@@ -13590,6 +13590,33 @@ type RootTranslation = {
 		 */
 		statusNotBackedUp: string
 	}
+	NostrConnectionApprovalScreen: {
+		/**
+		 * C​o​n​n​e​c​t​i​o​n​ ​r​e​q​u​e​s​t
+		 */
+		title: string
+		/**
+		 * T​h​i​s​ ​a​p​p​ ​w​a​n​t​s​ ​t​o​ ​s​i​g​n​ ​y​o​u​ ​i​n​ ​a​n​d​ ​s​i​g​n​ ​e​v​e​n​t​s​ ​o​n​ ​y​o​u​r​ ​b​e​h​a​l​f​.
+		 */
+		body: string
+		/**
+		 * A​p​p​r​o​v​e
+		 */
+		approve: string
+		/**
+		 * R​e​j​e​c​t
+		 */
+		reject: string
+		/**
+		 * A​n​ ​a​p​p
+		 */
+		unknownClient: string
+		/**
+		 * {​c​l​i​e​n​t​}​ ​w​a​n​t​s​ ​t​o​ ​s​i​g​n​ ​y​o​u​ ​i​n​ ​a​n​d​ ​s​i​g​n​ ​e​v​e​n​t​s​ ​o​n​ ​y​o​u​r​ ​b​e​h​a​l​f​.​ ​A​p​p​r​o​v​e​ ​o​r​ ​r​e​j​e​c​t​.
+		 * @param {string} client
+		 */
+		srLabel: RequiredParams<'client'>
+	}
 	NostrBoundedWaitScreen: {
 		/**
 		 * C​o​n​n​e​c​t​i​n​g
@@ -27014,6 +27041,32 @@ export type TranslationFunctions = {
 		 * Not backed up
 		 */
 		statusNotBackedUp: () => LocalizedString
+	}
+	NostrConnectionApprovalScreen: {
+		/**
+		 * Connection request
+		 */
+		title: () => LocalizedString
+		/**
+		 * This app wants to sign you in and sign events on your behalf.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Approve
+		 */
+		approve: () => LocalizedString
+		/**
+		 * Reject
+		 */
+		reject: () => LocalizedString
+		/**
+		 * An app
+		 */
+		unknownClient: () => LocalizedString
+		/**
+		 * {client} wants to sign you in and sign events on your behalf. Approve or reject.
+		 */
+		srLabel: (arg: { client: string }) => LocalizedString
 	}
 	NostrBoundedWaitScreen: {
 		/**

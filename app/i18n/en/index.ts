@@ -4282,6 +4282,15 @@ const en: BaseTranslation = {
     statusBackedUp: "Backed up",
     statusNotBackedUp: "Not backed up",
   },
+  NostrConnectionApprovalScreen: {
+    title: "Connection request",
+    body: "This app wants to sign you in and sign events on your behalf.",
+    approve: "Approve",
+    reject: "Reject",
+    unknownClient: "An app",
+    srLabel:
+      "{client:string} wants to sign you in and sign events on your behalf. Approve or reject.",
+  },
   NostrBoundedWaitScreen: {
     waiting: "Connecting",
     slowHint: "Still working, this is taking a little longer than usual",

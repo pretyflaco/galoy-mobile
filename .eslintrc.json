@@ -178,11 +178,12 @@
           {
             "paths": [
               { "name": "react", "message": "app/nostr/core must not import React (AD-1: core is UI-free)." },
+              { "name": "react-dom", "message": "app/nostr/core must not import react-dom (AD-1: core is UI-free)." },
               { "name": "react-native", "message": "app/nostr/core must not import react-native (AD-1: core is UI-free)." },
               { "name": "react-native-keychain", "message": "app/nostr/core must not import UI/native storage directly (AD-1)." }
             ],
             "patterns": [
-              { "group": ["react", "react-*", "@react-native*", "**/components/**", "**/screens/**", "**/hooks/**"], "message": "app/nostr/core must be UI-free (AD-1): no React, React Native, components, screens, or hooks imports." }
+              { "group": ["react-native-*", "@react-native*", "@react-navigation*", "**/components/**", "**/screens/**", "**/hooks/**"], "message": "app/nostr/core must be UI-free (AD-1): no React Native UI, components, screens, or hooks imports. The ONLY sanctioned exception is react-native-quick-crypto (native CSPRNG) via a documented eslint-disable in keygen.ts." }
             ]
           }
         ]
@@ -194,14 +195,17 @@
       "rules": {
         "no-restricted-properties": [
           "error",
-          { "object": "keychain", "property": "nsec", "message": "nsec is read ONLY in local-nsec-signer.ts / backup-export.ts (AD-2/FR-1). Use the NostrSigner seam." }
+          { "object": "keychain", "property": "nsec", "message": "nsec is read ONLY in local-nsec-signer.ts / backup-export.ts (AD-2/FR-1). Use the NostrSigner seam." },
+          { "object": "Math", "property": "random", "message": "AD-6/NFR-4: no Math.random on the signer path — use secureRandomBytes (native CSPRNG)." }
         ],
         "no-restricted-syntax": [
           "error",
-          {
-            "selector": "Identifier[name=/^(nsec|privateKeyHex|secretKey)$/]",
-            "message": "Private key material (nsec/privateKeyHex/secretKey) may only appear in local-nsec-signer.ts / backup-export.ts (AD-2/FR-1). Reach signatures/npub via the NostrSigner seam."
-          }
+          { "selector": "Identifier[name=/^(nsec|privateKeyHex)$/]", "message": "Private key material (nsec/privateKeyHex) may only appear in local-nsec-signer.ts / backup-export.ts (AD-2/FR-1). Reach signatures/npub via the NostrSigner seam." },
+          { "selector": "CallExpression[callee.name=/^(randomPrivateKey|randomSecretKey)$/]", "message": "AD-6: never call noble's no-arg key generator; inject native entropy explicitly via keygen.ts." },
+          { "selector": "MemberExpression[property.name=/^(randomPrivateKey|randomSecretKey)$/]", "message": "AD-6: never reach noble's no-arg key generator; inject native entropy explicitly." },
+          { "selector": "MemberExpression[object.name='Math'][property.name='random']", "message": "AD-6/NFR-4: no Math.random on the signer path — use secureRandomBytes (native CSPRNG)." },
+          { "selector": "AssignmentExpression[left.property.name='crypto'][left.object.name='global']", "message": "AD-6: never polyfill global.crypto; the signer path must depend only on native quick-crypto." },
+          { "selector": "AssignmentExpression[left.property.name='crypto'][left.object.name='globalThis']", "message": "AD-6: never polyfill globalThis.crypto; the signer path must depend only on native quick-crypto." }
         ]
       }
     }

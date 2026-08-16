@@ -76,6 +76,10 @@ module.exports = {
       "|uuid" +
       "|@formatjs" +
       "|react-native-inappbrowser-reborn" +
+      // nostr-signer crypto stack ships ESM and must be transpiled for Jest (AD-5).
+      "|@noble" +
+      "|@scure" +
+      "|nostr-tools" +
       ")/)",
   ],
 }

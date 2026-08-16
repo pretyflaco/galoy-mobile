@@ -13524,6 +13524,72 @@ type RootTranslation = {
 		 */
 		replaceSrLabel: string
 	}
+	NostrBackupScreen: {
+		/**
+		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 */
+		title: string
+		/**
+		 * C​h​o​o​s​e​ ​h​o​w​ ​t​o​ ​b​a​c​k​ ​u​p​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y​ ​s​o​ ​y​o​u​ ​c​a​n​ ​r​e​s​t​o​r​e​ ​i​t​ ​o​n​ ​a​ ​n​e​w​ ​d​e​v​i​c​e​.
+		 */
+		body: string
+		/**
+		 * C​l​o​u​d​ ​b​a​c​k​u​p
+		 */
+		methodCloud: string
+		/**
+		 * P​a​s​s​w​o​r​d​ ​m​a​n​a​g​e​r
+		 */
+		methodKeychain: string
+		/**
+		 * W​r​i​t​e​ ​i​t​ ​d​o​w​n
+		 */
+		methodManual: string
+		/**
+		 * S​e​t​ ​a​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​.​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​s​e​e​s​ ​i​t​ ​—​ ​s​o​ ​k​e​e​p​ ​i​t​ ​s​o​m​e​w​h​e​r​e​ ​s​a​f​e​,​ ​b​e​c​a​u​s​e​ ​w​e​ ​c​a​n​'​t​ ​r​e​c​o​v​e​r​ ​i​t​ ​f​o​r​ ​y​o​u​.
+		 */
+		passwordPrompt: string
+		/**
+		 * B​a​c​k​u​p​ ​p​a​s​s​w​o​r​d
+		 */
+		passwordLabel: string
+		/**
+		 * E​n​c​r​y​p​t​ ​a​n​d​ ​b​a​c​k​ ​u​p
+		 */
+		passwordCta: string
+		/**
+		 * B​a​c​k​ ​u​p​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​?
+		 */
+		plaintextTitle: string
+		/**
+		 * W​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​,​ ​y​o​u​r​ ​k​e​y​ ​i​s​ ​s​t​o​r​e​d​ ​u​n​p​r​o​t​e​c​t​e​d​ ​i​n​ ​y​o​u​r​ ​c​l​o​u​d​ ​d​r​i​v​e​.​ ​A​n​y​o​n​e​ ​w​i​t​h​ ​a​c​c​e​s​s​ ​t​o​ ​t​h​a​t​ ​d​r​i​v​e​ ​c​a​n​ ​u​s​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y​.​ ​C​o​n​t​i​n​u​e​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​?
+		 */
+		plaintextConsequence: string
+		/**
+		 * C​o​n​t​i​n​u​e​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d
+		 */
+		plaintextConfirm: string
+		/**
+		 * S​e​t​ ​a​ ​p​a​s​s​w​o​r​d​ ​i​n​s​t​e​a​d
+		 */
+		plaintextCancel: string
+		/**
+		 * B​a​c​k​ ​u​p​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​.​ ​Y​o​u​r​ ​k​e​y​ ​i​s​ ​s​t​o​r​e​d​ ​u​n​p​r​o​t​e​c​t​e​d​.​ ​C​o​n​t​i​n​u​e​ ​o​r​ ​c​a​n​c​e​l​.
+		 */
+		plaintextSrLabel: string
+		/**
+		 * N​o​t​ ​n​o​w
+		 */
+		notNow: string
+		/**
+		 * B​a​c​k​e​d​ ​u​p
+		 */
+		statusBackedUp: string
+		/**
+		 * N​o​t​ ​b​a​c​k​e​d​ ​u​p
+		 */
+		statusNotBackedUp: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -26836,6 +26902,72 @@ export type TranslationFunctions = {
 		 * Replace the identity on this account. The current key is permanently discarded. Confirm or cancel.
 		 */
 		replaceSrLabel: () => LocalizedString
+	}
+	NostrBackupScreen: {
+		/**
+		 * Back up your key
+		 */
+		title: () => LocalizedString
+		/**
+		 * Choose how to back up your identity so you can restore it on a new device.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Cloud backup
+		 */
+		methodCloud: () => LocalizedString
+		/**
+		 * Password manager
+		 */
+		methodKeychain: () => LocalizedString
+		/**
+		 * Write it down
+		 */
+		methodManual: () => LocalizedString
+		/**
+		 * Set a backup password. Blink never sees it — so keep it somewhere safe, because we can't recover it for you.
+		 */
+		passwordPrompt: () => LocalizedString
+		/**
+		 * Backup password
+		 */
+		passwordLabel: () => LocalizedString
+		/**
+		 * Encrypt and back up
+		 */
+		passwordCta: () => LocalizedString
+		/**
+		 * Back up without a password?
+		 */
+		plaintextTitle: () => LocalizedString
+		/**
+		 * Without a password, your key is stored unprotected in your cloud drive. Anyone with access to that drive can use your identity. Continue without a password?
+		 */
+		plaintextConsequence: () => LocalizedString
+		/**
+		 * Continue without a password
+		 */
+		plaintextConfirm: () => LocalizedString
+		/**
+		 * Set a password instead
+		 */
+		plaintextCancel: () => LocalizedString
+		/**
+		 * Back up without a password. Your key is stored unprotected. Continue or cancel.
+		 */
+		plaintextSrLabel: () => LocalizedString
+		/**
+		 * Not now
+		 */
+		notNow: () => LocalizedString
+		/**
+		 * Backed up
+		 */
+		statusBackedUp: () => LocalizedString
+		/**
+		 * Not backed up
+		 */
+		statusNotBackedUp: () => LocalizedString
 	}
 }
 

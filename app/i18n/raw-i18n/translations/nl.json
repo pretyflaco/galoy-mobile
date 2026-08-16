@@ -4059,5 +4059,23 @@
     "replaceConfirm": "Replace identity",
     "replaceCancel": "Cancel",
     "replaceSrLabel": "Replace the identity on this account. The current key is permanently discarded. Confirm or cancel."
+  },
+  "NostrBackupScreen": {
+    "title": "Back up your key",
+    "body": "Choose how to back up your identity so you can restore it on a new device.",
+    "methodCloud": "Cloud backup",
+    "methodKeychain": "Password manager",
+    "methodManual": "Write it down",
+    "passwordPrompt": "Set a backup password. Blink never sees it — so keep it somewhere safe, because we can't recover it for you.",
+    "passwordLabel": "Backup password",
+    "passwordCta": "Encrypt and back up",
+    "plaintextTitle": "Back up without a password?",
+    "plaintextConsequence": "Without a password, your key is stored unprotected in your cloud drive. Anyone with access to that drive can use your identity. Continue without a password?",
+    "plaintextConfirm": "Continue without a password",
+    "plaintextCancel": "Set a password instead",
+    "plaintextSrLabel": "Back up without a password. Your key is stored unprotected. Continue or cancel.",
+    "notNow": "Not now",
+    "statusBackedUp": "Backed up",
+    "statusNotBackedUp": "Not backed up"
   }
 }

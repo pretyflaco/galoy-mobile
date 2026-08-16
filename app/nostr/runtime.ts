@@ -48,7 +48,13 @@ import {
   createEncryptDecryptFlow,
   type CapabilityMethod,
 } from "./transport/encrypt-decrypt"
-import { decodeRequest, NIP46_KIND, type DecodedRequest } from "./transport/nip46-codec"
+import {
+  decodeRequest,
+  encodeResponse,
+  NIP46_KIND,
+  type DecodedRequest,
+  type Nip46Response,
+} from "./transport/nip46-codec"
 import { createInboundPipeline, type InboundPipeline } from "./transport/pipeline"
 import { getRelayPool, type RelayPool } from "./transport/relay-pool"
 import { createSignEventFlow } from "./transport/sign-event"
@@ -144,6 +150,24 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     if (relaySnapshot.length > 0) pool.publish(relaySnapshot, event)
   }
 
+  // Encode a NIP-46 response in-kind (AD-10) with the device-local transport secret and publish
+  // it back to the client. Used by the approval-gated flows (sign_event, nip04/nip44), which
+  // otherwise compute a result the client would never receive.
+  const sendResponse = async (
+    response: Nip46Response,
+    decoded: DecodedRequest,
+  ): Promise<void> => {
+    await primeTransportSk()
+    if (transportSkCache === null) return
+    publish(
+      encodeResponse(response, {
+        scheme: decoded.scheme,
+        clientPubkey: decoded.clientPubkey,
+        transportSk: transportSkCache,
+      }),
+    )
+  }
+
   // -- sign_event flow (Story 3.5): approval-gated, signs through the seam only.
   const runSignEvent = async (decoded: DecodedRequest): Promise<void> => {
     const userNpub = await signer.getPublicKey()
@@ -162,7 +186,14 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
         }).then((approved) => ({ approved })),
     })
     const raw = JSON.parse(decoded.request.params[0] ?? "{}")
-    await flow.handle(raw)
+    const result = await flow.handle(raw)
+    // Respond in-kind: the signed event JSON on success, a spec error on rejection.
+    await sendResponse(
+      result.ok
+        ? { id: decoded.request.id, result: JSON.stringify(result.event) }
+        : { id: decoded.request.id, error: result.error },
+      decoded,
+    )
   }
 
   // -- encrypt/decrypt flow (Story 3.6): each op raises its OWN fresh approval.
@@ -179,11 +210,17 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
           humanAction: req.method,
         }).then((approved) => ({ approved })),
     })
-    await flow.handle({
+    const result = await flow.handle({
       method: decoded.request.method as CapabilityMethod,
       peerPubkey: decoded.request.params[0] ?? "",
       payload: decoded.request.params[1] ?? "",
     })
+    await sendResponse(
+      result.ok
+        ? { id: decoded.request.id, result: result.result }
+        : { id: decoded.request.id, error: result.error },
+      decoded,
+    )
   }
 
   // -- transport dispatcher (Story 3.2): ping / get_public_key / connect + ledger + respond-in-kind.
@@ -216,9 +253,15 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     return dispatchTransport(decoded, event, transportSk)
   }
 
-  // -- decode: real decode needs the transport secret; primed on activation (sync cache). Tests
-  //    inject decodeForTest to exercise wiring without crypto.
+  // -- decode: real decode needs the transport secret in a sync cache (the pipeline's decode
+  //    stage is sync). handleInbound + activate prime it before any inbound event is decoded.
+  //    Tests inject decodeForTest to exercise wiring without crypto.
   let transportSkCache: string | null = null
+  const primeTransportSk = async (): Promise<void> => {
+    if (transportSkCache !== null) return
+    const sk = await readTransportSk()
+    if (transportSkCache === null) transportSkCache = sk
+  }
   const decode =
     deps.decodeForTest ??
     ((event: Event): DecodedRequest => {
@@ -257,11 +300,7 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     fireAndForget(() => pipeline.handleInbound(e as Event), log)
   }
   const activate = async (): Promise<void> => {
-    if (transportSkCache === null && deps.readTransportSkHex) {
-      // Read into a local, then assign ONCE — never reassign the cache based on a stale read.
-      const sk = await deps.readTransportSkHex()
-      if (transportSkCache === null) transportSkCache = sk
-    }
+    await primeTransportSk()
     await syncSnapshots()
     if (subscription || relaySnapshot.length === 0) return
     subscription = pool.subscribe(
@@ -296,7 +335,12 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   fireAndForget(syncSnapshots, log)
 
   return {
-    handleInbound: (event) => pipeline.handleInbound(event),
+    handleInbound: async (event) => {
+      // Ensure the transport secret is available for the sync decode stage before the pipeline
+      // runs (activation also primes it; this covers direct/first-event calls).
+      await primeTransportSk()
+      await pipeline.handleInbound(event)
+    },
     handleConnectUri: async (rawUri) => {
       await connectFlow.handleConnect(rawUri)
       await syncSnapshots()

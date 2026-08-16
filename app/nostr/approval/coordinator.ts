@@ -99,27 +99,55 @@ export interface ApprovalCoordinator {
 const noopPresent = async (): Promise<void> => undefined
 
 let singleton: ApprovalCoordinator | null = null
+/** Mutable ports for the singleton so `initApprovalCoordinator` can (re)bind the real surface
+ *  + grant predicate onto the ONE instance without ever constructing a second coordinator. */
+let singletonPorts: ApprovalCoordinatorPorts = { present: noopPresent }
 
 /**
  * The ONE process-wide ApprovalCoordinator (AD-9: single owner). Identity-mutation flows
  * (ceremony / import) drive its `runExclusive`; the pipeline and ConnectFlow route request /
  * connection approvals through it; the coordinator hook consumes it for presentation.
+ *
+ * Created lazily with a no-op present; the runtime binds the real `present` + `isCoveredByGrant`
+ * via `initApprovalCoordinator`. Because the singleton reads its ports through a mutable holder,
+ * a pre-init `getApprovalCoordinator()` (e.g. a ceremony `runExclusive`) and a post-init runtime
+ * share the SAME instance.
  */
 export const getApprovalCoordinator = (): ApprovalCoordinator => {
-  if (!singleton) singleton = createApprovalCoordinator({ present: noopPresent })
+  if (!singleton) singleton = createApprovalCoordinator(() => singletonPorts)
   return singleton
+}
+
+/**
+ * Bind the real presentation + grant-coverage ports onto the ONE singleton (AD-9). Idempotent:
+ * a second call re-binds the ports on the same instance; a second coordinator is never created.
+ * Returns the singleton for convenience.
+ */
+export const initApprovalCoordinator = (
+  ports: ApprovalCoordinatorPorts,
+): ApprovalCoordinator => {
+  singletonPorts = ports
+  return getApprovalCoordinator()
 }
 
 /** Test-only: drop the singleton so each test starts clean. */
 export const __resetApprovalCoordinatorForTest = (): void => {
   singleton = null
+  singletonPorts = { present: noopPresent }
 }
 
+/**
+ * Accepts either a static ports object OR a getter that returns the current ports. The getter
+ * form lets the process-wide singleton late-bind its real `present`/`isCoveredByGrant` after
+ * construction (via initApprovalCoordinator) without creating a second coordinator (AD-9).
+ */
 export const createApprovalCoordinator = (
-  ports: ApprovalCoordinatorPorts,
+  portsOrGetter: ApprovalCoordinatorPorts | (() => ApprovalCoordinatorPorts),
 ): ApprovalCoordinator => {
-  const { present, isCoveredByGrant, currentEpoch } = ports
-  const epochOf = (): number => currentEpoch?.() ?? 0
+  const getPorts = (): ApprovalCoordinatorPorts =>
+    typeof portsOrGetter === "function" ? portsOrGetter() : portsOrGetter
+  const present = (entry: ApprovalEntry): Promise<void> => getPorts().present(entry)
+  const epochOf = (): number => getPorts().currentEpoch?.() ?? 0
 
   const queue: QueueItem[] = []
   const listeners = new Set<() => void>()
@@ -144,8 +172,11 @@ export const createApprovalCoordinator = (
 
   return {
     async enqueue(entry: ApprovalEntry): Promise<ApprovalDecision> {
-      // Pre-approved by the fixed connect-time grant → no surface, resolve immediately.
-      if (isCoveredByGrant && (await isCoveredByGrant(entry))) {
+      // Pre-approved by the fixed connect-time grant → no surface, resolve immediately. Only
+      // await when a grant predicate is actually bound, so the no-grant path stays synchronous
+      // (queueDepth is observable immediately after enqueue, as the FIFO tests require).
+      const coveredBy = getPorts().isCoveredByGrant
+      if (coveredBy && (await coveredBy(entry))) {
         return { approved: true, epoch: epochOf() }
       }
       return new Promise<ApprovalDecision>((resolve) => {

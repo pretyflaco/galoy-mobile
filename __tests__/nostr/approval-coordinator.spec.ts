@@ -13,6 +13,7 @@
 import {
   createApprovalCoordinator,
   getApprovalCoordinator,
+  initApprovalCoordinator,
   __resetApprovalCoordinatorForTest,
   type RequestApprovalEntry,
 } from "../../app/nostr/approval/coordinator"
@@ -218,5 +219,43 @@ describe("identity-mutation exclusive section + epoch (AC #1 substrate, AD-9)", 
     // a request approved against epoch 1 must NOT be valid against epoch 2
     expect(coord.isEpochValid(decision, 2)).toBe(false)
     expect(coord.isEpochValid(decision, 1)).toBe(true)
+  })
+})
+
+describe("singleton initialization (A2/AD-9 — one coordinator, ports bound once)", () => {
+  beforeEach(() => {
+    __resetApprovalCoordinatorForTest()
+  })
+
+  it("initApprovalCoordinator binds present + isCoveredByGrant onto the ONE singleton", async () => {
+    const presented: string[] = []
+    const coord = initApprovalCoordinator({
+      present: async (entry) => {
+        presented.push(entry.id)
+      },
+      // Pre-approve only the "granted" client.
+      isCoveredByGrant: async (entry) => entry.clientPubkey === "client-granted",
+    })
+    // The returned coordinator IS the process-wide singleton.
+    expect(coord).toBe(getApprovalCoordinator())
+
+    // A granted request resolves immediately WITHOUT a surface.
+    const granted = await coord.enqueue(
+      requestEntry("g", { clientPubkey: "client-granted" }),
+    )
+    expect(granted.approved).toBe(true)
+    expect(presented).toEqual([])
+
+    // A non-granted request presents exactly one surface.
+    coord.enqueue(requestEntry("n", { clientPubkey: "client-other" }))
+    await Promise.resolve()
+    expect(presented).toEqual(["n"])
+  })
+
+  it("is idempotent per init: a second init re-binds ports on the SAME instance (no second coordinator)", () => {
+    const first = initApprovalCoordinator({ present: async () => undefined })
+    const second = initApprovalCoordinator({ present: async () => undefined })
+    expect(second).toBe(first)
+    expect(second).toBe(getApprovalCoordinator())
   })
 })

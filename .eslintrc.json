@@ -168,5 +168,42 @@
     "react": {
       "version": "detect"
     }
-  }
+  },
+  "overrides": [
+    {
+      "files": ["app/nostr/core/**/*.ts", "app/nostr/core/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "react", "message": "app/nostr/core must not import React (AD-1: core is UI-free)." },
+              { "name": "react-native", "message": "app/nostr/core must not import react-native (AD-1: core is UI-free)." },
+              { "name": "react-native-keychain", "message": "app/nostr/core must not import UI/native storage directly (AD-1)." }
+            ],
+            "patterns": [
+              { "group": ["react", "react-*", "@react-native*", "**/components/**", "**/screens/**", "**/hooks/**"], "message": "app/nostr/core must be UI-free (AD-1): no React, React Native, components, screens, or hooks imports." }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["app/nostr/**/*.ts", "app/nostr/**/*.tsx", "app/screens/nostr/**/*.ts", "app/screens/nostr/**/*.tsx"],
+      "excludedFiles": ["app/nostr/core/local-nsec-signer.ts", "app/nostr/core/backup-export.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          { "object": "keychain", "property": "nsec", "message": "nsec is read ONLY in local-nsec-signer.ts / backup-export.ts (AD-2/FR-1). Use the NostrSigner seam." }
+        ],
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "Identifier[name=/^(nsec|privateKeyHex|secretKey)$/]",
+            "message": "Private key material (nsec/privateKeyHex/secretKey) may only appear in local-nsec-signer.ts / backup-export.ts (AD-2/FR-1). Reach signatures/npub via the NostrSigner seam."
+          }
+        ]
+      }
+    }
+  ]
 }

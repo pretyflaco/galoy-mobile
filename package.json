@@ -69,6 +69,7 @@
     "@formatjs/intl-locale": "^3.4.5",
     "@formatjs/intl-numberformat": "^9.2.4",
     "@formatjs/intl-relativetimeformat": "^11.2.12",
+    "@noble/curves": "2.0.1",
     "@noble/hashes": "^1.8.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-clipboard/clipboard": "^1.14.0",
@@ -108,6 +109,7 @@
     "lodash.debounce": "^4.0.8",
     "lodash.merge": "^4.6.2",
     "node-libs-react-native": "^1.2.1",
+    "nostr-tools": "2.24.1",
     "phosphor-react-native": "^3.0.3",
     "react": "19.2.3",
     "react-content-loader": "^7.0.0",
@@ -277,7 +279,9 @@
     "shell-quote": "^1.10.0",
     "@react-native/codegen": "0.85.3",
     "handlebars": ">=4.7.9",
-    "protobufjs": ">=7.5.5"
+    "protobufjs": ">=7.5.5",
+    "@noble/curves": "2.0.1",
+    "@noble/ciphers": "2.1.1"
   },
   "engines": {
     "node": ">=24"
@@ -316,5 +320,6 @@
         "webview"
       ]
     }
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

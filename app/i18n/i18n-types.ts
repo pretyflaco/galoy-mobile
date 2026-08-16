@@ -13590,6 +13590,52 @@ type RootTranslation = {
 		 */
 		statusNotBackedUp: string
 	}
+	NostrBoundedWaitScreen: {
+		/**
+		 * C​o​n​n​e​c​t​i​n​g
+		 */
+		waiting: string
+		/**
+		 * S​t​i​l​l​ ​w​o​r​k​i​n​g​,​ ​t​h​i​s​ ​i​s​ ​t​a​k​i​n​g​ ​a​ ​l​i​t​t​l​e​ ​l​o​n​g​e​r​ ​t​h​a​n​ ​u​s​u​a​l
+		 */
+		slowHint: string
+		/**
+		 * I​ ​n​e​e​d​ ​m​o​r​e​ ​t​i​m​e
+		 */
+		extend: string
+		/**
+		 * T​h​i​s​ ​i​s​ ​t​a​k​i​n​g​ ​t​o​o​ ​l​o​n​g
+		 */
+		timeoutTitle: string
+		/**
+		 * W​e​ ​c​o​u​l​d​n​'​t​ ​r​e​a​c​h​ ​t​h​e​ ​n​e​t​w​o​r​k​ ​i​n​ ​t​i​m​e​.​ ​Y​o​u​ ​c​a​n​ ​t​r​y​ ​a​g​a​i​n​,​ ​o​r​ ​s​t​e​p​ ​a​w​a​y​ ​f​o​r​ ​n​o​w​.
+		 */
+		timeoutBody: string
+		/**
+		 * T​r​y​ ​a​g​a​i​n
+		 */
+		tryAgain: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		cancel: string
+		/**
+		 * S​i​g​n​ ​o​u​t
+		 */
+		signOut: string
+		/**
+		 * C​o​n​n​e​c​t​i​n​g​.​ ​P​l​e​a​s​e​ ​w​a​i​t​.
+		 */
+		waitingA11y: string
+		/**
+		 * S​t​i​l​l​ ​w​o​r​k​i​n​g​.​ ​T​h​i​s​ ​i​s​ ​t​a​k​i​n​g​ ​a​ ​l​i​t​t​l​e​ ​l​o​n​g​e​r​ ​t​h​a​n​ ​u​s​u​a​l​.
+		 */
+		slowHintA11y: string
+		/**
+		 * T​h​i​s​ ​i​s​ ​t​a​k​i​n​g​ ​t​o​o​ ​l​o​n​g​.​ ​T​r​y​ ​a​g​a​i​n​,​ ​o​r​ ​c​h​o​o​s​e​ ​t​h​e​ ​e​x​i​t​ ​t​o​ ​s​t​e​p​ ​a​w​a​y​.
+		 */
+		timeoutA11y: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -26968,6 +27014,52 @@ export type TranslationFunctions = {
 		 * Not backed up
 		 */
 		statusNotBackedUp: () => LocalizedString
+	}
+	NostrBoundedWaitScreen: {
+		/**
+		 * Connecting
+		 */
+		waiting: () => LocalizedString
+		/**
+		 * Still working, this is taking a little longer than usual
+		 */
+		slowHint: () => LocalizedString
+		/**
+		 * I need more time
+		 */
+		extend: () => LocalizedString
+		/**
+		 * This is taking too long
+		 */
+		timeoutTitle: () => LocalizedString
+		/**
+		 * We couldn't reach the network in time. You can try again, or step away for now.
+		 */
+		timeoutBody: () => LocalizedString
+		/**
+		 * Try again
+		 */
+		tryAgain: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		cancel: () => LocalizedString
+		/**
+		 * Sign out
+		 */
+		signOut: () => LocalizedString
+		/**
+		 * Connecting. Please wait.
+		 */
+		waitingA11y: () => LocalizedString
+		/**
+		 * Still working. This is taking a little longer than usual.
+		 */
+		slowHintA11y: () => LocalizedString
+		/**
+		 * This is taking too long. Try again, or choose the exit to step away.
+		 */
+		timeoutA11y: () => LocalizedString
 	}
 }
 

@@ -4282,6 +4282,21 @@ const en: BaseTranslation = {
     statusBackedUp: "Backed up",
     statusNotBackedUp: "Not backed up",
   },
+  NostrBoundedWaitScreen: {
+    waiting: "Connecting",
+    slowHint: "Still working, this is taking a little longer than usual",
+    extend: "I need more time",
+    timeoutTitle: "This is taking too long",
+    timeoutBody:
+      "We couldn't reach the network in time. You can try again, or step away for now.",
+    tryAgain: "Try again",
+    cancel: "Cancel",
+    signOut: "Sign out",
+    waitingA11y: "Connecting. Please wait.",
+    slowHintA11y: "Still working. This is taking a little longer than usual.",
+    timeoutA11y:
+      "This is taking too long. Try again, or choose the exit to step away.",
+  },
 }
 
 export default en

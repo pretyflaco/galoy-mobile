@@ -4109,5 +4109,14 @@
     "keepOpenHint": "On iPhone, keep Blink open to approve requests quickly.",
     "waitingCatchUp": "You have a request waiting.",
     "waitingCatchUpA11y": "You have a request waiting. Open it to approve or reject."
+  },
+  "NostrReviewAllScreen": {
+    "title": "Review requests",
+    "reviewAll": "Review all {total} requests",
+    "approveSelected": "Approve {count}",
+    "rejectSelected": "Reject {count}",
+    "approveSelectedA11y": "Approve {count} selected requests from {client}",
+    "rowA11y": "{action}: {preview}",
+    "footer": "You choose what to approve. Blink never batches this for you."
   }
 }

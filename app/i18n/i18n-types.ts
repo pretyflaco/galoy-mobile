@@ -13590,6 +13590,43 @@ type RootTranslation = {
 		 */
 		statusNotBackedUp: string
 	}
+	NostrReviewAllScreen: {
+		/**
+		 * R​e​v​i​e​w​ ​r​e​q​u​e​s​t​s
+		 */
+		title: string
+		/**
+		 * R​e​v​i​e​w​ ​a​l​l​ ​{​t​o​t​a​l​}​ ​r​e​q​u​e​s​t​s
+		 * @param {number} total
+		 */
+		reviewAll: RequiredParams<'total'>
+		/**
+		 * A​p​p​r​o​v​e​ ​{​c​o​u​n​t​}
+		 * @param {number} count
+		 */
+		approveSelected: RequiredParams<'count'>
+		/**
+		 * R​e​j​e​c​t​ ​{​c​o​u​n​t​}
+		 * @param {number} count
+		 */
+		rejectSelected: RequiredParams<'count'>
+		/**
+		 * A​p​p​r​o​v​e​ ​{​c​o​u​n​t​}​ ​s​e​l​e​c​t​e​d​ ​r​e​q​u​e​s​t​s​ ​f​r​o​m​ ​{​c​l​i​e​n​t​}
+		 * @param {string} client
+		 * @param {number} count
+		 */
+		approveSelectedA11y: RequiredParams<'client' | 'count'>
+		/**
+		 * {​a​c​t​i​o​n​}​:​ ​{​p​r​e​v​i​e​w​}
+		 * @param {string} action
+		 * @param {string} preview
+		 */
+		rowA11y: RequiredParams<'action' | 'preview'>
+		/**
+		 * Y​o​u​ ​c​h​o​o​s​e​ ​w​h​a​t​ ​t​o​ ​a​p​p​r​o​v​e​.​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​b​a​t​c​h​e​s​ ​t​h​i​s​ ​f​o​r​ ​y​o​u​.
+		 */
+		footer: string
+	}
 	NostrRequestApprovalScreen: {
 		/**
 		 * A​p​p​r​o​v​e​ ​r​e​q​u​e​s​t
@@ -27089,6 +27126,36 @@ export type TranslationFunctions = {
 		 * Not backed up
 		 */
 		statusNotBackedUp: () => LocalizedString
+	}
+	NostrReviewAllScreen: {
+		/**
+		 * Review requests
+		 */
+		title: () => LocalizedString
+		/**
+		 * Review all {total} requests
+		 */
+		reviewAll: (arg: { total: number }) => LocalizedString
+		/**
+		 * Approve {count}
+		 */
+		approveSelected: (arg: { count: number }) => LocalizedString
+		/**
+		 * Reject {count}
+		 */
+		rejectSelected: (arg: { count: number }) => LocalizedString
+		/**
+		 * Approve {count} selected requests from {client}
+		 */
+		approveSelectedA11y: (arg: { client: string, count: number }) => LocalizedString
+		/**
+		 * {action}: {preview}
+		 */
+		rowA11y: (arg: { action: string, preview: string }) => LocalizedString
+		/**
+		 * You choose what to approve. Blink never batches this for you.
+		 */
+		footer: () => LocalizedString
 	}
 	NostrRequestApprovalScreen: {
 		/**

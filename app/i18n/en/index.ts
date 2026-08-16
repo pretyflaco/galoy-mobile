@@ -4282,6 +4282,15 @@ const en: BaseTranslation = {
     statusBackedUp: "Backed up",
     statusNotBackedUp: "Not backed up",
   },
+  NostrReviewAllScreen: {
+    title: "Review requests",
+    reviewAll: "Review all {total:number} requests",
+    approveSelected: "Approve {count:number}",
+    rejectSelected: "Reject {count:number}",
+    approveSelectedA11y: "Approve {count:number} selected requests from {client:string}",
+    rowA11y: "{action:string}: {preview:string}",
+    footer: "You choose what to approve. Blink never batches this for you.",
+  },
   NostrRequestApprovalScreen: {
     title: "Approve request",
     approve: "Approve",

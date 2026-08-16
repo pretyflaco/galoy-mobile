@@ -19,6 +19,12 @@ import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
 import { getEventHash } from "nostr-tools/pure"
 import * as nip19 from "nostr-tools/nip19"
 
+import {
+  nip04Encrypt as nip04EncryptImpl,
+  nip04Decrypt as nip04DecryptImpl,
+  nip44Encrypt as nip44EncryptImpl,
+  nip44Decrypt as nip44DecryptImpl,
+} from "./capability-crypto"
 import { secureRandomBytes } from "./keygen"
 import {
   makeSignerError,
@@ -83,17 +89,53 @@ export const createLocalNsecSigner = (source: NsecSource): NostrSigner => {
     return { ...unsigned, id, sig }
   }
 
-  const unsupportedEncryption = (name: string) => async (): Promise<never> => {
-    throw makeSignerError("unavailable", `${name} not implemented until Story 3.6`)
+  // The four NIP-04/NIP-44 capability methods (Story 3.6 / FR-15). Each reads the identity
+  // secret ONLY here (nsec confinement, AD-2/AD-7) and delegates to the capability-crypto
+  // module, which injects every IV/nonce explicitly from the CSPRNG (AD-6). The peer pubkey is
+  // x-only hex; the returned ciphertext/plaintext is the sole thing the seam exposes.
+  const nip04Encrypt = async (
+    pubkey: string,
+    plaintext: string,
+    signal?: AbortSignal,
+  ): Promise<string> => {
+    const sk = await loadSecretBytes(signal)
+    return nip04EncryptImpl(sk, pubkey, plaintext)
+  }
+
+  const nip04Decrypt = async (
+    pubkey: string,
+    ciphertext: string,
+    signal?: AbortSignal,
+  ): Promise<string> => {
+    const sk = await loadSecretBytes(signal)
+    return nip04DecryptImpl(sk, pubkey, ciphertext)
+  }
+
+  const nip44Encrypt = async (
+    pubkey: string,
+    plaintext: string,
+    signal?: AbortSignal,
+  ): Promise<string> => {
+    const sk = await loadSecretBytes(signal)
+    return nip44EncryptImpl(sk, pubkey, plaintext)
+  }
+
+  const nip44Decrypt = async (
+    pubkey: string,
+    ciphertext: string,
+    signal?: AbortSignal,
+  ): Promise<string> => {
+    const sk = await loadSecretBytes(signal)
+    return nip44DecryptImpl(sk, pubkey, ciphertext)
   }
 
   return {
     getPublicKey,
     signEvent,
-    nip04Encrypt: unsupportedEncryption("nip04Encrypt"),
-    nip04Decrypt: unsupportedEncryption("nip04Decrypt"),
-    nip44Encrypt: unsupportedEncryption("nip44Encrypt"),
-    nip44Decrypt: unsupportedEncryption("nip44Decrypt"),
+    nip04Encrypt,
+    nip04Decrypt,
+    nip44Encrypt,
+    nip44Decrypt,
     capabilities,
   }
 }

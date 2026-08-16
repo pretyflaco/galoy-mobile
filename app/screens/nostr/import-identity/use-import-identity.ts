@@ -7,6 +7,7 @@ import * as nip19 from "nostr-tools/nip19"
 import { getApprovalCoordinator } from "@app/nostr/approval/coordinator"
 import { importIdentity, validateNsec, type ImportPorts } from "@app/nostr/core/identity"
 import { NOSTR_NSEC_SERVICE, writeSecret } from "@app/nostr/core/keystore"
+import { getNpubPush } from "@app/nostr/core/npub-push-runtime"
 
 type Phase = "input" | "confirm" | "invalid" | "done"
 
@@ -35,9 +36,9 @@ export const useImportIdentity = () => {
       // presentation pauses + the pipeline holds queued while the replace commit runs.
       runExclusive: (commit) => getApprovalCoordinator().runExclusive(commit),
       commitIdentity: async () => Date.now(), // epoch source until the identity store lands (Epic 3)
-      pushNpub: async () => {
-        // wired to the outbox drain in Story 2.x; non-blocking by contract
-      },
+      // AD-12/FR-9: enqueue the imported npub into the SAME shared persistent outbox as create
+      // (single slot — a re-import supersedes the prior mapping) + fire a non-blocking drain.
+      pushNpub: (npub) => getNpubPush().push(npub),
     }),
     [],
   )

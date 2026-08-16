@@ -8,7 +8,7 @@ import {
 } from "@app/nostr/analytics"
 import { getApprovalCoordinator } from "@app/nostr/approval/coordinator"
 import { generateNostrKey } from "@app/nostr/core/keygen"
-import { createNpubOutbox } from "@app/nostr/core/outbox"
+import { getNpubPush } from "@app/nostr/core/npub-push-runtime"
 import {
   confirmCreate,
   initialCeremonyState,
@@ -27,7 +27,6 @@ import { NOSTR_NSEC_SERVICE, writeSecret } from "@app/nostr/core/keystore"
 export const useCreateIdentity = () => {
   const [state, setState] = useState<CeremonyState>(initialCeremonyState)
   const [busy, setBusy] = useState(false)
-  const outbox = useMemo(() => createNpubOutbox(), [])
   const epochRef = useRef(0)
 
   const ports = useMemo<CeremonyPorts>(
@@ -43,11 +42,12 @@ export const useCreateIdentity = () => {
         epochRef.current += 1
         return epochRef.current
       },
-      pushNpub: async (npub) => {
-        outbox.enqueue(npub)
-      },
+      // AD-12/FR-9: enqueue the new npub into the shared persistent outbox + fire a
+      // non-blocking drain (Story 2.3). A slow/failing/absent endpoint never blocks the
+      // ceremony — the push awaits only the durable enqueue.
+      pushNpub: (npub) => getNpubPush().push(npub),
     }),
-    [outbox],
+    [],
   )
 
   const start = useCallback(() => {

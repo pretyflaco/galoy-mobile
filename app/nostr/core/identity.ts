@@ -148,17 +148,18 @@ export interface ImportPorts {
   toNpub(pubKeyHex: string): string
   runExclusive<T>(commit: () => Promise<T>): Promise<T>
   commitIdentity(identity: Omit<NostrIdentity, "epoch">): Promise<number>
-  /** Non-blocking npub push with a monotonic seq (AD-12). */
-  pushNpub(npub: string, seq: number): Promise<void>
+  /**
+   * Non-blocking npub push (AD-12). The monotonic seq is owned by the persistent outbox
+   * (Story 2.1) — the caller supplies only the npub; a superseded/discarded-key npub can
+   * never win because the outbox bumps the seq on every enqueue.
+   */
+  pushNpub(npub: string): Promise<void>
 }
-
-// Module-monotonic push sequence: a superseded/discarded-key npub can never win a race.
-let pushSeq = 0
 
 /**
  * Commit an imported nsec (already validated to hex): store it (replacing + discarding
  * the prior key — no archive), inside the AD-9 exclusive section with an epoch bump, then
- * push the new npub monotonically and non-blocking (AD-12).
+ * push the new npub non-blocking (AD-12). The outbox owns the monotonic seq.
  */
 export const importIdentity = async (
   privKeyHex: string,
@@ -173,9 +174,8 @@ export const importIdentity = async (
     return { pubKeyHex, npub, epoch }
   })
 
-  pushSeq += 1
   try {
-    await ports.pushNpub(npub, pushSeq)
+    await ports.pushNpub(npub)
   } catch {
     // swallowed by design — push failure never blocks import
   }

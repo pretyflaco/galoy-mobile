@@ -26,7 +26,7 @@ const makePorts = (over: Partial<ImportPorts> = {}) => {
   const state = {
     stored: "OLD_KEY",
     epoch: 1,
-    pushed: [] as { npub: string; seq: number }[],
+    pushed: [] as string[],
   }
   const exclusive: string[] = []
   const ports: ImportPorts = {
@@ -46,8 +46,8 @@ const makePorts = (over: Partial<ImportPorts> = {}) => {
       state.epoch += 1
       return state.epoch
     },
-    pushNpub: async (npub, seq) => {
-      state.pushed.push({ npub, seq })
+    pushNpub: async (npub) => {
+      state.pushed.push(npub)
     },
     ...over,
   }
@@ -136,18 +136,14 @@ describe("executor epoch re-check (AC-4/AD-9)", () => {
   })
 })
 
-describe("monotonic non-blocking npub push (AC-6/AD-12)", () => {
-  it("pushes the npub with a monotonically increasing seq", async () => {
-    const seqs: number[] = []
-    const { ports } = makePorts({
-      pushNpub: async (_npub, seq) => {
-        seqs.push(seq)
-      },
-    })
+describe("non-blocking npub push (AC-6/AD-12)", () => {
+  it("pushes the new npub after commit (seq is owned by the outbox, not the caller)", async () => {
+    const { ports, state } = makePorts()
     await importIdentity(NSEC_HEX, ports)
     await importIdentity(NSEC_HEX, ports)
-    expect(seqs).toHaveLength(2)
-    expect(seqs[1]).toBeGreaterThan(seqs[0])
+    // The controller pushes the npub on each import; the monotonic seq / supersede is the
+    // persistent outbox's job (covered by outbox.spec.ts + npub-push.spec.ts).
+    expect(state.pushed).toEqual([NPUB, NPUB])
   })
 
   it("a push rejection does NOT block or fail import completion", async () => {

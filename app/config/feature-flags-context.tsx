@@ -4,6 +4,7 @@ import remoteConfigInstance from "@react-native-firebase/remote-config"
 import { useLevel } from "@app/graphql/level-context"
 import { useAppConfig } from "@app/hooks/use-app-config"
 import { useHasCustodialAccount } from "@app/hooks/use-has-custodial-account"
+import { SignerEnabledKey } from "@app/nostr/config"
 import { logSelfCustodialRolloutExposed } from "@app/self-custodial/analytics"
 import { logError } from "@app/utils/log-error"
 import {
@@ -80,6 +81,7 @@ type FeatureFlags = {
   deviceAccountEnabled: boolean
   nonCustodialEnabled: boolean
   stableBalanceEnabled: boolean
+  nostrSignerEnabled: boolean
   remoteConfigReady: boolean
 }
 
@@ -110,6 +112,7 @@ type RemoteConfig = {
   [BackupNudgeModalThresholdKey]: number
   [NonCustodialEnabledKey]: boolean
   [StableBalanceEnabledKey]: boolean
+  [SignerEnabledKey]: boolean
   [DollarRestrictionCacheEnabledKey]: boolean
   [AutoConvertMaxAttemptsKey]: number
   [AutoConvertPollMaxAttemptsKey]: number
@@ -214,6 +217,7 @@ export const defaultRemoteConfig: RemoteConfig = {
   backupNudgeModalThreshold: 21000,
   nonCustodialEnabled: false,
   stableBalanceEnabled: false,
+  nostrSignerEnabled: false,
   dollarRestrictionCacheEnabled: true,
   autoConvertMaxAttempts: 3,
   autoConvertPollMaxAttempts: 30,
@@ -243,6 +247,7 @@ const defaultFeatureFlags: FeatureFlags = {
   deviceAccountEnabled: false,
   nonCustodialEnabled: false,
   stableBalanceEnabled: false,
+  nostrSignerEnabled: false,
   remoteConfigReady: false,
 }
 
@@ -403,6 +408,10 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           .getValue(StableBalanceEnabledKey)
           .asBoolean()
 
+        const nostrSignerEnabled = remoteConfigInstance()
+          .getValue(SignerEnabledKey)
+          .asBoolean()
+
         const dollarRestrictionCacheEnabled = remoteConfigInstance()
           .getValue(DollarRestrictionCacheEnabledKey)
           .asBoolean()
@@ -518,6 +527,7 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           backupNudgeModalThreshold,
           nonCustodialEnabled,
           stableBalanceEnabled,
+          nostrSignerEnabled,
           dollarRestrictionCacheEnabled,
           autoConvertMaxAttempts,
           autoConvertPollMaxAttempts,
@@ -555,6 +565,7 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
     nonCustodialEnabled: remoteConfig.nonCustodialEnabled,
     stableBalanceEnabled:
       remoteConfig.nonCustodialEnabled && remoteConfig.stableBalanceEnabled,
+    nostrSignerEnabled: remoteConfig.nostrSignerEnabled,
     remoteConfigReady,
   }
 

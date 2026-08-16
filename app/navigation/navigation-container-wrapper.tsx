@@ -16,6 +16,10 @@ import { useTheme } from "@rn-vui/themed"
 
 import { Action, useActionsContext } from "@app/components/actions"
 import { PREFIX_LINKING, TELEGRAM_CALLBACK_PATH } from "@app/config"
+import {
+  handleNostrConnectLink,
+  isNostrConnectLink,
+} from "@app/nostr/connect-link-handler"
 import { useIsAuthed } from "@app/graphql/is-authed-context"
 import { useActiveWallet } from "@app/hooks/use-active-wallet"
 import { useMigrationBlocker } from "@app/screens/account-migration/hooks/use-migration-blocker"
@@ -345,6 +349,15 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
     subscribe: (listener) => {
       const onReceiveURL = ({ url }: { url: string }) => {
         if (url.includes(TELEGRAM_CALLBACK_PATH)) return
+
+        // nostrconnect:// (Story A3 / AD-9): recognize the scheme and forward the RAW URI to
+        // ConnectFlow (via the runtime handler the provider registers while the signer is on).
+        // Never route it through the payment/nav listener. If the signer is off, no handler is
+        // registered and this is a no-op — the URL falls through unchanged.
+        if (isNostrConnectLink(url)) {
+          handleNostrConnectLink(url).catch(() => undefined)
+          return
+        }
 
         /** With the account-closed gate armed, only the migration deeplink is honoured; any
          *  other would open a working screen on top of the blocker, so it is dropped. */

@@ -19,6 +19,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef } from "re
 
 import { useFeatureFlags } from "@app/config/feature-flags-context"
 
+import { setNostrConnectHandler } from "./connect-link-handler"
 import { NOSTR_NSEC_SERVICE, NOSTR_TRANSPORT_SERVICE, readSecret } from "./core/keystore"
 import { createSignerRuntime, type SignerRuntime } from "./runtime"
 import { initSignerGate } from "./signer-gate"
@@ -65,9 +66,13 @@ export const NostrRuntimeProvider: React.FC<React.PropsWithChildren> = ({ childr
   const runtime = runtimeRef.current
 
   // Apply the flag on every change (initSignerGate is idempotent per init). Flag toggles never
-  // clear connection records — the gate deps expose no clear() (retention, AD-13).
+  // clear connection records — the gate deps expose no clear() (retention, AD-13). Register the
+  // nostrconnect:// deep-link/QR handler ONLY while enabled; clear it when off so a
+  // nostrconnect:// URL is not consumed (signer invisible + inert, NFR-9).
   useEffect(() => {
     initSignerGate(enabled, runtime.gateDeps)
+    setNostrConnectHandler(enabled ? (uri) => runtime.handleConnectUri(uri) : null)
+    return () => setNostrConnectHandler(null)
   }, [enabled, runtime])
 
   const value = useMemo<NostrRuntimeContextValue>(

@@ -15,6 +15,10 @@ import { check, request, PERMISSIONS, RESULTS } from "react-native-permissions"
 import RNQRGenerator from "rn-qr-generator"
 
 import { gql } from "@apollo/client"
+import {
+  handleNostrConnectLink,
+  isNostrConnectLink,
+} from "@app/nostr/connect-link-handler"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import {
   useAccountDefaultWalletLazyQuery,
@@ -148,6 +152,19 @@ export const ScanningQRCodeScreen: React.FC = () => {
       if (pending || !bitcoinNetwork || !data) {
         return
       }
+
+      // nostrconnect:// (Story A3 / AD-9): a scanned pairing URI is forwarded RAW to ConnectFlow
+      // (via the runtime handler) and never treated as a payment destination. The connection
+      // approval surface (Epic 3) takes over; we pop the scanner. If the signer is off, the
+      // handler is unregistered and this returns false, so the value falls through to payments.
+      if (isNostrConnectLink(data)) {
+        const forwarded = await handleNostrConnectLink(data)
+        if (forwarded) {
+          navigation.goBack()
+          return
+        }
+      }
+
       try {
         setPending(true)
 

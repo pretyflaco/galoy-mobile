@@ -178,4 +178,18 @@ describe("signer runtime assembly (A1)", () => {
     })
     expect(present).toHaveBeenCalledTimes(1)
   })
+
+  it("listConnections + disconnect manage the store (fix #3)", async () => {
+    const runtime = createSignerRuntime(makeDeps())
+    await runtime.grantForTest(clientPubkey, ["sign_event:22242"])
+
+    // The granted client is listed.
+    let list = await runtime.listConnections()
+    expect(list.map((r) => r.clientPubkey)).toContain(clientPubkey)
+
+    // Disconnect actually removes it (atomic delete + tombstone).
+    await runtime.disconnect(clientPubkey)
+    list = await runtime.listConnections()
+    expect(list.map((r) => r.clientPubkey)).not.toContain(clientPubkey)
+  })
 })

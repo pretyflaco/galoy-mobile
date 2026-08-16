@@ -1,71 +1,59 @@
 /**
- * ApprovalSurfaceHost (Story A6 / AD-9) — the RN presenter that was the missing keystone.
+ * ApprovalSurfaceHost (Story A6 / fix #1) — presents approvals as FULL SCREENS, not overlays.
  *
- * The ApprovalCoordinator (Story 3.4) OWNS approval sequencing but is UI-free: it exposes an
- * `activeEntry` and resolves via `resolveActive`. Something must actually RENDER that active
- * entry as a surface and feed the human's decision back. Without this host, a scanned
- * nostrconnect:// connection (or an inbound sign/decrypt request) enqueues, the coordinator's
- * no-op `present` runs, and nothing ever appears — the flow silently dead-ends. This component
- * closes that gap.
+ * The ApprovalCoordinator (Story 3.4) owns approval sequencing but is UI-free: it exposes an
+ * `activeEntry` and resolves via `resolveActive`. This host is a HEADLESS component (renders no
+ * UI itself): mounted once under NostrRuntimeProvider, it watches the coordinator and, when an
+ * entry becomes active + presentable, NAVIGATES to the corresponding full-screen approval route
+ * (nostrConnectionApproval / nostrRequestApproval). When the entry resolves (active → null) it
+ * pops the route. This replaces the earlier modal overlay, which floated over the live camera.
  *
- * Mounted ONCE, high in the tree (app.tsx, under NostrRuntimeProvider), it:
- *  - subscribes to the SAME coordinator singleton the runtime enqueues into (via the runtime
- *    context) through the existing useApprovalCoordinator hook (announce + focus land/trap);
- *  - renders the connection-approval surface for a `connection` entry and the request-approval
- *    surface for a `request` entry, as a modal overlay above the current screen;
- *  - wires Approve/Reject to coordinator.resolveActive.
- *
- * Flag-gated implicitly: the runtime context is null / no entries when the signer is disabled,
- * so the host renders nothing (NFR-9 — never intrudes on the wallet).
+ * The approval ROUTES (app/navigation/nostr-screens.tsx) render the actual approval content and
+ * drive approve/reject through the same coordinator. Flag-gated implicitly: no runtime context /
+ * no entries ⇒ this navigates nowhere (NFR-9 — never intrudes on the wallet).
  */
-import React from "react"
-import ReactNativeModal from "react-native-modal"
+import React, { useEffect, useRef } from "react"
+
+import { useNavigation } from "@react-navigation/native"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
+
+import { RootStackParamList } from "@app/navigation/stack-param-lists"
 
 import { useApprovalCoordinator } from "./hooks/use-approval-coordinator"
 import { useNostrRuntime } from "./nostr-runtime-provider"
-import { NostrConnectionApprovalScreen } from "@app/screens/nostr/connection-approval-screen"
-import { NostrRequestApprovalScreen } from "@app/screens/nostr/request-approval-screen"
 
 export const ApprovalSurfaceHost: React.FC = () => {
   const runtimeCtx = useNostrRuntime()
   if (!runtimeCtx) return null
-  return <ApprovalSurface coordinator={runtimeCtx.coordinator} />
+  return <ApprovalNavigator coordinator={runtimeCtx.coordinator} />
 }
 
 // Split so the hook is only used when a coordinator exists (hooks can't be conditional).
-const ApprovalSurface: React.FC<{
+const ApprovalNavigator: React.FC<{
   coordinator: NonNullable<ReturnType<typeof useNostrRuntime>>["coordinator"]
 }> = ({ coordinator }) => {
-  const { active, visible, depth, approve, reject } = useApprovalCoordinator(coordinator)
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
+  const { active, visible } = useApprovalCoordinator(coordinator)
+  // Track whether WE pushed an approval route, so we only pop what we pushed.
+  const presentedRef = useRef<null | "connection" | "request">(null)
 
-  const isOpen = Boolean(active) && visible
+  useEffect(() => {
+    const shouldShow = Boolean(active) && visible
 
-  return (
-    <ReactNativeModal
-      isVisible={isOpen}
-      onBackdropPress={reject}
-      // Reject on hardware back / swipe-dismiss — never silently approve.
-      onBackButtonPress={reject}
-      backdropOpacity={0.6}
-    >
-      {active?.kind === "connection" && (
-        <NostrConnectionApprovalScreen
-          clientName={active.metadata.name}
-          onApprove={approve}
-          onReject={reject}
-        />
-      )}
-      {active?.kind === "request" && (
-        <NostrRequestApprovalScreen
-          clientName={active.clientPubkey}
-          humanAction={active.humanAction}
-          contentPreview={active.contentPreview ?? ""}
-          index={1}
-          total={depth}
-          onApprove={approve}
-          onReject={reject}
-        />
-      )}
-    </ReactNativeModal>
-  )
+    if (shouldShow && active && presentedRef.current === null) {
+      presentedRef.current = active.kind
+      navigation.navigate(
+        active.kind === "connection" ? "nostrConnectionApproval" : "nostrRequestApproval",
+      )
+      return
+    }
+
+    // Entry resolved (or hidden) while a route is up → pop it.
+    if (!shouldShow && presentedRef.current !== null) {
+      presentedRef.current = null
+      if (navigation.canGoBack()) navigation.goBack()
+    }
+  }, [active, visible, navigation])
+
+  return null
 }

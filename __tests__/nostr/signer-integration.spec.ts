@@ -128,21 +128,47 @@ describe("end-to-end signer integration (A5)", () => {
     // The connect-time grant (sign_event:22242) pre-approves it — NO second surface.
     expect(presentedKinds).toEqual([])
 
-    // 3. A NIP-46 response (kind-24133) was published back, carrying the signed event as its
-    //    encrypted `result`. Decrypt it and verify the inner signed kind-22242 event.
-    const reply = fake.published.find((e) => e.kind === NIP46_KIND)
-    expect(reply).toBeTruthy()
+    // 3. Among the published NIP-46 responses (the connect-ack is published first, then the
+    //    sign response), find the one answering our sign_event request id and verify the inner
+    //    signed kind-22242 event.
     const convKey = nip44.getConversationKey(clientSk, transportPubHex)
-    const decoded = JSON.parse(
-      nip44.decrypt((reply as { content: string }).content, convKey),
-    )
-    expect(decoded.id).toBe("req-signin")
+    const decodeReply = (e: { content: string }) =>
+      JSON.parse(nip44.decrypt(e.content, convKey))
+    const decoded = fake.published
+      .filter((e) => e.kind === NIP46_KIND)
+      .map(decodeReply)
+      .find((m) => m.id === "req-signin")
+    expect(decoded).toBeTruthy()
     const signed = JSON.parse(decoded.result)
     expect(signed.kind).toBe(22242)
     expect(signed.pubkey).toBe(userPubHex)
     expect(verifyEvent(signed)).toBe(true)
     // It is the USER's signature (verifiable against the user npub).
     expect(nip19.decode(userNpub).data).toBe(signed.pubkey)
+  })
+
+  it("publishes the connect-ack echoing the secret after approve (unblocks sign-in)", async () => {
+    // The bug: sendConnectAck was a no-op, so the plugin waited forever. This asserts the ack
+    // is actually published to the client's relays with result === the URI secret.
+    const fake = makeFakePool()
+    const runtime = createSignerRuntime({
+      readNsecHex: async () => userSkHex,
+      readTransportSkHex: async () => transportSkHex,
+      storage: memoryStorage(),
+      createPool: () => fake.pool,
+      present: async () => runtime.coordinator.resolveActive({ approved: true }),
+    })
+
+    await runtime.handleConnectUri(PLUGIN_URI)
+    // Let the fire-and-forget ack send flush.
+    await new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+    const convKey = nip44.getConversationKey(clientSk, transportPubHex)
+    const acks = fake.published
+      .filter((e) => e.kind === NIP46_KIND)
+      .map((e) => JSON.parse(nip44.decrypt((e as { content: string }).content, convKey)))
+      .filter((m) => m.result === "login-secret")
+    expect(acks.length).toBeGreaterThan(0) // the plugin accepts result === secret
   })
 
   it("get_public_key returns the user npub over the transport (no approval surface)", async () => {
@@ -161,13 +187,13 @@ describe("end-to-end signer integration (A5)", () => {
 
     // A response event was published back (encrypted); its existence proves the transport path.
     expect(fake.published.length).toBeGreaterThan(0)
-    const reply = fake.published.find((e) => e.kind === NIP46_KIND)
-    expect(reply).toBeTruthy()
-    // Decrypt the reply and confirm it carries the user npub.
+    // Find the get_public_key reply (id req-pk) among the published events (skip the connect-ack).
     const convKey = nip44.getConversationKey(clientSk, transportPubHex)
-    const decoded = JSON.parse(
-      nip44.decrypt((reply as { content: string }).content, convKey),
-    )
+    const decoded = fake.published
+      .filter((e) => e.kind === NIP46_KIND)
+      .map((e) => JSON.parse(nip44.decrypt((e as { content: string }).content, convKey)))
+      .find((m) => m.id === "req-pk")
+    expect(decoded).toBeTruthy()
     expect(decoded.result).toBe(userNpub)
   })
 })

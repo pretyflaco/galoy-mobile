@@ -1,25 +1,25 @@
 /**
- * Story A6 — ApprovalSurfaceHost (the presenter that was missing).
- *
- * This is the regression guard for the on-device bug where scanning a nostrconnect:// QR did
- * "nothing": the ConnectFlow enqueued a connection on the coordinator, but NO component rendered
- * the coordinator's activeEntry, so the approval surface never appeared and the request waited
- * forever. The A5 integration test missed it because it drove the coordinator with a FAKE present
- * that auto-resolved. This test uses the REAL host + REAL coordinator: enqueue -> assert the
- * surface renders -> approve/reject -> assert coordinator.resolveActive fired.
+ * Story A6 / fix #1 — ApprovalSurfaceHost is now a HEADLESS navigator: on an active+visible
+ * coordinator entry it navigates to a FULL-SCREEN approval route (not a modal overlay), and pops
+ * when the entry resolves. This guards the regression where scanning did "nothing" (no presenter)
+ * AND the fix where the approval must be a proper screen, not an overlay over the camera.
  */
 import React from "react"
 import { AppState } from "react-native"
-import { render, fireEvent, waitFor } from "@testing-library/react-native"
+import { render, waitFor } from "@testing-library/react-native"
 
-// The presentation gate (shouldPresentNow) shows a surface on android unconditionally, and on
-// ios only when the app is "active". jest reports Platform.OS as "ios" and AppState as unknown,
-// which would suppress the surface; force AppState "active" so the on-device present path is
-// exercised (equivalent to a foregrounded phone).
+// Force the presentation gate open (android-parity): jest reports ios + unknown appstate, which
+// would suppress presentation.
 ;(AppState as unknown as { currentState: string }).currentState = "active"
 
-// The host reads the coordinator from the runtime context; mock the context to hand it our
-// real coordinator (so we exercise the host + hook + screens, not the whole provider stack).
+const navigate = jest.fn()
+const goBack = jest.fn()
+const canGoBack = jest.fn(() => true)
+jest.mock("@react-navigation/native", () => ({
+  ...jest.requireActual("@react-navigation/native"),
+  useNavigation: () => ({ navigate, goBack, canGoBack }),
+}))
+
 import {
   createApprovalCoordinator,
   type ApprovalCoordinator,
@@ -33,7 +33,6 @@ jest.mock("@app/nostr/nostr-runtime-provider", () => ({
 import { ApprovalSurfaceHost } from "@app/nostr/approval-surface-host"
 
 import { ContextForScreen } from "../screens/helper"
-import { flushEffects } from "../helpers/flush-effects"
 
 const renderHost = () =>
   render(
@@ -43,74 +42,55 @@ const renderHost = () =>
   )
 
 beforeEach(() => {
-  // A real coordinator with a no-op present (the HOST is what presents now, not the port).
+  navigate.mockClear()
+  goBack.mockClear()
   testCoordinator = createApprovalCoordinator({ present: async () => undefined })
 })
 
-describe("ApprovalSurfaceHost (A6 — the missing presenter)", () => {
-  it("renders NOTHING when the coordinator has no active entry", async () => {
-    const { queryByTestId } = renderHost()
-    await flushEffects()
-    expect(queryByTestId("nostr-connection-approve")).toBeNull()
-    expect(queryByTestId("nostr-request-approve")).toBeNull()
+describe("ApprovalSurfaceHost (A6 fix #1 — full-screen route, not overlay)", () => {
+  it("navigates nowhere when there is no active entry", async () => {
+    renderHost()
+    await waitFor(() => expect(navigate).not.toHaveBeenCalled())
   })
 
-  it("renders the CONNECTION approval surface when a connection entry is enqueued", async () => {
-    const { getByTestId } = renderHost()
-    // Enqueue a connection (what ConnectFlow does after a scanned nostrconnect:// URI).
+  it("navigates to the CONNECTION approval route on a connection entry", async () => {
+    renderHost()
     testCoordinator.enqueue({
-      id: "client-1",
+      id: "c1",
       kind: "connection",
-      clientPubkey: "client-1",
+      clientPubkey: "c1",
       metadata: { name: "BTCPay Server" },
     })
-    await waitFor(() => {
-      expect(getByTestId("nostr-connection-approve")).toBeTruthy()
-      expect(getByTestId("nostr-connection-reject")).toBeTruthy()
-    })
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith("nostrConnectionApproval"),
+    )
   })
 
-  it("Approve resolves the coordinator's active entry (approved=true)", async () => {
-    const { getByTestId } = renderHost()
-    const decision = testCoordinator.enqueue({
-      id: "client-2",
-      kind: "connection",
-      clientPubkey: "client-2",
-      metadata: { name: "BTCPay Server" },
-    })
-    await waitFor(() => expect(getByTestId("nostr-connection-approve")).toBeTruthy())
-
-    fireEvent.press(getByTestId("nostr-connection-approve"))
-    await expect(decision).resolves.toMatchObject({ approved: true })
-  })
-
-  it("Reject resolves the coordinator's active entry (approved=false)", async () => {
-    const { getByTestId } = renderHost()
-    const decision = testCoordinator.enqueue({
-      id: "client-3",
-      kind: "connection",
-      clientPubkey: "client-3",
-      metadata: {},
-    })
-    await waitFor(() => expect(getByTestId("nostr-connection-reject")).toBeTruthy())
-
-    fireEvent.press(getByTestId("nostr-connection-reject"))
-    await expect(decision).resolves.toMatchObject({ approved: false })
-  })
-
-  it("renders the REQUEST approval surface for a request entry (sign/decrypt)", async () => {
-    const { getByTestId } = renderHost()
+  it("navigates to the REQUEST approval route on a request entry", async () => {
+    renderHost()
     testCoordinator.enqueue({
-      id: "req-1",
+      id: "r1",
       kind: "request",
-      clientPubkey: "client-4",
+      clientPubkey: "c2",
       method: "nip44_decrypt",
       humanAction: "decrypt a message",
-      contentPreview: "hello",
     })
-    await waitFor(() => {
-      expect(getByTestId("nostr-request-approve")).toBeTruthy()
-      expect(getByTestId("nostr-request-reject")).toBeTruthy()
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrRequestApproval"))
+  })
+
+  it("pops the route when the active entry resolves", async () => {
+    renderHost()
+    const decision = testCoordinator.enqueue({
+      id: "c3",
+      kind: "connection",
+      clientPubkey: "c3",
+      metadata: {},
     })
+    await waitFor(() => expect(navigate).toHaveBeenCalledTimes(1))
+
+    // Resolve the active entry → the host should pop the presented route.
+    testCoordinator.resolveActive({ approved: true })
+    await decision
+    await waitFor(() => expect(goBack).toHaveBeenCalledTimes(1))
   })
 })

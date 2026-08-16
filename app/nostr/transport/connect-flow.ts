@@ -91,6 +91,8 @@ export interface ApprovalDecision {
 export interface ConnectAck {
   clientPubkey: string
   secret: string
+  /** The relays (from the URI) the ack must be published to — the client is listening there. */
+  relays: string[]
 }
 
 export interface ConnectFlowPorts {
@@ -136,8 +138,13 @@ export const createConnectFlow = (ports: ConnectFlowPorts): ConnectFlow => {
         return
       }
 
-      // Approved: echo the secret VERBATIM first — a connection exists ONLY on echo.
-      sendConnectAck({ clientPubkey: parsed.clientPubkey, secret: parsed.secret })
+      // Approved: echo the secret VERBATIM first — a connection exists ONLY on echo. The ack
+      // must reach the client on the relays it advertised in the URI (AD-11).
+      sendConnectAck({
+        clientPubkey: parsed.clientPubkey,
+        secret: parsed.secret,
+        relays: parsed.relays,
+      })
 
       // Fixed grant: exactly sign_event:22242 if requested, else empty. Secret NOT persisted.
       const grantedScopes = parsed.perms.includes(GRANTABLE_SCOPE)

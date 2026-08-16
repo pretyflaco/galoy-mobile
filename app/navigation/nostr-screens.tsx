@@ -24,8 +24,11 @@ import {
   NostrConnectedClientsSection,
   type ConnectedClient,
 } from "@app/screens/nostr/connected-clients-section"
+import { NostrConnectionApprovalScreen } from "@app/screens/nostr/connection-approval-screen"
+import { NostrRequestApprovalScreen } from "@app/screens/nostr/request-approval-screen"
 import { NostrIdentityHubScreen } from "@app/screens/nostr/identity-hub/nostr-identity-hub-screen"
 import { useNostrIdentity } from "@app/screens/nostr/identity-hub/use-nostr-identity"
+import { useApprovalCoordinator } from "@app/nostr/hooks/use-approval-coordinator"
 import { useNostrRuntime } from "@app/nostr/nostr-runtime-provider"
 import { Screen } from "@app/components/screen"
 
@@ -67,6 +70,16 @@ export const NostrRootScreens = (
       name="nostrConnectedClients"
       component={NostrConnectedClients}
       options={{ title: LL.NostrConnectedClientsScreen.sectionTitle() }}
+    />
+    <RootNavigator.Screen
+      name="nostrConnectionApproval"
+      component={NostrConnectionApproval}
+      options={{ title: LL.NostrConnectionApprovalScreen.title(), headerShown: false }}
+    />
+    <RootNavigator.Screen
+      name="nostrRequestApproval"
+      component={NostrRequestApproval}
+      options={{ title: LL.NostrRequestApprovalScreen.title(), headerShown: false }}
     />
   </>
 )
@@ -142,21 +155,79 @@ export const NostrConnectedClients: React.FC = () => {
   const runtime = useNostrRuntime()
   const [clients, setClients] = useState<ConnectedClient[]>([])
 
-  const reload = useCallback(() => {
-    const records = runtime?.runtime.gateDeps.connectionStore.list() ?? []
+  const reload = useCallback(async () => {
+    const records = (await runtime?.runtime.listConnections()) ?? []
     setClients(
       records.map((r) => ({
         clientPubkey: r.clientPubkey,
-        name: r.clientPubkey.slice(0, 12),
+        name: r.metadata.name ?? r.clientPubkey.slice(0, 12),
       })),
     )
   }, [runtime])
 
-  useEffect(() => reload(), [reload])
+  useEffect(() => {
+    reload().catch(() => undefined)
+  }, [reload])
+
+  const handleDisconnect = useCallback(
+    (clientPubkey: string) => {
+      // Actually disconnect (atomic delete + void grant + tombstone), THEN refresh the list.
+      runtime?.runtime
+        .disconnect(clientPubkey)
+        .then(() => reload())
+        .catch(() => undefined)
+    },
+    [runtime, reload],
+  )
 
   return (
     <Screen>
-      <NostrConnectedClientsSection clients={clients} onDisconnect={() => reload()} />
+      <NostrConnectedClientsSection clients={clients} onDisconnect={handleDisconnect} />
+    </Screen>
+  )
+}
+
+/**
+ * Full-screen CONNECTION approval route (Story A6 / fix #1). Presented by the ApprovalSurfaceHost
+ * when the coordinator's active entry is a connection; renders the approval content full-bleed (a
+ * proper screen, not a camera overlay). Approve/Reject resolve the coordinator, which unmounts
+ * the route (the host pops it when active clears).
+ */
+export const NostrConnectionApproval: React.FC = () => {
+  const runtime = useNostrRuntime()
+  const coordinator = runtime?.coordinator
+  const { active, approve, reject } = useApprovalCoordinator(coordinator ?? ({} as never))
+  const clientName = active?.kind === "connection" ? active.metadata.name : undefined
+  return (
+    <Screen>
+      <NostrConnectionApprovalScreen
+        clientName={clientName}
+        onApprove={approve}
+        onReject={reject}
+      />
+    </Screen>
+  )
+}
+
+/** Full-screen REQUEST approval route (sign/decrypt) — same pattern as the connection route. */
+export const NostrRequestApproval: React.FC = () => {
+  const runtime = useNostrRuntime()
+  const coordinator = runtime?.coordinator
+  const { active, depth, approve, reject } = useApprovalCoordinator(
+    coordinator ?? ({} as never),
+  )
+  const req = active?.kind === "request" ? active : null
+  return (
+    <Screen>
+      <NostrRequestApprovalScreen
+        clientName={req?.clientPubkey ?? ""}
+        humanAction={req?.humanAction ?? ""}
+        contentPreview={req?.contentPreview ?? ""}
+        index={1}
+        total={depth}
+        onApprove={approve}
+        onReject={reject}
+      />
     </Screen>
   )
 }

@@ -35,6 +35,7 @@ import { grantCoverageFromPolicy } from "./approval/grant-adapter"
 import {
   createConnectionStore,
   GRANTABLE_SCOPE,
+  type ConnectionRecord,
   type ConnectionStorage,
   type ConnectionStore,
 } from "./core/connection-store"
@@ -88,6 +89,10 @@ export interface SignerRuntime {
   coordinator: ApprovalCoordinator
   /** The flag-boundary control surface (Story 1.4). */
   gateDeps: SignerGateDeps
+  /** List the current connection records (management UI). */
+  listConnections(): Promise<ConnectionRecord[]>
+  /** Atomically disconnect a client (delete record + void grant + tombstone) and re-sync. */
+  disconnect(clientPubkey: string): Promise<void>
   /** Test-only: grant a scope to a client (simulates a completed connect). */
   grantForTest(clientPubkey: string, grantedScopes: string[]): Promise<void>
 }
@@ -279,6 +284,29 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     log,
   })
 
+  // Publish an encoded NIP-46 event to a SPECIFIC relay set (used by the connect handshake,
+  // whose target relays come from the URI and are not yet in the active snapshot).
+  const publishTo = (relays: string[], event: Event): void => {
+    if (relays.length > 0) pool.publish(relays, event)
+  }
+
+  // Encode + publish the NIP-46 connect-ack: a kind-24133 response whose `result` echoes the
+  // secret VERBATIM (the plugin accepts `result === secret`). Without this the handshake never
+  // completes and the verifier waits forever ("Waiting for signer approval…").
+  const sendConnectAckImpl = async (ack: {
+    clientPubkey: string
+    secret: string
+    relays: string[]
+  }): Promise<void> => {
+    await primeTransportSk()
+    if (transportSkCache === null) return
+    const event = encodeResponse(
+      { id: ack.clientPubkey, result: ack.secret },
+      { scheme: "nip44", clientPubkey: ack.clientPubkey, transportSk: transportSkCache },
+    )
+    publishTo(ack.relays, event)
+  }
+
   // -- connect-flow (Story 3.3): the nostrconnect:// handshake, coordinator-gated.
   const connectFlow: ConnectFlow = createConnectFlow({
     store,
@@ -289,7 +317,7 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
         clientPubkey: request.clientPubkey,
         metadata: request.metadata,
       }).then((approved) => ({ approved })),
-    sendConnectAck: () => undefined, // encoded-ack send is wired once the ack codec lands in the provider
+    sendConnectAck: (ack) => fireAndForget(() => sendConnectAckImpl(ack), log),
     sendRejection: () => undefined,
   })
 
@@ -299,15 +327,23 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   const onInbound = (e: unknown): void => {
     fireAndForget(() => pipeline.handleInbound(e as Event), log)
   }
-  const activate = async (): Promise<void> => {
-    await primeTransportSk()
-    await syncSnapshots()
-    if (subscription || relaySnapshot.length === 0) return
+  // (Re)subscribe the pool to the CURRENT relay snapshot. Closes any prior subscription first so
+  // a newly-connected client's relays (added on connect) are actually listened to — otherwise the
+  // follow-up get_public_key / sign_event after the connect-ack would never be received.
+  const resubscribe = (): void => {
+    subscription?.close()
+    subscription = null
+    if (relaySnapshot.length === 0) return
     subscription = pool.subscribe(
       relaySnapshot,
       { kinds: [NIP46_KIND] },
       { onevent: onInbound },
     )
+  }
+  const activate = async (): Promise<void> => {
+    await primeTransportSk()
+    await syncSnapshots()
+    resubscribe()
   }
   const deactivate = (): void => {
     subscription?.close()
@@ -344,9 +380,18 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     handleConnectUri: async (rawUri) => {
       await connectFlow.handleConnect(rawUri)
       await syncSnapshots()
+      // Listen on the newly-connected client's relays for the follow-up get_public_key /
+      // sign_event that complete sign-in.
+      resubscribe()
     },
     coordinator,
     gateDeps,
+    listConnections: () => store.list(),
+    disconnect: async (clientPubkey) => {
+      await store.disconnect(clientPubkey)
+      await syncSnapshots()
+      resubscribe()
+    },
     grantForTest: async (clientPubkey, grantedScopes) => {
       await store.upsert({
         clientPubkey,

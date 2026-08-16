@@ -66,6 +66,10 @@ export type RootStackParamList = {
   nostrImportIdentity: undefined
   nostrBackup: undefined
   nostrConnectedClients: undefined
+  // Approval surfaces are full screens (not overlays) presented by the ApprovalSurfaceHost when
+  // the coordinator has an active entry, and popped when it resolves.
+  nostrConnectionApproval: undefined
+  nostrRequestApproval: undefined
   addressScreen: undefined
   defaultWallet: undefined
   theme: undefined

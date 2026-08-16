@@ -4,6 +4,7 @@ import { schnorr } from "@noble/curves/secp256k1.js"
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
 import * as nip19 from "nostr-tools/nip19"
 
+import { getApprovalCoordinator } from "@app/nostr/approval/coordinator"
 import { importIdentity, validateNsec, type ImportPorts } from "@app/nostr/core/identity"
 import { NOSTR_NSEC_SERVICE, writeSecret } from "@app/nostr/core/keystore"
 
@@ -30,7 +31,9 @@ export const useImportIdentity = () => {
       derivePubKeyHex: (privKeyHex) =>
         bytesToHex(schnorr.getPublicKey(hexToBytes(privKeyHex))),
       toNpub: (pubKeyHex) => nip19.npubEncode(pubKeyHex),
-      runExclusive: async (commit) => commit(),
+      // AD-9 exclusive section via the process-wide ApprovalCoordinator (Story 3.4):
+      // presentation pauses + the pipeline holds queued while the replace commit runs.
+      runExclusive: (commit) => getApprovalCoordinator().runExclusive(commit),
       commitIdentity: async () => Date.now(), // epoch source until the identity store lands (Epic 3)
       pushNpub: async () => {
         // wired to the outbox drain in Story 2.x; non-blocking by contract

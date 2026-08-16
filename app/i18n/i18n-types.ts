@@ -13590,6 +13590,54 @@ type RootTranslation = {
 		 */
 		statusNotBackedUp: string
 	}
+	NostrRequestApprovalScreen: {
+		/**
+		 * A​p​p​r​o​v​e​ ​r​e​q​u​e​s​t
+		 */
+		title: string
+		/**
+		 * A​p​p​r​o​v​e
+		 */
+		approve: string
+		/**
+		 * R​e​j​e​c​t
+		 */
+		reject: string
+		/**
+		 * R​e​q​u​e​s​t​ ​{​i​n​d​e​x​}​ ​o​f​ ​{​t​o​t​a​l​}​ ​f​r​o​m​ ​{​c​l​i​e​n​t​}
+		 * @param {string} client
+		 * @param {number} index
+		 * @param {number} total
+		 */
+		counter: RequiredParams<'client' | 'index' | 'total'>
+		/**
+		 * {​c​l​i​e​n​t​}​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}​ ​—​ ​{​p​r​e​v​i​e​w​}​.​ ​A​p​p​r​o​v​e​ ​o​r​ ​r​e​j​e​c​t​.
+		 * @param {string} action
+		 * @param {string} client
+		 * @param {string} preview
+		 */
+		srLabel: RequiredParams<'action' | 'client' | 'preview'>
+		/**
+		 * R​e​q​u​e​s​t​ ​{​i​n​d​e​x​}​ ​o​f​ ​{​t​o​t​a​l​}​ ​f​r​o​m​ ​{​c​l​i​e​n​t​}​,​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}
+		 * @param {string} action
+		 * @param {string} client
+		 * @param {number} index
+		 * @param {number} total
+		 */
+		announce: RequiredParams<'action' | 'client' | 'index' | 'total'>
+		/**
+		 * O​n​ ​i​P​h​o​n​e​,​ ​k​e​e​p​ ​B​l​i​n​k​ ​o​p​e​n​ ​t​o​ ​a​p​p​r​o​v​e​ ​r​e​q​u​e​s​t​s​ ​q​u​i​c​k​l​y​.
+		 */
+		keepOpenHint: string
+		/**
+		 * Y​o​u​ ​h​a​v​e​ ​a​ ​r​e​q​u​e​s​t​ ​w​a​i​t​i​n​g​.
+		 */
+		waitingCatchUp: string
+		/**
+		 * Y​o​u​ ​h​a​v​e​ ​a​ ​r​e​q​u​e​s​t​ ​w​a​i​t​i​n​g​.​ ​O​p​e​n​ ​i​t​ ​t​o​ ​a​p​p​r​o​v​e​ ​o​r​ ​r​e​j​e​c​t​.
+		 */
+		waitingCatchUpA11y: string
+	}
 	NostrConnectionApprovalScreen: {
 		/**
 		 * C​o​n​n​e​c​t​i​o​n​ ​r​e​q​u​e​s​t
@@ -27041,6 +27089,44 @@ export type TranslationFunctions = {
 		 * Not backed up
 		 */
 		statusNotBackedUp: () => LocalizedString
+	}
+	NostrRequestApprovalScreen: {
+		/**
+		 * Approve request
+		 */
+		title: () => LocalizedString
+		/**
+		 * Approve
+		 */
+		approve: () => LocalizedString
+		/**
+		 * Reject
+		 */
+		reject: () => LocalizedString
+		/**
+		 * Request {index} of {total} from {client}
+		 */
+		counter: (arg: { client: string, index: number, total: number }) => LocalizedString
+		/**
+		 * {client} wants to {action} — {preview}. Approve or reject.
+		 */
+		srLabel: (arg: { action: string, client: string, preview: string }) => LocalizedString
+		/**
+		 * Request {index} of {total} from {client}, wants to {action}
+		 */
+		announce: (arg: { action: string, client: string, index: number, total: number }) => LocalizedString
+		/**
+		 * On iPhone, keep Blink open to approve requests quickly.
+		 */
+		keepOpenHint: () => LocalizedString
+		/**
+		 * You have a request waiting.
+		 */
+		waitingCatchUp: () => LocalizedString
+		/**
+		 * You have a request waiting. Open it to approve or reject.
+		 */
+		waitingCatchUpA11y: () => LocalizedString
 	}
 	NostrConnectionApprovalScreen: {
 		/**

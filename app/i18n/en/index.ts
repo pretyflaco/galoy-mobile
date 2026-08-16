@@ -4282,6 +4282,19 @@ const en: BaseTranslation = {
     statusBackedUp: "Backed up",
     statusNotBackedUp: "Not backed up",
   },
+  NostrRequestApprovalScreen: {
+    title: "Approve request",
+    approve: "Approve",
+    reject: "Reject",
+    counter: "Request {index:number} of {total:number} from {client:string}",
+    srLabel:
+      "{client:string} wants to {action:string} — {preview:string}. Approve or reject.",
+    announce:
+      "Request {index:number} of {total:number} from {client:string}, wants to {action:string}",
+    keepOpenHint: "On iPhone, keep Blink open to approve requests quickly.",
+    waitingCatchUp: "You have a request waiting.",
+    waitingCatchUpA11y: "You have a request waiting. Open it to approve or reject.",
+  },
   NostrConnectionApprovalScreen: {
     title: "Connection request",
     body: "This app wants to sign you in and sign events on your behalf.",

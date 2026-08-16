@@ -6,6 +6,7 @@ import {
   logNostrIdentityCeremonyCompleted,
   logNostrIdentityCeremonyStarted,
 } from "@app/nostr/analytics"
+import { getApprovalCoordinator } from "@app/nostr/approval/coordinator"
 import { generateNostrKey } from "@app/nostr/core/keygen"
 import { createNpubOutbox } from "@app/nostr/core/outbox"
 import {
@@ -34,9 +35,10 @@ export const useCreateIdentity = () => {
       generateKey: generateNostrKey,
       persistNsec: (privKeyHex) => writeSecret(NOSTR_NSEC_SERVICE, privKeyHex),
       toNpub: (pubKeyHex) => nip19.npubEncode(pubKeyHex),
-      // AD-9 exclusive section: minimal in-hook guard until the ApprovalCoordinator
-      // pause seam lands (Epic 3); commit runs atomically here.
-      runExclusive: async (commit) => commit(),
+      // AD-9 exclusive section: route through the process-wide ApprovalCoordinator so the
+      // coordinator PAUSES presentation and the pipeline HOLDS requests while the identity
+      // mutation commits (Story 3.4). Falls back to a bare commit if unavailable.
+      runExclusive: (commit) => getApprovalCoordinator().runExclusive(commit),
       commitIdentity: async () => {
         epochRef.current += 1
         return epochRef.current

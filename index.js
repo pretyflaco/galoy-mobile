@@ -7,6 +7,13 @@
 // side effect of breaking other tooling like mobile-center and react-native-rename.
 //
 // It's easier just to leave it here.
+
+// FIRST: install the Hermes TextEncoder/TextDecoder polyfill before ANY other import. The
+// nostr-signer + its crypto deps reference these globals at module-load time; on Hermes they
+// don't exist, so this import must run ahead of firebase/App. (ES imports are evaluated in
+// order, so importing this side-effect module first guarantees the globals are ready.)
+import "./app/polyfills/text-encoding"
+
 import "@react-native-firebase/app"
 import * as React from "react"
 

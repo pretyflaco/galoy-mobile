@@ -13789,6 +13789,56 @@ type RootTranslation = {
 		 */
 		timeoutA11y: string
 	}
+	NostrIdentityScreen: {
+		/**
+		 * N​o​s​t​r​ ​i​d​e​n​t​i​t​y
+		 */
+		settingsRow: string
+		/**
+		 * S​i​g​n​ ​i​n​ ​t​o​ ​a​p​p​s​ ​w​i​t​h​ ​y​o​u​r​ ​k​e​y
+		 */
+		settingsRowSubtitle: string
+		/**
+		 * N​o​s​t​r​ ​i​d​e​n​t​i​t​y
+		 */
+		title: string
+		/**
+		 * N​o​ ​i​d​e​n​t​i​t​y​ ​y​e​t
+		 */
+		emptyTitle: string
+		/**
+		 * C​r​e​a​t​e​ ​a​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​t​o​ ​s​i​g​n​ ​i​n​ ​t​o​ ​a​p​p​s​ ​w​i​t​h​ ​y​o​u​r​ ​k​e​y​ ​—​ ​n​o​ ​p​a​s​s​w​o​r​d​,​ ​o​n​l​y​ ​y​o​u​ ​i​n​ ​c​o​n​t​r​o​l​.
+		 */
+		emptyBody: string
+		/**
+		 * C​r​e​a​t​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		emptyCreate: string
+		/**
+		 * I​m​p​o​r​t​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​k​e​y
+		 */
+		emptyImport: string
+		/**
+		 * Y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+		 */
+		summaryPublicAddressLabel: string
+		/**
+		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 */
+		summaryBackup: string
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		summaryReplace: string
+		/**
+		 * C​o​n​n​e​c​t​e​d​ ​c​l​i​e​n​t​s
+		 */
+		summaryConnectedClients: string
+		/**
+		 * S​c​a​n​ ​t​o​ ​c​o​n​n​e​c​t​ ​a​n​ ​a​p​p
+		 */
+		summaryScanToConnect: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -27345,6 +27395,56 @@ export type TranslationFunctions = {
 		 * This is taking too long. Try again, or choose the exit to step away.
 		 */
 		timeoutA11y: () => LocalizedString
+	}
+	NostrIdentityScreen: {
+		/**
+		 * Nostr identity
+		 */
+		settingsRow: () => LocalizedString
+		/**
+		 * Sign in to apps with your key
+		 */
+		settingsRowSubtitle: () => LocalizedString
+		/**
+		 * Nostr identity
+		 */
+		title: () => LocalizedString
+		/**
+		 * No identity yet
+		 */
+		emptyTitle: () => LocalizedString
+		/**
+		 * Create a Nostr identity to sign in to apps with your key — no password, only you in control.
+		 */
+		emptyBody: () => LocalizedString
+		/**
+		 * Create your identity
+		 */
+		emptyCreate: () => LocalizedString
+		/**
+		 * Import an existing key
+		 */
+		emptyImport: () => LocalizedString
+		/**
+		 * Your public address
+		 */
+		summaryPublicAddressLabel: () => LocalizedString
+		/**
+		 * Back up your key
+		 */
+		summaryBackup: () => LocalizedString
+		/**
+		 * Replace your identity
+		 */
+		summaryReplace: () => LocalizedString
+		/**
+		 * Connected clients
+		 */
+		summaryConnectedClients: () => LocalizedString
+		/**
+		 * Scan to connect an app
+		 */
+		summaryScanToConnect: () => LocalizedString
 	}
 }
 

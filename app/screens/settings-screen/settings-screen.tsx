@@ -51,6 +51,7 @@ import { SwitchAccountSetting } from "./settings/multi-account"
 import { StableBalanceSetting } from "./settings/stable-balance"
 import { ViewBackupPhraseSetting } from "./settings/view-backup-phrase"
 import { BackupWalletSetting } from "./settings/backup-wallet"
+import { NostrIdentitySetting } from "./settings/nostr-identity"
 
 // All queries in settings have to be set here so that the server is not hit with
 // multiple requests for each query
@@ -136,6 +137,7 @@ export const SettingsScreen: React.FC = () => {
       OnDeviceSecuritySetting,
       ViewBackupPhraseSetting,
       BackupWalletSetting,
+      NostrIdentitySetting,
     ],
     advanced: [ExportCsvSetting, ApiAccessSetting],
     community: [NeedHelpSetting, JoinCommunitySetting],

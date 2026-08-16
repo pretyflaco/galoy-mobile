@@ -59,6 +59,13 @@ export type RootStackParamList = {
   earnsQuiz: { id: string; isAvailable: boolean }
   scanningQRCode: undefined
   settings: undefined
+  // Nostr signer (Story A2) — the identity hub + its ceremony/import/backup/management screens.
+  // All gated behind the nostrSignerEnabled flag at the settings-row entry point (AD-13).
+  nostrIdentity: undefined
+  nostrCreateIdentity: undefined
+  nostrImportIdentity: undefined
+  nostrBackup: undefined
+  nostrConnectedClients: undefined
   addressScreen: undefined
   defaultWallet: undefined
   theme: undefined

@@ -82,6 +82,7 @@ import { MapScreen } from "../screens/map-screen/map-screen"
 import { ContactsDetailScreen, PeopleScreen } from "../screens/people-screen"
 import { PriceHistoryScreen } from "../screens/price/price-history-screen"
 import { ScanningQRCodeScreen } from "../screens/send-bitcoin-screen"
+import { NostrRootScreens } from "./nostr-screens"
 import { SettingsScreen } from "../screens/settings-screen"
 import { LanguageScreen } from "../screens/settings-screen/language-screen"
 import { SelectionScreen } from "../screens/settings-screen/selection-screen"
@@ -311,6 +312,7 @@ export const RootStack = () => {
           headerShown: false,
         }}
       />
+      {NostrRootScreens(RootNavigator, LL)}
       <RootNavigator.Screen
         name="sendBitcoinDestination"
         component={SendBitcoinDestinationGated}

@@ -28,6 +28,7 @@ import { BackupStateProvider } from "./self-custodial/providers/backup-state"
 import { SelfCustodialWalletProvider } from "./self-custodial/providers/wallet"
 import { GaloyClient } from "./graphql/client"
 import { NetworkErrorComponent } from "./graphql/network-error-component"
+import { NostrRuntimeProvider } from "./nostr/nostr-runtime-provider"
 import TypesafeI18n from "./i18n/i18n-react"
 import { loadLocale } from "./i18n/i18n-util.sync"
 import "./i18n/mapping"
@@ -59,33 +60,35 @@ export const App = () => (
         <GaloyClient>
           <GaloyThemeProvider>
             <FeatureFlagContextProvider>
-              <CustodialWalletProvider>
-                <SelfCustodialWalletProvider>
-                  <BackupStateProvider>
-                    <AutoConvertStatusProvider>
-                      <ActionsProvider>
-                        <MigrationBlockerProvider>
-                          <NavigationContainerWrapper>
-                            <ErrorBoundary FallbackComponent={ErrorScreen}>
-                              <RootSiblingParent>
-                                <NotificationsProvider>
-                                  <AppStateWrapper />
-                                  <PushNotificationComponent />
-                                  <AutoConvertListenerMount />
-                                  <RootStack />
-                                  <NetworkErrorComponent />
-                                  <ActionModals />
-                                </NotificationsProvider>
-                                <GaloyToast />
-                              </RootSiblingParent>
-                            </ErrorBoundary>
-                          </NavigationContainerWrapper>
-                        </MigrationBlockerProvider>
-                      </ActionsProvider>
-                    </AutoConvertStatusProvider>
-                  </BackupStateProvider>
-                </SelfCustodialWalletProvider>
-              </CustodialWalletProvider>
+              <NostrRuntimeProvider>
+                <CustodialWalletProvider>
+                  <SelfCustodialWalletProvider>
+                    <BackupStateProvider>
+                      <AutoConvertStatusProvider>
+                        <ActionsProvider>
+                          <MigrationBlockerProvider>
+                            <NavigationContainerWrapper>
+                              <ErrorBoundary FallbackComponent={ErrorScreen}>
+                                <RootSiblingParent>
+                                  <NotificationsProvider>
+                                    <AppStateWrapper />
+                                    <PushNotificationComponent />
+                                    <AutoConvertListenerMount />
+                                    <RootStack />
+                                    <NetworkErrorComponent />
+                                    <ActionModals />
+                                  </NotificationsProvider>
+                                  <GaloyToast />
+                                </RootSiblingParent>
+                              </ErrorBoundary>
+                            </NavigationContainerWrapper>
+                          </MigrationBlockerProvider>
+                        </ActionsProvider>
+                      </AutoConvertStatusProvider>
+                    </BackupStateProvider>
+                  </SelfCustodialWalletProvider>
+                </CustodialWalletProvider>
+              </NostrRuntimeProvider>
             </FeatureFlagContextProvider>
           </GaloyThemeProvider>
         </GaloyClient>

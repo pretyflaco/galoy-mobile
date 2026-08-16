@@ -4341,6 +4341,21 @@ const en: BaseTranslation = {
     timeoutA11y:
       "This is taking too long. Try again, or choose the exit to step away.",
   },
+  NostrIdentityScreen: {
+    settingsRow: "Nostr identity",
+    settingsRowSubtitle: "Sign in to apps with your key",
+    title: "Nostr identity",
+    emptyTitle: "No identity yet",
+    emptyBody:
+      "Create a Nostr identity to sign in to apps with your key — no password, only you in control.",
+    emptyCreate: "Create your identity",
+    emptyImport: "Import an existing key",
+    summaryPublicAddressLabel: "Your public address",
+    summaryBackup: "Back up your key",
+    summaryReplace: "Replace your identity",
+    summaryConnectedClients: "Connected clients",
+    summaryScanToConnect: "Scan to connect an app",
+  },
 }
 
 export default en

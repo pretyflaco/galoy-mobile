@@ -4282,6 +4282,19 @@ const en: BaseTranslation = {
     statusBackedUp: "Backed up",
     statusNotBackedUp: "Not backed up",
   },
+  NostrConnectedClientsScreen: {
+    sectionTitle: "Connected clients",
+    empty: "No apps connected yet.",
+    disconnect: "Disconnect",
+    confirmTitle: "Disconnect {client:string}?",
+    confirmBody:
+      "It will no longer be able to reach your signer. It can reconnect with your approval.",
+    confirmDisconnect: "Disconnect",
+    confirmCancel: "Cancel",
+    srLabel:
+      "Disconnect {client:string}. It can reconnect with your approval. Disconnect or cancel.",
+    rowA11y: "{client:string}. Connected app.",
+  },
   NostrReviewAllScreen: {
     title: "Review requests",
     reviewAll: "Review all {total:number} requests",

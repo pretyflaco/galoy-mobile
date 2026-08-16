@@ -20,6 +20,9 @@ export const CONNECTIONS_STORAGE_KEY = "nostr.connections.v1"
 /** The ONLY grantable scope in v1 (AD-8). */
 export const GRANTABLE_SCOPE = "sign_event:22242"
 
+/** The bounded tombstone set size (AD-17: no unbounded growth; oldest evicted). */
+export const TOMBSTONE_LIMIT = 256
+
 /** Client identity/metadata carried from the nostrconnect:// URI. */
 export interface ClientMetadata {
   name?: string
@@ -54,47 +57,89 @@ export interface ConnectionStore {
   isConnected(clientPubkey: string): Promise<boolean>
   /** Whether the client's grant includes the given scope (v1: only sign_event:22242). */
   hasGrant(clientPubkey: string, scope: string): Promise<boolean>
+  /**
+   * Atomically DELETE the record AND VOID the grant, leaving a bounded tombstone (AD-8).
+   * There is no observable in-between state where the record is gone but the grant is live.
+   */
+  disconnect(clientPubkey: string): Promise<void>
+  /** Whether the pubkey was previously connected and is now disconnected (tombstoned). */
+  isTombstoned(clientPubkey: string): Promise<boolean>
 }
 
 type RecordMap = Record<string, ConnectionRecord>
+
+/** Persisted shape: the connection records + the bounded, ordered tombstone list (AD-17). */
+interface PersistedState {
+  records: RecordMap
+  /** Disconnected pubkeys, oldest-first; bounded to TOMBSTONE_LIMIT. */
+  tombstones: string[]
+}
 
 const defaultStorage: ConnectionStorage = { loadJson, saveJson }
 
 export const createConnectionStore = (
   storage: ConnectionStorage = defaultStorage,
 ): ConnectionStore => {
-  const readAll = async (): Promise<RecordMap> => {
-    const raw = (await storage.loadJson(CONNECTIONS_STORAGE_KEY)) as RecordMap | null
-    return raw ?? {}
+  const readState = async (): Promise<PersistedState> => {
+    const raw = (await storage.loadJson(CONNECTIONS_STORAGE_KEY)) as
+      | Partial<PersistedState>
+      | RecordMap
+      | null
+    if (!raw) return { records: {}, tombstones: [] }
+    // Forward-compat: a bare RecordMap from before tombstones existed is the records map.
+    if ("records" in raw || "tombstones" in raw) {
+      const state = raw as Partial<PersistedState>
+      return { records: state.records ?? {}, tombstones: state.tombstones ?? [] }
+    }
+    return { records: raw as RecordMap, tombstones: [] }
   }
-  const writeAll = (map: RecordMap): Promise<void> =>
-    storage.saveJson(CONNECTIONS_STORAGE_KEY, map)
+  const writeState = (state: PersistedState): Promise<void> =>
+    storage.saveJson(CONNECTIONS_STORAGE_KEY, state)
 
   return {
     async upsert(record: ConnectionRecord): Promise<void> {
-      const map = await readAll()
+      const state = await readState()
       // One record per client: keying by clientPubkey means a re-upsert REPLACES.
-      map[record.clientPubkey] = record
-      await writeAll(map)
+      state.records[record.clientPubkey] = record
+      // A fresh connection clears any prior tombstone for this pubkey.
+      state.tombstones = state.tombstones.filter((pk) => pk !== record.clientPubkey)
+      await writeState(state)
     },
 
     async get(clientPubkey: string): Promise<ConnectionRecord | null> {
-      const map = await readAll()
-      return map[clientPubkey] ?? null
+      const state = await readState()
+      return state.records[clientPubkey] ?? null
     },
 
     async list(): Promise<ConnectionRecord[]> {
-      return Object.values(await readAll())
+      return Object.values((await readState()).records)
     },
 
     async isConnected(clientPubkey: string): Promise<boolean> {
-      const map = await readAll()
-      return Boolean(map[clientPubkey])
+      const state = await readState()
+      return Boolean(state.records[clientPubkey])
     },
 
     async hasGrant(clientPubkey: string, scope: string): Promise<boolean> {
-      const map = await readAll()
-      return Boolean(map[clientPubkey]?.grantedScopes.includes(scope))
+      const state = await readState()
+      return Boolean(state.records[clientPubkey]?.grantedScopes.includes(scope))
+    },
+
+    async disconnect(clientPubkey: string): Promise<void> {
+      const state = await readState()
+      // Atomic: delete the record (which carries the grant) and add the tombstone in ONE
+      // write — there is no persisted state where the record is gone but the grant is live.
+      delete state.records[clientPubkey]
+      const tombstones = state.tombstones.filter((pk) => pk !== clientPubkey)
+      tombstones.push(clientPubkey)
+      // Bounded: evict oldest so the tombstone set never grows without limit.
+      state.tombstones = tombstones.slice(-TOMBSTONE_LIMIT)
+      await writeState(state)
+    },
+
+    async isTombstoned(clientPubkey: string): Promise<boolean> {
+      const state = await readState()
+      return state.tombstones.includes(clientPubkey)
     },
   }
 }

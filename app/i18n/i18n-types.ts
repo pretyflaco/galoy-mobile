@@ -13590,6 +13590,47 @@ type RootTranslation = {
 		 */
 		statusNotBackedUp: string
 	}
+	NostrConnectedClientsScreen: {
+		/**
+		 * C​o​n​n​e​c​t​e​d​ ​c​l​i​e​n​t​s
+		 */
+		sectionTitle: string
+		/**
+		 * N​o​ ​a​p​p​s​ ​c​o​n​n​e​c​t​e​d​ ​y​e​t​.
+		 */
+		empty: string
+		/**
+		 * D​i​s​c​o​n​n​e​c​t
+		 */
+		disconnect: string
+		/**
+		 * D​i​s​c​o​n​n​e​c​t​ ​{​c​l​i​e​n​t​}​?
+		 * @param {string} client
+		 */
+		confirmTitle: RequiredParams<'client'>
+		/**
+		 * I​t​ ​w​i​l​l​ ​n​o​ ​l​o​n​g​e​r​ ​b​e​ ​a​b​l​e​ ​t​o​ ​r​e​a​c​h​ ​y​o​u​r​ ​s​i​g​n​e​r​.​ ​I​t​ ​c​a​n​ ​r​e​c​o​n​n​e​c​t​ ​w​i​t​h​ ​y​o​u​r​ ​a​p​p​r​o​v​a​l​.
+		 */
+		confirmBody: string
+		/**
+		 * D​i​s​c​o​n​n​e​c​t
+		 */
+		confirmDisconnect: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		confirmCancel: string
+		/**
+		 * D​i​s​c​o​n​n​e​c​t​ ​{​c​l​i​e​n​t​}​.​ ​I​t​ ​c​a​n​ ​r​e​c​o​n​n​e​c​t​ ​w​i​t​h​ ​y​o​u​r​ ​a​p​p​r​o​v​a​l​.​ ​D​i​s​c​o​n​n​e​c​t​ ​o​r​ ​c​a​n​c​e​l​.
+		 * @param {string} client
+		 */
+		srLabel: RequiredParams<'client'>
+		/**
+		 * {​c​l​i​e​n​t​}​.​ ​C​o​n​n​e​c​t​e​d​ ​a​p​p​.
+		 * @param {string} client
+		 */
+		rowA11y: RequiredParams<'client'>
+	}
 	NostrReviewAllScreen: {
 		/**
 		 * R​e​v​i​e​w​ ​r​e​q​u​e​s​t​s
@@ -27126,6 +27167,44 @@ export type TranslationFunctions = {
 		 * Not backed up
 		 */
 		statusNotBackedUp: () => LocalizedString
+	}
+	NostrConnectedClientsScreen: {
+		/**
+		 * Connected clients
+		 */
+		sectionTitle: () => LocalizedString
+		/**
+		 * No apps connected yet.
+		 */
+		empty: () => LocalizedString
+		/**
+		 * Disconnect
+		 */
+		disconnect: () => LocalizedString
+		/**
+		 * Disconnect {client}?
+		 */
+		confirmTitle: (arg: { client: string }) => LocalizedString
+		/**
+		 * It will no longer be able to reach your signer. It can reconnect with your approval.
+		 */
+		confirmBody: () => LocalizedString
+		/**
+		 * Disconnect
+		 */
+		confirmDisconnect: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		confirmCancel: () => LocalizedString
+		/**
+		 * Disconnect {client}. It can reconnect with your approval. Disconnect or cancel.
+		 */
+		srLabel: (arg: { client: string }) => LocalizedString
+		/**
+		 * {client}. Connected app.
+		 */
+		rowA11y: (arg: { client: string }) => LocalizedString
 	}
 	NostrReviewAllScreen: {
 		/**

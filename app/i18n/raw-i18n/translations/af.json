@@ -4118,5 +4118,16 @@
     "approveSelectedA11y": "Approve {count} selected requests from {client}",
     "rowA11y": "{action}: {preview}",
     "footer": "You choose what to approve. Blink never batches this for you."
+  },
+  "NostrConnectedClientsScreen": {
+    "sectionTitle": "Connected clients",
+    "empty": "No apps connected yet.",
+    "disconnect": "Disconnect",
+    "confirmTitle": "Disconnect {client}?",
+    "confirmBody": "It will no longer be able to reach your signer. It can reconnect with your approval.",
+    "confirmDisconnect": "Disconnect",
+    "confirmCancel": "Cancel",
+    "srLabel": "Disconnect {client}. It can reconnect with your approval. Disconnect or cancel.",
+    "rowA11y": "{client}. Connected app."
   }
 }

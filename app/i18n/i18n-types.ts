@@ -13352,6 +13352,120 @@ type RootTranslation = {
 		 */
 		hasFundsWarningButton: string
 	}
+	NostrCreateIdentityScreen: {
+		/**
+		 * C​r​e​a​t​e​ ​y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y
+		 */
+		introTitle: string
+		/**
+		 * A​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​a​ ​k​e​y​ ​t​h​a​t​ ​i​s​ ​y​o​u​r​s​ ​a​l​o​n​e​.​ ​Y​o​u​ ​u​s​e​ ​i​t​ ​t​o​ ​s​i​g​n​ ​i​n​ ​t​o​ ​a​p​p​s​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​,​ ​a​n​d​ ​o​n​l​y​ ​y​o​u​ ​c​o​n​t​r​o​l​ ​i​t​.
+		 */
+		introBody: string
+		/**
+		 * L​e​a​r​n​ ​m​o​r​e
+		 */
+		introLearnMore: string
+		/**
+		 * Y​o​u​r​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​a​ ​c​r​y​p​t​o​g​r​a​p​h​i​c​ ​k​e​y​ ​k​e​p​t​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​s​e​e​s​ ​t​h​e​ ​p​r​i​v​a​t​e​ ​p​a​r​t​.​ ​Y​o​u​ ​g​e​t​ ​o​n​e​ ​i​d​e​n​t​i​t​y​ ​p​e​r​ ​a​c​c​o​u​n​t​,​ ​a​n​d​ ​y​o​u​ ​c​a​n​ ​h​a​v​e​ ​a​s​ ​m​a​n​y​ ​a​c​c​o​u​n​t​s​ ​a​s​ ​y​o​u​ ​l​i​k​e​.
+		 */
+		introLearnMoreBody: string
+		/**
+		 * C​r​e​a​t​e​ ​m​y​ ​i​d​e​n​t​i​t​y
+		 */
+		introCreate: string
+		/**
+		 * I​m​p​o​r​t​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​k​e​y
+		 */
+		introImport: string
+		/**
+		 * R​e​a​d​y​ ​t​o​ ​c​r​e​a​t​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		confirmTitle: string
+		/**
+		 * T​h​i​s​ ​c​r​e​a​t​e​s​ ​a​ ​n​e​w​ ​k​e​y​ ​o​n​ ​y​o​u​r​ ​d​e​v​i​c​e​.​ ​O​n​l​y​ ​y​o​u​ ​w​i​l​l​ ​c​o​n​t​r​o​l​ ​i​t​,​ ​a​n​d​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​s​e​e​s​ ​t​h​e​ ​p​r​i​v​a​t​e​ ​k​e​y​.
+		 */
+		confirmBody: string
+		/**
+		 * C​r​e​a​t​e​ ​i​d​e​n​t​i​t​y
+		 */
+		confirmCta: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		confirmCancel: string
+		/**
+		 * C​r​e​a​t​i​n​g​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		generating: string
+		/**
+		 * S​t​i​l​l​ ​w​o​r​k​i​n​g​,​ ​t​h​i​s​ ​i​s​ ​t​a​k​i​n​g​ ​a​ ​l​i​t​t​l​e​ ​l​o​n​g​e​r​ ​t​h​a​n​ ​u​s​u​a​l
+		 */
+		slowHint: string
+		/**
+		 * W​e​ ​c​o​u​l​d​n​'​t​ ​c​r​e​a​t​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		errorTitle: string
+		/**
+		 * Y​o​u​r​ ​d​e​v​i​c​e​'​s​ ​s​e​c​u​r​e​ ​k​e​y​ ​g​e​n​e​r​a​t​o​r​ ​w​a​s​n​'​t​ ​a​v​a​i​l​a​b​l​e​,​ ​s​o​ ​n​o​ ​k​e​y​ ​w​a​s​ ​c​r​e​a​t​e​d​.​ ​Y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​u​n​c​h​a​n​g​e​d​.
+		 */
+		errorBody: string
+		/**
+		 * Y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​u​n​c​h​a​n​g​e​d​.
+		 */
+		errorUnchanged: string
+		/**
+		 * T​r​y​ ​a​g​a​i​n
+		 */
+		errorTryAgain: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		errorCancel: string
+		/**
+		 * T​h​i​s​ ​i​s​ ​y​o​u​r​s​.​ ​O​n​l​y​ ​y​o​u​ ​c​o​n​t​r​o​l​ ​i​t​.​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​s​e​e​s​ ​y​o​u​r​ ​p​r​i​v​a​t​e​ ​k​e​y​.
+		 */
+		resultOwnership: string
+		/**
+		 * Y​o​u​ ​h​a​v​e​ ​o​n​e​ ​i​d​e​n​t​i​t​y​ ​f​o​r​ ​t​h​i​s​ ​a​c​c​o​u​n​t​.​ ​C​r​e​a​t​e​ ​a​n​o​t​h​e​r​ ​a​c​c​o​u​n​t​ ​f​o​r​ ​a​n​o​t​h​e​r​ ​i​d​e​n​t​i​t​y​.
+		 */
+		resultOneIdentity: string
+		/**
+		 * Y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+		 */
+		resultPublicAddressLabel: string
+		/**
+		 * T​a​p​ ​t​o​ ​r​e​v​e​a​l
+		 */
+		resultReveal: string
+		/**
+		 * C​o​p​y
+		 */
+		resultCopy: string
+		/**
+		 * C​o​p​i​e​d
+		 */
+		resultCopied: string
+		/**
+		 * I​d​e​n​t​i​t​y​ ​p​i​c​t​u​r​e​ ​f​o​r​ ​y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+		 */
+		identiconA11y: string
+		/**
+		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 */
+		backupTitle: string
+		/**
+		 * I​f​ ​y​o​u​ ​l​o​s​e​ ​t​h​i​s​ ​d​e​v​i​c​e​,​ ​a​ ​b​a​c​k​u​p​ ​i​s​ ​t​h​e​ ​o​n​l​y​ ​w​a​y​ ​t​o​ ​r​e​c​o​v​e​r​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y​.
+		 */
+		backupBody: string
+		/**
+		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 */
+		backupCta: string
+		/**
+		 * N​o​t​ ​n​o​w
+		 */
+		backupNotNow: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -26492,6 +26606,120 @@ export type TranslationFunctions = {
 		 * Go back
 		 */
 		hasFundsWarningButton: () => LocalizedString
+	}
+	NostrCreateIdentityScreen: {
+		/**
+		 * Create your Nostr identity
+		 */
+		introTitle: () => LocalizedString
+		/**
+		 * A Nostr identity is a key that is yours alone. You use it to sign in to apps without a password, and only you control it.
+		 */
+		introBody: () => LocalizedString
+		/**
+		 * Learn more
+		 */
+		introLearnMore: () => LocalizedString
+		/**
+		 * Your identity is a cryptographic key kept on this device. Blink never sees the private part. You get one identity per account, and you can have as many accounts as you like.
+		 */
+		introLearnMoreBody: () => LocalizedString
+		/**
+		 * Create my identity
+		 */
+		introCreate: () => LocalizedString
+		/**
+		 * Import an existing key
+		 */
+		introImport: () => LocalizedString
+		/**
+		 * Ready to create your identity
+		 */
+		confirmTitle: () => LocalizedString
+		/**
+		 * This creates a new key on your device. Only you will control it, and Blink never sees the private key.
+		 */
+		confirmBody: () => LocalizedString
+		/**
+		 * Create identity
+		 */
+		confirmCta: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		confirmCancel: () => LocalizedString
+		/**
+		 * Creating your identity
+		 */
+		generating: () => LocalizedString
+		/**
+		 * Still working, this is taking a little longer than usual
+		 */
+		slowHint: () => LocalizedString
+		/**
+		 * We couldn't create your identity
+		 */
+		errorTitle: () => LocalizedString
+		/**
+		 * Your device's secure key generator wasn't available, so no key was created. Your current identity is unchanged.
+		 */
+		errorBody: () => LocalizedString
+		/**
+		 * Your current identity is unchanged.
+		 */
+		errorUnchanged: () => LocalizedString
+		/**
+		 * Try again
+		 */
+		errorTryAgain: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		errorCancel: () => LocalizedString
+		/**
+		 * This is yours. Only you control it. Blink never sees your private key.
+		 */
+		resultOwnership: () => LocalizedString
+		/**
+		 * You have one identity for this account. Create another account for another identity.
+		 */
+		resultOneIdentity: () => LocalizedString
+		/**
+		 * Your public address
+		 */
+		resultPublicAddressLabel: () => LocalizedString
+		/**
+		 * Tap to reveal
+		 */
+		resultReveal: () => LocalizedString
+		/**
+		 * Copy
+		 */
+		resultCopy: () => LocalizedString
+		/**
+		 * Copied
+		 */
+		resultCopied: () => LocalizedString
+		/**
+		 * Identity picture for your public address
+		 */
+		identiconA11y: () => LocalizedString
+		/**
+		 * Back up your key
+		 */
+		backupTitle: () => LocalizedString
+		/**
+		 * If you lose this device, a backup is the only way to recover your identity.
+		 */
+		backupBody: () => LocalizedString
+		/**
+		 * Back up your key
+		 */
+		backupCta: () => LocalizedString
+		/**
+		 * Not now
+		 */
+		backupNotNow: () => LocalizedString
 	}
 }
 

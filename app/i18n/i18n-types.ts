@@ -13466,6 +13466,64 @@ type RootTranslation = {
 		 */
 		backupNotNow: string
 	}
+	NostrImportIdentityScreen: {
+		/**
+		 * I​m​p​o​r​t​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​k​e​y
+		 */
+		title: string
+		/**
+		 * P​a​s​t​e​ ​y​o​u​r​ ​n​s​e​c​ ​o​r​ ​s​c​a​n​ ​i​t​s​ ​Q​R​ ​c​o​d​e​ ​t​o​ ​u​s​e​ ​y​o​u​r​ ​e​x​i​s​t​i​n​g​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​h​e​r​e​.
+		 */
+		body: string
+		/**
+		 * Y​o​u​r​ ​n​s​e​c
+		 */
+		pasteLabel: string
+		/**
+		 * n​s​e​c​1​…
+		 */
+		pastePlaceholder: string
+		/**
+		 * S​c​a​n​ ​a​ ​Q​R​ ​c​o​d​e
+		 */
+		scanCta: string
+		/**
+		 * C​o​n​t​i​n​u​e
+		 */
+		continueCta: string
+		/**
+		 * T​h​a​t​ ​d​o​e​s​n​'​t​ ​l​o​o​k​ ​l​i​k​e​ ​a​ ​v​a​l​i​d​ ​n​s​e​c
+		 */
+		invalidTitle: string
+		/**
+		 * C​h​e​c​k​ ​t​h​a​t​ ​y​o​u​ ​p​a​s​t​e​d​ ​t​h​e​ ​f​u​l​l​ ​n​s​e​c​ ​k​e​y​.​ ​Y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​u​n​c​h​a​n​g​e​d​.
+		 */
+		invalidBody: string
+		/**
+		 * Y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​u​n​c​h​a​n​g​e​d​.
+		 */
+		invalidUnchanged: string
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y​?
+		 */
+		replaceTitle: string
+		/**
+		 * T​h​i​s​ ​r​e​p​l​a​c​e​s​ ​t​h​e​ ​i​d​e​n​t​i​t​y​ ​o​n​ ​t​h​i​s​ ​a​c​c​o​u​n​t​.​ ​T​h​e​ ​c​u​r​r​e​n​t​ ​k​e​y​ ​w​i​l​l​ ​b​e​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​i​s​c​a​r​d​e​d​ ​a​n​d​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​c​o​v​e​r​e​d​ ​u​n​l​e​s​s​ ​y​o​u​ ​b​a​c​k​e​d​ ​i​t​ ​u​p​.
+		 */
+		replaceConsequence: string
+		/**
+		 * R​e​p​l​a​c​e​ ​i​d​e​n​t​i​t​y
+		 */
+		replaceConfirm: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		replaceCancel: string
+		/**
+		 * R​e​p​l​a​c​e​ ​t​h​e​ ​i​d​e​n​t​i​t​y​ ​o​n​ ​t​h​i​s​ ​a​c​c​o​u​n​t​.​ ​T​h​e​ ​c​u​r​r​e​n​t​ ​k​e​y​ ​i​s​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​i​s​c​a​r​d​e​d​.​ ​C​o​n​f​i​r​m​ ​o​r​ ​c​a​n​c​e​l​.
+		 */
+		replaceSrLabel: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -26720,6 +26778,64 @@ export type TranslationFunctions = {
 		 * Not now
 		 */
 		backupNotNow: () => LocalizedString
+	}
+	NostrImportIdentityScreen: {
+		/**
+		 * Import an existing key
+		 */
+		title: () => LocalizedString
+		/**
+		 * Paste your nsec or scan its QR code to use your existing Nostr identity here.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Your nsec
+		 */
+		pasteLabel: () => LocalizedString
+		/**
+		 * nsec1…
+		 */
+		pastePlaceholder: () => LocalizedString
+		/**
+		 * Scan a QR code
+		 */
+		scanCta: () => LocalizedString
+		/**
+		 * Continue
+		 */
+		continueCta: () => LocalizedString
+		/**
+		 * That doesn't look like a valid nsec
+		 */
+		invalidTitle: () => LocalizedString
+		/**
+		 * Check that you pasted the full nsec key. Your current identity is unchanged.
+		 */
+		invalidBody: () => LocalizedString
+		/**
+		 * Your current identity is unchanged.
+		 */
+		invalidUnchanged: () => LocalizedString
+		/**
+		 * Replace your identity?
+		 */
+		replaceTitle: () => LocalizedString
+		/**
+		 * This replaces the identity on this account. The current key will be permanently discarded and cannot be recovered unless you backed it up.
+		 */
+		replaceConsequence: () => LocalizedString
+		/**
+		 * Replace identity
+		 */
+		replaceConfirm: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		replaceCancel: () => LocalizedString
+		/**
+		 * Replace the identity on this account. The current key is permanently discarded. Confirm or cancel.
+		 */
+		replaceSrLabel: () => LocalizedString
 	}
 }
 

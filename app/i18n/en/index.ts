@@ -4242,6 +4242,25 @@ const en: BaseTranslation = {
     backupCta: "Back up your key",
     backupNotNow: "Not now",
   },
+  NostrImportIdentityScreen: {
+    title: "Import an existing key",
+    body: "Paste your nsec or scan its QR code to use your existing Nostr identity here.",
+    pasteLabel: "Your nsec",
+    pastePlaceholder: "nsec1…",
+    scanCta: "Scan a QR code",
+    continueCta: "Continue",
+    invalidTitle: "That doesn't look like a valid nsec",
+    invalidBody:
+      "Check that you pasted the full nsec key. Your current identity is unchanged.",
+    invalidUnchanged: "Your current identity is unchanged.",
+    replaceTitle: "Replace your identity?",
+    replaceConsequence:
+      "This replaces the identity on this account. The current key will be permanently discarded and cannot be recovered unless you backed it up.",
+    replaceConfirm: "Replace identity",
+    replaceCancel: "Cancel",
+    replaceSrLabel:
+      "Replace the identity on this account. The current key is permanently discarded. Confirm or cancel.",
+  },
 }
 
 export default en

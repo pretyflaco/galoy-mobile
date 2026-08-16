@@ -12,6 +12,9 @@
  * The screens own presentation/copy/analytics; this owns the state transitions and the
  * commit/push orchestration so they are unit-testable without the RN render stack.
  */
+import { bytesToHex } from "@noble/hashes/utils.js"
+import * as nip19 from "nostr-tools/nip19"
+
 import { makeSignerError, type SignerError } from "./signer"
 
 export type CeremonyStep = "intro" | "confirm" | "result" | "error"
@@ -107,3 +110,91 @@ export const retryAfterError = (state: CeremonyState): CeremonyState => ({
   step: "confirm",
   error: null,
 })
+
+// ---------------------------------------------------------------------------
+// Import / replace identity (Story 1.6)
+// ---------------------------------------------------------------------------
+
+export type NsecValidation =
+  | { ok: true; privKeyHex: string; npub: string }
+  | { ok: false }
+
+/**
+ * Validate a pasted/scanned bech32 nsec at the import edge (AC-2). A well-formed value
+ * decodes via nip19 to `{ type: 'nsec', data }`; anything else (wrong prefix, bad
+ * checksum, non-nsec type, garbage) is invalid. Pure — performs NO state change.
+ * bech32 is used only here; internally the key is hex lowercase.
+ */
+export const validateNsec = (
+  input: string,
+  deriveNpub: (privKeyHex: string) => string,
+): NsecValidation => {
+  try {
+    const decoded = nip19.decode(input.trim())
+    if (decoded.type !== "nsec") return { ok: false }
+    const privKeyHex = bytesToHex(decoded.data as Uint8Array)
+    return { ok: true, privKeyHex, npub: deriveNpub(privKeyHex) }
+  } catch {
+    return { ok: false }
+  }
+}
+
+/** Ports the import commit depends on (AD-9 exclusive section + AD-12 monotonic push). */
+export interface ImportPorts {
+  persistNsec(privKeyHex: string): Promise<void>
+  /** Derive the identity's x-only pubkey (hex) from the private key. */
+  derivePubKeyHex(privKeyHex: string): string
+  /** Encode an x-only pubkey hex to npub (nip19 at the edge). */
+  toNpub(pubKeyHex: string): string
+  runExclusive<T>(commit: () => Promise<T>): Promise<T>
+  commitIdentity(identity: Omit<NostrIdentity, "epoch">): Promise<number>
+  /** Non-blocking npub push with a monotonic seq (AD-12). */
+  pushNpub(npub: string, seq: number): Promise<void>
+}
+
+// Module-monotonic push sequence: a superseded/discarded-key npub can never win a race.
+let pushSeq = 0
+
+/**
+ * Commit an imported nsec (already validated to hex): store it (replacing + discarding
+ * the prior key — no archive), inside the AD-9 exclusive section with an epoch bump, then
+ * push the new npub monotonically and non-blocking (AD-12).
+ */
+export const importIdentity = async (
+  privKeyHex: string,
+  ports: ImportPorts,
+): Promise<{ identity: NostrIdentity }> => {
+  const pubKeyHex = ports.derivePubKeyHex(privKeyHex)
+  const npub = ports.toNpub(pubKeyHex)
+
+  const identity = await ports.runExclusive(async () => {
+    await ports.persistNsec(privKeyHex) // overwrites nostr.nsec — replaced key discarded
+    const epoch = await ports.commitIdentity({ pubKeyHex, npub })
+    return { pubKeyHex, npub, epoch }
+  })
+
+  pushSeq += 1
+  try {
+    await ports.pushNpub(npub, pushSeq)
+  } catch {
+    // swallowed by design — push failure never blocks import
+  }
+
+  return { identity }
+}
+
+/**
+ * AD-9 executor epoch re-check: a request approved against identity epoch N must NEVER
+ * execute after the identity mutated to N+1. The executor calls this with the epoch the
+ * request was approved under and the CURRENT identity epoch; a mismatch drops the request.
+ */
+export const executeIfEpochCurrent = <T>(
+  approvedEpoch: number,
+  currentEpoch: number,
+  execute: () => T,
+): { executed: true; value: T } | { executed: false; reason: "stale-epoch" } => {
+  if (approvedEpoch !== currentEpoch) {
+    return { executed: false, reason: "stale-epoch" }
+  }
+  return { executed: true, value: execute() }
+}

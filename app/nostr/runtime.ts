@@ -36,6 +36,11 @@ import {
 } from "./approval/coordinator"
 import { grantCoverageFromPolicy } from "./approval/grant-adapter"
 import {
+  buildCapabilityPreview,
+  buildSignEventPreview,
+  formatSignEventPanel,
+} from "./approval/request-preview"
+import {
   createConnectionStore,
   GRANTABLE_SCOPE,
   type ConnectionRecord,
@@ -263,6 +268,8 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
           method: "sign_event",
           eventKind: event.kind,
           humanAction: "sign-in-and-sign",
+          // Structured "what will be signed" panel (B4): the exact fields being signed.
+          contentPreview: formatSignEventPanel(buildSignEventPreview(event)),
         }).then((approved) => ({ approved })),
     })
     const raw = JSON.parse(decoded.request.params[0] ?? "{}")
@@ -288,6 +295,8 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
           clientPubkey: decoded.clientPubkey,
           method: req.method,
           humanAction: req.method,
+          // Metadata-only preview (B4): op + counterparty; NEVER the payload (leak-audit gate).
+          contentPreview: buildCapabilityPreview(req.method, req.peerPubkey),
         }).then((approved) => ({ approved })),
     })
     const result = await flow.handle({

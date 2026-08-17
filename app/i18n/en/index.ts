@@ -4306,6 +4306,7 @@ const en: BaseTranslation = {
   },
   NostrRequestApprovalScreen: {
     title: "Approve request",
+    whatWillBeSigned: "What will be signed",
     approve: "Approve",
     reject: "Reject",
     counter: "Request {index:number} of {total:number} from {client:string}",

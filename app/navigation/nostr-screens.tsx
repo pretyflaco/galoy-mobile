@@ -26,6 +26,10 @@ import {
 } from "@app/screens/nostr/connected-clients-section"
 import { NostrConnectionApprovalScreen } from "@app/screens/nostr/connection-approval-screen"
 import { NostrRequestApprovalScreen } from "@app/screens/nostr/request-approval-screen"
+import {
+  NostrReviewAllScreen,
+  type ReviewAllItem,
+} from "@app/screens/nostr/review-all-screen"
 import { NostrIdentityHubScreen } from "@app/screens/nostr/identity-hub/nostr-identity-hub-screen"
 import { useNostrIdentity } from "@app/screens/nostr/identity-hub/use-nostr-identity"
 import { useApprovalCoordinator } from "@app/nostr/hooks/use-approval-coordinator"
@@ -80,6 +84,11 @@ export const NostrRootScreens = (
       name="nostrRequestApproval"
       component={NostrRequestApproval}
       options={{ title: LL.NostrRequestApprovalScreen.title(), headerShown: false }}
+    />
+    <RootNavigator.Screen
+      name="nostrReviewAll"
+      component={NostrReviewAll}
+      options={{ title: LL.NostrReviewAllScreen.title(), headerShown: false }}
     />
   </>
 )
@@ -224,6 +233,35 @@ export const NostrConnectionApproval: React.FC = () => {
   )
 }
 
+/**
+ * Resolve a connected client's friendly display (name + avatar) from the ConnectionStore by
+ * pubkey, so the approval surfaces show "BTCPay Server" + logo rather than a raw hex pubkey.
+ * Falls back to a truncated pubkey when the client is not (yet) a stored connection.
+ */
+const useClientDisplay = (clientPubkey?: string): { name?: string; image?: string } => {
+  const runtime = useNostrRuntime()
+  const [display, setDisplay] = useState<{ name?: string; image?: string }>({})
+  useEffect(() => {
+    let cancelled = false
+    if (!clientPubkey) {
+      setDisplay({})
+      return
+    }
+    runtime?.runtime
+      .listConnections()
+      .then((records) => {
+        if (cancelled) return
+        const match = records.find((r) => r.clientPubkey === clientPubkey)
+        setDisplay({ name: match?.metadata.name, image: match?.metadata.image })
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [runtime, clientPubkey])
+  return display
+}
+
 /** Full-screen REQUEST approval route (sign/decrypt) — same pattern as the connection route. */
 export const NostrRequestApproval: React.FC = () => {
   const runtime = useNostrRuntime()
@@ -232,16 +270,75 @@ export const NostrRequestApproval: React.FC = () => {
     coordinator ?? ({} as never),
   )
   const req = active?.kind === "request" ? active : null
+  const display = useClientDisplay(req?.clientPubkey)
+  const clientLabel =
+    display.name ?? (req?.clientPubkey ? `${req.clientPubkey.slice(0, 12)}…` : "")
+  // Real queue position: the active entry is always first in pendingEntries() (B5 API).
+  const index = 1
   return (
     <Screen>
       <NostrRequestApprovalScreen
-        clientName={req?.clientPubkey ?? ""}
+        clientName={clientLabel}
+        clientImage={display.image}
         humanAction={req?.humanAction ?? ""}
         contentPreview={req?.contentPreview ?? ""}
-        index={1}
+        index={index}
         total={depth}
         onApprove={approve}
         onReject={reject}
+      />
+    </Screen>
+  )
+}
+
+/**
+ * Full-screen "Review all" burst route (B5 / Flow 4). Presented by the ApprovalSurfaceHost when
+ * a client has REVIEW_ALL_THRESHOLD+ pending REQUEST approvals queued. Expands the serialized
+ * queue into a selectable list and batch-resolves the chosen requests via the coordinator's
+ * resolveMany (no "approve all remaining"). When the queue drains below 2, the host pops back to
+ * one-by-one paging.
+ */
+export const NostrReviewAll: React.FC = () => {
+  const navigation = useNavigation<Nav>()
+  const runtime = useNostrRuntime()
+  const coordinator = runtime?.coordinator
+  // Subscribe for re-render on queue changes; read the full pending snapshot from the coordinator.
+  const { depth } = useApprovalCoordinator(coordinator ?? ({} as never))
+  const pending = coordinator?.pendingEntries() ?? []
+  const requests = pending.filter((e) => e.kind === "request")
+  const clientPubkey = requests[0]?.clientPubkey
+  const display = useClientDisplay(clientPubkey)
+  const clientLabel =
+    display.name ?? (clientPubkey ? `${clientPubkey.slice(0, 12)}…` : "")
+
+  const items: ReviewAllItem[] = requests.map((r) => ({
+    id: r.id,
+    action: r.kind === "request" ? r.humanAction : "",
+    preview: (r.kind === "request" && r.contentPreview) || "",
+  }))
+
+  const onApproveSelected = useCallback(
+    (ids: string[]) => coordinator?.resolveMany(ids, true),
+    [coordinator],
+  )
+  const onRejectSelected = useCallback(
+    (ids: string[]) => coordinator?.resolveMany(ids, false),
+    [coordinator],
+  )
+
+  // When the burst has drained (depth < 2), leave the review-all surface (the host resumes
+  // one-by-one paging for any remainder).
+  useEffect(() => {
+    if (depth < 2 && navigation.canGoBack()) navigation.goBack()
+  }, [depth, navigation])
+
+  return (
+    <Screen>
+      <NostrReviewAllScreen
+        clientName={clientLabel}
+        items={items}
+        onApproveSelected={onApproveSelected}
+        onRejectSelected={onRejectSelected}
       />
     </Screen>
   )

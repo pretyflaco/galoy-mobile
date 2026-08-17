@@ -1,7 +1,7 @@
 import React from "react"
-import { View } from "react-native"
+import { ScrollView, View } from "react-native"
 
-import { Text, makeStyles } from "@rn-vui/themed"
+import { Avatar, Text, makeStyles } from "@rn-vui/themed"
 
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
@@ -9,6 +9,8 @@ import { useI18nContext } from "@app/i18n/i18n-react"
 
 type Props = {
   clientName: string
+  /** Optional avatar image URL from the connection metadata (NIP-46 `image`). */
+  clientImage?: string
   /** Human-meaning action (e.g. "decrypt a message") — never raw scope/kind. */
   humanAction: string
   /** The EXACT content that will be signed/decrypted (rendered in full, not a summary). */
@@ -32,6 +34,7 @@ type Props = {
  */
 export const NostrRequestApprovalScreen: React.FC<Props> = ({
   clientName,
+  clientImage,
   humanAction,
   contentPreview,
   index,
@@ -44,8 +47,8 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
   const T = LL.NostrRequestApprovalScreen
 
   return (
-    <View
-      style={styles.container}
+    <ScrollView
+      contentContainerStyle={styles.container}
       testID="nostr-request-approval"
       accessible
       accessibilityLiveRegion="assertive"
@@ -69,14 +72,41 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
         {T.counter({ index, total, client: clientName })}
       </Text>
 
+      {/* App-identity row: avatar (client `image`, or initial-in-circle) + name — mirrors the
+          approval mock header so the user sees WHO is asking. */}
+      <View style={styles.appRow}>
+        <Avatar
+          rounded
+          size={44}
+          {...(clientImage
+            ? { source: { uri: clientImage } }
+            : { title: (clientName || "?").charAt(0).toUpperCase() })}
+          containerStyle={styles.avatar}
+        />
+        <Text type="p1" style={styles.clientName}>
+          {clientName}
+        </Text>
+      </View>
+
       <Text type="h2" style={styles.title}>
         {T.title()}
       </Text>
 
-      {/* The EXACT content that will be signed/decrypted (SM-C3: no summary). */}
-      <Text type="p2" style={styles.content} testID="nostr-request-content">
-        {contentPreview}
+      {/* "What will be signed": the EXACT content (SM-C3: no summary) in a monospace panel.
+          Consequence copy never truncates — the panel grows/scrolls to preserve it in full. */}
+      <Text type="p3" style={styles.panelLabel}>
+        {T.whatWillBeSigned()}
       </Text>
+      <View style={styles.panel}>
+        <Text
+          type="p2"
+          style={styles.panelText}
+          testID="nostr-request-content"
+          selectable
+        >
+          {contentPreview}
+        </Text>
+      </View>
 
       {/* Affirmative (approve) is the default focus target; reject is never default. The
           coordinator hook calls AccessibilityInfo.setAccessibilityFocus on the marked view. */}
@@ -92,7 +122,7 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
         onPress={onReject}
         testID="nostr-request-reject"
       />
-    </View>
+    </ScrollView>
   )
 }
 
@@ -104,10 +134,34 @@ const useStyles = makeStyles(({ colors }) => ({
   counter: {
     color: colors.grey1,
   },
+  appRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 12,
+  },
+  avatar: {
+    backgroundColor: colors.grey4,
+  },
+  clientName: {
+    flexShrink: 1,
+    fontWeight: "600",
+    color: colors.black,
+  },
   title: {
     color: colors.black,
   },
-  content: {
-    color: colors.black,
+  panelLabel: {
+    color: colors.grey2,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  panel: {
+    backgroundColor: colors.grey5,
+    borderRadius: 8,
+    padding: 14,
+  },
+  panelText: {
+    color: colors.grey0,
+    fontFamily: "monospace",
   },
 }))

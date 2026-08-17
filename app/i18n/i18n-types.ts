@@ -13674,6 +13674,10 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
+		 * W​h​a​t​ ​w​i​l​l​ ​b​e​ ​s​i​g​n​e​d
+		 */
+		whatWillBeSigned: string
+		/**
 		 * A​p​p​r​o​v​e
 		 */
 		approve: string
@@ -27295,6 +27299,10 @@ export type TranslationFunctions = {
 		 * Approve request
 		 */
 		title: () => LocalizedString
+		/**
+		 * What will be signed
+		 */
+		whatWillBeSigned: () => LocalizedString
 		/**
 		 * Approve
 		 */

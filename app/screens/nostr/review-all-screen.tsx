@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from "react"
-import { TouchableOpacity, View } from "react-native"
+import { ScrollView, TouchableOpacity, View } from "react-native"
 
 import { Text, makeStyles } from "@rn-vui/themed"
 
+import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
 import { useI18nContext } from "@app/i18n/i18n-react"
@@ -55,10 +56,18 @@ export const NostrReviewAllScreen: React.FC<Props> = ({
   const count = selection.count()
 
   return (
-    <View style={styles.container} testID="nostr-review-all">
-      <Text type="h2" style={styles.title}>
-        {T.title()}
-      </Text>
+    <ScrollView contentContainerStyle={styles.container} testID="nostr-review-all">
+      <View style={styles.header}>
+        <Text type="h2" style={styles.title}>
+          {T.title()}
+        </Text>
+        {/* Counter chip: how many requests are in this burst (mirrors the modal-burst mock). */}
+        <View style={styles.counterChip}>
+          <Text type="p4" style={styles.counterChipText} testID="nostr-review-counter">
+            {T.reviewAll({ total: items.length })}
+          </Text>
+        </View>
+      </View>
 
       {items.map((item) => {
         const checked = selection.isSelected(item.id)
@@ -72,16 +81,28 @@ export const NostrReviewAllScreen: React.FC<Props> = ({
             onPress={() => toggle(item.id)}
             style={styles.row}
           >
-            <Text type="p3" style={styles.action}>
-              {item.action}
-            </Text>
-            <Text
-              type="p2"
-              style={styles.preview}
-              testID={`nostr-review-preview-${item.id}`}
+            {/* Visible checkbox glyph reflecting the selected state (was a11y-only before). */}
+            <View
+              style={[styles.checkbox, checked && styles.checkboxOn]}
+              testID={`nostr-review-checkbox-${item.id}`}
             >
-              {item.preview}
-            </Text>
+              {checked ? (
+                <GaloyIcon name="check" size={16} color={styles.checkOn.color} />
+              ) : null}
+            </View>
+            <View style={styles.rowMain}>
+              <Text type="p3" style={styles.action}>
+                {item.action}
+              </Text>
+              <Text
+                type="p2"
+                style={styles.preview}
+                numberOfLines={2}
+                testID={`nostr-review-preview-${item.id}`}
+              >
+                {item.preview}
+              </Text>
+            </View>
           </TouchableOpacity>
         )
       })}
@@ -101,7 +122,7 @@ export const NostrReviewAllScreen: React.FC<Props> = ({
       <Text type="p3" style={styles.footer}>
         {T.footer()}
       </Text>
-    </View>
+    </ScrollView>
   )
 }
 
@@ -110,15 +131,59 @@ const useStyles = makeStyles(({ colors }) => ({
     padding: 24,
     rowGap: 12,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    columnGap: 10,
+  },
   title: {
     color: colors.black,
   },
+  counterChip: {
+    backgroundColor: colors.grey5,
+    borderColor: colors.grey4,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 3,
+    paddingHorizontal: 12,
+  },
+  counterChipText: {
+    color: colors.grey0,
+    fontWeight: "600",
+  },
   row: {
-    paddingVertical: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.grey4,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: colors.grey2,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkboxOn: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkOn: {
+    color: colors.white,
+  },
+  rowMain: {
+    flex: 1,
     rowGap: 2,
   },
   action: {
     color: colors.grey1,
+    fontWeight: "600",
   },
   preview: {
     color: colors.black,

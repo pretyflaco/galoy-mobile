@@ -111,4 +111,35 @@ describe("ApprovalSurfaceHost (A6 fix #1 — full-screen route, not overlay)", (
     })
     expect(goBack).not.toHaveBeenCalled()
   })
+
+  it("presents the REVIEW-ALL burst route when one client has 3+ pending requests (B5)", async () => {
+    renderHost()
+    // Three requests from the SAME client queued before the host presents.
+    for (const id of ["b1", "b2", "b3"]) {
+      testCoordinator.enqueue({
+        id,
+        kind: "request",
+        clientPubkey: "burst-client",
+        method: "nip44_decrypt",
+        humanAction: "decrypt a message",
+      })
+    }
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrReviewAll"))
+    expect(navigate).not.toHaveBeenCalledWith("nostrRequestApproval")
+  })
+
+  it("still pages one-by-one below the burst threshold (2 pending requests)", async () => {
+    renderHost()
+    for (const id of ["t1", "t2"]) {
+      testCoordinator.enqueue({
+        id,
+        kind: "request",
+        clientPubkey: "small-client",
+        method: "nip44_decrypt",
+        humanAction: "decrypt a message",
+      })
+    }
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrRequestApproval"))
+    expect(navigate).not.toHaveBeenCalledWith("nostrReviewAll")
+  })
 })

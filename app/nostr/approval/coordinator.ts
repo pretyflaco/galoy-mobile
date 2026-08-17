@@ -20,6 +20,12 @@
  * `resolveActive`. `isCoveredByGrant` reads the ConnectionStore grant (shared predicate).
  */
 
+/**
+ * When a single client has this many or more pending REQUEST approvals queued, the host offers
+ * the "Review all" burst surface instead of paging them one-by-one (B5 / Flow 4).
+ */
+export const REVIEW_ALL_THRESHOLD = 3
+
 /** Client metadata carried on a connection-approval entry. */
 export interface EntryMetadata {
   name?: string
@@ -83,6 +89,18 @@ export interface ApprovalCoordinator {
   queueDepth(): number
   /** The entry currently presented, or null. */
   activeEntry(): ApprovalEntry | null
+  /**
+   * A read-only snapshot of ALL unresolved entries (active first, then pending FIFO order),
+   * for the "Review all" burst surface (B5). Does not mutate the queue.
+   */
+  pendingEntries(): ApprovalEntry[]
+  /**
+   * Batch-resolve the entries with the given ids to `approved` (B5). Resolves the active entry
+   * and any queued entries whose id matches, stamping the current epoch (AD-9) on each — exactly
+   * as resolveActive would. Ids not present are ignored. After resolving, the FIFO resumes for
+   * any entries the user did not act on (there is deliberately no "approve all remaining").
+   */
+  resolveMany(ids: string[], approved: boolean): void
   /** Subscribe to queue changes (enqueue / resolve / pause); returns an unsubscribe fn. */
   subscribe(listener: () => void): () => void
   /** Run `commit` as an exclusive section: presentation pauses until it resolves (AD-9). */
@@ -202,6 +220,34 @@ export const createApprovalCoordinator = (
 
     activeEntry(): ApprovalEntry | null {
       return active?.entry ?? null
+    },
+
+    pendingEntries(): ApprovalEntry[] {
+      // Active first (it is the currently-presented one), then the pending FIFO.
+      const entries = queue.map((q) => q.entry)
+      return active ? [active.entry, ...entries] : entries
+    },
+
+    resolveMany(ids: string[], approved: boolean): void {
+      if (ids.length === 0) return
+      const idSet = new Set(ids)
+      const epoch = epochOf()
+      // Resolve the active entry if selected (mirrors resolveActive: clear active first).
+      if (active && idSet.has(active.entry.id)) {
+        const current = active
+        active = null
+        current.resolve({ approved, epoch })
+      }
+      // Resolve matching queued entries, removing them from the FIFO. Entries the user did NOT
+      // select stay queued and are presented normally afterwards (no blanket approve). Partition
+      // in place: keep the unselected (order preserved), resolve the selected.
+      const kept = queue.filter((q) => !idSet.has(q.entry.id))
+      const removed = queue.filter((q) => idSet.has(q.entry.id))
+      queue.length = 0
+      queue.push(...kept)
+      for (const q of removed) q.resolve({ approved, epoch })
+      notify()
+      pump()
     },
 
     subscribe(listener: () => void): () => void {

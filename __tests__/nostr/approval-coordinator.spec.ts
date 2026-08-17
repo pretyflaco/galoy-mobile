@@ -259,3 +259,83 @@ describe("singleton initialization (A2/AD-9 — one coordinator, ports bound onc
     expect(second).toBe(getApprovalCoordinator())
   })
 })
+
+describe("Review-all burst: pendingEntries + resolveMany (B5)", () => {
+  it("pendingEntries snapshots active-first then FIFO, without mutating the queue", async () => {
+    const coord = createApprovalCoordinator({ present: async () => undefined })
+    coord.enqueue(requestEntry("a"))
+    coord.enqueue(requestEntry("b"))
+    coord.enqueue(requestEntry("c"))
+    await Promise.resolve()
+
+    const ids = coord.pendingEntries().map((e) => e.id)
+    expect(ids).toEqual(["a", "b", "c"]) // active "a" first, then pending b, c
+    // snapshot is read-only: depth unchanged, still presenting the same active entry
+    expect(coord.queueDepth()).toBe(3)
+    expect(coord.activeEntry()?.id).toBe("a")
+  })
+
+  it("resolveMany resolves selected entries (active + queued) and resumes FIFO for the rest", async () => {
+    const presented: string[] = []
+    const coord = createApprovalCoordinator({
+      present: async (entry) => {
+        presented.push(entry.id)
+      },
+    })
+    const pa = coord.enqueue(requestEntry("a"))
+    const pb = coord.enqueue(requestEntry("b"))
+    const pc = coord.enqueue(requestEntry("c"))
+    await Promise.resolve()
+    expect(presented).toEqual(["a"])
+
+    // Approve a + c (a is active, c is queued); b is left unselected.
+    coord.resolveMany(["a", "c"], true)
+    await expect(pa).resolves.toEqual({ approved: true, epoch: 0 })
+    await expect(pc).resolves.toEqual({ approved: true, epoch: 0 })
+
+    // The unselected "b" resumes as the next presented surface (no blanket approve).
+    await Promise.resolve()
+    expect(presented).toEqual(["a", "b"])
+    expect(coord.queueDepth()).toBe(1)
+    coord.resolveActive({ approved: false })
+    await expect(pb).resolves.toEqual({ approved: false, epoch: 0 })
+  })
+
+  it("resolveMany can reject a batch", async () => {
+    const coord = createApprovalCoordinator({ present: async () => undefined })
+    const pa = coord.enqueue(requestEntry("a"))
+    const pb = coord.enqueue(requestEntry("b"))
+    await Promise.resolve()
+
+    coord.resolveMany(["a", "b"], false)
+    await expect(pa).resolves.toEqual({ approved: false, epoch: 0 })
+    await expect(pb).resolves.toEqual({ approved: false, epoch: 0 })
+    expect(coord.queueDepth()).toBe(0)
+  })
+
+  it("resolveMany ignores unknown ids and is a no-op for an empty selection", async () => {
+    const coord = createApprovalCoordinator({ present: async () => undefined })
+    coord.enqueue(requestEntry("a"))
+    await Promise.resolve()
+
+    coord.resolveMany([], true)
+    coord.resolveMany(["nope"], true)
+    expect(coord.queueDepth()).toBe(1)
+    expect(coord.activeEntry()?.id).toBe("a")
+  })
+
+  it("resolveMany stamps the current identity epoch on each resolved entry (AD-9)", async () => {
+    let epoch = 7
+    const coord = createApprovalCoordinator({
+      present: async () => undefined,
+      currentEpoch: () => epoch,
+    })
+    const pa = coord.enqueue(requestEntry("a"))
+    const pb = coord.enqueue(requestEntry("b"))
+    await Promise.resolve()
+    epoch = 8
+    coord.resolveMany(["a", "b"], true)
+    await expect(pa).resolves.toEqual({ approved: true, epoch: 8 })
+    await expect(pb).resolves.toEqual({ approved: true, epoch: 8 })
+  })
+})

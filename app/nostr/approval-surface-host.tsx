@@ -19,6 +19,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 
+import { REVIEW_ALL_THRESHOLD } from "./approval/coordinator"
 import { useApprovalCoordinator } from "./hooks/use-approval-coordinator"
 import { useNostrRuntime } from "./nostr-runtime-provider"
 
@@ -35,29 +36,44 @@ const ApprovalNavigator: React.FC<{
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { active, visible } = useApprovalCoordinator(coordinator)
   // Track whether WE pushed an approval route, so we only pop what we pushed.
-  const presentedRef = useRef<null | "connection" | "request">(null)
+  const presentedRef = useRef<null | "connection" | "request" | "reviewAll">(null)
 
   useEffect(() => {
     const shouldShow = Boolean(active) && visible
 
     if (shouldShow && active && presentedRef.current === null) {
-      presentedRef.current = active.kind
-      navigation.navigate(
-        active.kind === "connection" ? "nostrConnectionApproval" : "nostrRequestApproval",
-      )
+      if (active.kind === "connection") {
+        presentedRef.current = "connection"
+        navigation.navigate("nostrConnectionApproval")
+        return
+      }
+      // Request: if this client has a BURST of queued requests, present the "Review all"
+      // surface (B5) instead of paging one-by-one; otherwise the single request surface.
+      const sameClientRequests = coordinator
+        .pendingEntries()
+        .filter(
+          (e) => e.kind === "request" && e.clientPubkey === active.clientPubkey,
+        ).length
+      if (sameClientRequests >= REVIEW_ALL_THRESHOLD) {
+        presentedRef.current = "reviewAll"
+        navigation.navigate("nostrReviewAll")
+      } else {
+        presentedRef.current = "request"
+        navigation.navigate("nostrRequestApproval")
+      }
       return
     }
 
     // Entry resolved (or hidden) while a route is up → pop it. EXCEPTION: connection approvals
     // self-navigate on approve (the route sends the user to Connected clients), so the host must
-    // NOT also pop — that would double-navigate. Only auto-pop request approvals, which have no
-    // natural landing screen.
+    // NOT also pop — that would double-navigate. The review-all route pops itself when the burst
+    // drains. Only auto-pop the single request approval, which has no natural landing screen.
     if (!shouldShow && presentedRef.current !== null) {
-      const wasConnection = presentedRef.current === "connection"
+      const wasSingleRequest = presentedRef.current === "request"
       presentedRef.current = null
-      if (!wasConnection && navigation.canGoBack()) navigation.goBack()
+      if (wasSingleRequest && navigation.canGoBack()) navigation.goBack()
     }
-  }, [active, visible, navigation])
+  }, [active, visible, navigation, coordinator])
 
   return null
 }

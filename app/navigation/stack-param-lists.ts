@@ -70,6 +70,9 @@ export type RootStackParamList = {
   // the coordinator has an active entry, and popped when it resolves.
   nostrConnectionApproval: undefined
   nostrRequestApproval: undefined
+  // "Review all" burst surface (B5): presented instead of paging one-by-one when a client has
+  // many (>= REVIEW_ALL_THRESHOLD) pending requests queued.
+  nostrReviewAll: undefined
   addressScreen: undefined
   defaultWallet: undefined
   theme: undefined

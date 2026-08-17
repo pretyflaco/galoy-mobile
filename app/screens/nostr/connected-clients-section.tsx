@@ -117,7 +117,7 @@ export const NostrConnectedClientsSection: React.FC<Props> = ({
                 mirrors Amber's Applications list so identical names are still distinguishable. */}
             <Avatar
               rounded
-              size={40}
+              size={44}
               {...(client.image
                 ? { source: { uri: client.image } }
                 : { title: (client.name || "?").charAt(0).toUpperCase() })}

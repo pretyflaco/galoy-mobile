@@ -155,21 +155,37 @@ export const NostrConnectedClients: React.FC = () => {
   const runtime = useNostrRuntime()
   const [clients, setClients] = useState<ConnectedClient[]>([])
 
-  const reload = useCallback(() => {
-    const records = runtime?.runtime.gateDeps.connectionStore.list() ?? []
+  const reload = useCallback(async () => {
+    const records = (await runtime?.runtime.listConnections()) ?? []
     setClients(
       records.map((r) => ({
         clientPubkey: r.clientPubkey,
-        name: r.clientPubkey.slice(0, 12),
+        name: r.metadata.name ?? r.clientPubkey.slice(0, 12),
+        relays: r.relays,
+        image: r.metadata.image,
+        createdAt: r.createdAt,
       })),
     )
   }, [runtime])
 
-  useEffect(() => reload(), [reload])
+  useEffect(() => {
+    reload().catch(() => undefined)
+  }, [reload])
+
+  const handleDisconnect = useCallback(
+    (clientPubkey: string) => {
+      // Actually disconnect (atomic delete + void grant + tombstone), THEN refresh the list.
+      runtime?.runtime
+        .disconnect(clientPubkey)
+        .then(() => reload())
+        .catch(() => undefined)
+    },
+    [runtime, reload],
+  )
 
   return (
     <Screen>
-      <NostrConnectedClientsSection clients={clients} onDisconnect={() => reload()} />
+      <NostrConnectedClientsSection clients={clients} onDisconnect={handleDisconnect} />
     </Screen>
   )
 }

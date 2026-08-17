@@ -13722,6 +13722,10 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
+		 * w​a​n​t​s​ ​y​o​u​r​ ​a​p​p​r​o​v​a​l
+		 */
+		wantsApproval: string
+		/**
 		 * T​h​i​s​ ​a​p​p​ ​w​a​n​t​s​ ​t​o​ ​s​i​g​n​ ​y​o​u​ ​i​n​ ​a​n​d​ ​s​i​g​n​ ​e​v​e​n​t​s​ ​o​n​ ​y​o​u​r​ ​b​e​h​a​l​f​.
 		 */
 		body: string
@@ -27329,6 +27333,10 @@ export type TranslationFunctions = {
 		 * Connection request
 		 */
 		title: () => LocalizedString
+		/**
+		 * wants your approval
+		 */
+		wantsApproval: () => LocalizedString
 		/**
 		 * This app wants to sign you in and sign events on your behalf.
 		 */

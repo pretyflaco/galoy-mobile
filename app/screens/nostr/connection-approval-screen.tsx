@@ -1,7 +1,7 @@
 import React from "react"
 import { View } from "react-native"
 
-import { Text, makeStyles } from "@rn-vui/themed"
+import { Avatar, Text, makeStyles } from "@rn-vui/themed"
 
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
@@ -11,6 +11,8 @@ import { testProps } from "@app/utils/testProps"
 type Props = {
   /** The connecting client's name/identity (from the nostrconnect:// URI metadata). */
   clientName?: string
+  /** Optional avatar image URL from the connection metadata (NIP-46 `image`). */
+  clientImage?: string
   onApprove: () => void
   onReject: () => void
 }
@@ -27,6 +29,7 @@ type Props = {
  */
 export const NostrConnectionApprovalScreen: React.FC<Props> = ({
   clientName,
+  clientImage,
   onApprove,
   onReject,
 }) => {
@@ -45,9 +48,28 @@ export const NostrConnectionApprovalScreen: React.FC<Props> = ({
       <Text type="h2" style={styles.title}>
         {T.title()}
       </Text>
-      <Text type="p1" style={styles.clientName}>
-        {client}
-      </Text>
+
+      {/* App identity row: avatar (client `image`, or an initial-in-circle fallback) + name +
+          a de-emphasized "wants your approval" line — mirrors the approval mock's header. */}
+      <View style={styles.appRow}>
+        <Avatar
+          rounded
+          size={44}
+          {...(clientImage
+            ? { source: { uri: clientImage } }
+            : { title: (client || "?").charAt(0).toUpperCase() })}
+          containerStyle={styles.avatar}
+        />
+        <View style={styles.appMeta}>
+          <Text type="p1" style={styles.clientName}>
+            {client}
+          </Text>
+          <Text type="p3" style={styles.wantsApproval}>
+            {T.wantsApproval()}
+          </Text>
+        </View>
+      </View>
+
       <Text type="p2" style={styles.body}>
         {T.body()}
       </Text>
@@ -74,9 +96,24 @@ const useStyles = makeStyles(({ colors }) => ({
   title: {
     color: colors.black,
   },
+  appRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 12,
+  },
+  avatar: {
+    backgroundColor: colors.grey4,
+  },
+  appMeta: {
+    flexShrink: 1,
+    rowGap: 2,
+  },
   clientName: {
     fontWeight: "600",
     color: colors.black,
+  },
+  wantsApproval: {
+    color: colors.grey2,
   },
   body: {
     color: colors.grey1,

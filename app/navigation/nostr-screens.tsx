@@ -202,6 +202,7 @@ export const NostrConnectionApproval: React.FC = () => {
   const coordinator = runtime?.coordinator
   const { active, approve, reject } = useApprovalCoordinator(coordinator ?? ({} as never))
   const clientName = active?.kind === "connection" ? active.metadata.name : undefined
+  const clientImage = active?.kind === "connection" ? active.metadata.image : undefined
 
   // On approve, resolve the coordinator (the host pops this route) and land the user on the
   // Connected clients screen so they see the app they just connected — rather than popping back
@@ -215,6 +216,7 @@ export const NostrConnectionApproval: React.FC = () => {
     <Screen>
       <NostrConnectionApprovalScreen
         clientName={clientName}
+        clientImage={clientImage}
         onApprove={onApprove}
         onReject={reject}
       />

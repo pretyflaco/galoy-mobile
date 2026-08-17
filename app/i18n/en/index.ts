@@ -4319,6 +4319,7 @@ const en: BaseTranslation = {
   },
   NostrConnectionApprovalScreen: {
     title: "Connection request",
+    wantsApproval: "wants your approval",
     body: "This app wants to sign you in and sign events on your behalf.",
     approve: "Approve",
     reject: "Reject",

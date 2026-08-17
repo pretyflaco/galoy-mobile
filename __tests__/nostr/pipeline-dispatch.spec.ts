@@ -22,7 +22,7 @@ const clientSk = new Uint8Array(32).fill(5)
 const clientPub = bytesToHex(schnorr.getPublicKey(clientSk))
 const transportSk = new Uint8Array(32).fill(13)
 const transportPub = bytesToHex(schnorr.getPublicKey(transportSk))
-const USER_NPUB = "npub1useruseruseruseruseruseruseruseruseruseruseruser"
+const USER_PUBKEY_HEX = "c".repeat(64) // NIP-46 get_public_key wire format (hex, not npub)
 
 const memoryStorage = (): LedgerStorage => {
   const map = new Map<string, unknown>()
@@ -54,10 +54,10 @@ const decryptSent = (evt: Event) =>
 describe("wired dispatch: methods + ledger + respond-in-kind (AC #3/#4)", () => {
   it("answers a fresh request once, sends it in-kind, and records it", async () => {
     const send = jest.fn()
-    const getPublicKey = jest.fn(async () => USER_NPUB)
+    const getPublicKeyHex = jest.fn(async () => USER_PUBKEY_HEX)
     const dispatcher = createRequestDispatcher({
       ledger: createRequestLedger(memoryStorage()),
-      methodPorts: { getPublicKey },
+      methodPorts: { getPublicKeyHex },
       transportSk,
       send,
     })
@@ -72,10 +72,10 @@ describe("wired dispatch: methods + ledger + respond-in-kind (AC #3/#4)", () => 
 
   it("re-sends the STORED response on redelivery of an answered request (no re-exec)", async () => {
     const send = jest.fn()
-    const getPublicKey = jest.fn(async () => USER_NPUB)
+    const getPublicKeyHex = jest.fn(async () => USER_PUBKEY_HEX)
     const dispatcher = createRequestDispatcher({
       ledger: createRequestLedger(memoryStorage()),
-      methodPorts: { getPublicKey },
+      methodPorts: { getPublicKeyHex },
       transportSk,
       send,
     })
@@ -89,11 +89,11 @@ describe("wired dispatch: methods + ledger + respond-in-kind (AC #3/#4)", () => 
     await dispatcher.dispatch(gpk("r2"), requestEvent()) // first: executes + answers
     await dispatcher.dispatch(gpk("r2"), requestEvent()) // redelivery: replay stored
 
-    expect(getPublicKey).toHaveBeenCalledTimes(1) // handler executed ONCE
+    expect(getPublicKeyHex).toHaveBeenCalledTimes(1) // handler executed ONCE
     expect(send).toHaveBeenCalledTimes(2) // but the response was re-sent both times
     expect(decryptSent(send.mock.calls[1][0])).toMatchObject({
       id: "r2",
-      result: USER_NPUB,
+      result: USER_PUBKEY_HEX,
     })
   })
 })

@@ -3,7 +3,10 @@
  *
  * Handles the methods that are answerable at the transport layer without an approval surface:
  *  - `ping`           → `result: "pong"`.
- *  - `get_public_key` → `result: <user npub>` via the NostrSigner seam (AD-4).
+ *  - `get_public_key` → `result: <user pubkey HEX>` (NIP-46 wire format — 64-char x-only hex,
+ *                       NOT npub; every NIP-46 client, incl. the btcpay-nostr-login plugin,
+ *                       rejects a bech32 npub here). The seam's display `getPublicKey()` returns
+ *                       npub; the hex is supplied via the `getPublicKeyHex` port (AD-4).
  *  - `connect`        → `result: "ack"` (method-level acknowledgement; the full
  *                       nostrconnect:// handshake — secret echo, approval, ConnectionStore —
  *                       is owned by ConnectFlow in Story 3.3).
@@ -21,8 +24,12 @@ import type { Nip46Request, Nip46Response } from "./nip46-codec"
 
 /** Ports the standard-method dispatcher needs (the seam's public-key read, AD-4). */
 export interface MethodPorts {
-  /** Returns the user npub (bech32) via the NostrSigner seam. */
-  getPublicKey: (signal?: AbortSignal) => Promise<string>
+  /**
+   * Returns the user's x-only public key as lowercase HEX (64 chars) — the NIP-46 wire format
+   * for get_public_key. NOT npub: a bech32 npub is rejected by NIP-46 clients (the plugin
+   * requires `result.Length == 64 && all hex`). The runtime derives this from the seam.
+   */
+  getPublicKeyHex: (signal?: AbortSignal) => Promise<string>
 }
 
 /** Methods handled here at the transport layer (no approval surface required). */
@@ -42,7 +49,7 @@ export const dispatchNip46Method = async (
     case "ping":
       return { id, result: "pong" }
     case "get_public_key":
-      return { id, result: await ports.getPublicKey() }
+      return { id, result: await ports.getPublicKeyHex() }
     case "connect":
       return { id, result: "ack" }
     default:

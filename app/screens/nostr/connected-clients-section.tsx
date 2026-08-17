@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { View } from "react-native"
 
-import { ListItem, Text, makeStyles } from "@rn-vui/themed"
+import { Avatar, ListItem, Text, makeStyles } from "@rn-vui/themed"
 
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
@@ -12,6 +12,25 @@ export interface ConnectedClient {
   clientPubkey: string
   /** The app identity (name) from the connection metadata. */
   name: string
+  /** The relays this client is reached on (from the nostrconnect:// URI). */
+  relays?: string[]
+  /** Optional avatar image URL from the connection metadata (NIP-46 `image`). */
+  image?: string
+  /** Unix seconds the connection was created. */
+  createdAt?: number
+}
+
+/** first8:last8 of the client pubkey — the Amber-style disambiguating fingerprint. */
+const pubkeyPair = (pubkey: string): string =>
+  pubkey.length >= 16 ? `${pubkey.slice(0, 8)}:${pubkey.slice(-8)}` : pubkey
+
+/** "HH:MM - DD Mon" (Amber-style connected-at). */
+const formatConnectedAt = (createdAt?: number): string => {
+  if (!createdAt) return ""
+  const d = new Date(createdAt * 1000)
+  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  const day = d.toLocaleDateString([], { day: "2-digit", month: "short" })
+  return `${time} - ${day}`
 }
 
 type Props = {
@@ -94,8 +113,33 @@ export const NostrConnectedClientsSection: React.FC<Props> = ({
             accessibilityLabel={T.rowA11y({ client: client.name })}
             testID={`nostr-client-row-${client.clientPubkey}`}
           >
+            {/* Avatar: the client's image (NIP-46 `image`) or an initial-in-circle fallback —
+                mirrors Amber's Applications list so identical names are still distinguishable. */}
+            <Avatar
+              rounded
+              size={40}
+              {...(client.image
+                ? { source: { uri: client.image } }
+                : { title: (client.name || "?").charAt(0).toUpperCase() })}
+              containerStyle={styles.avatar}
+            />
             <ListItem.Content>
-              <ListItem.Title>{client.name}</ListItem.Title>
+              <ListItem.Title style={styles.rowName}>{client.name}</ListItem.Title>
+              {client.relays && client.relays.length > 0 && (
+                <ListItem.Subtitle
+                  style={styles.rowMeta}
+                  testID={`nostr-client-relays-${client.clientPubkey}`}
+                >
+                  {client.relays.map((r) => r.replace(/^wss:\/\//, "")).join(", ")}
+                </ListItem.Subtitle>
+              )}
+              <ListItem.Subtitle
+                style={styles.rowMeta}
+                testID={`nostr-client-fingerprint-${client.clientPubkey}`}
+              >
+                {pubkeyPair(client.clientPubkey)}
+                {client.createdAt ? `   ${formatConnectedAt(client.createdAt)}` : ""}
+              </ListItem.Subtitle>
             </ListItem.Content>
             <GaloySecondaryButton
               title={T.disconnect()}
@@ -118,6 +162,17 @@ const useStyles = makeStyles(({ colors }) => ({
   },
   empty: {
     color: colors.grey2,
+  },
+  avatar: {
+    backgroundColor: colors.grey4,
+  },
+  rowName: {
+    color: colors.black,
+    fontWeight: "600",
+  },
+  rowMeta: {
+    color: colors.grey2,
+    fontSize: 12,
   },
   warningCard: {
     padding: 20,

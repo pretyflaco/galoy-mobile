@@ -61,9 +61,7 @@ describe("ApprovalSurfaceHost (A6 fix #1 — full-screen route, not overlay)", (
       clientPubkey: "c1",
       metadata: { name: "BTCPay Server" },
     })
-    await waitFor(() =>
-      expect(navigate).toHaveBeenCalledWith("nostrConnectionApproval"),
-    )
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrConnectionApproval"))
   })
 
   it("navigates to the REQUEST approval route on a request entry", async () => {
@@ -78,19 +76,39 @@ describe("ApprovalSurfaceHost (A6 fix #1 — full-screen route, not overlay)", (
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrRequestApproval"))
   })
 
-  it("pops the route when the active entry resolves", async () => {
+  it("pops a REQUEST route when the active entry resolves (requests have no landing screen)", async () => {
     renderHost()
     const decision = testCoordinator.enqueue({
-      id: "c3",
-      kind: "connection",
+      id: "r3",
+      kind: "request",
       clientPubkey: "c3",
-      metadata: {},
+      method: "nip44_decrypt",
+      humanAction: "decrypt a message",
     })
-    await waitFor(() => expect(navigate).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrRequestApproval"))
 
-    // Resolve the active entry → the host should pop the presented route.
     testCoordinator.resolveActive({ approved: true })
     await decision
     await waitFor(() => expect(goBack).toHaveBeenCalledTimes(1))
+  })
+
+  it("does NOT auto-pop a CONNECTION route on resolve (the route self-navigates)", async () => {
+    renderHost()
+    const decision = testCoordinator.enqueue({
+      id: "c4",
+      kind: "connection",
+      clientPubkey: "c4",
+      metadata: {},
+    })
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrConnectionApproval"))
+
+    // Resolving a connection must NOT trigger a host goBack — the approval route drives its own
+    // navigation (approve → Connected clients, reject → back), avoiding a double-navigate.
+    testCoordinator.resolveActive({ approved: true })
+    await decision
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0)
+    })
+    expect(goBack).not.toHaveBeenCalled()
   })
 })

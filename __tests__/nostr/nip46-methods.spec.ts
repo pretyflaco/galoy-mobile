@@ -1,10 +1,11 @@
 /**
  * Story 3.2 — standard NIP-46 method handlers + unknown-method spec error (AC #4, AD-16).
  *
- * Handles connect / get_public_key / ping per spec; get_public_key returns the user npub via
- * the seam (AD-4). Any unknown method — including switch_relays in v1 — returns a
- * spec-conformant error reply using the NIP-46 `error` field. Method names and request ids
- * are taken verbatim from the message.
+ * Handles connect / get_public_key / ping per spec; get_public_key returns the user's x-only
+ * pubkey as HEX (NIP-46 wire format — NOT npub; a bech32 npub is rejected by NIP-46 clients such
+ * as the btcpay-nostr-login plugin, which requires result.Length == 64 && all hex). Any unknown
+ * method — including switch_relays in v1 — returns a spec error reply. Method names and request
+ * ids are taken verbatim from the message.
  *
  * (sign_event, nip04_/nip44_ land in Stories 3.5/3.6; logout = client disconnect, AD-8.)
  */
@@ -14,10 +15,11 @@ import {
 } from "../../app/nostr/transport/nip46-methods"
 import type { Nip46Request } from "../../app/nostr/transport/nip46-codec"
 
-const USER_NPUB = "npub1exampleexampleexampleexampleexampleexampleexampleex"
+// A valid 64-char lowercase-hex x-only pubkey (the NIP-46 get_public_key wire format).
+const USER_PUBKEY_HEX = "a".repeat(64)
 
 const makePorts = (over: Partial<MethodPorts> = {}): MethodPorts => ({
-  getPublicKey: jest.fn(async () => USER_NPUB),
+  getPublicKeyHex: jest.fn(async () => USER_PUBKEY_HEX),
   ...over,
 })
 
@@ -33,14 +35,17 @@ describe("standard methods (AC #4)", () => {
     expect(res).toEqual({ id: "VERBATIM-1", result: "pong" })
   })
 
-  it("get_public_key → the user npub via the seam (AD-4)", async () => {
-    const getPublicKey = jest.fn(async () => USER_NPUB)
+  it("get_public_key → the user pubkey as 64-char HEX, not npub (NIP-46 interop)", async () => {
+    const getPublicKeyHex = jest.fn(async () => USER_PUBKEY_HEX)
     const res = await dispatchNip46Method(
       req("get_public_key"),
-      makePorts({ getPublicKey }),
+      makePorts({ getPublicKeyHex }),
     )
-    expect(res).toEqual({ id: "req-1", result: USER_NPUB })
-    expect(getPublicKey).toHaveBeenCalledTimes(1)
+    expect(res).toEqual({ id: "req-1", result: USER_PUBKEY_HEX })
+    expect(getPublicKeyHex).toHaveBeenCalledTimes(1)
+    // Interop: the plugin requires result.Length == 64 && all hex — a bech32 npub would fail.
+    expect(res.result).toMatch(/^[0-9a-f]{64}$/)
+    expect(res.result?.startsWith("npub")).toBe(false)
   })
 
   it("connect → spec ack result", async () => {
@@ -66,8 +71,8 @@ describe("unknown method → spec error reply (AC #4)", () => {
   })
 
   it("does not call the seam for an unknown method", async () => {
-    const getPublicKey = jest.fn(async () => USER_NPUB)
-    await dispatchNip46Method(req("switch_relays"), makePorts({ getPublicKey }))
-    expect(getPublicKey).not.toHaveBeenCalled()
+    const getPublicKeyHex = jest.fn(async () => USER_PUBKEY_HEX)
+    await dispatchNip46Method(req("switch_relays"), makePorts({ getPublicKeyHex }))
+    expect(getPublicKeyHex).not.toHaveBeenCalled()
   })
 })

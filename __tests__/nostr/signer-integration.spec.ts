@@ -120,10 +120,20 @@ describe("end-to-end signer integration (A5)", () => {
     // The connection raised exactly one approval surface and was approved.
     expect(presentedKinds).toEqual(["surface"])
 
-    // 2. A sign_event for the kind-22242 auth challenge arrives over the (mocked) relay.
+    // 2. The plugin's EXACT sign_event challenge arrives: a kind-22242 event carrying the
+    //    ["challenge", <hex>] tag (which the plugin later validates is preserved in the signature).
     presentedKinds = []
-    const challenge = JSON.stringify({ kind: 22242, content: "", tags: [] })
-    await runtime.handleInbound(makeRequestEvent("sign_event", [challenge], "req-signin"))
+    const challengeHex = "deadbeef".repeat(4)
+    const challengeEvent = JSON.stringify({
+      kind: 22242,
+      // eslint-disable-next-line camelcase
+      created_at: Math.floor(Date.now() / 1000),
+      content: `BTCPay Server sign-in challenge: ${challengeHex}`,
+      tags: [["challenge", challengeHex]],
+    })
+    await runtime.handleInbound(
+      makeRequestEvent("sign_event", [challengeEvent], "req-signin"),
+    )
 
     // The connect-time grant (sign_event:22242) pre-approves it — NO second surface.
     expect(presentedKinds).toEqual([])
@@ -143,6 +153,8 @@ describe("end-to-end signer integration (A5)", () => {
     expect(signed.kind).toBe(22242)
     expect(signed.pubkey).toBe(userPubHex)
     expect(verifyEvent(signed)).toBe(true)
+    // The challenge tag SURVIVES normalization (the plugin rejects a signed event without it).
+    expect(signed.tags).toContainEqual(["challenge", challengeHex])
     // It is the USER's signature (verifiable against the user npub).
     expect(nip19.decode(userNpub).data).toBe(signed.pubkey)
   })
@@ -161,7 +173,9 @@ describe("end-to-end signer integration (A5)", () => {
 
     await runtime.handleConnectUri(PLUGIN_URI)
     // Let the fire-and-forget ack send flush.
-    await new Promise<void>((resolve) => setTimeout(resolve, 0))
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0)
+    })
 
     const convKey = nip44.getConversationKey(clientSk, transportPubHex)
     const acks = fake.published
@@ -171,7 +185,7 @@ describe("end-to-end signer integration (A5)", () => {
     expect(acks.length).toBeGreaterThan(0) // the plugin accepts result === secret
   })
 
-  it("get_public_key returns the user npub over the transport (no approval surface)", async () => {
+  it("get_public_key returns the user pubkey (hex) over the transport (no approval surface)", async () => {
     const fake = makeFakePool()
     const runtime = createSignerRuntime({
       readNsecHex: async () => userSkHex,
@@ -188,12 +202,15 @@ describe("end-to-end signer integration (A5)", () => {
     // A response event was published back (encrypted); its existence proves the transport path.
     expect(fake.published.length).toBeGreaterThan(0)
     // Find the get_public_key reply (id req-pk) among the published events (skip the connect-ack).
+    // Decrypt and confirm it carries the user pubkey as 64-char HEX (NIP-46 wire format — the
+    // btcpay-nostr-login plugin rejects a bech32 npub).
     const convKey = nip44.getConversationKey(clientSk, transportPubHex)
     const decoded = fake.published
       .filter((e) => e.kind === NIP46_KIND)
       .map((e) => JSON.parse(nip44.decrypt((e as { content: string }).content, convKey)))
       .find((m) => m.id === "req-pk")
     expect(decoded).toBeTruthy()
-    expect(decoded.result).toBe(userNpub)
+    expect(decoded.result).toBe(userPubHex)
+    expect(decoded.result).toMatch(/^[0-9a-f]{64}$/)
   })
 })

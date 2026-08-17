@@ -24,7 +24,10 @@
  * Keychain services (AD-4): the IDENTITY nsec drives the NostrSigner seam; the DEVICE-LOCAL
  * transport secret drives NIP-46 transport decode/encode. They are distinct keys.
  */
+import { schnorr } from "@noble/curves/secp256k1.js"
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
 import { verifyEvent, type Event } from "nostr-tools/pure"
+import * as nip19 from "nostr-tools/nip19"
 
 import {
   initApprovalCoordinator,
@@ -228,6 +231,13 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     )
   }
 
+  // The user's x-only pubkey as HEX (NIP-46 get_public_key wire format). The seam returns npub
+  // for display; decode it to hex here — a bech32 npub is rejected by NIP-46 clients.
+  const getUserPubkeyHex = async (): Promise<string> => {
+    const decoded = nip19.decode(await signer.getPublicKey())
+    return decoded.data as string
+  }
+
   // -- transport dispatcher (Story 3.2): ping / get_public_key / connect + ledger + respond-in-kind.
   const dispatchTransport = async (
     decoded: DecodedRequest,
@@ -236,7 +246,7 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   ): Promise<void> => {
     const dispatcher = createRequestDispatcher({
       ledger,
-      methodPorts: { getPublicKey: () => signer.getPublicKey() },
+      methodPorts: { getPublicKeyHex: getUserPubkeyHex },
       transportSk,
       send: publish,
     })
@@ -327,18 +337,27 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   const onInbound = (e: unknown): void => {
     fireAndForget(() => pipeline.handleInbound(e as Event), log)
   }
+  // The device-local transport x-only pubkey (hex), derived from the cached transport secret.
+  // Used to scope the relay subscription to events ADDRESSED to us (#p filter).
+  const transportPubkeyHex = (): string | null =>
+    transportSkCache === null
+      ? null
+      : bytesToHex(schnorr.getPublicKey(hexToBytes(transportSkCache)))
+
   // (Re)subscribe the pool to the CURRENT relay snapshot. Closes any prior subscription first so
   // a newly-connected client's relays (added on connect) are actually listened to — otherwise the
-  // follow-up get_public_key / sign_event after the connect-ack would never be received.
+  // follow-up get_public_key / sign_event after the connect-ack would never be received. The
+  // filter is scoped with `#p: [transportPubkey]` so we only ingest kind-24133 events ADDRESSED
+  // to us — not all NIP-46 traffic on busy public relays (nos.lol / relay.primal.net).
   const resubscribe = (): void => {
     subscription?.close()
     subscription = null
     if (relaySnapshot.length === 0) return
-    subscription = pool.subscribe(
-      relaySnapshot,
-      { kinds: [NIP46_KIND] },
-      { onevent: onInbound },
-    )
+    const pubkey = transportPubkeyHex()
+    const filter: Record<string, unknown> = pubkey
+      ? { "kinds": [NIP46_KIND], "#p": [pubkey] }
+      : { kinds: [NIP46_KIND] }
+    subscription = pool.subscribe(relaySnapshot, filter, { onevent: onInbound })
   }
   const activate = async (): Promise<void> => {
     await primeTransportSk()

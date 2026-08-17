@@ -48,10 +48,14 @@ const ApprovalNavigator: React.FC<{
       return
     }
 
-    // Entry resolved (or hidden) while a route is up → pop it.
+    // Entry resolved (or hidden) while a route is up → pop it. EXCEPTION: connection approvals
+    // self-navigate on approve (the route sends the user to Connected clients), so the host must
+    // NOT also pop — that would double-navigate. Only auto-pop request approvals, which have no
+    // natural landing screen.
     if (!shouldShow && presentedRef.current !== null) {
+      const wasConnection = presentedRef.current === "connection"
       presentedRef.current = null
-      if (navigation.canGoBack()) navigation.goBack()
+      if (!wasConnection && navigation.canGoBack()) navigation.goBack()
     }
   }, [active, visible, navigation])
 

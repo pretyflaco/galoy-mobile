@@ -40,6 +40,35 @@ describe("connected-clients list (AC #1)", () => {
     expect(getByTestId(`nostr-client-row-${clients[1].clientPubkey}`)).toBeTruthy()
   })
 
+  it("shows an Amber-style fingerprint + relays so identical names are distinguishable", async () => {
+    // Two clients with the SAME name but different pubkeys/relays (the two-BTCPay case).
+    const pkA = "1".repeat(63) + "a"
+    const pkB = "2".repeat(63) + "b"
+    const same = [
+      {
+        clientPubkey: pkA,
+        name: "BTCPay Server",
+        relays: ["wss://nos.lol", "wss://relay.primal.net"],
+      },
+      { clientPubkey: pkB, name: "BTCPay Server", relays: ["wss://relay.damus.io"] },
+    ]
+    const { getByTestId } = renderSection({ clients: same })
+    await flushEffects()
+
+    // Each row shows a distinct pubkey fingerprint (first8:last8).
+    const fpA = getByTestId(`nostr-client-fingerprint-${pkA}`)
+    const fpB = getByTestId(`nostr-client-fingerprint-${pkB}`)
+    expect(fpA).toBeTruthy()
+    expect(fpB).toBeTruthy()
+    expect(fpA.props.children).not.toEqual(fpB.props.children)
+
+    // Relays are shown (wss:// stripped), distinct per row.
+    expect(getByTestId(`nostr-client-relays-${pkA}`).props.children).toContain("nos.lol")
+    expect(getByTestId(`nostr-client-relays-${pkB}`).props.children).toContain(
+      "relay.damus.io",
+    )
+  })
+
   it("shows the empty state when there are no connected clients", async () => {
     const { getByTestId, queryByTestId } = renderSection({ clients: [] })
     await flushEffects()

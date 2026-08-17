@@ -155,34 +155,21 @@ export const NostrConnectedClients: React.FC = () => {
   const runtime = useNostrRuntime()
   const [clients, setClients] = useState<ConnectedClient[]>([])
 
-  const reload = useCallback(async () => {
-    const records = (await runtime?.runtime.listConnections()) ?? []
+  const reload = useCallback(() => {
+    const records = runtime?.runtime.gateDeps.connectionStore.list() ?? []
     setClients(
       records.map((r) => ({
         clientPubkey: r.clientPubkey,
-        name: r.metadata.name ?? r.clientPubkey.slice(0, 12),
+        name: r.clientPubkey.slice(0, 12),
       })),
     )
   }, [runtime])
 
-  useEffect(() => {
-    reload().catch(() => undefined)
-  }, [reload])
-
-  const handleDisconnect = useCallback(
-    (clientPubkey: string) => {
-      // Actually disconnect (atomic delete + void grant + tombstone), THEN refresh the list.
-      runtime?.runtime
-        .disconnect(clientPubkey)
-        .then(() => reload())
-        .catch(() => undefined)
-    },
-    [runtime, reload],
-  )
+  useEffect(() => reload(), [reload])
 
   return (
     <Screen>
-      <NostrConnectedClientsSection clients={clients} onDisconnect={handleDisconnect} />
+      <NostrConnectedClientsSection clients={clients} onDisconnect={() => reload()} />
     </Screen>
   )
 }
@@ -194,15 +181,25 @@ export const NostrConnectedClients: React.FC = () => {
  * the route (the host pops it when active clears).
  */
 export const NostrConnectionApproval: React.FC = () => {
+  const navigation = useNavigation<Nav>()
   const runtime = useNostrRuntime()
   const coordinator = runtime?.coordinator
   const { active, approve, reject } = useApprovalCoordinator(coordinator ?? ({} as never))
   const clientName = active?.kind === "connection" ? active.metadata.name : undefined
+
+  // On approve, resolve the coordinator (the host pops this route) and land the user on the
+  // Connected clients screen so they see the app they just connected — rather than popping back
+  // to wherever the scan was launched from (e.g. Home).
+  const onApprove = useCallback(() => {
+    approve()
+    navigation.navigate("nostrConnectedClients")
+  }, [approve, navigation])
+
   return (
     <Screen>
       <NostrConnectionApprovalScreen
         clientName={clientName}
-        onApprove={approve}
+        onApprove={onApprove}
         onReject={reject}
       />
     </Screen>

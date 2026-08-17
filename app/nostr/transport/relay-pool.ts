@@ -26,6 +26,15 @@ export interface RelayPool {
     params: Record<string, unknown>,
   ): { close: (reason?: string) => void }
   publish(relays: string[], event: unknown): Promise<string>[]
+  /**
+   * Open (or reuse) a connection to a single relay, resolving once the socket is connected.
+   * Mirrors Amber's `client.connect()` before a connect-response publish: a NIP-46 response
+   * (ack / get_public_key / sign_event) is an EPHEMERAL event — if it is published to a relay
+   * whose socket is not yet open, the relay drops it and the client times out. Warming the
+   * socket first (and registering the listening REQ before the ack) makes single-shot delivery
+   * reliable on public relays (nos.lol / relay.primal.net).
+   */
+  ensureRelay(url: string, params?: { connectionTimeout?: number }): Promise<unknown>
   close(relays: string[]): void
   destroy(): void
 }

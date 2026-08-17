@@ -28,6 +28,7 @@ import {
 const makeFakePool = () => ({
   subscribe: jest.fn(() => ({ close: jest.fn() })),
   publish: jest.fn(() => [Promise.resolve("ok")]),
+  ensureRelay: jest.fn(() => Promise.resolve({})),
   close: jest.fn(),
   destroy: jest.fn(),
 })

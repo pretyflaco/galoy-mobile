@@ -46,7 +46,11 @@ import { createLocalNsecSigner } from "./core/local-nsec-signer"
 import { signerLogFields } from "./core/redact"
 import { createRequestLedger } from "./core/request-ledger"
 import type { ConnectionRecordLike, SignerGateDeps } from "./signer-gate"
-import { createConnectFlow, type ConnectFlow } from "./transport/connect-flow"
+import {
+  createConnectFlow,
+  parseNostrConnectUri,
+  type ConnectFlow,
+} from "./transport/connect-flow"
 import { createRequestDispatcher } from "./transport/dispatcher"
 import {
   createEncryptDecryptFlow,
@@ -125,6 +129,35 @@ const fireAndForget = (
   work().catch(() => onError({ dropped: "background-task-failed" }))
 }
 
+/**
+ * Retry an async boolean operation with capped exponential backoff, mirroring Amber's
+ * `retryWithBackoff` (BunkerRequestUtils.kt): 5 attempts, 200ms → 3.2s ceiling. Returns true on
+ * the first success, false if every attempt fails. A NIP-46 response is a single-shot ephemeral
+ * event; without this a transient public-relay drop silently loses the reply and the client
+ * (BTCPay plugin) times out with no logged reason.
+ */
+export const retryWithBackoff = async (
+  block: () => Promise<boolean>,
+  options: { maxRetries?: number; initialDelayMs?: number; maxDelayMs?: number } = {},
+  sleep: (ms: number) => Promise<void> = (ms) =>
+    new Promise((resolve) => {
+      setTimeout(resolve, ms)
+    }),
+): Promise<boolean> => {
+  const maxRetries = options.maxRetries ?? 5
+  const initialDelayMs = options.initialDelayMs ?? 200
+  const maxDelayMs = options.maxDelayMs ?? 3_200
+  let delay = initialDelayMs
+  for (let attempt = 0; attempt < maxRetries; attempt += 1) {
+    if (await block()) return true
+    if (attempt < maxRetries - 1) {
+      await sleep(delay)
+      delay = Math.min(delay * 2, maxDelayMs)
+    }
+  }
+  return false
+}
+
 export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   const log = deps.log ?? ((): void => undefined)
   const store: ConnectionStore = createConnectionStore(deps.storage)
@@ -154,24 +187,63 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     recordSnapshot = toRecordLike(records)
     relaySnapshot = Array.from(new Set(records.flatMap((r) => r.relays)))
   }
-  const publish = (event: Event): void => {
-    if (relaySnapshot.length > 0) pool.publish(relaySnapshot, event)
+  // Warm every relay socket before a single-shot publish (Amber's `client.connect()` before a
+  // connect-response). ensureRelay resolves once connected; failures are swallowed (the publish
+  // retry below still attempts delivery and confirms via the OK channel).
+  const ensureRelays = async (relays: string[]): Promise<void> => {
+    await Promise.all(
+      relays.map((url) =>
+        pool.ensureRelay(url, { connectionTimeout: 5000 }).catch(() => undefined),
+      ),
+    )
+  }
+
+  // Confirmed + retried publish (AD-10 / Amber parity). `encode` is a THUNK so each retry mints a
+  // fresh event (new created_at → new id); a stale/duplicate ephemeral event may be dropped by a
+  // relay that already saw it. `pool.publish` returns one Promise<string> per relay that RESOLVES
+  // on the relay's OK and rejects/times out otherwise; `Promise.any` succeeds on the first OK.
+  // Warms sockets first so the very first attempt lands on a connected relay.
+  const publishConfirmed = async (
+    relays: string[],
+    encode: () => Event,
+  ): Promise<boolean> => {
+    if (relays.length === 0) return false
+    await ensureRelays(relays)
+    return retryWithBackoff(async () => {
+      try {
+        await Promise.any(pool.publish(relays, encode()))
+        return true
+      } catch {
+        return false // every relay rejected/timed out this attempt
+      }
+    })
+  }
+
+  // Fire-and-forget wrapper for the response paths (kept non-blocking to the pipeline), but now
+  // backed by confirmed+retried delivery. Logs a drop only after all retries fail.
+  const publishResponse = (relays: string[], encode: () => Event): void => {
+    fireAndForget(async () => {
+      const ok = await publishConfirmed(relays, encode)
+      if (!ok) log({ dropped: "publish-unconfirmed" })
+    }, log)
   }
 
   // Encode a NIP-46 response in-kind (AD-10) with the device-local transport secret and publish
   // it back to the client. Used by the approval-gated flows (sign_event, nip04/nip44), which
-  // otherwise compute a result the client would never receive.
+  // otherwise compute a result the client would never receive. Confirmed + retried (Amber parity)
+  // so a transient relay drop does not silently lose the reply.
   const sendResponse = async (
     response: Nip46Response,
     decoded: DecodedRequest,
   ): Promise<void> => {
     await primeTransportSk()
     if (transportSkCache === null) return
-    publish(
+    const sk = transportSkCache
+    publishResponse(relaySnapshot, () =>
       encodeResponse(response, {
         scheme: decoded.scheme,
         clientPubkey: decoded.clientPubkey,
-        transportSk: transportSkCache,
+        transportSk: sk,
       }),
     )
   }
@@ -248,7 +320,10 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
       ledger,
       methodPorts: { getPublicKeyHex: getUserPubkeyHex },
       transportSk,
-      send: publish,
+      // Confirmed + retried delivery of the transport response (ping / get_public_key). The
+      // dispatcher hands us the already-encoded event; publish it to the client's relays and
+      // confirm via the relay OK (Amber parity) so get_public_key is not silently dropped.
+      send: (responseEvent) => publishResponse(relaySnapshot, () => responseEvent),
     })
     await dispatcher.dispatch(decoded, event)
   }
@@ -294,15 +369,16 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     log,
   })
 
-  // Publish an encoded NIP-46 event to a SPECIFIC relay set (used by the connect handshake,
-  // whose target relays come from the URI and are not yet in the active snapshot).
-  const publishTo = (relays: string[], event: Event): void => {
-    if (relays.length > 0) pool.publish(relays, event)
-  }
-
   // Encode + publish the NIP-46 connect-ack: a kind-24133 response whose `result` echoes the
   // secret VERBATIM (the plugin accepts `result === secret`). Without this the handshake never
   // completes and the verifier waits forever ("Waiting for signer approval…").
+  //
+  // Amber-parity ordering (BunkerRequestUtils.kt): BEFORE publishing the ack we (1) merge the
+  // URI relays into the active snapshot and (2) register the listening #p subscription across
+  // them, so the client's follow-up get_public_key / sign_event has a subscriber the instant it
+  // arrives (the RPC is ephemeral — no subscriber means the relay drops it). Then the ack is
+  // published with confirmed + retried delivery, re-encoding a fresh event (new created_at → new
+  // id) per attempt so a relay that already rejected the prior copy still accepts a retry.
   const sendConnectAckImpl = async (ack: {
     clientPubkey: string
     secret: string
@@ -310,11 +386,21 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   }): Promise<void> => {
     await primeTransportSk()
     if (transportSkCache === null) return
-    const event = encodeResponse(
-      { id: ack.clientPubkey, result: ack.secret },
-      { scheme: "nip44", clientPubkey: ack.clientPubkey, transportSk: transportSkCache },
+    const sk = transportSkCache
+
+    // (1)+(2): warm sockets, widen the snapshot, and register the listening REQ FIRST.
+    relaySnapshot = Array.from(new Set([...relaySnapshot, ...ack.relays]))
+    await ensureRelays(ack.relays)
+    resubscribe()
+
+    // (3): confirmed + retried ack publish (echoing the secret), fresh event per attempt.
+    const ok = await publishConfirmed(ack.relays, () =>
+      encodeResponse(
+        { id: ack.clientPubkey, result: ack.secret },
+        { scheme: "nip44", clientPubkey: ack.clientPubkey, transportSk: sk },
+      ),
     )
-    publishTo(ack.relays, event)
+    if (!ok) log({ dropped: "connect-ack-unconfirmed" })
   }
 
   // -- connect-flow (Story 3.3): the nostrconnect:// handshake, coordinator-gated.
@@ -389,6 +475,13 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   // Prime the snapshot once at construction (empty until the first connection).
   fireAndForget(syncSnapshots, log)
 
+  // In-flight connect guard (Fix B): the QR scanner fires per-frame and the deep-link + QR
+  // entry points can both deliver the same URI, so `handleConnectUri` may be invoked more than
+  // once concurrently for the SAME client. Without this, each invocation enqueues its own
+  // connection approval → the user sees the approve modal twice. We drop a concurrent connect
+  // for a clientPubkey already being processed (idempotent per client).
+  const connectsInFlight = new Set<string>()
+
   return {
     handleInbound: async (event) => {
       // Ensure the transport secret is available for the sync decode stage before the pipeline
@@ -397,11 +490,24 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
       await pipeline.handleInbound(event)
     },
     handleConnectUri: async (rawUri) => {
-      await connectFlow.handleConnect(rawUri)
-      await syncSnapshots()
-      // Listen on the newly-connected client's relays for the follow-up get_public_key /
-      // sign_event that complete sign-in.
-      resubscribe()
+      const parsed = parseNostrConnectUri(rawUri)
+      const key = parsed?.clientPubkey
+      if (key) {
+        if (connectsInFlight.has(key)) {
+          log({ dropped: "duplicate-connect-in-flight" })
+          return
+        }
+        connectsInFlight.add(key)
+      }
+      try {
+        await connectFlow.handleConnect(rawUri)
+        await syncSnapshots()
+        // Listen on the newly-connected client's relays for the follow-up get_public_key /
+        // sign_event that complete sign-in.
+        resubscribe()
+      } finally {
+        if (key) connectsInFlight.delete(key)
+      }
     },
     coordinator,
     gateDeps,

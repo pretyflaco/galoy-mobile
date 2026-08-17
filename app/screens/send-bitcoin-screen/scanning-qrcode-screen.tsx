@@ -87,6 +87,11 @@ export const ScanningQRCodeScreen: React.FC = () => {
   } = useTheme()
 
   const [pending, setPending] = React.useState(false)
+  // Synchronous guard for the nostrconnect:// branch below. The camera fires per-frame and
+  // `pending`/`scannedCache` are async React state, so two rapid frames can both pass the state
+  // guards and forward the SAME pairing URI twice → a duplicate connection-approval modal. A ref
+  // flips synchronously on the first frame, closing that window (AD-9 / Fix B).
+  const nostrConnectInFlight = React.useRef(false)
   const [scannedCache, setScannedCache] = React.useState(new Set<string>())
   const [hasPermission, setHasPermission] = React.useState(false)
   const [isCameraUnavailable, setIsCameraUnavailable] = React.useState(false)
@@ -158,7 +163,17 @@ export const ScanningQRCodeScreen: React.FC = () => {
       // approval surface (Epic 3) takes over; we pop the scanner. If the signer is off, the
       // handler is unregistered and this returns false, so the value falls through to payments.
       if (isNostrConnectLink(data)) {
-        const forwarded = await handleNostrConnectLink(data)
+        // Ref guard closes the per-frame double-forward window (see nostrConnectInFlight above).
+        if (nostrConnectInFlight.current) {
+          return
+        }
+        nostrConnectInFlight.current = true
+        // Reset the latch when the forward settles, via .finally() (not a post-await assignment)
+        // so it survives both the forwarded (unmount) and fall-through paths without tripping the
+        // atomic-update lint on a ref written after an await.
+        const forwarded = await handleNostrConnectLink(data).finally(() => {
+          nostrConnectInFlight.current = false
+        })
         if (forwarded) {
           navigation.goBack()
           return

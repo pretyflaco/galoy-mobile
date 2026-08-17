@@ -51,6 +51,7 @@ const makeFakePool = () => {
       published.push(event)
       return [Promise.resolve("ok")]
     },
+    ensureRelay: (_url: string) => Promise.resolve({}),
     close: () => undefined,
     destroy: () => undefined,
   }

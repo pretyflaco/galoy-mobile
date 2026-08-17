@@ -13,6 +13,11 @@
 // don't exist, so this import must run ahead of firebase/App. (ES imports are evaluated in
 // order, so importing this side-effect module first guarantees the globals are ready.)
 import "./app/polyfills/text-encoding"
+// SECOND (still before any nostr-tools/@noble consumer): install crypto.getRandomValues on
+// Hermes. nostr-tools finalizeEvent → @noble schnorr signing reads global crypto.getRandomValues
+// for aux randomness; without it every signed NIP-46 event throws and the connect-ack never
+// publishes (BTCPay plugin then times out).
+import "./app/polyfills/crypto-get-random-values"
 
 import "@react-native-firebase/app"
 import * as React from "react"

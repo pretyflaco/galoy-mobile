@@ -172,7 +172,10 @@ export const createSignEventFlow = (ports: SignEventFlowPorts): SignEventFlow =>
       if (!decision.approved) return { ok: false, error: "request rejected by user" }
 
       // Sign ONLY through the seam. The seam recomputes id from the same fields + user key;
-      // assert canonicality (never repair) before trusting the returned signature.
+      // assert canonicality (never repair) before trusting the returned signature. The signing
+      // await is isolated in its own statement (not folded into the return object literal): on
+      // Hermes the folded form mis-evaluated the async result, yielding a non-object return that
+      // surfaced to the client as an empty response and stalled BTCPay's NIP-46 sign-in.
       assertCanonicalUnsignedEvent(canonical)
       const signed = await signer.signEvent({
         kind: canonical.kind,

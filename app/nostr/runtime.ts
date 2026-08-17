@@ -475,12 +475,25 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   // Prime the snapshot once at construction (empty until the first connection).
   fireAndForget(syncSnapshots, log)
 
-  // In-flight connect guard (Fix B): the QR scanner fires per-frame and the deep-link + QR
-  // entry points can both deliver the same URI, so `handleConnectUri` may be invoked more than
-  // once concurrently for the SAME client. Without this, each invocation enqueues its own
-  // connection approval → the user sees the approve modal twice. We drop a concurrent connect
-  // for a clientPubkey already being processed (idempotent per client).
-  const connectsInFlight = new Set<string>()
+  // Connect de-dup guard (Fix B). The QR scanner fires per-frame AND the deep-link + QR entry
+  // points can both deliver the SAME nostrconnect:// URI, so `handleConnectUri` may be invoked
+  // multiple times for one client — concurrently OR staggered (the connect flow is fast because
+  // the ack is fire-and-forget, so an in-flight-only guard clears before the second forward
+  // arrives). Each extra invocation enqueues its own connection approval → the duplicate approve
+  // modal + a second stored connection. We therefore remember each clientPubkey for a short TTL
+  // and drop any repeat within the window (covers concurrent AND staggered duplicates).
+  const recentConnects = new Map<string, number>()
+  const CONNECT_DEDUP_TTL_MS = 60_000
+  const isDuplicateConnect = (key: string): boolean => {
+    const now = Date.now()
+    // Sweep expired entries so the map cannot grow unbounded.
+    for (const [k, ts] of recentConnects) {
+      if (now - ts > CONNECT_DEDUP_TTL_MS) recentConnects.delete(k)
+    }
+    if (recentConnects.has(key)) return true
+    recentConnects.set(key, now)
+    return false
+  }
 
   return {
     handleInbound: async (event) => {
@@ -492,22 +505,15 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     handleConnectUri: async (rawUri) => {
       const parsed = parseNostrConnectUri(rawUri)
       const key = parsed?.clientPubkey
-      if (key) {
-        if (connectsInFlight.has(key)) {
-          log({ dropped: "duplicate-connect-in-flight" })
-          return
-        }
-        connectsInFlight.add(key)
+      if (key && isDuplicateConnect(key)) {
+        log({ dropped: "duplicate-connect" })
+        return
       }
-      try {
-        await connectFlow.handleConnect(rawUri)
-        await syncSnapshots()
-        // Listen on the newly-connected client's relays for the follow-up get_public_key /
-        // sign_event that complete sign-in.
-        resubscribe()
-      } finally {
-        if (key) connectsInFlight.delete(key)
-      }
+      await connectFlow.handleConnect(rawUri)
+      await syncSnapshots()
+      // Listen on the newly-connected client's relays for the follow-up get_public_key /
+      // sign_event that complete sign-in.
+      resubscribe()
     },
     coordinator,
     gateDeps,

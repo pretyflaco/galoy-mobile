@@ -22,6 +22,7 @@ import { useFeatureFlags } from "@app/config/feature-flags-context"
 import { setNostrConnectHandler } from "./connect-link-handler"
 import { NOSTR_NSEC_SERVICE, NOSTR_TRANSPORT_SERVICE, readSecret } from "./core/keystore"
 import { createSignerRuntime, type SignerRuntime } from "./runtime"
+import { provisionTransportKey } from "./transport/transport-key"
 import { initSignerGate } from "./signer-gate"
 import type { ApprovalCoordinator } from "./approval/coordinator"
 
@@ -44,11 +45,22 @@ const readNsecHex = async (): Promise<string> => {
   return hex
 }
 
-/** Read the device-local transport secret as hex (AD-4); provisioned on first signer enable. */
+/**
+ * Read the device-local transport secret as hex (AD-4), provisioning it on first use.
+ *
+ * The transport keypair is distinct from the identity (it drives kind-24133 NIP-46 transport
+ * encryption, not signing). It must exist before the connect handshake can ack; nothing else
+ * wired `provisionTransportKey`, so the read self-provisions here (idempotent — an existing key
+ * is never overwritten). Without this the connect-ack path threw "transport key unavailable"
+ * before publishing, so the BTCPay plugin never received the ack and the browser spun forever.
+ */
 const readTransportSkHex = async (): Promise<string> => {
   const hex = await readSecret(NOSTR_TRANSPORT_SERVICE)
-  if (!hex) throw new Error("nostr transport key unavailable")
-  return hex
+  if (hex) return hex
+  await provisionTransportKey() // generates + persists on first call (AD-6 CSPRNG)
+  const provisioned = await readSecret(NOSTR_TRANSPORT_SERVICE)
+  if (!provisioned) throw new Error("nostr transport key unavailable")
+  return provisioned
 }
 
 export const NostrRuntimeProvider: React.FC<React.PropsWithChildren> = ({ children }) => {

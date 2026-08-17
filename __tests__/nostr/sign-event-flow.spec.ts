@@ -96,6 +96,34 @@ describe("sign_event flow (AC #1)", () => {
     expect(requestApproval).toHaveBeenCalledTimes(1)
     expect(result.ok).toBe(false)
   })
+
+  it("returns a well-formed {ok:false,error} object when the seam throws (never a non-object)", async () => {
+    // Device regression: on Hermes, a flat `return {ok:true, event: await signer.signEvent(...)}`
+    // mis-bound the awaited result and `handle` returned a NON-OBJECT (observed as 0). The BTCPay
+    // plugin then saw an empty NIP-46 result and stalled. handle() must ALWAYS resolve to a proper
+    // SignEventResult, and a seam throw must surface as {ok:false,error} — not propagate or return
+    // a non-object.
+    const signer = {
+      signEvent: jest.fn(async () => {
+        throw new Error("seam boom")
+      }),
+    }
+    const flow = createSignEventFlow({
+      signer: signer as never,
+      userNpub,
+      now: () => NOW,
+      requestApproval: async () => ({ approved: true }),
+    })
+
+    const result = await flow.handle({ kind: 22242, tags: [], content: "" })
+
+    // A real object with ok:false and a string error — the exact shape the dispatcher serializes.
+    expect(typeof result).toBe("object")
+    expect(result).not.toBeNull()
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(typeof result.error).toBe("string")
+    expect(signer.signEvent).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe("kind-22242 end-to-end interop (AC #3, SM-2)", () => {

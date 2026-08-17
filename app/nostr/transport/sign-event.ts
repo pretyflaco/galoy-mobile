@@ -171,19 +171,31 @@ export const createSignEventFlow = (ports: SignEventFlowPorts): SignEventFlow =>
       const decision = await requestApproval(canonical)
       if (!decision.approved) return { ok: false, error: "request rejected by user" }
 
-      // Sign ONLY through the seam. The seam recomputes id from the same fields + user key;
-      // assert canonicality (never repair) before trusting the returned signature. The signing
-      // await is isolated in its own statement (not folded into the return object literal): on
-      // Hermes the folded form mis-evaluated the async result, yielding a non-object return that
-      // surfaced to the client as an empty response and stalled BTCPay's NIP-46 sign-in.
-      assertCanonicalUnsignedEvent(canonical)
-      const signed = await signer.signEvent({
-        kind: canonical.kind,
-        // eslint-disable-next-line camelcase
-        created_at: canonical.created_at,
-        tags: canonical.tags,
-        content: canonical.content,
-      })
+      // Sign ONLY through the seam. The seam recomputes id from the same fields + user key.
+      //
+      // Hermes note: the canonicality assert and the signing `await` MUST each stand in their own
+      // statement/try block — do NOT fold the `await signer.signEvent(...)` into the returned
+      // object literal, and do NOT chain the assert inline. On Hermes the folded/flat form
+      // mis-binds the awaited result and `handle` returns a non-object (observed as `0`), which
+      // reaches the NIP-46 client as an empty response and stalls BTCPay sign-in. Keeping these as
+      // discrete statements (below) makes the async result bind correctly. Verified on-device via
+      // adb logcat: flat form → sign-result ok:0; this form → signed + approved session.
+      let signed: SignedEvent
+      try {
+        assertCanonicalUnsignedEvent(canonical)
+        signed = await signer.signEvent({
+          kind: canonical.kind,
+          // eslint-disable-next-line camelcase
+          created_at: canonical.created_at,
+          tags: canonical.tags,
+          content: canonical.content,
+        })
+      } catch (error) {
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : "signing failed",
+        }
+      }
       return { ok: true, event: signed }
     },
   }

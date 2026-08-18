@@ -48,6 +48,8 @@ import {
   type ConnectionStore,
 } from "./core/connection-store"
 import { createLocalNsecSigner } from "./core/local-nsec-signer"
+import { NIP98_KIND } from "./core/policy-check"
+import { normalizeHost } from "./core/url-origin"
 import { signerLogFields } from "./core/redact"
 import { createRequestLedger } from "./core/request-ledger"
 import {
@@ -151,6 +153,20 @@ const toRecordLike = (
   records.map((r) => ({ clientPubkey: r.clientPubkey, relays: r.relays }))
 
 /**
+ * Origin-bind key for a sign_event approval entry: for a kind-27235 (NIP-98) event, the
+ * normalized host of its first `["u", <url>]` tag; null/undefined otherwise. Defensive — a
+ * malformed event or absent tag yields null, which the policy treats as a mismatch → prompt.
+ */
+const uHostForSign = (event: {
+  kind?: number
+  tags?: string[][]
+}): string | null | undefined => {
+  if (event.kind !== NIP98_KIND) return undefined
+  const uTag = event.tags?.find((t) => t[0] === "u")?.[1] ?? null
+  return uTag ? normalizeHost(uTag) : null
+}
+
+/**
  * Run a fire-and-forget async side effect (activation / snapshot refresh) from a synchronous
  * gate/entry-point call. Errors are swallowed to a metadata-only log — a background refresh
  * failure must never throw into the wallet host (NFR-9). Avoids the banned `void promise` form.
@@ -201,18 +217,37 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   const awaitingFollowup = createAwaitingFollowupStore()
   const pool = getRelayPool({ createPool: deps.createPool })
 
-  // Bounded auto-clear for the sign-in waiting overlay: if the login follow-up never arrives (or
-  // its signed response never confirms), stop waiting after this window so the spinner cannot
-  // hang — the UI falls back to the Activity screen showing whatever was recorded.
-  const FOLLOWUP_WAIT_TIMEOUT_MS = 25_000
+  // Sliding-window auto-clear for the sign-in waiting overlay. A slow app (e.g. vezir over 5
+  // relays with clock-offset learning + republish) sequences connect → get_public_key →
+  // sign_event(27235) with real gaps between steps; a single fixed timeout would drop the spinner
+  // mid-handshake. Instead we treat the wait as an IDLE window that RESETS on each inbound request
+  // from the awaited client (bumpAwaiting, called from recordActivity): as long as the flow is
+  // still progressing the overlay stays up, and only a genuine stall (no step within the idle
+  // window) falls back to the Activity screen. An absolute cap bounds a pathological loop.
+  const FOLLOWUP_IDLE_TIMEOUT_MS = 90_000
+  const FOLLOWUP_ABSOLUTE_CAP_MS = 180_000
   const followupTimers = new Map<string, ReturnType<typeof setTimeout>>()
+  const followupDeadlines = new Map<string, number>()
   const stopAwaiting = (clientPubkey: string): void => {
     const timer = followupTimers.get(clientPubkey)
     if (timer) {
       clearTimeout(timer)
       followupTimers.delete(clientPubkey)
     }
+    followupDeadlines.delete(clientPubkey)
     awaitingFollowup.clear(clientPubkey)
+  }
+  // (Re)arm the idle timer for a client, clamped to the absolute cap set at startAwaiting.
+  const armFollowupTimer = (clientPubkey: string): void => {
+    const prior = followupTimers.get(clientPubkey)
+    if (prior) clearTimeout(prior)
+    const cap =
+      followupDeadlines.get(clientPubkey) ?? Date.now() + FOLLOWUP_ABSOLUTE_CAP_MS
+    const delay = Math.max(0, Math.min(FOLLOWUP_IDLE_TIMEOUT_MS, cap - Date.now()))
+    followupTimers.set(
+      clientPubkey,
+      setTimeout(() => stopAwaiting(clientPubkey), delay),
+    )
   }
   const startAwaiting = (state: {
     clientPubkey: string
@@ -220,12 +255,13 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     image?: string
   }): void => {
     awaitingFollowup.set(state)
-    const prior = followupTimers.get(state.clientPubkey)
-    if (prior) clearTimeout(prior)
-    followupTimers.set(
-      state.clientPubkey,
-      setTimeout(() => stopAwaiting(state.clientPubkey), FOLLOWUP_WAIT_TIMEOUT_MS),
-    )
+    followupDeadlines.set(state.clientPubkey, Date.now() + FOLLOWUP_ABSOLUTE_CAP_MS)
+    armFollowupTimer(state.clientPubkey)
+  }
+  // Reset the idle window when a request from the awaited client arrives (still progressing).
+  const bumpAwaiting = (clientPubkey: string): void => {
+    if (awaitingFollowup.current()?.clientPubkey !== clientPubkey) return
+    armFollowupTimer(clientPubkey)
   }
 
   // Metadata-only activity recording (leak-audit safe): log the accept/reject decision for a
@@ -234,6 +270,9 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     clientPubkey: string,
     entry: { method: string; accepted: boolean; eventKind?: number },
   ): void => {
+    // Progress signal: a request from the awaited client resets the sign-in idle window so a
+    // slow-but-advancing handshake keeps the waiting overlay up instead of timing out.
+    bumpAwaiting(clientPubkey)
     activityLog
       .record(clientPubkey, { ...entry, time: Date.now() })
       .catch(() => undefined)
@@ -378,6 +417,10 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
           clientPubkey: decoded.clientPubkey,
           method: "sign_event",
           eventKind: event.kind,
+          // Origin-bind key for a NIP-98 (27235) sign: the host of the first `u` tag. The policy
+          // pre-approves 27235 only when this equals the connect-time app origin. Defensive parse
+          // (malformed/absent → null → prompt). Non-27235 kinds carry no u-host.
+          uHost: uHostForSign(event),
           humanAction: "sign-in-and-sign",
           // Structured "what will be signed" panel (B4): the exact fields being signed.
           contentPreview: formatSignEventPanel(buildSignEventPreview(event)),

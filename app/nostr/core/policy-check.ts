@@ -12,7 +12,9 @@
  *                         voided grant (Story 3.7 / AD-8 / AD-16). The tombstoned-vs-never
  *                         asymmetry is load-bearing.
  *  - `pre-approved`     : a kind-22242 auth-challenge `sign_event` on a LIVE connection whose
- *                         grant includes `sign_event:22242` → satisfied WITHOUT a second modal
+ *                         grant includes `sign_event:22242`; OR a kind-27235 NIP-98 `sign_event`
+ *                         whose grant includes `sign_event:27235` AND whose `u`-tag host matches
+ *                         the connect-time app origin → satisfied WITHOUT a second modal
  *                         (single-approval login, AC #8 / CAP-4). The ONLY cached consent.
  *  - `needs-approval`   : a connected client whose request is not covered by the fixed grant →
  *                         raise a fresh approval (every request approved except the grant).
@@ -23,6 +25,8 @@ import { GRANTABLE_SCOPE, type ConnectionStore } from "./connection-store"
 
 /** The kind whose signature the fixed connect-time grant covers (auth challenge). */
 export const AUTH_CHALLENGE_KIND = 22242
+/** NIP-98 HTTP-auth kind: pre-approved ONLY when origin-bound (u-host == granted url host). */
+export const NIP98_KIND = 27235
 
 export type PolicyDecision =
   | "drop-silent"
@@ -30,10 +34,12 @@ export type PolicyDecision =
   | "pre-approved"
   | "needs-approval"
 
-/** Minimal request shape the policy inspects (method + optional event kind). */
+/** Minimal request shape the policy inspects (method + optional event kind + u-host for 27235). */
 export interface PolicyRequest {
   method: string
   kind?: number
+  /** For a kind-27235 sign_event: the normalized host of the event's `u` tag (else undefined). */
+  uHost?: string | null
 }
 
 export const evaluateRequestPolicy = async (
@@ -46,12 +52,33 @@ export const evaluateRequestPolicy = async (
     return (await store.isTombstoned(clientPubkey)) ? "error-disconnected" : "drop-silent"
   }
 
-  // Single-approval login: the fixed sign_event:22242 grant covers a kind-22242 sign_event
-  // and nothing else. Everything outside that exact match raises a fresh approval.
-  const isAuthChallengeSign =
-    request.method === "sign_event" && request.kind === AUTH_CHALLENGE_KIND
-  if (isAuthChallengeSign && (await store.hasGrant(clientPubkey, GRANTABLE_SCOPE))) {
+  const isSign = request.method === "sign_event"
+
+  // Fast-path 1 (unchanged): opaque auth-challenge. The sign_event:22242 grant covers a
+  // kind-22242 sign_event and nothing else.
+  if (
+    isSign &&
+    request.kind === AUTH_CHALLENGE_KIND &&
+    (await store.hasGrant(clientPubkey, GRANTABLE_SCOPE))
+  ) {
     return "pre-approved"
+  }
+
+  // Fast-path 2 (NIP-98, ORIGIN-BOUND): a kind-27235 sign is pre-approved ONLY when the connection
+  // holds sign_event:27235 AND the event's `u`-tag host equals the granted app origin (the host of
+  // metadata.url). Missing url (grantedOrigin null), missing/mismatched u-host → per-request
+  // approval. This is the load-bearing safety gate: it stops a connected client silently signing
+  // HTTP auth for arbitrary URLs.
+  if (
+    isSign &&
+    request.kind === NIP98_KIND &&
+    (await store.hasGrant(clientPubkey, "sign_event:27235"))
+  ) {
+    const grantedHost = await store.grantedOrigin(clientPubkey)
+    if (grantedHost && request.uHost && request.uHost === grantedHost) {
+      return "pre-approved"
+    }
+    return "needs-approval"
   }
 
   return "needs-approval"

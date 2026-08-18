@@ -20,10 +20,11 @@
  * are injected ports so the handshake is unit-testable without UI or relays.
  */
 import {
-  GRANTABLE_SCOPE,
+  GRANTABLE_SCOPES,
   type ClientMetadata,
   type ConnectionStore,
 } from "@app/nostr/core/connection-store"
+import { normalizeHost } from "@app/nostr/core/url-origin"
 
 /** Parsed nostrconnect:// URI (secret guaranteed non-empty when non-null). */
 export interface NostrConnectUri {
@@ -137,12 +138,19 @@ export interface ConnectFlow {
 }
 
 /**
- * Map the raw requested perms to the human-meaning descriptors shown to the user. In v1 the
- * only meaningful grant is sign-in + sign-on-your-behalf (the sign_event:22242 grant); no raw
- * scope is ever surfaced.
+ * Map the raw requested perms to the human-meaning descriptors shown to the user. Two grantable
+ * shapes: the opaque auth-challenge ("sign-in-and-sign") and NIP-98 HTTP auth, which is surfaced
+ * WITH the app host ("sign-in-http:<host>") so the connect approval is informed consent for the
+ * exact origin. No raw scope string is ever surfaced.
  */
-const toHumanPerms = (perms: string[]): string[] =>
-  perms.includes(GRANTABLE_SCOPE) ? ["sign-in-and-sign"] : []
+const toHumanPerms = (perms: string[], host: string | null): string[] => {
+  const out: string[] = []
+  if (perms.includes("sign_event:22242")) out.push("sign-in-and-sign")
+  if (perms.includes("sign_event:27235")) {
+    out.push(host ? `sign-in-http:${host}` : "sign-in-http")
+  }
+  return out
+}
 
 export const createConnectFlow = (ports: ConnectFlowPorts): ConnectFlow => {
   const { store, requestApproval, resolveDuplicate, sendConnectAck, sendRejection } =
@@ -154,11 +162,12 @@ export const createConnectFlow = (ports: ConnectFlowPorts): ConnectFlow => {
       // Secret-less / malformed → drop before any approval surface (no side effects).
       if (!parsed) return
 
+      const host = normalizeHost(parsed.metadata.url ?? "")
       const decision = await requestApproval({
         kind: "connection",
         clientPubkey: parsed.clientPubkey,
         metadata: parsed.metadata,
-        humanPerms: toHumanPerms(parsed.perms),
+        humanPerms: toHumanPerms(parsed.perms, host),
       })
 
       if (!decision.approved) {
@@ -202,10 +211,14 @@ export const createConnectFlow = (ports: ConnectFlowPorts): ConnectFlow => {
         relays: parsed.relays,
       })
 
-      // Fixed grant: exactly sign_event:22242 if requested, else empty. Secret NOT persisted.
-      const grantedScopes = parsed.perms.includes(GRANTABLE_SCOPE)
-        ? [GRANTABLE_SCOPE]
-        : []
+      // Grant = the intersection of requested perms with the grantable set (e.g.
+      // ["sign_event:27235"] for vezir, ["sign_event:22242"] for the plugin). The 27235 grant only
+      // ever PRE-APPROVES when origin-bound at policy time (metadata.url host == u-tag host); if
+      // no url was sent it is stored but never silently honored — safe by construction. Secret NOT
+      // persisted.
+      const grantedScopes = parsed.perms.filter((p) =>
+        (GRANTABLE_SCOPES as readonly string[]).includes(p),
+      )
       await store.upsert({
         clientPubkey: parsed.clientPubkey,
         relays: parsed.relays,

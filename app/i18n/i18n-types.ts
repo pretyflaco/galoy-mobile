@@ -13734,11 +13734,15 @@ type RootTranslation = {
 	}
 	NostrAwaitingFollowupScreen: {
 		/**
-		 * W​a​i​t​i​n​g​ ​f​o​r​ ​s​i​g​n​-​i​n​ ​r​e​q​u​e​s​t​…
+		 * W​a​i​t​i​n​g​ ​f​o​r​ ​s​i​g​n​-​i​n​ ​c​h​a​l​l​e​n​g​e​ ​f​r​o​m​ ​a​p​p​…
 		 */
 		body: string
 		/**
-		 * C​o​n​n​e​c​t​e​d​ ​t​o​ ​{​c​l​i​e​n​t​}​.​ ​W​a​i​t​i​n​g​ ​f​o​r​ ​t​h​e​ ​s​i​g​n​-​i​n​ ​r​e​q​u​e​s​t​.
+		 * Y​o​u​ ​m​a​y​ ​b​e​ ​a​s​k​e​d​ ​t​o​ ​a​p​p​r​o​v​e​ ​o​n​e​ ​m​o​r​e​ ​t​i​m​e​.
+		 */
+		hint: string
+		/**
+		 * C​o​n​n​e​c​t​e​d​ ​t​o​ ​{​c​l​i​e​n​t​}​.​ ​W​a​i​t​i​n​g​ ​f​o​r​ ​t​h​e​ ​s​i​g​n​-​i​n​ ​c​h​a​l​l​e​n​g​e​.​ ​Y​o​u​ ​m​a​y​ ​b​e​ ​a​s​k​e​d​ ​t​o​ ​a​p​p​r​o​v​e​ ​o​n​e​ ​m​o​r​e​ ​t​i​m​e​.
 		 * @param {string} client
 		 */
 		srLabel: RequiredParams<'client'>
@@ -27470,11 +27474,15 @@ export type TranslationFunctions = {
 	}
 	NostrAwaitingFollowupScreen: {
 		/**
-		 * Waiting for sign-in request…
+		 * Waiting for sign-in challenge from app…
 		 */
 		body: () => LocalizedString
 		/**
-		 * Connected to {client}. Waiting for the sign-in request.
+		 * You may be asked to approve one more time.
+		 */
+		hint: () => LocalizedString
+		/**
+		 * Connected to {client}. Waiting for the sign-in challenge. You may be asked to approve one more time.
 		 */
 		srLabel: (arg: { client: string }) => LocalizedString
 	}

@@ -13,11 +13,20 @@
  * `app/utils/storage`. Story 3.7 adds `disconnect` (atomic delete + void + bounded tombstone).
  */
 import { loadJson, saveJson } from "@app/utils/storage"
+import { normalizeHost } from "./url-origin"
 
 /** AD-17 storage key. */
 export const CONNECTIONS_STORAGE_KEY = "nostr.connections.v1"
 
-/** The ONLY grantable scope in v1 (AD-8). */
+/**
+ * The scopes grantable at connect time. `sign_event:22242` is the opaque auth-challenge (safe to
+ * pre-approve unconditionally); `sign_event:27235` is NIP-98 HTTP auth (pre-approved ONLY when
+ * origin-bound — see PolicyCheck). Nothing else is ever pre-granted.
+ */
+export const GRANTABLE_SCOPES = ["sign_event:22242", "sign_event:27235"] as const
+export type GrantableScope = (typeof GRANTABLE_SCOPES)[number]
+
+/** @deprecated back-compat alias; prefer GRANTABLE_SCOPES. The 22242 auth-challenge scope. */
 export const GRANTABLE_SCOPE = "sign_event:22242"
 
 /** The bounded tombstone set size (AD-17: no unbounded growth; oldest evicted). */
@@ -62,8 +71,14 @@ export interface ConnectionStore {
   list(): Promise<ConnectionRecord[]>
   /** Whether a record exists for the clientPubkey (PolicyCheck: connected?). */
   isConnected(clientPubkey: string): Promise<boolean>
-  /** Whether the client's grant includes the given scope (v1: only sign_event:22242). */
+  /** Whether the client's grant includes the given scope (e.g. sign_event:22242 / :27235). */
   hasGrant(clientPubkey: string, scope: string): Promise<boolean>
+  /**
+   * The granted app origin (normalized host of the connection's metadata.url), or null when the
+   * client sent no url. Used to origin-bind the sign_event:27235 pre-approval: a 27235 sign is
+   * only pre-approved when its `u`-tag host equals this. Symmetric normalization via url-origin.
+   */
+  grantedOrigin(clientPubkey: string): Promise<string | null>
   /**
    * Atomically DELETE the record AND VOID the grant, leaving a bounded tombstone (AD-8).
    * There is no observable in-between state where the record is gone but the grant is live.
@@ -143,6 +158,12 @@ export const createConnectionStore = (
     async hasGrant(clientPubkey: string, scope: string): Promise<boolean> {
       const state = await readState()
       return Boolean(state.records[clientPubkey]?.grantedScopes.includes(scope))
+    },
+
+    async grantedOrigin(clientPubkey: string): Promise<string | null> {
+      const state = await readState()
+      const url = state.records[clientPubkey]?.metadata.url
+      return url ? normalizeHost(url) : null
     },
 
     async disconnect(clientPubkey: string): Promise<void> {

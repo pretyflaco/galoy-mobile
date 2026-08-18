@@ -32,12 +32,13 @@ const memory = (): ConnectionStorage => {
   }
 }
 
-const uriWith = (opts: { secret?: string; perms?: string } = {}) => {
+const uriWith = (opts: { secret?: string; perms?: string; url?: string } = {}) => {
   const secret = opts.secret ?? "sekret-42"
   const perms = opts.perms ? `&perms=${encodeURIComponent(opts.perms)}` : ""
+  const url = opts.url ? `&url=${encodeURIComponent(opts.url)}` : ""
   return (
     `nostrconnect://${CLIENT}?relay=wss%3A%2F%2Fr.example&secret=${secret}` +
-    `&name=Damus${perms}`
+    `&name=Damus${perms}${url}`
   )
 }
 
@@ -112,6 +113,36 @@ describe("ConnectFlow: approve path (AC #1/#2/#3/#5)", () => {
     const { flow, store } = makeFlow(true)
     await flow.handleConnect(uriWith({ perms: "nip44_decrypt" }))
     expect((await store.get(CLIENT))?.grantedScopes).toEqual([])
+  })
+
+  it("grants sign_event:27235 when requested (vezir), dropping non-grantable perms (Plan A)", async () => {
+    const { flow, store } = makeFlow(true)
+    await flow.handleConnect(
+      uriWith({
+        perms: "sign_event:27235,get_public_key",
+        url: "https://vezir.twentyone.ist",
+      }),
+    )
+    const rec = await store.get(CLIENT)
+    expect(rec?.grantedScopes).toEqual(["sign_event:27235"]) // get_public_key not grantable
+  })
+
+  it("stores metadata.url so the 27235 grant can origin-bind at policy time", async () => {
+    const { flow, store } = makeFlow(true)
+    await flow.handleConnect(
+      uriWith({ perms: "sign_event:27235", url: "https://vezir.twentyone.ist" }),
+    )
+    expect(await store.grantedOrigin(CLIENT)).toBe("vezir.twentyone.ist")
+  })
+
+  it("surfaces the host in human perms for a 27235 request, with NO raw scope leaked", async () => {
+    const { flow, requestApproval } = makeFlow(true)
+    await flow.handleConnect(
+      uriWith({ perms: "sign_event:27235", url: "https://vezir.twentyone.ist" }),
+    )
+    const decision = requestApproval.mock.calls[0][0] as { humanPerms: string[] }
+    expect(decision.humanPerms).toContain("sign-in-http:vezir.twentyone.ist")
+    expect(JSON.stringify(decision)).not.toContain("sign_event:27235")
   })
 })
 

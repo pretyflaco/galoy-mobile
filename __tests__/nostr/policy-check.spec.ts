@@ -29,12 +29,13 @@ const memory = (): ConnectionStorage => {
 const connect = async (
   store: ReturnType<typeof createConnectionStore>,
   grantedScopes: string[],
+  metadata: { name?: string; url?: string; image?: string } = { name: "Damus" },
 ) =>
   store.upsert({
     clientPubkey: CLIENT,
     relays: [],
     grantedScopes,
-    metadata: { name: "Damus" },
+    metadata,
     createdAt: 1,
   })
 
@@ -79,5 +80,73 @@ describe("PolicyCheck (AC #7/#8, AD-8)", () => {
       method: "nip44_decrypt",
     })
     expect(decision).toBe("needs-approval")
+  })
+})
+
+describe("PolicyCheck — origin-bound NIP-98 (27235) fast-path (Plan A)", () => {
+  const GRANT_27235 = "sign_event:27235"
+  const req27235 = (uHost: string | null) => ({
+    method: "sign_event",
+    kind: 27235,
+    uHost,
+  })
+
+  it("pre-approves a 27235 sign when the u-host matches the granted app origin", async () => {
+    const store = createConnectionStore(memory())
+    await connect(store, [GRANT_27235], { url: "https://vezir.twentyone.ist" })
+    const decision = await evaluateRequestPolicy(
+      store,
+      CLIENT,
+      req27235("vezir.twentyone.ist"),
+    )
+    expect(decision).toBe("pre-approved")
+  })
+
+  it("requires approval for a 27235 sign when the u-host differs from the granted origin", async () => {
+    const store = createConnectionStore(memory())
+    await connect(store, [GRANT_27235], { url: "https://vezir.twentyone.ist" })
+    const decision = await evaluateRequestPolicy(store, CLIENT, req27235("evil.example"))
+    expect(decision).toBe("needs-approval")
+  })
+
+  it("requires approval for a 27235 sign when the connection has no granted url", async () => {
+    const store = createConnectionStore(memory())
+    await connect(store, [GRANT_27235], { name: "vezir" }) // no url → grantedOrigin null
+    const decision = await evaluateRequestPolicy(
+      store,
+      CLIENT,
+      req27235("vezir.twentyone.ist"),
+    )
+    expect(decision).toBe("needs-approval")
+  })
+
+  it("requires approval for a 27235 sign when the u-host is null/absent", async () => {
+    const store = createConnectionStore(memory())
+    await connect(store, [GRANT_27235], { url: "https://vezir.twentyone.ist" })
+    const decision = await evaluateRequestPolicy(store, CLIENT, req27235(null))
+    expect(decision).toBe("needs-approval")
+  })
+
+  it("requires approval for a 27235 sign when the grant lacks sign_event:27235", async () => {
+    const store = createConnectionStore(memory())
+    await connect(store, [GRANTABLE_SCOPE], { url: "https://vezir.twentyone.ist" })
+    const decision = await evaluateRequestPolicy(
+      store,
+      CLIENT,
+      req27235("vezir.twentyone.ist"),
+    )
+    expect(decision).toBe("needs-approval")
+  })
+
+  it("still pre-approves 22242 on a 27235-granted connection (regression)", async () => {
+    const store = createConnectionStore(memory())
+    await connect(store, [GRANTABLE_SCOPE, GRANT_27235], {
+      url: "https://vezir.twentyone.ist",
+    })
+    const decision = await evaluateRequestPolicy(store, CLIENT, {
+      method: "sign_event",
+      kind: 22242,
+    })
+    expect(decision).toBe("pre-approved")
   })
 })

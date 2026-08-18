@@ -16,10 +16,11 @@ type Props = {
 /**
  * Sign-in waiting surface. After a connection is approved, the client sends its login request (a
  * sign_event, e.g. NIP-98 kind 27235) a moment later over the relay. This full-screen surface
- * bridges that gap: client avatar + name + a spinner + "Waiting for sign-in request…", so the
- * user knows the signer is connected and expecting the login. It is replaced by the request
- * approval surface the instant that request arrives, and dismissed once sign-in is delivered (or
- * after a timeout). Pure presentation; the awaiting state lives in the runtime store.
+ * bridges that gap: client avatar + name + a spinner + "Waiting for sign-in challenge from app…"
+ * plus a hint that a second approval may appear (a slow app that does not pre-grant its login kind
+ * raises a per-request approval). It is replaced by the request approval surface the instant that
+ * request arrives, and dismissed once sign-in is delivered (or after the sliding idle timeout).
+ * Pure presentation; the awaiting state lives in the runtime store.
  */
 export const NostrAwaitingFollowupScreen: React.FC<Props> = ({
   clientName,
@@ -60,8 +61,11 @@ export const NostrAwaitingFollowupScreen: React.FC<Props> = ({
         {...testProps("nostr-awaiting-spinner")}
       />
 
-      <Text type="p1" style={styles.body}>
+      <Text type="p1" style={styles.body} testID="nostr-awaiting-body">
         {T.body()}
+      </Text>
+      <Text type="p3" style={styles.hint} testID="nostr-awaiting-hint">
+        {T.hint()}
       </Text>
     </View>
   )
@@ -84,6 +88,10 @@ const useStyles = makeStyles(({ colors }) => ({
   },
   body: {
     color: colors.grey2,
+    textAlign: "center",
+  },
+  hint: {
+    color: colors.grey3,
     textAlign: "center",
   },
 }))

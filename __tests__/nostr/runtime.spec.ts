@@ -269,4 +269,160 @@ describe("signer runtime assembly (A1)", () => {
       name: "BTCPay Server",
     })
   })
+
+  it("pre-approves a 27235 sign when the u-host matches the connect url (Plan A one-tap)", async () => {
+    const present = jest.fn(async () => undefined)
+    // Grant sign_event:27235 origin-bound to vezir.twentyone.ist (simulating a completed connect
+    // that carried url=). grantForTest only stores 22242, so upsert the record directly via a
+    // connect: use decodeForTest for the 27235 sign and seed the store through handleConnectUri.
+    const holder: { runtime?: ReturnType<typeof createSignerRuntime> } = {}
+    const present2 = jest.fn(async () => {
+      holder.runtime?.coordinator.resolveActive({ approved: true })
+    })
+    const uHostEvent = JSON.stringify({
+      kind: 27235,
+      content: "",
+      tags: [
+        ["u", "https://vezir.twentyone.ist/api/auth/nostr/login"],
+        ["method", "POST"],
+      ],
+    })
+    let phase: "connect" | "sign" = "connect"
+    const decodeForTest = () =>
+      phase === "sign"
+        ? {
+            scheme: "nip44" as const,
+            clientPubkey,
+            request: { id: "sign-27235", method: "sign_event", params: [uHostEvent] },
+          }
+        : {
+            scheme: "nip44" as const,
+            clientPubkey,
+            request: { id: "gpk", method: "get_public_key", params: [] },
+          }
+    const runtime = createSignerRuntime(
+      makeDeps({ present: present2, decodeForTest, readTransportSkHex: readNsecHex }),
+    )
+    holder.runtime = runtime
+
+    // Connect with url + perms=27235 → origin-bound grant stored.
+    await runtime.handleConnectUri(
+      `nostrconnect://${clientPubkey}?relay=wss%3A%2F%2Fr.example&secret=s` +
+        `&name=vezir&perms=sign_event%3A27235&url=${encodeURIComponent(
+          "https://vezir.twentyone.ist",
+        )}`,
+    )
+    await flushAsync()
+
+    // Now deliver the 27235 sign_event — it must be pre-approved (NO surface).
+    phase = "sign"
+    present.mockClear()
+    await runtime.handleInbound(makeInbound("verified") as never)
+    await flushAsync()
+    expect(present2).not.toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "request" }),
+    )
+  })
+
+  it("sliding window: an inbound request from the awaited client keeps the waiting overlay up past the idle window", async () => {
+    // Real timers to drive the runtime's setTimeout-based idle window deterministically via fake
+    // timers scoped to THIS test only.
+    jest.useFakeTimers()
+    try {
+      const holder: { runtime?: ReturnType<typeof createSignerRuntime> } = {}
+      const present = jest.fn(async (entry: { kind: string }) => {
+        if (entry.kind === "connection")
+          holder.runtime?.coordinator.resolveActive({ approved: true })
+      })
+      let phase: "connect" | "gpk" = "connect"
+      const decodeForTest = () => ({
+        scheme: "nip44" as const,
+        clientPubkey,
+        request:
+          phase === "gpk"
+            ? { id: "gpk-late", method: "get_public_key", params: [] }
+            : { id: "gpk-0", method: "get_public_key", params: [] },
+      })
+      const runtime = createSignerRuntime(
+        makeDeps({ present, decodeForTest, readTransportSkHex: readNsecHex }),
+      )
+      holder.runtime = runtime
+
+      await runtime.handleConnectUri(
+        `nostrconnect://${clientPubkey}?relay=wss%3A%2F%2Fr.example&secret=s&name=vezir&perms=sign_event%3A27235`,
+      )
+      // Flush the connect microtasks under fake timers.
+      await Promise.resolve()
+      await Promise.resolve()
+      expect(runtime.awaitingFollowup.current()).not.toBeNull()
+
+      // Advance to just before the 90s idle window; still waiting.
+      jest.advanceTimersByTime(80_000)
+      expect(runtime.awaitingFollowup.current()).not.toBeNull()
+
+      // A late get_public_key arrives → resets the idle window.
+      phase = "gpk"
+      await runtime.handleInbound(makeInbound("verified") as never)
+      await Promise.resolve()
+
+      // Advance another 80s (past the ORIGINAL 90s from connect, but within the reset window).
+      jest.advanceTimersByTime(80_000)
+      expect(runtime.awaitingFollowup.current()).not.toBeNull() // still up — window slid
+
+      // No further activity → the idle window finally elapses → cleared.
+      jest.advanceTimersByTime(90_000)
+      expect(runtime.awaitingFollowup.current()).toBeNull()
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it("raises a surface for a 27235 sign whose u-host differs from the connect url (mismatch prompts)", async () => {
+    const holder: { runtime?: ReturnType<typeof createSignerRuntime> } = {}
+    const present = jest.fn(async (entry: { kind: string }) => {
+      // Auto-approve only the connection entry; leave a request surface pending (counts it).
+      if (entry.kind === "connection")
+        holder.runtime?.coordinator.resolveActive({ approved: true })
+    })
+    const evilEvent = JSON.stringify({
+      kind: 27235,
+      content: "",
+      tags: [
+        ["u", "https://evil.example/login"],
+        ["method", "POST"],
+      ],
+    })
+    let phase: "connect" | "sign" = "connect"
+    const decodeForTest = () =>
+      phase === "sign"
+        ? {
+            scheme: "nip44" as const,
+            clientPubkey,
+            request: { id: "sign-evil", method: "sign_event", params: [evilEvent] },
+          }
+        : {
+            scheme: "nip44" as const,
+            clientPubkey,
+            request: { id: "gpk2", method: "get_public_key", params: [] },
+          }
+    const runtime = createSignerRuntime(
+      makeDeps({ present, decodeForTest, readTransportSkHex: readNsecHex }),
+    )
+    holder.runtime = runtime
+
+    await runtime.handleConnectUri(
+      `nostrconnect://${clientPubkey}?relay=wss%3A%2F%2Fr.example&secret=s` +
+        `&name=vezir&perms=sign_event%3A27235&url=${encodeURIComponent(
+          "https://vezir.twentyone.ist",
+        )}`,
+    )
+    await flushAsync()
+
+    phase = "sign"
+    const connectionCalls = present.mock.calls.length
+    runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
+    await flushAsync()
+    // A NEW (request) surface was presented for the mismatched-host 27235 sign.
+    expect(present.mock.calls.length).toBeGreaterThan(connectionCalls)
+  })
 })

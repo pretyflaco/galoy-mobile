@@ -4323,8 +4323,10 @@ const en: BaseTranslation = {
     rowA11y: "{action:string} — {decision:string} at {when:string}.",
   },
   NostrAwaitingFollowupScreen: {
-    body: "Waiting for sign-in request…",
-    srLabel: "Connected to {client:string}. Waiting for the sign-in request.",
+    body: "Waiting for sign-in challenge from app…",
+    hint: "You may be asked to approve one more time.",
+    srLabel:
+      "Connected to {client:string}. Waiting for the sign-in challenge. You may be asked to approve one more time.",
   },
   NostrReviewAllScreen: {
     title: "Review requests",

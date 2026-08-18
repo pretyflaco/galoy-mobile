@@ -24,6 +24,7 @@ export const grantCoverageFromPolicy =
     const decision = await evaluateRequestPolicy(store, entry.clientPubkey, {
       method: entry.method,
       kind: entry.eventKind,
+      uHost: entry.uHost,
     })
     return decision === "pre-approved"
   }

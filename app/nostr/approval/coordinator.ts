@@ -50,6 +50,8 @@ export interface RequestApprovalEntry {
   method: string
   /** For sign_event, the event kind (e.g. 22242 auth challenge). */
   eventKind?: number
+  /** For a kind-27235 sign_event: normalized host of the event's `u` tag (origin-bound grant). */
+  uHost?: string | null
   /** Human-meaning action for the surface + SR label (never raw scope/kind). */
   humanAction: string
   /** Human-readable content preview of what will be signed/decrypted. */

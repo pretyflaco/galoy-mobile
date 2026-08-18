@@ -8,6 +8,7 @@
  */
 import {
   handleNostrConnectLink,
+  hasNostrConnectHandler,
   isNostrConnectLink,
   setNostrConnectHandler,
 } from "../../app/nostr/connect-link-handler"
@@ -25,6 +26,16 @@ describe("nostrconnect:// link recognition (A3)", () => {
     expect(isNostrConnectLink("lightning://abc")).toBe(false)
     expect(isNostrConnectLink("bitcoin:bc1qxyz")).toBe(false)
     expect(isNostrConnectLink("https://btcpay.example/login")).toBe(false)
+  })
+})
+
+describe("hasNostrConnectHandler (sync camera-dismissal gate)", () => {
+  it("is false when no handler is registered (signer off) and true once registered", () => {
+    expect(hasNostrConnectHandler()).toBe(false)
+    setNostrConnectHandler(jest.fn(async () => undefined))
+    expect(hasNostrConnectHandler()).toBe(true)
+    setNostrConnectHandler(null)
+    expect(hasNostrConnectHandler()).toBe(false)
   })
 })
 

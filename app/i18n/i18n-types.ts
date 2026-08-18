@@ -13675,6 +13675,11 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
+		 * {​c​l​i​e​n​t​}​ ​—​ ​A​c​t​i​v​i​t​y
+		 * @param {string} client
+		 */
+		titleForClient: RequiredParams<'client'>
+		/**
 		 * N​o​ ​a​c​t​i​v​i​t​y​ ​y​e​t​.
 		 */
 		empty: string
@@ -13708,12 +13713,35 @@ type RootTranslation = {
 		 */
 		signEvent: string
 		/**
+		 * C​o​n​n​e​c​t
+		 */
+		methodConnect: string
+		/**
+		 * a​c​k
+		 */
+		methodConnectAck: string
+		/**
+		 * R​e​a​d​ ​y​o​u​r​ ​p​u​b​l​i​c​ ​k​e​y
+		 */
+		methodReadPubkey: string
+		/**
 		 * {​a​c​t​i​o​n​}​ ​—​ ​{​d​e​c​i​s​i​o​n​}​ ​a​t​ ​{​w​h​e​n​}​.
 		 * @param {string} action
 		 * @param {string} decision
 		 * @param {string} when
 		 */
 		rowA11y: RequiredParams<'action' | 'decision' | 'when'>
+	}
+	NostrAwaitingFollowupScreen: {
+		/**
+		 * W​a​i​t​i​n​g​ ​f​o​r​ ​s​i​g​n​-​i​n​ ​r​e​q​u​e​s​t​…
+		 */
+		body: string
+		/**
+		 * C​o​n​n​e​c​t​e​d​ ​t​o​ ​{​c​l​i​e​n​t​}​.​ ​W​a​i​t​i​n​g​ ​f​o​r​ ​t​h​e​ ​s​i​g​n​-​i​n​ ​r​e​q​u​e​s​t​.
+		 * @param {string} client
+		 */
+		srLabel: RequiredParams<'client'>
 	}
 	NostrReviewAllScreen: {
 		/**
@@ -27388,6 +27416,10 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
+		 * {client} — Activity
+		 */
+		titleForClient: (arg: { client: string }) => LocalizedString
+		/**
 		 * No activity yet.
 		 */
 		empty: () => LocalizedString
@@ -27420,9 +27452,31 @@ export type TranslationFunctions = {
 		 */
 		signEvent: () => LocalizedString
 		/**
+		 * Connect
+		 */
+		methodConnect: () => LocalizedString
+		/**
+		 * ack
+		 */
+		methodConnectAck: () => LocalizedString
+		/**
+		 * Read your public key
+		 */
+		methodReadPubkey: () => LocalizedString
+		/**
 		 * {action} — {decision} at {when}.
 		 */
 		rowA11y: (arg: { action: string, decision: string, when: string }) => LocalizedString
+	}
+	NostrAwaitingFollowupScreen: {
+		/**
+		 * Waiting for sign-in request…
+		 */
+		body: () => LocalizedString
+		/**
+		 * Connected to {client}. Waiting for the sign-in request.
+		 */
+		srLabel: (arg: { client: string }) => LocalizedString
 	}
 	NostrReviewAllScreen: {
 		/**

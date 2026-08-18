@@ -90,6 +90,16 @@ jest.mock("react-native-image-picker", () => ({
   launchImageLibrary: jest.fn().mockResolvedValue({ assets: [] }),
 }))
 
+// nostrconnect:// camera-dismissal wiring: control recognition + whether the signer is on.
+const mockIsNostrConnectLink = jest.fn((raw: string) => raw.startsWith("nostrconnect://"))
+const mockHasNostrConnectHandler = jest.fn(() => false)
+const mockHandleNostrConnectLink = jest.fn(async (_raw: string) => true)
+jest.mock("@app/nostr/connect-link-handler", () => ({
+  isNostrConnectLink: (raw: string) => mockIsNostrConnectLink(raw),
+  hasNostrConnectHandler: () => mockHasNostrConnectHandler(),
+  handleNostrConnectLink: (raw: string) => mockHandleNostrConnectLink(raw),
+}))
+
 const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(() => {})
 
 beforeAll(() => {
@@ -329,5 +339,35 @@ describe("ScanningQRCodeScreen", () => {
     await fireScan("lnbc1same")
 
     expect(mockResolveDestination).toHaveBeenCalledTimes(1)
+  })
+
+  describe("nostrconnect:// camera dismissal", () => {
+    const NC_URI = `nostrconnect://${"b".repeat(64)}?relay=wss%3A%2F%2Fnos.lol&secret=s`
+
+    it("pops the camera IMMEDIATELY and forwards the URI when the signer is ON", async () => {
+      mockHasNostrConnectHandler.mockReturnValue(true)
+      await renderScreen()
+      await fireScan(NC_URI)
+
+      // Camera dismissed right away (before any approval decision) and never treated as payment.
+      expect(mockGoBack).toHaveBeenCalledTimes(1)
+      expect(mockHandleNostrConnectLink).toHaveBeenCalledWith(NC_URI)
+      expect(mockResolveDestination).not.toHaveBeenCalled()
+    })
+
+    it("falls through to payment parsing when the signer is OFF (no handler)", async () => {
+      mockHasNostrConnectHandler.mockReturnValue(false)
+      mockResolveDestination.mockResolvedValue({
+        valid: false,
+        invalidReason: InvalidDestinationReason.UnknownDestination,
+      })
+      await renderScreen()
+      await fireScan(NC_URI)
+
+      // Not consumed by the signer → does not pop the camera; treated as a scanned destination.
+      expect(mockGoBack).not.toHaveBeenCalled()
+      expect(mockHandleNostrConnectLink).not.toHaveBeenCalled()
+      expect(mockResolveDestination).toHaveBeenCalledTimes(1)
+    })
   })
 })

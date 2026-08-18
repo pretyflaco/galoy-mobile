@@ -92,4 +92,16 @@ describe("activity log", () => {
     expect(await log.stats("A")).toEqual({ total: 3, accepted: 2, rejected: 1 })
     expect(await log.stats("empty")).toEqual({ total: 0, accepted: 0, rejected: 0 })
   })
+
+  it("notifies subscribers on each record so a live screen can re-read", async () => {
+    const log = createActivityLog(memoryStorage())
+    const listener = jest.fn()
+    const unsub = log.subscribe(listener)
+    await log.record("A", { method: "connect", accepted: true, time: 1 })
+    await log.record("A", { method: "get_public_key", accepted: true, time: 2 })
+    expect(listener).toHaveBeenCalledTimes(2)
+    unsub()
+    await log.record("A", { method: "sign_event", accepted: true, time: 3 })
+    expect(listener).toHaveBeenCalledTimes(2) // unsubscribed → no more calls
+  })
 })

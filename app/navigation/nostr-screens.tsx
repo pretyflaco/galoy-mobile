@@ -24,7 +24,10 @@ import {
   NostrConnectedClientsSection,
   type ConnectedClient,
 } from "@app/screens/nostr/connected-clients-section"
-import { NostrActivityScreen } from "@app/screens/nostr/activity-screen"
+import {
+  NostrActivityScreen,
+  NostrActivityHeaderTitle,
+} from "@app/screens/nostr/activity-screen"
 import type { ActivityEntry, ActivityStats } from "@app/nostr/core/activity-log"
 import { NostrIdentityHubScreen } from "@app/screens/nostr/identity-hub/nostr-identity-hub-screen"
 import { useNostrIdentity } from "@app/screens/nostr/identity-hub/use-nostr-identity"
@@ -199,6 +202,7 @@ export const NostrConnectedClients: React.FC = () => {
 
 /** Per-client activity history ("Show activity"), reading the metadata-only log from runtime. */
 export const NostrActivity: React.FC = () => {
+  const navigation = useNavigation<Nav>()
   const route = useRoute<RouteProp<RootStackParamList, "nostrActivity">>()
   const { clientPubkey } = route.params
   const runtime = useNostrRuntime()
@@ -209,23 +213,50 @@ export const NostrActivity: React.FC = () => {
     rejected: 0,
   })
 
-  useEffect(() => {
-    let cancelled = false
-    Promise.all([
+  const reload = useCallback(async () => {
+    const [e, s] = await Promise.all([
       runtime?.runtime.listActivity(clientPubkey) ?? Promise.resolve([]),
       runtime?.runtime.activityStats(clientPubkey) ??
         Promise.resolve({ total: 0, accepted: 0, rejected: 0 }),
     ])
-      .then(([e, s]) => {
+    setEntries(e)
+    setStats(s)
+  }, [runtime, clientPubkey])
+
+  // Live-refresh: the user lands here BEFORE the login flow finishes, so re-read on every new
+  // activity entry (connect → read-public-key → signed event are recorded in sequence).
+  useEffect(() => {
+    reload().catch(() => undefined)
+    const unsubscribe = runtime?.runtime.subscribeActivity(() => {
+      reload().catch(() => undefined)
+    })
+    return unsubscribe
+  }, [reload, runtime])
+
+  // Custom header (Amber parity): client avatar + name. Fetch the connection record and install a
+  // headerTitle component; falls back to the static title until the record resolves.
+  useEffect(() => {
+    let cancelled = false
+    runtime?.runtime
+      .listConnections()
+      .then((records) => {
         if (cancelled) return
-        setEntries(e)
-        setStats(s)
+        const match = records.find((r) => r.clientPubkey === clientPubkey)
+        if (!match?.metadata.name && !match?.metadata.image) return
+        navigation.setOptions({
+          headerTitle: () => (
+            <NostrActivityHeaderTitle
+              name={match?.metadata.name}
+              image={match?.metadata.image}
+            />
+          ),
+        })
       })
       .catch(() => undefined)
     return () => {
       cancelled = true
     }
-  }, [runtime, clientPubkey])
+  }, [navigation, runtime, clientPubkey])
 
   return (
     <Screen preset="fixed">

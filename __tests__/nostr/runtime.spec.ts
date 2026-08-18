@@ -76,6 +76,12 @@ const makeDeps = (over: Partial<SignerRuntimeDeps> = {}): SignerRuntimeDeps => (
 // (the explicit verify stage must never trust an implicit "already verified" flag).
 const asWireEvent = (event: unknown) => JSON.parse(JSON.stringify(event))
 
+// Let the microtask + 0ms-timer queue drain (enqueue → pump → present → activity record).
+const flushAsync = (): Promise<void> =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, 0)
+  })
+
 // Build a signed kind-24133 request event from the client to the user's transport pubkey.
 const makeInbound = (payloadCiphertext: string) =>
   asWireEvent(
@@ -202,13 +208,13 @@ describe("signer runtime assembly (A1)", () => {
 
     // First delivery: raises exactly one surface (stays pending on approval).
     runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
-    await new Promise<void>((resolve) => setTimeout(resolve, 0))
+    await flushAsync()
     expect(present).toHaveBeenCalledTimes(1)
 
     // Retry while the first surface is still open (pending) → ledger returns pending-duplicate,
     // the flow drops it, and NO second surface is presented.
     runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
-    await new Promise<void>((resolve) => setTimeout(resolve, 0))
+    await flushAsync()
     expect(present).toHaveBeenCalledTimes(1)
   })
 
@@ -224,5 +230,43 @@ describe("signer runtime assembly (A1)", () => {
     await runtime.disconnect(clientPubkey)
     list = await runtime.listConnections()
     expect(list.map((r) => r.clientPubkey)).not.toContain(clientPubkey)
+  })
+
+  it("records a 'get_public_key' activity entry ('Read your public key', Amber parity)", async () => {
+    const decodeForTest = () => ({
+      scheme: "nip44" as const,
+      clientPubkey,
+      request: { id: "gpk-1", method: "get_public_key", params: [] },
+    })
+    const runtime = createSignerRuntime(makeDeps({ decodeForTest }))
+    await runtime.handleInbound(makeInbound("verified") as never)
+    await flushAsync()
+    const activity = await runtime.listActivity(clientPubkey)
+    expect(activity.some((e) => e.method === "get_public_key" && e.accepted)).toBe(true)
+  })
+
+  it("connect approve records a 'connect' activity entry AND begins awaiting the login follow-up", async () => {
+    // A present that auto-approves the connection entry the instant it is presented. A holder lets
+    // the present closure reach the runtime that is constructed WITH it (chicken-and-egg).
+    const holder: { runtime?: ReturnType<typeof createSignerRuntime> } = {}
+    const present = jest.fn(async () => {
+      holder.runtime?.coordinator.resolveActive({ approved: true })
+    })
+    const runtime = createSignerRuntime(makeDeps({ present }))
+    holder.runtime = runtime
+
+    const uri =
+      `nostrconnect://${clientPubkey}` +
+      `?relay=wss%3A%2F%2Fnos.lol&secret=s&name=BTCPay%20Server&perms=sign_event%3A22242`
+    await runtime.handleConnectUri(uri)
+    await flushAsync()
+
+    const activity = await runtime.listActivity(clientPubkey)
+    expect(activity.some((e) => e.method === "connect" && e.accepted)).toBe(true)
+    // We are now waiting on this client's login sign_event.
+    expect(runtime.awaitingFollowup.current()).toMatchObject({
+      clientPubkey,
+      name: "BTCPay Server",
+    })
   })
 })

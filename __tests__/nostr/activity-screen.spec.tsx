@@ -7,7 +7,10 @@
 import React from "react"
 import { render } from "@testing-library/react-native"
 
-import { NostrActivityScreen } from "@app/screens/nostr/activity-screen"
+import {
+  NostrActivityScreen,
+  NostrActivityHeaderTitle,
+} from "@app/screens/nostr/activity-screen"
 
 import { ContextForScreen } from "../screens/helper"
 import { flushEffects } from "../helpers/flush-effects"
@@ -66,5 +69,31 @@ describe("activity screen", () => {
     await flushEffects()
     expect(getByText("nip44_decrypt")).toBeTruthy()
     expect(getByTestId("nostr-activity-rejected")).toBeTruthy()
+  })
+
+  it("labels connect / get_public_key entries (Amber parity) with an ack subtitle on connect", async () => {
+    const { getByTestId } = renderScreen({
+      entries: [
+        { method: "get_public_key", accepted: true, time: 1_700_000_000_000 },
+        { method: "connect", accepted: true, time: 1_700_000_000_000 },
+      ],
+      stats: { total: 2, accepted: 2, rejected: 0 },
+    })
+    await flushEffects()
+    expect(getByTestId("nostr-activity-method-connect")).toBeTruthy()
+    expect(getByTestId("nostr-activity-subtitle")).toBeTruthy() // "ack" line under Connect
+    expect(getByTestId("nostr-activity-method-get_public_key")).toBeTruthy()
+  })
+})
+
+describe("activity header title (avatar + name)", () => {
+  it("renders the client name", async () => {
+    const { getByText } = render(
+      <ContextForScreen>
+        <NostrActivityHeaderTitle name="BTCPay Server" />
+      </ContextForScreen>,
+    )
+    await flushEffects()
+    expect(getByText("BTCPay Server")).toBeTruthy()
   })
 })

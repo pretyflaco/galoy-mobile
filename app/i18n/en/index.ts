@@ -4308,6 +4308,7 @@ const en: BaseTranslation = {
   },
   NostrActivityScreen: {
     title: "Activity",
+    titleForClient: "{client:string} — Activity",
     empty: "No activity yet.",
     statTotal: "Total",
     statAccepted: "Accepted",
@@ -4316,7 +4317,14 @@ const en: BaseTranslation = {
     rejected: "Rejected",
     signEventKind: "Signed event (kind {kind:number})",
     signEvent: "Signed event",
+    methodConnect: "Connect",
+    methodConnectAck: "ack",
+    methodReadPubkey: "Read your public key",
     rowA11y: "{action:string} — {decision:string} at {when:string}.",
+  },
+  NostrAwaitingFollowupScreen: {
+    body: "Waiting for sign-in request…",
+    srLabel: "Connected to {client:string}. Waiting for the sign-in request.",
   },
   NostrReviewAllScreen: {
     title: "Review requests",

@@ -17,6 +17,7 @@ import RNQRGenerator from "rn-qr-generator"
 import { gql } from "@apollo/client"
 import {
   handleNostrConnectLink,
+  hasNostrConnectHandler,
   isNostrConnectLink,
 } from "@app/nostr/connect-link-handler"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
@@ -159,25 +160,32 @@ export const ScanningQRCodeScreen: React.FC = () => {
       }
 
       // nostrconnect:// (Story A3 / AD-9): a scanned pairing URI is forwarded RAW to ConnectFlow
-      // (via the runtime handler) and never treated as a payment destination. The connection
-      // approval surface (Epic 3) takes over; we pop the scanner. If the signer is off, the
-      // handler is unregistered and this returns false, so the value falls through to payments.
+      // (via the runtime handler) and never treated as a payment destination.
+      //
+      // Camera dismissal (UX): when the signer is ON (a handler is registered) we pop the scanner
+      // IMMEDIATELY on recognizing the URI — BEFORE the connection approval resolves — so the
+      // approval surface renders on a clean background instead of over the still-running camera.
+      // The forward is fired without awaiting the human decision; `hasNostrConnectHandler()` lets
+      // us know synchronously whether the URI will actually be consumed. If the signer is off, no
+      // handler is registered, so we keep the old await/fall-through-to-payments behavior.
       if (isNostrConnectLink(data)) {
         // Ref guard closes the per-frame double-forward window (see nostrConnectInFlight above).
         if (nostrConnectInFlight.current) {
           return
         }
-        nostrConnectInFlight.current = true
-        // Reset the latch when the forward settles, via .finally() (not a post-await assignment)
-        // so it survives both the forwarded (unmount) and fall-through paths without tripping the
-        // atomic-update lint on a ref written after an await.
-        const forwarded = await handleNostrConnectLink(data).finally(() => {
-          nostrConnectInFlight.current = false
-        })
-        if (forwarded) {
+
+        if (hasNostrConnectHandler()) {
+          nostrConnectInFlight.current = true
+          // Fire-and-forget the forward (the approval overlay owns the decision from here) and pop
+          // the camera synchronously so it unmounts before the connection Modal appears.
+          handleNostrConnectLink(data).finally(() => {
+            nostrConnectInFlight.current = false
+          })
           navigation.goBack()
           return
         }
+
+        // Signer off: no handler → the URI is not consumed; fall through to payment parsing.
       }
 
       try {

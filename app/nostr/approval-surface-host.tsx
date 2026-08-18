@@ -35,8 +35,11 @@ import {
   type ReviewAllItem,
 } from "@app/screens/nostr/review-all-screen"
 
+import { NostrAwaitingFollowupScreen } from "@app/screens/nostr/awaiting-followup-screen"
+
 import { REVIEW_ALL_THRESHOLD, type ApprovalEntry } from "./approval/coordinator"
 import type { DuplicatePromptStore } from "./core/duplicate-prompt"
+import type { AwaitingFollowupStore } from "./core/awaiting-followup"
 import { useApprovalCoordinator } from "./hooks/use-approval-coordinator"
 import { useNostrRuntime } from "./nostr-runtime-provider"
 
@@ -49,7 +52,48 @@ export const ApprovalSurfaceHost: React.FC = () => {
     <>
       <ApprovalOverlay coordinator={runtimeCtx.coordinator} />
       <DuplicatePromptOverlay store={runtimeCtx.runtime.duplicatePrompt} />
+      <AwaitingFollowupOverlay
+        store={runtimeCtx.runtime.awaitingFollowup}
+        coordinator={runtimeCtx.coordinator}
+      />
     </>
+  )
+}
+
+/**
+ * Renders the sign-in "Waiting for login request…" surface as its OWN overlay, driven by the
+ * runtime's awaiting-followup store. Shown only while NO approval is active (so the request
+ * approval surface takes precedence the instant the login sign_event arrives) and the duplicate
+ * prompt is not up. Cleared by the runtime on confirmed sign-in or timeout, which hides the Modal.
+ */
+const AwaitingFollowupOverlay: React.FC<{
+  store: AwaitingFollowupStore
+  coordinator: NonNullable<ReturnType<typeof useNostrRuntime>>["coordinator"]
+}> = ({ store, coordinator }) => {
+  const styles = useStyles()
+  const awaiting = useSyncExternalStore(
+    (cb) => store.subscribe(cb),
+    () => store.current(),
+  )
+  // Suppress while an approval is active — the approval Modal owns the screen then.
+  const hasActiveApproval = useSyncExternalStore(
+    (cb) => coordinator.subscribe(cb),
+    () => coordinator.activeEntry() !== null,
+  )
+  const shouldShow = Boolean(awaiting) && !hasActiveApproval
+  return (
+    <Modal visible={shouldShow} animationType="fade" transparent={false}>
+      <Screen>
+        <View style={styles.container}>
+          {awaiting ? (
+            <NostrAwaitingFollowupScreen
+              clientName={awaiting.name}
+              clientImage={awaiting.image}
+            />
+          ) : null}
+        </View>
+      </Screen>
+    </Modal>
   )
 }
 
@@ -151,12 +195,15 @@ const ApprovalOverlay: React.FC<{
     clientDisplay.name ??
     (active?.clientPubkey ? `${active.clientPubkey.slice(0, 12)}…` : "")
 
-  // CONNECTION approve: resolve, then land on Connected clients from the stable hub base so the
-  // back button returns to the Nostr Identity hub (not to a resolved approval surface).
+  // CONNECTION approve: resolve, then land on the client's Activity screen (Amber parity) from the
+  // stable hub base so the back button returns to the Nostr Identity hub. The waiting overlay +
+  // subsequent sign_event approval Modal float over Activity; when sign-in is delivered the user
+  // rests on Activity showing the whole session (Connect / Read public key / Signed event).
   const onConnectionApprove = useCallback(() => {
+    const clientPubkey = active?.clientPubkey
     approve()
-    navigation.navigate("nostrConnectedClients")
-  }, [approve, navigation])
+    if (clientPubkey) navigation.navigate("nostrActivity", { clientPubkey })
+  }, [active, approve, navigation])
 
   const onReviewApprove = useCallback(
     (ids: string[]) => coordinator.resolveMany(ids, true),

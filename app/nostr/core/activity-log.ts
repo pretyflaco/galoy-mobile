@@ -51,6 +51,12 @@ export interface ActivityLog {
   list(clientPubkey: string): Promise<ActivityEntry[]>
   /** Aggregate accept/reject stats for a client. */
   stats(clientPubkey: string): Promise<ActivityStats>
+  /**
+   * Subscribe to record events so a live screen (the Activity screen) can re-read after a new
+   * entry lands — e.g. while the user watches, the connect / read-public-key / sign-in entries
+   * are recorded in sequence. Returns an unsubscribe.
+   */
+  subscribe(listener: () => void): () => void
 }
 
 type ActivityMap = Record<string, ActivityEntry[]>
@@ -75,6 +81,9 @@ const sanitize = (entry: ActivityEntry): ActivityEntry => {
 export const createActivityLog = (
   storage: ActivityStorage = defaultStorage,
 ): ActivityLog => {
+  const listeners = new Set<() => void>()
+  const notify = (): void => listeners.forEach((l) => l())
+
   const readAll = async (): Promise<ActivityMap> => {
     const raw = (await storage.loadJson(ACTIVITY_STORAGE_KEY)) as ActivityMap | null
     return raw ?? {}
@@ -91,6 +100,7 @@ export const createActivityLog = (
       )
       map[clientPubkey] = next
       await writeAll(map)
+      notify()
     },
 
     async list(clientPubkey): Promise<ActivityEntry[]> {
@@ -102,6 +112,13 @@ export const createActivityLog = (
       const entries = (await readAll())[clientPubkey] ?? []
       const accepted = entries.filter((e) => e.accepted).length
       return { total: entries.length, accepted, rejected: entries.length - accepted }
+    },
+
+    subscribe(listener): () => void {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
     },
   }
 }

@@ -59,6 +59,10 @@ import {
   createDuplicatePromptStore,
   type DuplicatePromptStore,
 } from "./core/duplicate-prompt"
+import {
+  createAwaitingFollowupStore,
+  type AwaitingFollowupStore,
+} from "./core/awaiting-followup"
 import type { ConnectionRecordLike, SignerGateDeps } from "./signer-gate"
 import {
   createConnectFlow,
@@ -121,10 +125,14 @@ export interface SignerRuntime {
   disconnect(clientPubkey: string): Promise<void>
   /** The re-login Replace/Keep-both/Cancel prompt store (rendered by the ApprovalSurfaceHost). */
   duplicatePrompt: DuplicatePromptStore
+  /** The sign-in "waiting for login request" store (rendered by the ApprovalSurfaceHost). */
+  awaitingFollowup: AwaitingFollowupStore
   /** Metadata-only activity history for a client (newest first) — the "Show activity" screen. */
   listActivity(clientPubkey: string): Promise<ActivityEntry[]>
   /** Aggregate accept/reject stats for a client (activity screen stats card). */
   activityStats(clientPubkey: string): Promise<ActivityStats>
+  /** Subscribe to activity changes so a live screen re-reads on each new entry. */
+  subscribeActivity(listener: () => void): () => void
   /** Test-only: grant a scope to a client (simulates a completed connect). */
   grantForTest(clientPubkey: string, grantedScopes: string[]): Promise<void>
 }
@@ -190,7 +198,35 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   const ledger = createRequestLedger(deps.storage)
   const activityLog = createActivityLog(deps.storage)
   const duplicatePrompt = createDuplicatePromptStore()
+  const awaitingFollowup = createAwaitingFollowupStore()
   const pool = getRelayPool({ createPool: deps.createPool })
+
+  // Bounded auto-clear for the sign-in waiting overlay: if the login follow-up never arrives (or
+  // its signed response never confirms), stop waiting after this window so the spinner cannot
+  // hang — the UI falls back to the Activity screen showing whatever was recorded.
+  const FOLLOWUP_WAIT_TIMEOUT_MS = 25_000
+  const followupTimers = new Map<string, ReturnType<typeof setTimeout>>()
+  const stopAwaiting = (clientPubkey: string): void => {
+    const timer = followupTimers.get(clientPubkey)
+    if (timer) {
+      clearTimeout(timer)
+      followupTimers.delete(clientPubkey)
+    }
+    awaitingFollowup.clear(clientPubkey)
+  }
+  const startAwaiting = (state: {
+    clientPubkey: string
+    name?: string
+    image?: string
+  }): void => {
+    awaitingFollowup.set(state)
+    const prior = followupTimers.get(state.clientPubkey)
+    if (prior) clearTimeout(prior)
+    followupTimers.set(
+      state.clientPubkey,
+      setTimeout(() => stopAwaiting(state.clientPubkey), FOLLOWUP_WAIT_TIMEOUT_MS),
+    )
+  }
 
   // Metadata-only activity recording (leak-audit safe): log the accept/reject decision for a
   // client's request. Fire-and-forget — persistence must never block or fail a signer response.
@@ -291,11 +327,16 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   const sendResponse = async (
     response: Nip46Response,
     decoded: DecodedRequest,
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     await primeTransportSk()
-    if (transportSkCache === null) return
+    if (transportSkCache === null) return false
     const sk = transportSkCache
-    publishResponse(relaySnapshot, () =>
+    // Returns whether the response was CONFIRMED published (>=1 relay ACK) — the strongest
+    // "delivered to the client" signal that exists. The waiting overlay uses this to know the
+    // signed sign-in event actually left the device. publishConfirmed already retries; we await
+    // it here so the caller can react to delivery (the fire-and-forget publishResponse remains
+    // for paths that do not need the outcome).
+    return publishConfirmed(relaySnapshot, () =>
       encodeResponse(response, {
         scheme: decoded.scheme,
         clientPubkey: decoded.clientPubkey,
@@ -360,7 +401,12 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
       decoded.request.id,
       JSON.stringify(response),
     )
-    await sendResponse(response, decoded)
+    const confirmed = await sendResponse(response, decoded)
+    // Sign-in delivered: the login sign_event was approved AND its signed response was
+    // confirmed-published (>=1 relay ACK). This is the moment to stop waiting — the client will
+    // complete login over HTTP with no further signer involvement. On rejection or an unconfirmed
+    // publish we leave the timeout to clear the wait (the client may retry / the user backed out).
+    if (result.ok && confirmed) stopAwaiting(decoded.clientPubkey)
   }
 
   // -- encrypt/decrypt flow (Story 3.6): each op raises its OWN fresh approval.
@@ -439,6 +485,18 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     if (method === "sign_event") return runSignEvent(decoded)
     if (CAPABILITY_METHODS.has(method)) return runCapability(decoded)
     const transportSk = await readTransportSk()
+    // Metadata-only activity for get_public_key ("Read your public key", Amber parity). Record
+    // ONCE per genuine request — skip if the ledger already saw this id (a STAGE_TIMEOUT retry),
+    // so the Activity list shows one row, not one per redelivery.
+    if (method === "get_public_key") {
+      const seen = await ledger.lookup(decoded.clientPubkey, decoded.request.id)
+      if (!seen) {
+        recordActivity(decoded.clientPubkey, {
+          method: "get_public_key",
+          accepted: true,
+        })
+      }
+    }
     return dispatchTransport(decoded, event, transportSk)
   }
 
@@ -511,7 +569,20 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
         kind: "connection",
         clientPubkey: request.clientPubkey,
         metadata: request.metadata,
-      }).then((approved) => ({ approved })),
+      }).then((approved) => {
+        if (approved) {
+          // Record the "Connect" activity (Amber parity) and begin waiting for the login
+          // follow-up (the client's sign_event lands a moment later over the relay). The waiting
+          // overlay reads awaitingFollowup; it clears on the confirmed sign-in or on timeout.
+          recordActivity(request.clientPubkey, { method: "connect", accepted: true })
+          startAwaiting({
+            clientPubkey: request.clientPubkey,
+            name: request.metadata.name,
+            image: request.metadata.image,
+          })
+        }
+        return { approved }
+      }),
     // Same-identity re-login: surface the Replace / Keep both / Cancel prompt via the runtime's
     // duplicate-prompt store (rendered by the ApprovalSurfaceHost as its own overlay).
     resolveDuplicate: (request) => duplicatePrompt.prompt(request),
@@ -627,8 +698,10 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
       resubscribe()
     },
     duplicatePrompt,
+    awaitingFollowup,
     listActivity: (clientPubkey) => activityLog.list(clientPubkey),
     activityStats: (clientPubkey) => activityLog.stats(clientPubkey),
+    subscribeActivity: (listener) => activityLog.subscribe(listener),
     grantForTest: async (clientPubkey, grantedScopes) => {
       await store.upsert({
         clientPubkey,

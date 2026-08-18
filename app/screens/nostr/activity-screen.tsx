@@ -1,7 +1,7 @@
 import React from "react"
 import { FlatList, View } from "react-native"
 
-import { Text, makeStyles } from "@rn-vui/themed"
+import { Avatar, Text, makeStyles } from "@rn-vui/themed"
 
 import { useI18nContext } from "@app/i18n/i18n-react"
 import type { ActivityEntry, ActivityStats } from "@app/nostr/core/activity-log"
@@ -9,6 +9,34 @@ import type { ActivityEntry, ActivityStats } from "@app/nostr/core/activity-log"
 type Props = {
   entries: ActivityEntry[]
   stats: ActivityStats
+}
+
+/**
+ * Custom navigation header title for the Activity screen (Amber parity): a small client avatar +
+ * name, so the header reads e.g. "BTCPay Server". Installed via navigation.setOptions in the
+ * route wrapper once the connection record loads; falls back to the static title until then.
+ */
+export const NostrActivityHeaderTitle: React.FC<{ name?: string; image?: string }> = ({
+  name,
+  image,
+}) => {
+  const styles = useStyles()
+  const label = name ?? ""
+  return (
+    <View style={styles.headerTitle}>
+      <Avatar
+        rounded
+        size={28}
+        {...(image
+          ? { source: { uri: image } }
+          : { title: (label || "?").charAt(0).toUpperCase() })}
+        containerStyle={styles.headerAvatar}
+      />
+      <Text type="p1" style={styles.headerName} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  )
 }
 
 /** "HH:MM - DD Mon" for an activity timestamp (ms). */
@@ -37,8 +65,16 @@ export const NostrActivityScreen: React.FC<Props> = ({ entries, stats }) => {
         ? T.signEventKind({ kind: e.eventKind })
         : T.signEvent()
     }
+    if (e.method === "connect") return T.methodConnect()
+    if (e.method === "get_public_key") return T.methodReadPubkey()
     return e.method
   }
+
+  // Amber-style secondary detail line (e.g. "ack" under a Connect row). Metadata only. Gate on
+  // the method (not the i18n return) so the row structure is deterministic.
+  const hasSubtitle = (e: ActivityEntry): boolean => e.method === "connect"
+  const subtitle = (e: ActivityEntry): string =>
+    e.method === "connect" ? T.methodConnectAck() : ""
 
   const header = (
     <View style={styles.statsCard} testID="nostr-activity-stats">
@@ -100,11 +136,20 @@ export const NostrActivityScreen: React.FC<Props> = ({ entries, stats }) => {
                   testID={
                     typeof item.eventKind === "number"
                       ? `nostr-activity-kind-${item.eventKind}`
-                      : undefined
+                      : `nostr-activity-method-${item.method}`
                   }
                 >
                   {actionLabel(item)}
                 </Text>
+                {hasSubtitle(item) ? (
+                  <Text
+                    type="p4"
+                    style={styles.rowSubtitle}
+                    testID="nostr-activity-subtitle"
+                  >
+                    {subtitle(item)}
+                  </Text>
+                ) : null}
                 <Text type="p4" style={styles.rowWhen}>
                   {when}
                 </Text>
@@ -128,6 +173,20 @@ export const NostrActivityScreen: React.FC<Props> = ({ entries, stats }) => {
 }
 
 const useStyles = makeStyles(({ colors }) => ({
+  headerTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 10,
+    flexShrink: 1,
+  },
+  headerAvatar: {
+    backgroundColor: colors.grey4,
+  },
+  headerName: {
+    color: colors.black,
+    fontWeight: "600",
+    flexShrink: 1,
+  },
   container: {
     flex: 1,
   },
@@ -177,6 +236,9 @@ const useStyles = makeStyles(({ colors }) => ({
   rowAction: {
     color: colors.black,
     fontWeight: "600",
+  },
+  rowSubtitle: {
+    color: colors.grey1,
   },
   rowWhen: {
     color: colors.grey2,

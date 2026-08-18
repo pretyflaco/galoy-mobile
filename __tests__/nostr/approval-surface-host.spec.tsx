@@ -27,6 +27,9 @@ import {
 } from "@app/nostr/approval/coordinator"
 
 let testCoordinator: ApprovalCoordinator
+// A mutable awaiting-followup state the tests can set; the store reads it live so a re-render
+// (driven by the coordinator subscription) reflects it.
+let testAwaiting: { clientPubkey: string; name?: string; image?: string } | null = null
 jest.mock("@app/nostr/nostr-runtime-provider", () => ({
   useNostrRuntime: () => ({
     coordinator: testCoordinator,
@@ -37,6 +40,12 @@ jest.mock("@app/nostr/nostr-runtime-provider", () => ({
         subscribe: () => () => undefined,
         current: () => null,
         prompt: async () => "cancel",
+      },
+      awaitingFollowup: {
+        subscribe: (cb: () => void) => testCoordinator.subscribe(cb),
+        current: () => testAwaiting,
+        set: () => undefined,
+        clear: () => undefined,
       },
     },
   }),
@@ -55,6 +64,7 @@ const renderHost = () =>
 
 beforeEach(() => {
   navigate.mockClear()
+  testAwaiting = null
   testCoordinator = createApprovalCoordinator({ present: async () => undefined })
 })
 
@@ -92,7 +102,7 @@ describe("ApprovalSurfaceHost (render-from-state overlay)", () => {
     expect(queryByTestId("nostr-review-all")).toBeNull()
   })
 
-  it("CONNECTION approve resolves + navigates to Connected clients (deliberate, from the hub base)", async () => {
+  it("CONNECTION approve resolves + navigates to the client's Activity screen (from the hub base)", async () => {
     const { getByTestId } = renderHost()
     const decision = testCoordinator.enqueue({
       id: "c3",
@@ -103,7 +113,7 @@ describe("ApprovalSurfaceHost (render-from-state overlay)", () => {
     await waitFor(() => expect(getByTestId("nostr-connection-approve")).toBeTruthy())
     fireEvent.press(getByTestId("nostr-connection-approve"))
     await expect(decision).resolves.toEqual({ approved: true, epoch: 0 })
-    expect(navigate).toHaveBeenCalledWith("nostrConnectedClients")
+    expect(navigate).toHaveBeenCalledWith("nostrActivity", { clientPubkey: "c3" })
   })
 
   it("REJECT resolves the connection and dismisses the surface (no navigation)", async () => {
@@ -150,5 +160,39 @@ describe("ApprovalSurfaceHost (render-from-state overlay)", () => {
     }
     await waitFor(() => expect(queryByTestId("nostr-request-approval")).toBeTruthy())
     expect(queryByTestId("nostr-review-all")).toBeNull()
+  })
+})
+
+describe("ApprovalSurfaceHost — sign-in waiting overlay", () => {
+  it("shows the waiting surface when awaitingFollowup is set and no approval is active", async () => {
+    testAwaiting = { clientPubkey: "w1", name: "BTCPay Server" }
+    const { queryByTestId } = renderHost()
+    // Nudge a coordinator notify so the store subscription re-reads (no active entry enqueued).
+    testCoordinator.enqueue({
+      id: "nudge",
+      kind: "request",
+      clientPubkey: "other",
+      method: "nip44_decrypt",
+      humanAction: "decrypt a message",
+    })
+    // The nudge itself becomes active → waiting suppressed. Resolve it to clear active.
+    await waitFor(() => expect(queryByTestId("nostr-request-approval")).toBeTruthy())
+    testCoordinator.resolveActive({ approved: false })
+    await waitFor(() => expect(queryByTestId("nostr-awaiting-followup")).toBeTruthy())
+  })
+
+  it("suppresses the waiting surface while an approval IS active (approval takes precedence)", async () => {
+    testAwaiting = { clientPubkey: "w2", name: "BTCPay Server" }
+    const { queryByTestId } = renderHost()
+    testCoordinator.enqueue({
+      id: "req",
+      kind: "request",
+      clientPubkey: "w2",
+      method: "nip44_decrypt",
+      humanAction: "decrypt a message",
+    })
+    await waitFor(() => expect(queryByTestId("nostr-request-approval")).toBeTruthy())
+    // The request approval owns the screen; the waiting surface is not shown underneath it.
+    expect(queryByTestId("nostr-awaiting-followup")).toBeNull()
   })
 })

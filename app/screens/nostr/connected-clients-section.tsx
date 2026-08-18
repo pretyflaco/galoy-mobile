@@ -20,6 +20,9 @@ export interface ConnectedClient {
   createdAt?: number
 }
 
+/** Per-relay delivery health (Amber-style): accepted-event count keyed by relay URL. */
+export type RelayHealth = Record<string, number>
+
 /** first8:last8 of the client pubkey — the Amber-style disambiguating fingerprint. */
 const pubkeyPair = (pubkey: string): string =>
   pubkey.length >= 16 ? `${pubkey.slice(0, 8)}:${pubkey.slice(-8)}` : pubkey
@@ -37,6 +40,8 @@ type Props = {
   clients: ConnectedClient[]
   /** Trigger the atomic disconnect for a pubkey (ConnectionStore.disconnect). */
   onDisconnect: (clientPubkey: string) => void
+  /** Optional per-relay accepted-event counts for the Amber-style relay badges. */
+  relayHealth?: RelayHealth
 }
 
 /**
@@ -52,6 +57,7 @@ type Props = {
 export const NostrConnectedClientsSection: React.FC<Props> = ({
   clients,
   onDisconnect,
+  relayHealth,
 }) => {
   const { LL } = useI18nContext()
   const styles = useStyles()
@@ -126,12 +132,30 @@ export const NostrConnectedClientsSection: React.FC<Props> = ({
             <ListItem.Content>
               <ListItem.Title style={styles.rowName}>{client.name}</ListItem.Title>
               {client.relays && client.relays.length > 0 && (
-                <ListItem.Subtitle
-                  style={styles.rowMeta}
+                <View
+                  style={styles.relayList}
                   testID={`nostr-client-relays-${client.clientPubkey}`}
                 >
-                  {client.relays.map((r) => r.replace(/^wss:\/\//, "")).join(", ")}
-                </ListItem.Subtitle>
+                  {client.relays.map((r) => {
+                    const count = relayHealth?.[r]
+                    return (
+                      <View key={r} style={styles.relayChip}>
+                        <Text type="p4" style={styles.relayChipText}>
+                          {r.replace(/^wss:\/\//, "").replace(/\/$/, "")}
+                        </Text>
+                        {/* Amber-style delivery badge: accepted-event count, or "?" when a relay
+                            has not (yet) ACKed any of our published events. */}
+                        <View
+                          style={[styles.relayBadge, count ? styles.relayBadgeOk : null]}
+                        >
+                          <Text type="p4" style={styles.relayBadgeText}>
+                            {count ?? "?"}
+                          </Text>
+                        </View>
+                      </View>
+                    )
+                  })}
+                </View>
               )}
               <ListItem.Subtitle
                 style={styles.rowMeta}
@@ -173,6 +197,39 @@ const useStyles = makeStyles(({ colors }) => ({
   rowMeta: {
     color: colors.grey2,
     fontSize: 12,
+  },
+  relayList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    marginVertical: 2,
+  },
+  relayChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 4,
+    borderWidth: 1,
+    borderColor: colors.grey4,
+    borderRadius: 6,
+    paddingVertical: 1,
+    paddingLeft: 6,
+    paddingRight: 2,
+  },
+  relayChipText: {
+    color: colors.grey2,
+  },
+  relayBadge: {
+    minWidth: 18,
+    alignItems: "center",
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    backgroundColor: colors.grey4,
+  },
+  relayBadgeOk: {
+    backgroundColor: colors._green,
+  },
+  relayBadgeText: {
+    color: colors.white,
   },
   warningCard: {
     padding: 20,

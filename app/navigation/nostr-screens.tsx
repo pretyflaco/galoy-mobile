@@ -23,6 +23,7 @@ import { NostrBackupScreen } from "@app/screens/nostr/backup/nostr-backup-screen
 import {
   NostrConnectedClientsSection,
   type ConnectedClient,
+  type RelayHealth,
 } from "@app/screens/nostr/connected-clients-section"
 import { NostrConnectionApprovalScreen } from "@app/screens/nostr/connection-approval-screen"
 import { NostrRequestApprovalScreen } from "@app/screens/nostr/request-approval-screen"
@@ -163,6 +164,7 @@ export const NostrBackup: React.FC = () => {
 export const NostrConnectedClients: React.FC = () => {
   const runtime = useNostrRuntime()
   const [clients, setClients] = useState<ConnectedClient[]>([])
+  const [relayHealth, setRelayHealth] = useState<RelayHealth>({})
 
   const reload = useCallback(async () => {
     const records = (await runtime?.runtime.listConnections()) ?? []
@@ -175,11 +177,17 @@ export const NostrConnectedClients: React.FC = () => {
         createdAt: r.createdAt,
       })),
     )
+    setRelayHealth(runtime?.runtime.relayHealth() ?? {})
   }, [runtime])
 
   useEffect(() => {
     reload().catch(() => undefined)
-  }, [reload])
+    // Poll relay health so the badges update as our published events get ACKed.
+    const id = setInterval(() => {
+      setRelayHealth(runtime?.runtime.relayHealth() ?? {})
+    }, 2000)
+    return () => clearInterval(id)
+  }, [reload, runtime])
 
   const handleDisconnect = useCallback(
     (clientPubkey: string) => {
@@ -194,7 +202,11 @@ export const NostrConnectedClients: React.FC = () => {
 
   return (
     <Screen>
-      <NostrConnectedClientsSection clients={clients} onDisconnect={handleDisconnect} />
+      <NostrConnectedClientsSection
+        clients={clients}
+        onDisconnect={handleDisconnect}
+        relayHealth={relayHealth}
+      />
     </Screen>
   )
 }

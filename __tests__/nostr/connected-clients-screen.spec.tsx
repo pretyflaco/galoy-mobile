@@ -7,7 +7,7 @@
  * copy. Behavior via testIDs (i18n empty in harness); SR label content enforced by source-scan.
  */
 import React from "react"
-import { render, fireEvent } from "@testing-library/react-native"
+import { render, fireEvent, within } from "@testing-library/react-native"
 
 import { NostrConnectedClientsSection } from "@app/screens/nostr/connected-clients-section"
 
@@ -62,11 +62,33 @@ describe("connected-clients list (AC #1)", () => {
     expect(fpB).toBeTruthy()
     expect(fpA.props.children).not.toEqual(fpB.props.children)
 
-    // Relays are shown (wss:// stripped), distinct per row.
-    expect(getByTestId(`nostr-client-relays-${pkA}`).props.children).toContain("nos.lol")
-    expect(getByTestId(`nostr-client-relays-${pkB}`).props.children).toContain(
-      "relay.damus.io",
-    )
+    // Relays are shown as per-relay chips (wss:// stripped), distinct per row.
+    const relaysA = getByTestId(`nostr-client-relays-${pkA}`)
+    const relaysB = getByTestId(`nostr-client-relays-${pkB}`)
+    expect(relaysA).toBeTruthy()
+    expect(relaysB).toBeTruthy()
+    expect(within(relaysA).getByText("nos.lol")).toBeTruthy()
+    expect(within(relaysA).getByText("relay.primal.net")).toBeTruthy()
+    expect(within(relaysB).getByText("relay.damus.io")).toBeTruthy()
+  })
+
+  it("renders an Amber-style delivery badge per relay (count when healthy, ? otherwise)", async () => {
+    const pk = "3".repeat(63) + "c"
+    const { getByTestId } = renderSection({
+      clients: [
+        {
+          clientPubkey: pk,
+          name: "BTCPay Server",
+          relays: ["wss://nos.lol", "wss://offchain.pub"],
+        },
+      ],
+      relayHealth: { "wss://nos.lol": 87 },
+    })
+    await flushEffects()
+    const relays = getByTestId(`nostr-client-relays-${pk}`)
+    // nos.lol has ACKed 87 of our events; offchain.pub has none yet → "?".
+    expect(within(relays).getByText("87")).toBeTruthy()
+    expect(within(relays).getByText("?")).toBeTruthy()
   })
 
   it("shows the empty state when there are no connected clients", async () => {

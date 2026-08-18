@@ -103,6 +103,11 @@ export interface SignerRuntime {
   gateDeps: SignerGateDeps
   /** List the current connection records (management UI). */
   listConnections(): Promise<ConnectionRecord[]>
+  /**
+   * Per-relay delivery health: how many of our published NIP-46 events each relay has ACKed
+   * (accepted), keyed by relay URL. Drives the Amber-style relay badges. Observational only.
+   */
+  relayHealth(): Record<string, number>
   /** Atomically disconnect a client (delete record + void grant + tombstone) and re-sync. */
   disconnect(clientPubkey: string): Promise<void>
   /** Test-only: grant a scope to a client (simulates a completed connect). */
@@ -187,6 +192,22 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   // hardcoded list). A synchronous snapshot backs the gate's sync list() + publish targets.
   let relaySnapshot: string[] = []
   let recordSnapshot: ConnectionRecordLike[] = []
+
+  // Per-relay delivery health (Amber-parity badges). A side-map of how many of our published
+  // NIP-46 events each relay ACKed (accepted). Purely observational: recorded from the OK channel
+  // pool.publish already returns, WITHOUT gating delivery (publishConfirmed's control flow is the
+  // hard-won reliability path and is left untouched). Surfaced to the UI via relayHealth().
+  const relayAccepts = new Map<string, number>()
+  const observeRelayOutcomes = (relays: string[], results: Promise<string>[]): void => {
+    relays.forEach((url, i) => {
+      const p = results[i]
+      if (!p) return
+      // Swallow rejections — a failed relay simply doesn't increment (renders as "?"/0).
+      p.then(() => {
+        relayAccepts.set(url, (relayAccepts.get(url) ?? 0) + 1)
+      }).catch(() => undefined)
+    })
+  }
   const syncSnapshots = async (): Promise<void> => {
     const records = await store.list()
     recordSnapshot = toRecordLike(records)
@@ -216,7 +237,9 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     await ensureRelays(relays)
     return retryWithBackoff(async () => {
       try {
-        await Promise.any(pool.publish(relays, encode()))
+        const results = pool.publish(relays, encode())
+        observeRelayOutcomes(relays, results) // record per-relay ACKs (non-gating)
+        await Promise.any(results)
         return true
       } catch {
         return false // every relay rejected/timed out this attempt
@@ -527,6 +550,7 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     coordinator,
     gateDeps,
     listConnections: () => store.list(),
+    relayHealth: () => Object.fromEntries(relayAccepts),
     disconnect: async (clientPubkey) => {
       await store.disconnect(clientPubkey)
       await syncSnapshots()

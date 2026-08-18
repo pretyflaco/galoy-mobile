@@ -270,6 +270,30 @@ describe("signer runtime assembly (A1)", () => {
     })
   })
 
+  it("connects a SECRET-LESS URI with a metadata= blob (Plebeian interop) and stores its identity", async () => {
+    const holder: { runtime?: ReturnType<typeof createSignerRuntime> } = {}
+    const present = jest.fn(async () => {
+      holder.runtime?.coordinator.resolveActive({ approved: true })
+    })
+    const runtime = createSignerRuntime(makeDeps({ present }))
+    holder.runtime = runtime
+
+    const blob = encodeURIComponent(
+      JSON.stringify({ name: "Plebeian.market", url: "https://plebeian.market" }),
+    )
+    // No secret=, token= present (ignored) — the shape Plebeian.market emits.
+    await runtime.handleConnectUri(
+      `nostrconnect://${clientPubkey}?relay=wss%3A%2F%2Fnos.lol&metadata=${blob}&token=abc`,
+    )
+    await flushAsync()
+
+    const records = await runtime.listConnections()
+    const rec = records.find((r) => r.clientPubkey === clientPubkey)
+    expect(rec).toBeTruthy()
+    expect(rec?.metadata.name).toBe("Plebeian.market")
+    expect(rec?.metadata.url).toBe("https://plebeian.market")
+  })
+
   it("pre-approves a 27235 sign when the u-host matches the connect url (Plan A one-tap)", async () => {
     const present = jest.fn(async () => undefined)
     // Grant sign_event:27235 origin-bound to vezir.twentyone.ist (simulating a completed connect

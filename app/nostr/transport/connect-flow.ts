@@ -1,18 +1,20 @@
 /**
  * ConnectFlow (Story 3.3 / AD-8 / AD-9) — owns the nostrconnect:// handshake.
  *
- * Flow: parse the URI (mandatory secret) → raise the CONNECTION approval DECISION through the
- * injected ApprovalCoordinator port (ConnectFlow NEVER raises a surface directly, AD-9) → on
- * approve, send the connect-ack echoing the URI `secret` VERBATIM and create the
- * ConnectionStore record ONLY once that echo is sent → on reject, write no record and send the
- * spec rejection.
+ * Flow: parse the URI → raise the CONNECTION approval DECISION through the injected
+ * ApprovalCoordinator port (ConnectFlow NEVER raises a surface directly, AD-9) → on approve,
+ * send the connect-response (the URI `secret` echoed VERBATIM, or the literal "ack" when the URI
+ * carried no secret) and create the ConnectionStore record ONLY once that response is sent → on
+ * reject, write no record and send the spec rejection.
  *
  * Security invariants:
- *  - The `secret` is MANDATORY. A secret-less URI is rejected BEFORE any approval surface —
- *    pairing without a secret is the Mike Dilger connection-hijacking attack (hardened clients
- *    reject it). The secret is transient handshake state: used once, NEVER persisted.
- *  - The v1 grantable set is EXACTLY `sign_event:22242`. Any other requested perm is
- *    denied-by-default at grant time; `grantedScopes` is `['sign_event:22242']` or `[]`.
+ *  - The `secret` is OPTIONAL (interop). Historically we REQUIRED it as Mike Dilger / QRLjacking
+ *    hardening, but real clients (Plebeian.market; Amber accepts them too) omit it, so a
+ *    secret-less URI is now accepted and answered with "ack". The consent gate is the EXPLICIT
+ *    HUMAN connection approval — a secret-less URI still cannot connect without a tap. When a
+ *    secret IS present it is echoed verbatim (strong session binding) and NEVER persisted.
+ *  - The grantable set is `sign_event:22242` (auth challenge) + origin-bound `sign_event:27235`
+ *    (NIP-98). Any other requested perm is denied-by-default at grant time.
  *  - No raw scope string reaches the human — the approval decision carries client identity +
  *    human-meaning perms only (the screen renders human copy; Story 3.4 owns the surface).
  *
@@ -26,19 +28,79 @@ import {
 } from "@app/nostr/core/connection-store"
 import { normalizeHost } from "@app/nostr/core/url-origin"
 
-/** Parsed nostrconnect:// URI (secret guaranteed non-empty when non-null). */
+/** Parsed nostrconnect:// URI. `secret` is OPTIONAL (see the secret note below). */
 export interface NostrConnectUri {
   clientPubkey: string
   relays: string[]
-  secret: string
+  /**
+   * The connect `secret` when the URI carried one, else undefined. Historically we REQUIRED a
+   * secret (Mike Dilger / QRLjacking hardening). We now accept secret-less URIs for interop with
+   * clients that omit it (Plebeian.market, and Amber accepts them too): the connect-response then
+   * replies the literal "ack" instead of an echoed secret. The real consent gate remains the
+   * EXPLICIT human connection approval — a secret-less URI still cannot connect without a tap.
+   */
+  secret?: string
   /** Requested permissions in raw form (used only to decide the fixed grant). */
   perms: string[]
   metadata: ClientMetadata
 }
 
+/** Cap on any single URI-derived string we keep (defensive: the URI is attacker-influenced). */
+const MAX_FIELD_LEN = 2048
+
+/** Keep only http(s) urls (origin-binding + display); anything else is dropped. */
+const sanitizeHttpUrl = (raw: unknown): string | undefined => {
+  if (typeof raw !== "string" || raw.length === 0 || raw.length > MAX_FIELD_LEN) return
+  try {
+    const u = new URL(raw)
+    return u.protocol === "https:" || u.protocol === "http:" ? raw : undefined
+  } catch {
+    return undefined
+  }
+}
+
+const sanitizeString = (raw: unknown): string | undefined =>
+  typeof raw === "string" && raw.length > 0 && raw.length <= MAX_FIELD_LEN
+    ? raw
+    : undefined
+
+const splitPerms = (raw: string | undefined | null): string[] =>
+  raw
+    ? raw
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean)
+    : []
+
 /**
- * Parse and validate a nostrconnect:// URI. Returns null (no side effects) if the scheme is
- * wrong, the client pubkey is missing, or the mandatory secret is absent/empty.
+ * Parse the `metadata=` JSON blob some clients send (Plebeian.market; Amber parses it too) as a
+ * FALLBACK for name/url/image/perms. Defensive: attacker-influenced input, so parse in try/catch,
+ * whitelist only the fields we use, cap lengths, and accept only http(s) urls. `icons[0]` is used
+ * as the image when `image` is absent (Plebeian sends `icons: []`).
+ */
+const parseMetadataBlob = (
+  raw: string,
+): { name?: string; url?: string; image?: string; perms: string[] } => {
+  try {
+    const blob = JSON.parse(raw) as Record<string, unknown>
+    if (!blob || typeof blob !== "object") return { perms: [] }
+    const icons = Array.isArray(blob.icons) ? blob.icons : []
+    return {
+      name: sanitizeString(blob.name),
+      url: sanitizeHttpUrl(blob.url),
+      image: sanitizeHttpUrl(blob.image) ?? sanitizeHttpUrl(icons[0]),
+      perms: splitPerms(typeof blob.perms === "string" ? blob.perms : ""),
+    }
+  } catch {
+    return { perms: [] }
+  }
+}
+
+/**
+ * Parse and validate a nostrconnect:// URI. Returns null (no side effects) ONLY if the scheme is
+ * wrong or the client pubkey is missing — a missing `secret` is NO LONGER a rejection (see the
+ * secret note on NostrConnectUri). Identity/perms come from the separate query params, falling
+ * back to a `metadata=` JSON blob when those params are absent.
  */
 export const parseNostrConnectUri = (uri: string): NostrConnectUri | null => {
   if (!uri.startsWith("nostrconnect://")) return null
@@ -53,26 +115,32 @@ export const parseNostrConnectUri = (uri: string): NostrConnectUri | null => {
     queryStart === -1 ? "" : withoutScheme.slice(queryStart + 1),
   )
 
-  const secret = params.get("secret")
-  if (!secret) return null // mandatory-secret (Mike Dilger) — reject before any surface
+  // Secret is optional now. An empty string is treated as absent (reply "ack").
+  const secretParam = params.get("secret")
+  const secret = secretParam && secretParam.length > 0 ? secretParam : undefined
 
-  const permsRaw = params.get("perms")
-  const perms = permsRaw
-    ? permsRaw
-        .split(",")
-        .map((p) => p.trim())
-        .filter(Boolean)
-    : []
+  // The metadata= blob is a FALLBACK; separate params win when both are present.
+  const blobRaw = params.get("metadata")
+  const blob = blobRaw ? parseMetadataBlob(blobRaw) : { perms: [] as string[] }
+
+  const perms = splitPerms(params.get("perms"))
+  const effectivePerms = perms.length > 0 ? perms : blob.perms
 
   const metadata: ClientMetadata = {}
-  const name = params.get("name")
-  const url = params.get("url")
-  const image = params.get("image")
+  const name = sanitizeString(params.get("name")) ?? blob.name
+  const url = sanitizeHttpUrl(params.get("url")) ?? blob.url
+  const image = sanitizeHttpUrl(params.get("image")) ?? blob.image
   if (name) metadata.name = name
   if (url) metadata.url = url
   if (image) metadata.image = image
 
-  return { clientPubkey, relays: params.getAll("relay"), secret, perms, metadata }
+  return {
+    clientPubkey,
+    relays: params.getAll("relay"),
+    secret,
+    perms: effectivePerms,
+    metadata,
+  }
 }
 
 /** The connection-approval decision surfaced through the coordinator (human meaning only). */
@@ -109,10 +177,11 @@ export interface ConnectionRecordLike {
   metadata: ClientMetadata
 }
 
-/** The connect-ack payload (echoes the secret verbatim). */
+/** The connect-ack payload. `result` is the secret echoed verbatim, or "ack" when secret-less. */
 export interface ConnectAck {
   clientPubkey: string
-  secret: string
+  /** The connect-response result: the URI secret echoed verbatim, or the literal "ack". */
+  result: string
   /** The relays (from the URI) the ack must be published to — the client is listening there. */
   relays: string[]
 }
@@ -203,11 +272,12 @@ export const createConnectFlow = (ports: ConnectFlowPorts): ConnectFlow => {
         // "keep" falls through: both records coexist.
       }
 
-      // Approved: echo the secret VERBATIM first — a connection exists ONLY on echo. The ack
-      // must reach the client on the relays it advertised in the URI (AD-11).
+      // Approved: send the connect-response FIRST — a connection exists ONLY once acked. The
+      // result echoes the URI secret verbatim, or is the literal "ack" for a secret-less URI
+      // (NIP-46 / Amber parity). The ack must reach the client on the relays it advertised (AD-11).
       sendConnectAck({
         clientPubkey: parsed.clientPubkey,
-        secret: parsed.secret,
+        result: parsed.secret ?? "ack",
         relays: parsed.relays,
       })
 

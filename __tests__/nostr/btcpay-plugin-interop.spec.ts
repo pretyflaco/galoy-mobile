@@ -47,10 +47,14 @@ describe("BTCPay plugin nostrconnect:// interop (A4)", () => {
     ])
   })
 
-  it("rejects a secret-less plugin URI before any surface (Mike Dilger hardening)", () => {
+  it("accepts a secret-less plugin URI (interop): parses it, secret undefined", () => {
+    // Secret is now OPTIONAL for interop; the human connection approval is the consent gate.
     const noSecret =
       `nostrconnect://${CLIENT_PUBKEY}` +
       `?relay=wss://nos.lol&perms=sign_event:22242&name=BTCPay%20Server`
-    expect(parseNostrConnectUri(noSecret)).toBeNull()
+    const parsed = parseNostrConnectUri(noSecret)
+    expect(parsed).not.toBeNull()
+    expect(parsed?.secret).toBeUndefined()
+    expect(parsed?.perms).toEqual(["sign_event:22242"])
   })
 })

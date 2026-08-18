@@ -76,8 +76,46 @@ describe("ConnectFlow: approve path (AC #1/#2/#3/#5)", () => {
     await flow.handleConnect(uriWith({ secret: "VERBATIM-SECRET-123" }))
     expect(sendConnectAck).toHaveBeenCalledTimes(1)
     const ack = sendConnectAck.mock.calls[0][0]
-    expect(ack.secret).toBe("VERBATIM-SECRET-123")
+    expect(ack.result).toBe("VERBATIM-SECRET-123")
     expect(ack.clientPubkey).toBe(CLIENT)
+  })
+
+  it("on approve of a SECRET-LESS URI, the ack result is the literal 'ack' (interop)", async () => {
+    const store = createConnectionStore(memory())
+    const sendConnectAck = jest.fn()
+    const flow = createConnectFlow({
+      store,
+      requestApproval: async () => ({ approved: true }),
+      sendConnectAck,
+      sendRejection: jest.fn(),
+    })
+    // A secret-less nostrconnect URI (Plebeian-style).
+    await flow.handleConnect(`nostrconnect://${CLIENT}?relay=wss%3A%2F%2Fr&name=Pleb`)
+    expect(sendConnectAck).toHaveBeenCalledTimes(1)
+    expect(sendConnectAck.mock.calls[0][0].result).toBe("ack")
+    // The connection is still recorded (approval was the gate).
+    expect(await store.get(CLIENT)).not.toBeNull()
+  })
+
+  it("grants scopes parsed from a metadata= blob when no top-level perms= is present", async () => {
+    const store = createConnectionStore(memory())
+    const flow = createConnectFlow({
+      store,
+      requestApproval: async () => ({ approved: true }),
+      sendConnectAck: jest.fn(),
+      sendRejection: jest.fn(),
+    })
+    const blob = JSON.stringify({
+      name: "Pleb",
+      url: "https://plebeian.market",
+      perms: "sign_event:27235,get_public_key",
+    })
+    await flow.handleConnect(
+      `nostrconnect://${CLIENT}?relay=wss%3A%2F%2Fr&metadata=${encodeURIComponent(blob)}`,
+    )
+    const rec = await store.get(CLIENT)
+    expect(rec?.grantedScopes).toEqual(["sign_event:27235"]) // intersected from blob perms
+    expect(rec?.metadata.url).toBe("https://plebeian.market")
   })
 
   it("creates the ConnectionStore record ONLY after the echo is sent", async () => {
@@ -156,13 +194,12 @@ describe("ConnectFlow: reject path (AC #3)", () => {
   })
 })
 
-describe("ConnectFlow: mandatory secret (AC #2, Mike Dilger)", () => {
-  it("a secret-less URI is rejected BEFORE any approval is raised", async () => {
-    const { flow, requestApproval, sendConnectAck, sendRejection } = makeFlow(true)
+describe("ConnectFlow: optional secret (interop) + secret confinement", () => {
+  it("a secret-less URI STILL raises the connection approval (the human tap is the gate)", async () => {
+    const { flow, requestApproval, sendConnectAck } = makeFlow(true)
     await flow.handleConnect(`nostrconnect://${CLIENT}?relay=wss%3A%2F%2Fr&name=Damus`)
-    expect(requestApproval).not.toHaveBeenCalled()
-    expect(sendConnectAck).not.toHaveBeenCalled()
-    expect(sendRejection).not.toHaveBeenCalled() // no surface, no side effects
+    expect(requestApproval).toHaveBeenCalledTimes(1)
+    expect(sendConnectAck).toHaveBeenCalledTimes(1) // acked after approval
   })
 
   it("never persists the secret to the ConnectionStore record", async () => {

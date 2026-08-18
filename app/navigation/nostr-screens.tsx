@@ -29,6 +29,7 @@ import {
   NostrActivityHeaderTitle,
 } from "@app/screens/nostr/activity-screen"
 import type { ActivityEntry, ActivityStats } from "@app/nostr/core/activity-log"
+import { normalizeHost } from "@app/nostr/core/url-origin"
 import { NostrIdentityHubScreen } from "@app/screens/nostr/identity-hub/nostr-identity-hub-screen"
 import { useNostrIdentity } from "@app/screens/nostr/identity-hub/use-nostr-identity"
 import { useNostrRuntime } from "@app/nostr/nostr-runtime-provider"
@@ -242,12 +243,15 @@ export const NostrActivity: React.FC = () => {
       .then((records) => {
         if (cancelled) return
         const match = records.find((r) => r.clientPubkey === clientPubkey)
-        if (!match?.metadata.name && !match?.metadata.image) return
+        if (!match) return
+        const name = match.metadata.name ?? `${clientPubkey.slice(0, 12)}…`
+        const host = match.metadata.url ? normalizeHost(match.metadata.url) : null
         navigation.setOptions({
           headerTitle: () => (
             <NostrActivityHeaderTitle
-              name={match?.metadata.name}
-              image={match?.metadata.image}
+              name={name}
+              image={match.metadata.image}
+              host={host ?? undefined}
             />
           ),
         })

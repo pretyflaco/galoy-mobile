@@ -86,7 +86,7 @@ describe("activity screen", () => {
   })
 })
 
-describe("activity header title (avatar + name)", () => {
+describe("activity header title (avatar + name + host)", () => {
   it("renders the client name", async () => {
     const { getByText } = render(
       <ContextForScreen>
@@ -95,5 +95,16 @@ describe("activity header title (avatar + name)", () => {
     )
     await flushEffects()
     expect(getByText("BTCPay Server")).toBeTruthy()
+  })
+
+  it("renders the app host under the name when provided", async () => {
+    const { getByText } = render(
+      <ContextForScreen>
+        <NostrActivityHeaderTitle name="BTCPay Server" host="btcpay.twentyone.ist" />
+      </ContextForScreen>,
+    )
+    await flushEffects()
+    expect(getByText("BTCPay Server")).toBeTruthy()
+    expect(getByText("btcpay.twentyone.ist")).toBeTruthy()
   })
 })

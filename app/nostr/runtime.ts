@@ -581,7 +581,7 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   // id) per attempt so a relay that already rejected the prior copy still accepts a retry.
   const sendConnectAckImpl = async (ack: {
     clientPubkey: string
-    secret: string
+    result: string
     relays: string[]
   }): Promise<void> => {
     await primeTransportSk()
@@ -593,10 +593,10 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     await ensureRelays(ack.relays)
     resubscribe()
 
-    // (3): confirmed + retried ack publish (echoing the secret), fresh event per attempt.
+    // (3): confirmed + retried ack publish (echoed secret, or "ack"), fresh event per attempt.
     const ok = await publishConfirmed(ack.relays, () =>
       encodeResponse(
-        { id: ack.clientPubkey, result: ack.secret },
+        { id: ack.clientPubkey, result: ack.result },
         { scheme: "nip44", clientPubkey: ack.clientPubkey, transportSk: sk },
       ),
     )

@@ -13,13 +13,15 @@ type Props = {
 
 /**
  * Custom navigation header title for the Activity screen (Amber parity): a small client avatar +
- * name, so the header reads e.g. "BTCPay Server". Installed via navigation.setOptions in the
- * route wrapper once the connection record loads; falls back to the static title until then.
+ * name (+ the app host under it), so the header reads e.g. "BTCPay Server" / "btcpay.twentyone.ist".
+ * Installed via navigation.setOptions in the route wrapper once the connection record loads;
+ * falls back to the static title until then.
  */
-export const NostrActivityHeaderTitle: React.FC<{ name?: string; image?: string }> = ({
-  name,
-  image,
-}) => {
+export const NostrActivityHeaderTitle: React.FC<{
+  name?: string
+  image?: string
+  host?: string
+}> = ({ name, image, host }) => {
   const styles = useStyles()
   const label = name ?? ""
   return (
@@ -32,9 +34,16 @@ export const NostrActivityHeaderTitle: React.FC<{ name?: string; image?: string 
           : { title: (label || "?").charAt(0).toUpperCase() })}
         containerStyle={styles.headerAvatar}
       />
-      <Text type="p1" style={styles.headerName} numberOfLines={1}>
-        {label}
-      </Text>
+      <View style={styles.headerTextCol}>
+        <Text type="p1" style={styles.headerName} numberOfLines={1}>
+          {label}
+        </Text>
+        {host ? (
+          <Text type="p4" style={styles.headerHost} numberOfLines={1}>
+            {host}
+          </Text>
+        ) : null}
+      </View>
     </View>
   )
 }
@@ -181,6 +190,12 @@ const useStyles = makeStyles(({ colors }) => ({
   },
   headerAvatar: {
     backgroundColor: colors.grey4,
+  },
+  headerTextCol: {
+    flexShrink: 1,
+  },
+  headerHost: {
+    color: colors.grey2,
   },
   headerName: {
     color: colors.black,

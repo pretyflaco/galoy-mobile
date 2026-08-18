@@ -1,10 +1,10 @@
 /**
  * Story A2 — Nostr Identity hub screen (settings entry).
  *
- * Decides empty-state (no identity → create/import) vs. summary (identity exists → scan,
- * connected clients, backup, replace). Navigation-agnostic: routing is via injected callbacks.
- * The nsec is never rendered; only the public npub appears (truncated, tap-to-reveal). Behavior
- * is asserted via testIDs (the ContextForScreen harness renders i18n copy empty).
+ * Empty-state (no identity → create/import) vs. summary. The summary leads with a profile hero
+ * (kind-0 avatar or identicon placeholder + add-photo stub), the npub with copy + QR, then
+ * Connected clients + Settings. Scan-to-connect is GONE from the hub (Home screen only). The nsec
+ * is never rendered. Behavior is asserted via testIDs (the harness renders i18n copy empty).
  */
 import React from "react"
 import { render, fireEvent } from "@testing-library/react-native"
@@ -15,6 +15,7 @@ import { ContextForScreen } from "../screens/helper"
 import { flushEffects } from "../helpers/flush-effects"
 
 const NPUB = "npub1" + "q".repeat(58)
+const PUBKEY = "a".repeat(64)
 
 const renderHub = (
   props: Partial<React.ComponentProps<typeof NostrIdentityHubScreen>> = {},
@@ -23,13 +24,13 @@ const renderHub = (
     <ContextForScreen>
       <NostrIdentityHubScreen
         npub={null}
+        pubkeyHex={null}
+        pictureUrl={null}
         loading={false}
         onCreate={jest.fn()}
         onImport={jest.fn()}
-        onBackup={jest.fn()}
-        onReplace={jest.fn()}
         onConnectedClients={jest.fn()}
-        onScanToConnect={jest.fn()}
+        onSettings={jest.fn()}
         {...props}
       />
     </ContextForScreen>,
@@ -56,47 +57,64 @@ describe("Nostr Identity hub (A2)", () => {
     expect(onImport).toHaveBeenCalledTimes(1)
   })
 
-  it("renders the summary with the management actions when an identity exists", async () => {
-    const { getByTestId, queryByTestId } = renderHub({ npub: NPUB })
+  it("summary shows the hero + npub actions + Connected clients + Settings; NO scan button", async () => {
+    const { getByTestId, queryByTestId } = renderHub({ npub: NPUB, pubkeyHex: PUBKEY })
     await flushEffects()
     expect(getByTestId("nostr-identity-hub-summary")).toBeTruthy()
-    expect(getByTestId("nostr-identity-scan-to-connect")).toBeTruthy()
+    expect(getByTestId("nostr-identity-add-photo")).toBeTruthy()
+    expect(getByTestId("nostr-identity-copy-npub")).toBeTruthy()
+    expect(getByTestId("nostr-identity-show-qr")).toBeTruthy()
     expect(getByTestId("nostr-identity-connected-clients")).toBeTruthy()
-    expect(getByTestId("nostr-identity-backup")).toBeTruthy()
-    expect(getByTestId("nostr-identity-replace")).toBeTruthy()
+    expect(getByTestId("nostr-identity-settings")).toBeTruthy()
+    // The scan-to-connect button was removed from the hub (Home screen is the only scan entry).
+    expect(queryByTestId("nostr-identity-scan-to-connect")).toBeNull()
     expect(queryByTestId("nostr-identity-hub-empty")).toBeNull()
   })
 
-  it("shows the npub truncated and reveals the full value on tap (nsec never rendered)", async () => {
-    const { getByTestId, queryByText } = renderHub({ npub: NPUB })
+  it("renders the fetched avatar image when a pictureUrl is present, else the identicon", async () => {
+    const withPic = renderHub({
+      npub: NPUB,
+      pubkeyHex: PUBKEY,
+      pictureUrl: "https://x/y.png",
+    })
     await flushEffects()
-    // Full npub is not shown until revealed.
+    expect(withPic.getByTestId("nostr-identity-avatar-image")).toBeTruthy()
+
+    const noPic = renderHub({ npub: NPUB, pubkeyHex: PUBKEY, pictureUrl: null })
+    await flushEffects()
+    // No <Image> avatar when there is no picture — the identicon SVG stands in.
+    expect(noPic.queryByTestId("nostr-identity-avatar-image")).toBeNull()
+  })
+
+  it("shows the npub truncated and reveals the full value on tap (nsec never rendered)", async () => {
+    const { getByTestId, queryByText } = renderHub({ npub: NPUB, pubkeyHex: PUBKEY })
+    await flushEffects()
     expect(queryByText(NPUB)).toBeNull()
     fireEvent.press(getByTestId("nostr-identity-npub"))
     expect(getByTestId("nostr-identity-npub")).toBeTruthy()
   })
 
-  it("routes each management action", async () => {
-    const onScanToConnect = jest.fn()
+  it("opens the npub QR overlay from the QR button", async () => {
+    const { getByTestId } = renderHub({ npub: NPUB, pubkeyHex: PUBKEY })
+    await flushEffects()
+    fireEvent.press(getByTestId("nostr-identity-show-qr"))
+    expect(getByTestId("nostr-identity-qr-close")).toBeTruthy()
+  })
+
+  it("routes Connected clients + Settings", async () => {
     const onConnectedClients = jest.fn()
-    const onBackup = jest.fn()
-    const onReplace = jest.fn()
+    const onSettings = jest.fn()
     const { getByTestId } = renderHub({
       npub: NPUB,
-      onScanToConnect,
+      pubkeyHex: PUBKEY,
       onConnectedClients,
-      onBackup,
-      onReplace,
+      onSettings,
     })
     await flushEffects()
-    fireEvent.press(getByTestId("nostr-identity-scan-to-connect"))
     fireEvent.press(getByTestId("nostr-identity-connected-clients"))
-    fireEvent.press(getByTestId("nostr-identity-backup"))
-    fireEvent.press(getByTestId("nostr-identity-replace"))
-    expect(onScanToConnect).toHaveBeenCalledTimes(1)
+    fireEvent.press(getByTestId("nostr-identity-settings"))
     expect(onConnectedClients).toHaveBeenCalledTimes(1)
-    expect(onBackup).toHaveBeenCalledTimes(1)
-    expect(onReplace).toHaveBeenCalledTimes(1)
+    expect(onSettings).toHaveBeenCalledTimes(1)
   })
 
   it("renders a loading state without empty/summary while reading the keystore", async () => {

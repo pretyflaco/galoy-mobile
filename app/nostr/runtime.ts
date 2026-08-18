@@ -50,6 +50,7 @@ import {
 import { createLocalNsecSigner } from "./core/local-nsec-signer"
 import { NIP98_KIND } from "./core/policy-check"
 import { normalizeHost } from "./core/url-origin"
+import { fetchProfilePicture } from "./core/profile-fetch"
 import { signerLogFields } from "./core/redact"
 import { createRequestLedger } from "./core/request-ledger"
 import {
@@ -135,6 +136,8 @@ export interface SignerRuntime {
   activityStats(clientPubkey: string): Promise<ActivityStats>
   /** Subscribe to activity changes so a live screen re-reads on each new entry. */
   subscribeActivity(listener: () => void): () => void
+  /** Fetch the LOCAL identity's avatar (kind-0 `picture`) from profile relays, or null. */
+  fetchOwnProfilePicture(): Promise<string | null>
   /** Test-only: grant a scope to a client (simulates a completed connect). */
   grantForTest(clientPubkey: string, grantedScopes: string[]): Promise<void>
 }
@@ -498,6 +501,29 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     return decoded.data as string
   }
 
+  // Read-only avatar for the LOCAL identity: fetch our own kind-0 `picture` from the profile
+  // indexer relays (Amber/Amethyst parity). Cached in-memory with a short TTL so the hub doesn't
+  // re-hit relays on every focus. Metadata-only; never touches the nsec.
+  const PROFILE_CACHE_TTL_MS = 5 * 60_000
+  let profileCache: { pubkeyHex: string; picture: string | null; at: number } | null = null
+  const fetchOwnProfilePicture = async (): Promise<string | null> => {
+    const pubkeyHex = await getUserPubkeyHex()
+    const now = Date.now()
+    if (
+      profileCache &&
+      profileCache.pubkeyHex === pubkeyHex &&
+      now - profileCache.at < PROFILE_CACHE_TTL_MS
+    ) {
+      return profileCache.picture
+    }
+    // pool.get is optional on the narrow RelayPool (test fakes omit it); skip cleanly if absent.
+    const picture = pool.get
+      ? await fetchProfilePicture(pubkeyHex, { get: pool.get.bind(pool) })
+      : null
+    profileCache = { pubkeyHex, picture, at: now }
+    return picture
+  }
+
   // -- transport dispatcher (Story 3.2): ping / get_public_key / connect + ledger + respond-in-kind.
   const dispatchTransport = async (
     decoded: DecodedRequest,
@@ -745,6 +771,7 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     listActivity: (clientPubkey) => activityLog.list(clientPubkey),
     activityStats: (clientPubkey) => activityLog.stats(clientPubkey),
     subscribeActivity: (listener) => activityLog.subscribe(listener),
+    fetchOwnProfilePicture,
     grantForTest: async (clientPubkey, grantedScopes) => {
       await store.upsert({
         clientPubkey,

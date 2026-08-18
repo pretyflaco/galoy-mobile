@@ -66,6 +66,11 @@ export type RootStackParamList = {
   nostrImportIdentity: undefined
   nostrBackup: undefined
   nostrConnectedClients: undefined
+  // Nostr settings hub (Back up / Replace your identity) — moved off the Identity hub.
+  nostrSettings: undefined
+  // Replace-identity choice: import an existing key OR create a brand-new one (destructive
+  // consent shown in-screen before entering the create ceremony).
+  nostrReplaceChoice: undefined
   // Per-client activity history (Amber-style "Show activity"): metadata-only log of what a
   // connected client asked us to sign/decrypt and whether we accepted (never content).
   nostrActivity: { clientPubkey: string }

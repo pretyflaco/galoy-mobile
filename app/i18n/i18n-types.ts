@@ -13959,9 +13959,93 @@ type RootTranslation = {
 		 */
 		summaryConnectedClients: string
 		/**
-		 * S​c​a​n​ ​t​o​ ​c​o​n​n​e​c​t​ ​a​n​ ​a​p​p
+		 * S​e​t​t​i​n​g​s
 		 */
-		summaryScanToConnect: string
+		summarySettings: string
+		/**
+		 * C​o​p​y​ ​y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+		 */
+		summaryCopyNpub: string
+		/**
+		 * P​u​b​l​i​c​ ​a​d​d​r​e​s​s​ ​c​o​p​i​e​d
+		 */
+		summaryNpubCopied: string
+		/**
+		 * S​h​o​w​ ​Q​R​ ​c​o​d​e
+		 */
+		summaryShowQr: string
+		/**
+		 * Y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+		 */
+		summaryQrTitle: string
+		/**
+		 * C​l​o​s​e
+		 */
+		summaryQrClose: string
+		/**
+		 * Y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​a​v​a​t​a​r
+		 */
+		summaryAvatarA11y: string
+		/**
+		 * A​d​d​ ​a​ ​p​r​o​f​i​l​e​ ​p​h​o​t​o
+		 */
+		summaryAddProfileImage: string
+		/**
+		 * P​r​o​f​i​l​e​ ​p​h​o​t​o​ ​u​p​l​o​a​d​ ​i​s​ ​c​o​m​i​n​g​ ​s​o​o​n
+		 */
+		summaryProfileImageComingSoon: string
+	}
+	NostrSettingsScreen: {
+		/**
+		 * S​e​t​t​i​n​g​s
+		 */
+		title: string
+		/**
+		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 */
+		backup: string
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		replace: string
+	}
+	NostrReplaceChoiceScreen: {
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		title: string
+		/**
+		 * I​m​p​o​r​t​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​k​e​y​,​ ​o​r​ ​c​r​e​a​t​e​ ​a​ ​b​r​a​n​d​-​n​e​w​ ​i​d​e​n​t​i​t​y​.​ ​E​i​t​h​e​r​ ​o​n​e​ ​r​e​p​l​a​c​e​s​ ​a​n​d​ ​d​i​s​c​a​r​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​k​e​y​.
+		 */
+		body: string
+		/**
+		 * I​m​p​o​r​t​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​k​e​y
+		 */
+		importOption: string
+		/**
+		 * C​r​e​a​t​e​ ​a​ ​n​e​w​ ​i​d​e​n​t​i​t​y
+		 */
+		createOption: string
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​?
+		 */
+		confirmTitle: string
+		/**
+		 * T​h​i​s​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​i​s​c​a​r​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​k​e​y​.​ ​C​o​n​n​e​c​t​e​d​ ​a​p​p​s​ ​w​i​l​l​ ​s​t​o​p​ ​w​o​r​k​i​n​g​ ​u​n​t​i​l​ ​y​o​u​ ​r​e​c​o​n​n​e​c​t​.​ ​B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y​ ​f​i​r​s​t​ ​i​f​ ​y​o​u​ ​m​i​g​h​t​ ​n​e​e​d​ ​i​t​.
+		 */
+		confirmConsequence: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		confirmCancel: string
+		/**
+		 * C​r​e​a​t​e​ ​a​ ​n​e​w​ ​i​d​e​n​t​i​t​y
+		 */
+		confirmContinue: string
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​.​ ​T​h​i​s​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​i​s​c​a​r​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​k​e​y​.​ ​C​a​n​c​e​l​ ​o​r​ ​c​o​n​t​i​n​u​e​.
+		 */
+		confirmSrLabel: string
 	}
 }
 
@@ -27680,9 +27764,93 @@ export type TranslationFunctions = {
 		 */
 		summaryConnectedClients: () => LocalizedString
 		/**
-		 * Scan to connect an app
+		 * Settings
 		 */
-		summaryScanToConnect: () => LocalizedString
+		summarySettings: () => LocalizedString
+		/**
+		 * Copy your public address
+		 */
+		summaryCopyNpub: () => LocalizedString
+		/**
+		 * Public address copied
+		 */
+		summaryNpubCopied: () => LocalizedString
+		/**
+		 * Show QR code
+		 */
+		summaryShowQr: () => LocalizedString
+		/**
+		 * Your public address
+		 */
+		summaryQrTitle: () => LocalizedString
+		/**
+		 * Close
+		 */
+		summaryQrClose: () => LocalizedString
+		/**
+		 * Your Nostr identity avatar
+		 */
+		summaryAvatarA11y: () => LocalizedString
+		/**
+		 * Add a profile photo
+		 */
+		summaryAddProfileImage: () => LocalizedString
+		/**
+		 * Profile photo upload is coming soon
+		 */
+		summaryProfileImageComingSoon: () => LocalizedString
+	}
+	NostrSettingsScreen: {
+		/**
+		 * Settings
+		 */
+		title: () => LocalizedString
+		/**
+		 * Back up your key
+		 */
+		backup: () => LocalizedString
+		/**
+		 * Replace your identity
+		 */
+		replace: () => LocalizedString
+	}
+	NostrReplaceChoiceScreen: {
+		/**
+		 * Replace your identity
+		 */
+		title: () => LocalizedString
+		/**
+		 * Import an existing key, or create a brand-new identity. Either one replaces and discards your current key.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Import an existing key
+		 */
+		importOption: () => LocalizedString
+		/**
+		 * Create a new identity
+		 */
+		createOption: () => LocalizedString
+		/**
+		 * Replace your current identity?
+		 */
+		confirmTitle: () => LocalizedString
+		/**
+		 * This permanently discards your current key. Connected apps will stop working until you reconnect. Back up your key first if you might need it.
+		 */
+		confirmConsequence: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		confirmCancel: () => LocalizedString
+		/**
+		 * Create a new identity
+		 */
+		confirmContinue: () => LocalizedString
+		/**
+		 * Replace your current identity. This permanently discards your current key. Cancel or continue.
+		 */
+		confirmSrLabel: () => LocalizedString
 	}
 }
 

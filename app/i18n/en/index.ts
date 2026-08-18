@@ -4389,7 +4389,33 @@ const en: BaseTranslation = {
     summaryBackup: "Back up your key",
     summaryReplace: "Replace your identity",
     summaryConnectedClients: "Connected clients",
-    summaryScanToConnect: "Scan to connect an app",
+    summarySettings: "Settings",
+    summaryCopyNpub: "Copy your public address",
+    summaryNpubCopied: "Public address copied",
+    summaryShowQr: "Show QR code",
+    summaryQrTitle: "Your public address",
+    summaryQrClose: "Close",
+    summaryAvatarA11y: "Your Nostr identity avatar",
+    summaryAddProfileImage: "Add a profile photo",
+    summaryProfileImageComingSoon: "Profile photo upload is coming soon",
+  },
+  NostrSettingsScreen: {
+    title: "Settings",
+    backup: "Back up your key",
+    replace: "Replace your identity",
+  },
+  NostrReplaceChoiceScreen: {
+    title: "Replace your identity",
+    body: "Import an existing key, or create a brand-new identity. Either one replaces and discards your current key.",
+    importOption: "Import an existing key",
+    createOption: "Create a new identity",
+    confirmTitle: "Replace your current identity?",
+    confirmConsequence:
+      "This permanently discards your current key. Connected apps will stop working until you reconnect. Back up your key first if you might need it.",
+    confirmCancel: "Cancel",
+    confirmContinue: "Create a new identity",
+    confirmSrLabel:
+      "Replace your current identity. This permanently discards your current key. Cancel or continue.",
   },
 }
 

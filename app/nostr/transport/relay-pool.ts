@@ -27,6 +27,17 @@ export interface RelayPool {
   ): { close: (reason?: string) => void }
   publish(relays: string[], event: unknown): Promise<string>[]
   /**
+   * One-shot fetch: subscribe, collect matching events until EOSE or `maxWait`, resolve with the
+   * newest matching event (or null). Used ONLY for the read-only kind-0 profile fetch (never for
+   * NIP-46 transport). Mirrors nostr-tools SimplePool.get. Optional so test fakes needn't stub it
+   * (the real SimplePool always provides it); the profile fetch treats its absence as "no avatar".
+   */
+  get?(
+    relays: string[],
+    filter: Record<string, unknown>,
+    params?: { maxWait?: number },
+  ): Promise<unknown | null>
+  /**
    * Open (or reuse) a connection to a single relay, resolving once the socket is connected.
    * Mirrors Amber's `client.connect()` before a connect-response publish: a NIP-46 response
    * (ack / get_public_key / sign_event) is an EPHEMERAL event — if it is published to a relay

@@ -18,28 +18,37 @@ import { NOSTR_NSEC_SERVICE, readSecret } from "@app/nostr/core/keystore"
 export interface NostrIdentityState {
   loading: boolean
   npub: string | null
+  /** The identity's x-only pubkey (hex) — drives the identicon; null in empty-state. */
+  pubkeyHex: string | null
 }
 
 export const useNostrIdentity = (): NostrIdentityState & { reload: () => void } => {
-  const [state, setState] = useState<NostrIdentityState>({ loading: true, npub: null })
+  const [state, setState] = useState<NostrIdentityState>({
+    loading: true,
+    npub: null,
+    pubkeyHex: null,
+  })
 
   const load = useCallback(async () => {
-    setState({ loading: true, npub: null })
+    setState({ loading: true, npub: null, pubkeyHex: null })
     const nsecHex = await readSecret(NOSTR_NSEC_SERVICE)
     if (!nsecHex) {
-      setState({ loading: false, npub: null })
+      setState({ loading: false, npub: null, pubkeyHex: null })
       return
     }
-    const npub = nip19.npubEncode(bytesToHex(schnorr.getPublicKey(hexToBytes(nsecHex))))
-    setState({ loading: false, npub })
+    const pubkeyHex = bytesToHex(schnorr.getPublicKey(hexToBytes(nsecHex)))
+    const npub = nip19.npubEncode(pubkeyHex)
+    setState({ loading: false, npub, pubkeyHex })
   }, [])
 
   useEffect(() => {
-    load().catch(() => setState({ loading: false, npub: null }))
+    load().catch(() =>
+      setState({ loading: false, npub: null, pubkeyHex: null }),
+    )
   }, [load])
 
   const reload = useCallback(() => {
-    load().catch(() => setState({ loading: false, npub: null }))
+    load().catch(() => setState({ loading: false, npub: null, pubkeyHex: null }))
   }, [load])
 
   return { ...state, reload }

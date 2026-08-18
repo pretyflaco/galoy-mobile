@@ -20,6 +20,8 @@ import type { TranslationFunctions } from "@app/i18n/i18n-types"
 import { CreateIdentityNavigator } from "@app/screens/nostr/create-identity/create-identity-navigator"
 import { NostrImportIdentityScreen } from "@app/screens/nostr/import-identity/import-identity-screen"
 import { NostrBackupScreen } from "@app/screens/nostr/backup/nostr-backup-screen"
+import { NostrSettingsScreen } from "@app/screens/nostr/settings/nostr-settings-screen"
+import { NostrReplaceChoiceScreen } from "@app/screens/nostr/settings/replace-choice-screen"
 import {
   NostrConnectedClientsSection,
   type ConnectedClient,
@@ -79,6 +81,16 @@ export const NostrRootScreens = (
       component={NostrActivity}
       options={{ title: LL.NostrActivityScreen.title() }}
     />
+    <RootNavigator.Screen
+      name="nostrSettings"
+      component={NostrSettings}
+      options={{ title: LL.NostrSettingsScreen.title() }}
+    />
+    <RootNavigator.Screen
+      name="nostrReplaceChoice"
+      component={NostrReplaceChoice}
+      options={{ title: LL.NostrReplaceChoiceScreen.title() }}
+    />
     {/* Approval surfaces (connection / request / review-all) are rendered by the
         ApprovalSurfaceHost as a state-driven full-screen overlay — NOT pushed routes — so a
         resolved approval never lingers underneath another screen. See approval-surface-host.tsx. */}
@@ -88,22 +100,42 @@ export const NostrRootScreens = (
 /** The Nostr Identity hub — empty-state (create/import) vs. summary (manage). */
 export const NostrIdentityHub: React.FC = () => {
   const navigation = useNavigation<Nav>()
-  const { loading, npub, reload } = useNostrIdentity()
+  const runtime = useNostrRuntime()
+  const { loading, npub, pubkeyHex, reload } = useNostrIdentity()
+  const [pictureUrl, setPictureUrl] = useState<string | null>(null)
 
   // Refresh on focus so a completed create/import/replace reflects immediately.
   useEffect(() => navigation.addListener("focus", reload), [navigation, reload])
+
+  // Pull the identity's avatar (kind-0 picture) from the profile relays once we have a key.
+  useEffect(() => {
+    if (!pubkeyHex) {
+      setPictureUrl(null)
+      return
+    }
+    let cancelled = false
+    runtime?.runtime
+      .fetchOwnProfilePicture()
+      .then((url) => {
+        if (!cancelled) setPictureUrl(url)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [runtime, pubkeyHex])
 
   return (
     <Screen>
       <NostrIdentityHubScreen
         loading={loading}
         npub={npub}
+        pubkeyHex={pubkeyHex}
+        pictureUrl={pictureUrl}
         onCreate={() => navigation.navigate("nostrCreateIdentity")}
         onImport={() => navigation.navigate("nostrImportIdentity")}
-        onBackup={() => navigation.navigate("nostrBackup")}
-        onReplace={() => navigation.navigate("nostrImportIdentity")}
         onConnectedClients={() => navigation.navigate("nostrConnectedClients")}
-        onScanToConnect={() => navigation.navigate("scanningQRCode")}
+        onSettings={() => navigation.navigate("nostrSettings")}
       />
     </Screen>
   )
@@ -146,6 +178,32 @@ export const NostrBackup: React.FC = () => {
         onEncryptedBackup={() => navigation.goBack()}
         onPlaintextAcknowledged={() => navigation.goBack()}
         onNotNow={() => navigation.goBack()}
+      />
+    </Screen>
+  )
+}
+
+/** Nostr settings hub — Back up / Replace, moved off the Identity hub. */
+export const NostrSettings: React.FC = () => {
+  const navigation = useNavigation<Nav>()
+  return (
+    <Screen>
+      <NostrSettingsScreen
+        onBackup={() => navigation.navigate("nostrBackup")}
+        onReplace={() => navigation.navigate("nostrReplaceChoice")}
+      />
+    </Screen>
+  )
+}
+
+/** Replace-identity choice: import an existing key OR create a brand-new one (with consent). */
+export const NostrReplaceChoice: React.FC = () => {
+  const navigation = useNavigation<Nav>()
+  return (
+    <Screen>
+      <NostrReplaceChoiceScreen
+        onImport={() => navigation.navigate("nostrImportIdentity")}
+        onCreateNew={() => navigation.navigate("nostrCreateIdentity")}
       />
     </Screen>
   )

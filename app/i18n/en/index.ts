@@ -4293,7 +4293,30 @@ const en: BaseTranslation = {
     confirmCancel: "Cancel",
     srLabel:
       "Disconnect {client:string}. It can reconnect with your approval. Disconnect or cancel.",
-    rowA11y: "{client:string}. Connected app.",
+    rowA11y: "{client:string}. Connected app. Tap to view activity.",
+  },
+  NostrDuplicateConnectionScreen: {
+    title: "{client:string} is already connected",
+    body: "This app is already connected under a different session. What would you like to do?",
+    replace: "Replace the old connection",
+    keepBoth: "Keep both",
+    cancel: "Cancel",
+    replaceA11y: "Replace the existing connection for {client:string} with this new one.",
+    keepBothA11y: "Keep both the existing and the new connection for {client:string}.",
+    srLabel:
+      "{client:string} is already connected. Replace the old connection, keep both, or cancel.",
+  },
+  NostrActivityScreen: {
+    title: "Activity",
+    empty: "No activity yet.",
+    statTotal: "Total",
+    statAccepted: "Accepted",
+    statRejected: "Rejected",
+    accepted: "Approved",
+    rejected: "Rejected",
+    signEventKind: "Signed event (kind {kind:number})",
+    signEvent: "Signed event",
+    rowA11y: "{action:string} — {decision:string} at {when:string}.",
   },
   NostrReviewAllScreen: {
     title: "Review requests",

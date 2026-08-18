@@ -62,33 +62,23 @@ describe("connected-clients list (AC #1)", () => {
     expect(fpB).toBeTruthy()
     expect(fpA.props.children).not.toEqual(fpB.props.children)
 
-    // Relays are shown as per-relay chips (wss:// stripped), distinct per row.
+    // Relays are shown per row (wss:// stripped), distinct per row. No delivery badges — those
+    // moved off this screen (fix #6): relay health is not a connected-client concern.
     const relaysA = getByTestId(`nostr-client-relays-${pkA}`)
     const relaysB = getByTestId(`nostr-client-relays-${pkB}`)
     expect(relaysA).toBeTruthy()
     expect(relaysB).toBeTruthy()
-    expect(within(relaysA).getByText("nos.lol")).toBeTruthy()
-    expect(within(relaysA).getByText("relay.primal.net")).toBeTruthy()
-    expect(within(relaysB).getByText("relay.damus.io")).toBeTruthy()
+    expect(within(relaysA).getByText(/nos\.lol/)).toBeTruthy()
+    expect(within(relaysA).getByText(/relay\.primal\.net/)).toBeTruthy()
+    expect(within(relaysB).getByText(/relay\.damus\.io/)).toBeTruthy()
   })
 
-  it("renders an Amber-style delivery badge per relay (count when healthy, ? otherwise)", async () => {
-    const pk = "3".repeat(63) + "c"
-    const { getByTestId } = renderSection({
-      clients: [
-        {
-          clientPubkey: pk,
-          name: "BTCPay Server",
-          relays: ["wss://nos.lol", "wss://offchain.pub"],
-        },
-      ],
-      relayHealth: { "wss://nos.lol": 87 },
-    })
+  it("tapping a client row opens its activity history (fix #5)", async () => {
+    const onClientPress = jest.fn()
+    const { getByTestId } = renderSection({ onClientPress })
     await flushEffects()
-    const relays = getByTestId(`nostr-client-relays-${pk}`)
-    // nos.lol has ACKed 87 of our events; offchain.pub has none yet → "?".
-    expect(within(relays).getByText("87")).toBeTruthy()
-    expect(within(relays).getByText("?")).toBeTruthy()
+    fireEvent.press(getByTestId(`nostr-client-row-${clients[0].clientPubkey}`))
+    expect(onClientPress).toHaveBeenCalledWith(clients[0].clientPubkey)
   })
 
   it("shows the empty state when there are no connected clients", async () => {

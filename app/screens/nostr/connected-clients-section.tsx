@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { View } from "react-native"
+import { FlatList, View } from "react-native"
 
 import { Avatar, ListItem, Text, makeStyles } from "@rn-vui/themed"
 
@@ -20,9 +20,6 @@ export interface ConnectedClient {
   createdAt?: number
 }
 
-/** Per-relay delivery health (Amber-style): accepted-event count keyed by relay URL. */
-export type RelayHealth = Record<string, number>
-
 /** first8:last8 of the client pubkey — the Amber-style disambiguating fingerprint. */
 const pubkeyPair = (pubkey: string): string =>
   pubkey.length >= 16 ? `${pubkey.slice(0, 8)}:${pubkey.slice(-8)}` : pubkey
@@ -40,24 +37,25 @@ type Props = {
   clients: ConnectedClient[]
   /** Trigger the atomic disconnect for a pubkey (ConnectionStore.disconnect). */
   onDisconnect: (clientPubkey: string) => void
-  /** Optional per-relay accepted-event counts for the Amber-style relay badges. */
-  relayHealth?: RelayHealth
+  /** Open the client's activity/history (row tap) — Amber's "Show activity". */
+  onClientPress?: (clientPubkey: string) => void
 }
 
 /**
  * Connected clients section (Story 3.7 / FR-13) — the trust-critical list-and-revoke FLOOR on
  * the Nostr Identity screen. Reads the connected clients ONLY through ConnectionStore (passed
  * in as `clients`); the screen never touches persistence or grant state directly. Each row has
- * an EXPLICIT Disconnect button (never gesture-only). Disconnect opens a {warning}-styled
- * confirm dialog stating the effect — recoverable (the client can reconnect with approval), so
- * it uses inherited {warning} (border/icon/accent only; body text grey0), NOT the
- * {consent-danger} red reserved for irreversible surfaces. No session-management dashboard.
- * All copy is i18n-sourced.
+ * an EXPLICIT Disconnect button (never gesture-only) and, tapping the row body, opens the
+ * client's activity history. The list is a FlatList so long client lists scroll (every row's
+ * Disconnect stays reachable). Disconnect opens a {warning}-styled confirm dialog stating the
+ * effect — recoverable (the client can reconnect with approval), so it uses inherited {warning}
+ * (border/icon/accent only; body text grey0), NOT the {consent-danger} red reserved for
+ * irreversible surfaces. No session-management dashboard. All copy is i18n-sourced.
  */
 export const NostrConnectedClientsSection: React.FC<Props> = ({
   clients,
   onDisconnect,
-  relayHealth,
+  onClientPress,
 }) => {
   const { LL } = useI18nContext()
   const styles = useStyles()
@@ -101,6 +99,51 @@ export const NostrConnectedClientsSection: React.FC<Props> = ({
     )
   }
 
+  const renderRow = (client: ConnectedClient) => (
+    <ListItem
+      bottomDivider
+      accessibilityLabel={T.rowA11y({ client: client.name })}
+      testID={`nostr-client-row-${client.clientPubkey}`}
+      onPress={onClientPress ? () => onClientPress(client.clientPubkey) : undefined}
+    >
+      {/* Avatar: the client's image (NIP-46 `image`) or an initial-in-circle fallback —
+          mirrors Amber's Applications list so identical names are still distinguishable. */}
+      <Avatar
+        rounded
+        size={44}
+        {...(client.image
+          ? { source: { uri: client.image } }
+          : { title: (client.name || "?").charAt(0).toUpperCase() })}
+        containerStyle={styles.avatar}
+      />
+      <ListItem.Content>
+        <ListItem.Title style={styles.rowName}>{client.name}</ListItem.Title>
+        {client.relays && client.relays.length > 0 && (
+          <ListItem.Subtitle
+            style={styles.rowMeta}
+            testID={`nostr-client-relays-${client.clientPubkey}`}
+          >
+            {client.relays
+              .map((r) => r.replace(/^wss:\/\//, "").replace(/\/$/, ""))
+              .join(", ")}
+          </ListItem.Subtitle>
+        )}
+        <ListItem.Subtitle
+          style={styles.rowMeta}
+          testID={`nostr-client-fingerprint-${client.clientPubkey}`}
+        >
+          {pubkeyPair(client.clientPubkey)}
+          {client.createdAt ? `   ${formatConnectedAt(client.createdAt)}` : ""}
+        </ListItem.Subtitle>
+      </ListItem.Content>
+      <GaloySecondaryButton
+        title={T.disconnect()}
+        onPress={() => setPending(client)}
+        testID={`nostr-client-disconnect-${client.clientPubkey}`}
+      />
+    </ListItem>
+  )
+
   return (
     <View style={styles.container} {...testProps("nostr-connected-clients")}>
       <Text type="h2" style={styles.sectionTitle}>
@@ -112,66 +155,12 @@ export const NostrConnectedClientsSection: React.FC<Props> = ({
           {T.empty()}
         </Text>
       ) : (
-        clients.map((client) => (
-          <ListItem
-            key={client.clientPubkey}
-            bottomDivider
-            accessibilityLabel={T.rowA11y({ client: client.name })}
-            testID={`nostr-client-row-${client.clientPubkey}`}
-          >
-            {/* Avatar: the client's image (NIP-46 `image`) or an initial-in-circle fallback —
-                mirrors Amber's Applications list so identical names are still distinguishable. */}
-            <Avatar
-              rounded
-              size={44}
-              {...(client.image
-                ? { source: { uri: client.image } }
-                : { title: (client.name || "?").charAt(0).toUpperCase() })}
-              containerStyle={styles.avatar}
-            />
-            <ListItem.Content>
-              <ListItem.Title style={styles.rowName}>{client.name}</ListItem.Title>
-              {client.relays && client.relays.length > 0 && (
-                <View
-                  style={styles.relayList}
-                  testID={`nostr-client-relays-${client.clientPubkey}`}
-                >
-                  {client.relays.map((r) => {
-                    const count = relayHealth?.[r]
-                    return (
-                      <View key={r} style={styles.relayChip}>
-                        <Text type="p4" style={styles.relayChipText}>
-                          {r.replace(/^wss:\/\//, "").replace(/\/$/, "")}
-                        </Text>
-                        {/* Amber-style delivery badge: accepted-event count, or "?" when a relay
-                            has not (yet) ACKed any of our published events. */}
-                        <View
-                          style={[styles.relayBadge, count ? styles.relayBadgeOk : null]}
-                        >
-                          <Text type="p4" style={styles.relayBadgeText}>
-                            {count ?? "?"}
-                          </Text>
-                        </View>
-                      </View>
-                    )
-                  })}
-                </View>
-              )}
-              <ListItem.Subtitle
-                style={styles.rowMeta}
-                testID={`nostr-client-fingerprint-${client.clientPubkey}`}
-              >
-                {pubkeyPair(client.clientPubkey)}
-                {client.createdAt ? `   ${formatConnectedAt(client.createdAt)}` : ""}
-              </ListItem.Subtitle>
-            </ListItem.Content>
-            <GaloySecondaryButton
-              title={T.disconnect()}
-              onPress={() => setPending(client)}
-              testID={`nostr-client-disconnect-${client.clientPubkey}`}
-            />
-          </ListItem>
-        ))
+        <FlatList
+          data={clients}
+          keyExtractor={(c) => c.clientPubkey}
+          renderItem={({ item }) => renderRow(item)}
+          contentContainerStyle={styles.listContent}
+        />
       )}
     </View>
   )
@@ -179,7 +168,11 @@ export const NostrConnectedClientsSection: React.FC<Props> = ({
 
 const useStyles = makeStyles(({ colors }) => ({
   container: {
+    flex: 1,
     rowGap: 8,
+  },
+  listContent: {
+    paddingBottom: 30,
   },
   sectionTitle: {
     color: colors.black,
@@ -198,45 +191,12 @@ const useStyles = makeStyles(({ colors }) => ({
     color: colors.grey2,
     fontSize: 12,
   },
-  relayList: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 4,
-    marginVertical: 2,
-  },
-  relayChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 4,
-    borderWidth: 1,
-    borderColor: colors.grey4,
-    borderRadius: 6,
-    paddingVertical: 1,
-    paddingLeft: 6,
-    paddingRight: 2,
-  },
-  relayChipText: {
-    color: colors.grey2,
-  },
-  relayBadge: {
-    minWidth: 18,
-    alignItems: "center",
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    backgroundColor: colors.grey4,
-  },
-  relayBadgeOk: {
-    backgroundColor: colors._green,
-  },
-  relayBadgeText: {
-    color: colors.white,
-  },
   warningCard: {
     padding: 20,
-    rowGap: 12,
+    rowGap: 14,
     borderWidth: 1,
     borderColor: colors.warning,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   warningTitle: {
     color: colors.black,

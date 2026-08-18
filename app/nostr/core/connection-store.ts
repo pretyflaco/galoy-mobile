@@ -51,6 +51,13 @@ export interface ConnectionStore {
   upsert(record: ConnectionRecord): Promise<void>
   /** The record for a clientPubkey, or null. */
   get(clientPubkey: string): Promise<ConnectionRecord | null>
+  /**
+   * Records sharing a client IDENTITY (metadata.url ?? metadata.name) but a DIFFERENT pubkey.
+   * A re-login mints a fresh ephemeral clientPubkey, so identity — not pubkey — is what tells
+   * us "this same app is connecting again". Used to offer Replace / Keep both / Cancel instead
+   * of silently accreting a duplicate row per sign-in. Empty identity never matches.
+   */
+  findByIdentity(identity: string, excludePubkey: string): Promise<ConnectionRecord[]>
   /** All connection records. */
   list(): Promise<ConnectionRecord[]>
   /** Whether a record exists for the clientPubkey (PolicyCheck: connected?). */
@@ -109,6 +116,19 @@ export const createConnectionStore = (
     async get(clientPubkey: string): Promise<ConnectionRecord | null> {
       const state = await readState()
       return state.records[clientPubkey] ?? null
+    },
+
+    async findByIdentity(
+      identity: string,
+      excludePubkey: string,
+    ): Promise<ConnectionRecord[]> {
+      if (!identity) return [] // no stable identity → cannot dedupe; treat as distinct
+      const state = await readState()
+      return Object.values(state.records).filter(
+        (r) =>
+          r.clientPubkey !== excludePubkey &&
+          (r.metadata.url ?? r.metadata.name) === identity,
+      )
     },
 
     async list(): Promise<ConnectionRecord[]> {

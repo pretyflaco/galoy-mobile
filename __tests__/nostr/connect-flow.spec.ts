@@ -180,3 +180,74 @@ describe("ConnectFlow: re-connect replaces only after fresh approval (AC #6)", (
     expect((await store.get(CLIENT))?.relays).toEqual(["wss://NEW.relay"])
   })
 })
+
+describe("ConnectFlow: same-identity re-login dedupe (fix #4)", () => {
+  const OLD_PK = "aaaa".repeat(16)
+  const NEW_PK = "bbbb".repeat(16)
+  // Same identity (name=Damus), different ephemeral pubkeys.
+  const uriFor = (pk: string) =>
+    `nostrconnect://${pk}?relay=wss%3A%2F%2Fr.example&secret=s&name=Damus`
+
+  const makeDedupeFlow = (resolution: "replace" | "keep" | "cancel") => {
+    const store = createConnectionStore(memory())
+    const resolveDuplicate = jest.fn(async () => resolution)
+    const sendRejection = jest.fn()
+    const flow = createConnectFlow({
+      store,
+      requestApproval: async () => ({ approved: true }),
+      resolveDuplicate,
+      sendConnectAck: jest.fn(),
+      sendRejection,
+    })
+    return { flow, store, resolveDuplicate, sendRejection }
+  }
+
+  it("does NOT prompt on the FIRST connection (no existing identity)", async () => {
+    const { flow, resolveDuplicate, store } = makeDedupeFlow("keep")
+    await flow.handleConnect(uriFor(NEW_PK))
+    expect(resolveDuplicate).not.toHaveBeenCalled()
+    expect(await store.get(NEW_PK)).not.toBeNull()
+  })
+
+  it("REPLACE disconnects the old record and keeps only the new one", async () => {
+    const { flow, resolveDuplicate, store } = makeDedupeFlow("replace")
+    await flow.handleConnect(uriFor(OLD_PK))
+    await flow.handleConnect(uriFor(NEW_PK))
+    expect(resolveDuplicate).toHaveBeenCalledTimes(1)
+    expect(await store.get(OLD_PK)).toBeNull()
+    expect(await store.get(NEW_PK)).not.toBeNull()
+    expect(await store.list()).toHaveLength(1)
+  })
+
+  it("KEEP BOTH leaves both records connected", async () => {
+    const { flow, store } = makeDedupeFlow("keep")
+    await flow.handleConnect(uriFor(OLD_PK))
+    await flow.handleConnect(uriFor(NEW_PK))
+    expect(await store.get(OLD_PK)).not.toBeNull()
+    expect(await store.get(NEW_PK)).not.toBeNull()
+    expect(await store.list()).toHaveLength(2)
+  })
+
+  it("CANCEL writes no new record and sends a rejection (old survives)", async () => {
+    const { flow, store, sendRejection } = makeDedupeFlow("cancel")
+    await flow.handleConnect(uriFor(OLD_PK))
+    await flow.handleConnect(uriFor(NEW_PK))
+    expect(sendRejection).toHaveBeenCalledWith(NEW_PK)
+    expect(await store.get(NEW_PK)).toBeNull()
+    expect(await store.get(OLD_PK)).not.toBeNull()
+    expect(await store.list()).toHaveLength(1)
+  })
+
+  it("without a resolveDuplicate port, a re-login just keeps both (back-compat)", async () => {
+    const store = createConnectionStore(memory())
+    const flow = createConnectFlow({
+      store,
+      requestApproval: async () => ({ approved: true }),
+      sendConnectAck: jest.fn(),
+      sendRejection: jest.fn(),
+    })
+    await flow.handleConnect(uriFor(OLD_PK))
+    await flow.handleConnect(uriFor(NEW_PK))
+    expect(await store.list()).toHaveLength(2)
+  })
+})

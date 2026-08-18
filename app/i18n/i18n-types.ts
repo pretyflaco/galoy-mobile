@@ -13626,10 +13626,94 @@ type RootTranslation = {
 		 */
 		srLabel: RequiredParams<'client'>
 		/**
-		 * {​c​l​i​e​n​t​}​.​ ​C​o​n​n​e​c​t​e​d​ ​a​p​p​.
+		 * {​c​l​i​e​n​t​}​.​ ​C​o​n​n​e​c​t​e​d​ ​a​p​p​.​ ​T​a​p​ ​t​o​ ​v​i​e​w​ ​a​c​t​i​v​i​t​y​.
 		 * @param {string} client
 		 */
 		rowA11y: RequiredParams<'client'>
+	}
+	NostrDuplicateConnectionScreen: {
+		/**
+		 * {​c​l​i​e​n​t​}​ ​i​s​ ​a​l​r​e​a​d​y​ ​c​o​n​n​e​c​t​e​d
+		 * @param {string} client
+		 */
+		title: RequiredParams<'client'>
+		/**
+		 * T​h​i​s​ ​a​p​p​ ​i​s​ ​a​l​r​e​a​d​y​ ​c​o​n​n​e​c​t​e​d​ ​u​n​d​e​r​ ​a​ ​d​i​f​f​e​r​e​n​t​ ​s​e​s​s​i​o​n​.​ ​W​h​a​t​ ​w​o​u​l​d​ ​y​o​u​ ​l​i​k​e​ ​t​o​ ​d​o​?
+		 */
+		body: string
+		/**
+		 * R​e​p​l​a​c​e​ ​t​h​e​ ​o​l​d​ ​c​o​n​n​e​c​t​i​o​n
+		 */
+		replace: string
+		/**
+		 * K​e​e​p​ ​b​o​t​h
+		 */
+		keepBoth: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		cancel: string
+		/**
+		 * R​e​p​l​a​c​e​ ​t​h​e​ ​e​x​i​s​t​i​n​g​ ​c​o​n​n​e​c​t​i​o​n​ ​f​o​r​ ​{​c​l​i​e​n​t​}​ ​w​i​t​h​ ​t​h​i​s​ ​n​e​w​ ​o​n​e​.
+		 * @param {string} client
+		 */
+		replaceA11y: RequiredParams<'client'>
+		/**
+		 * K​e​e​p​ ​b​o​t​h​ ​t​h​e​ ​e​x​i​s​t​i​n​g​ ​a​n​d​ ​t​h​e​ ​n​e​w​ ​c​o​n​n​e​c​t​i​o​n​ ​f​o​r​ ​{​c​l​i​e​n​t​}​.
+		 * @param {string} client
+		 */
+		keepBothA11y: RequiredParams<'client'>
+		/**
+		 * {​c​l​i​e​n​t​}​ ​i​s​ ​a​l​r​e​a​d​y​ ​c​o​n​n​e​c​t​e​d​.​ ​R​e​p​l​a​c​e​ ​t​h​e​ ​o​l​d​ ​c​o​n​n​e​c​t​i​o​n​,​ ​k​e​e​p​ ​b​o​t​h​,​ ​o​r​ ​c​a​n​c​e​l​.
+		 * @param {string} client
+		 */
+		srLabel: RequiredParams<'client'>
+	}
+	NostrActivityScreen: {
+		/**
+		 * A​c​t​i​v​i​t​y
+		 */
+		title: string
+		/**
+		 * N​o​ ​a​c​t​i​v​i​t​y​ ​y​e​t​.
+		 */
+		empty: string
+		/**
+		 * T​o​t​a​l
+		 */
+		statTotal: string
+		/**
+		 * A​c​c​e​p​t​e​d
+		 */
+		statAccepted: string
+		/**
+		 * R​e​j​e​c​t​e​d
+		 */
+		statRejected: string
+		/**
+		 * A​p​p​r​o​v​e​d
+		 */
+		accepted: string
+		/**
+		 * R​e​j​e​c​t​e​d
+		 */
+		rejected: string
+		/**
+		 * S​i​g​n​e​d​ ​e​v​e​n​t​ ​(​k​i​n​d​ ​{​k​i​n​d​}​)
+		 * @param {number} kind
+		 */
+		signEventKind: RequiredParams<'kind'>
+		/**
+		 * S​i​g​n​e​d​ ​e​v​e​n​t
+		 */
+		signEvent: string
+		/**
+		 * {​a​c​t​i​o​n​}​ ​—​ ​{​d​e​c​i​s​i​o​n​}​ ​a​t​ ​{​w​h​e​n​}​.
+		 * @param {string} action
+		 * @param {string} decision
+		 * @param {string} when
+		 */
+		rowA11y: RequiredParams<'action' | 'decision' | 'when'>
 	}
 	NostrReviewAllScreen: {
 		/**
@@ -27260,9 +27344,85 @@ export type TranslationFunctions = {
 		 */
 		srLabel: (arg: { client: string }) => LocalizedString
 		/**
-		 * {client}. Connected app.
+		 * {client}. Connected app. Tap to view activity.
 		 */
 		rowA11y: (arg: { client: string }) => LocalizedString
+	}
+	NostrDuplicateConnectionScreen: {
+		/**
+		 * {client} is already connected
+		 */
+		title: (arg: { client: string }) => LocalizedString
+		/**
+		 * This app is already connected under a different session. What would you like to do?
+		 */
+		body: () => LocalizedString
+		/**
+		 * Replace the old connection
+		 */
+		replace: () => LocalizedString
+		/**
+		 * Keep both
+		 */
+		keepBoth: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		cancel: () => LocalizedString
+		/**
+		 * Replace the existing connection for {client} with this new one.
+		 */
+		replaceA11y: (arg: { client: string }) => LocalizedString
+		/**
+		 * Keep both the existing and the new connection for {client}.
+		 */
+		keepBothA11y: (arg: { client: string }) => LocalizedString
+		/**
+		 * {client} is already connected. Replace the old connection, keep both, or cancel.
+		 */
+		srLabel: (arg: { client: string }) => LocalizedString
+	}
+	NostrActivityScreen: {
+		/**
+		 * Activity
+		 */
+		title: () => LocalizedString
+		/**
+		 * No activity yet.
+		 */
+		empty: () => LocalizedString
+		/**
+		 * Total
+		 */
+		statTotal: () => LocalizedString
+		/**
+		 * Accepted
+		 */
+		statAccepted: () => LocalizedString
+		/**
+		 * Rejected
+		 */
+		statRejected: () => LocalizedString
+		/**
+		 * Approved
+		 */
+		accepted: () => LocalizedString
+		/**
+		 * Rejected
+		 */
+		rejected: () => LocalizedString
+		/**
+		 * Signed event (kind {kind})
+		 */
+		signEventKind: (arg: { kind: number }) => LocalizedString
+		/**
+		 * Signed event
+		 */
+		signEvent: () => LocalizedString
+		/**
+		 * {action} — {decision} at {when}.
+		 */
+		rowA11y: (arg: { action: string, decision: string, when: string }) => LocalizedString
 	}
 	NostrReviewAllScreen: {
 		/**

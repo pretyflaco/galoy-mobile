@@ -1,79 +1,276 @@
 /**
- * ApprovalSurfaceHost (Story A6 / fix #1) — presents approvals as FULL SCREENS, not overlays.
+ * ApprovalSurfaceHost — renders NIP-46 approvals as a full-screen overlay driven PURELY by the
+ * ApprovalCoordinator's state (Amber's IncomingRequest model), NOT by pushing/popping navigation
+ * routes.
  *
- * The ApprovalCoordinator (Story 3.4) owns approval sequencing but is UI-free: it exposes an
- * `activeEntry` and resolves via `resolveActive`. This host is a HEADLESS component (renders no
- * UI itself): mounted once under NostrRuntimeProvider, it watches the coordinator and, when an
- * entry becomes active + presentable, NAVIGATES to the corresponding full-screen approval route
- * (nostrConnectionApproval / nostrRequestApproval). When the entry resolves (active → null) it
- * pops the route. This replaces the earlier modal overlay, which floated over the live camera.
+ * Why this shape (the fix for the stale-route + dead-reject bugs): the coordinator (Story 3.4) is
+ * a UI-free FIFO exposing `activeEntry`/`pendingEntries` + `resolveActive`/`resolveMany`. This
+ * host subscribes to it and, whenever an entry is active + presentable, renders the matching
+ * surface inside a full-screen `<Modal>`. Approve/Reject call the coordinator only; clearing the
+ * active entry (`active → null`) hides the Modal and the next queued surface (or nothing) renders.
+ * There is no `navigate("approval")` / `goBack()` pair to desync — so Reject reliably dismisses,
+ * and no stale approval route is ever left underneath another screen.
  *
- * The approval ROUTES (app/navigation/nostr-screens.tsx) render the actual approval content and
- * drive approve/reject through the same coordinator. Flag-gated implicitly: no runtime context /
- * no entries ⇒ this navigates nowhere (NFR-9 — never intrudes on the wallet).
+ * The ONE deliberate navigation: after a CONNECTION approve, we navigate the app to the Connected
+ * clients screen from the stable hub base, so its header back button returns to the Nostr Identity
+ * hub (not to a resolved approval surface).
+ *
+ * Flag-gated implicitly: no runtime context / no active entry ⇒ the Modal is not shown (NFR-9).
  */
-import React, { useEffect, useRef } from "react"
+import React, { useCallback, useEffect, useState, useSyncExternalStore } from "react"
+import { Modal, View } from "react-native"
 
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
-import { RootStackParamList } from "@app/navigation/stack-param-lists"
+import { makeStyles } from "@rn-vui/themed"
 
-import { REVIEW_ALL_THRESHOLD } from "./approval/coordinator"
+import { Screen } from "@app/components/screen"
+import { RootStackParamList } from "@app/navigation/stack-param-lists"
+import { NostrConnectionApprovalScreen } from "@app/screens/nostr/connection-approval-screen"
+import { NostrDuplicateConnectionScreen } from "@app/screens/nostr/duplicate-connection-screen"
+import { NostrRequestApprovalScreen } from "@app/screens/nostr/request-approval-screen"
+import {
+  NostrReviewAllScreen,
+  type ReviewAllItem,
+} from "@app/screens/nostr/review-all-screen"
+
+import { REVIEW_ALL_THRESHOLD, type ApprovalEntry } from "./approval/coordinator"
+import type { DuplicatePromptStore } from "./core/duplicate-prompt"
 import { useApprovalCoordinator } from "./hooks/use-approval-coordinator"
 import { useNostrRuntime } from "./nostr-runtime-provider"
+
+type Nav = NativeStackNavigationProp<RootStackParamList>
 
 export const ApprovalSurfaceHost: React.FC = () => {
   const runtimeCtx = useNostrRuntime()
   if (!runtimeCtx) return null
-  return <ApprovalNavigator coordinator={runtimeCtx.coordinator} />
+  return (
+    <>
+      <ApprovalOverlay coordinator={runtimeCtx.coordinator} />
+      <DuplicatePromptOverlay store={runtimeCtx.runtime.duplicatePrompt} />
+    </>
+  )
+}
+
+/**
+ * Renders the re-login Replace/Keep-both/Cancel prompt (fix #4) as its OWN overlay, driven by the
+ * runtime's duplicate-prompt store (outside the binary approval coordinator). Resolving the
+ * prompt clears the store's active entry, which hides the Modal.
+ */
+const DuplicatePromptOverlay: React.FC<{ store: DuplicatePromptStore }> = ({ store }) => {
+  const styles = useStyles()
+  const current = useSyncExternalStore(
+    (cb) => store.subscribe(cb),
+    () => store.current(),
+  )
+  const req = current?.request
+  return (
+    <Modal
+      visible={Boolean(current)}
+      animationType="slide"
+      transparent={false}
+      onRequestClose={() => current?.resolve("cancel")}
+    >
+      <Screen>
+        <View style={styles.container}>
+          {req ? (
+            <NostrDuplicateConnectionScreen
+              clientName={req.metadata.name}
+              clientImage={req.metadata.image}
+              onReplace={() => current?.resolve("replace")}
+              onKeepBoth={() => current?.resolve("keep")}
+              onCancel={() => current?.resolve("cancel")}
+            />
+          ) : null}
+        </View>
+      </Screen>
+    </Modal>
+  )
+}
+
+/**
+ * Resolve a connected client's friendly display (name + avatar) from the ConnectionStore by
+ * pubkey, so the approval surfaces show "BTCPay Server" + logo rather than a raw hex pubkey.
+ * Falls back to a truncated pubkey when the client is not (yet) a stored connection.
+ */
+const useClientDisplay = (clientPubkey?: string): { name?: string; image?: string } => {
+  const runtime = useNostrRuntime()
+  const listConnections = runtime?.runtime.listConnections
+  const [display, setDisplay] = useState<{ name?: string; image?: string }>({})
+  useEffect(() => {
+    let cancelled = false
+    if (!clientPubkey || !listConnections) {
+      // Only clear if we actually hold a value (avoids a set-state-every-render loop).
+      setDisplay((prev) =>
+        prev.name === undefined && prev.image === undefined ? prev : {},
+      )
+      return
+    }
+    listConnections()
+      .then((records) => {
+        if (cancelled) return
+        const match = records.find((r) => r.clientPubkey === clientPubkey)
+        setDisplay((prev) => {
+          const name = match?.metadata.name
+          const image = match?.metadata.image
+          return prev.name === name && prev.image === image ? prev : { name, image }
+        })
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+    // listConnections is a stable runtime method; depend only on the pubkey.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientPubkey])
+  return display
 }
 
 // Split so the hook is only used when a coordinator exists (hooks can't be conditional).
-const ApprovalNavigator: React.FC<{
+const ApprovalOverlay: React.FC<{
   coordinator: NonNullable<ReturnType<typeof useNostrRuntime>>["coordinator"]
 }> = ({ coordinator }) => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  const { active, visible } = useApprovalCoordinator(coordinator)
-  // Track whether WE pushed an approval route, so we only pop what we pushed.
-  const presentedRef = useRef<null | "connection" | "request" | "reviewAll">(null)
+  const styles = useStyles()
+  const navigation = useNavigation<Nav>()
+  const { active, depth, visible, approve, reject } = useApprovalCoordinator(coordinator)
 
-  useEffect(() => {
-    const shouldShow = Boolean(active) && visible
+  // Is this active request part of a same-client BURST (>= threshold pending requests)? If so we
+  // render the "Review all" surface instead of paging one-by-one (B5 / Flow 4).
+  const sameClientRequests =
+    active?.kind === "request"
+      ? coordinator
+          .pendingEntries()
+          .filter((e) => e.kind === "request" && e.clientPubkey === active.clientPubkey)
+          .length
+      : 0
+  const showReviewAll = sameClientRequests >= REVIEW_ALL_THRESHOLD
 
-    if (shouldShow && active && presentedRef.current === null) {
-      if (active.kind === "connection") {
-        presentedRef.current = "connection"
-        navigation.navigate("nostrConnectionApproval")
-        return
-      }
-      // Request: if this client has a BURST of queued requests, present the "Review all"
-      // surface (B5) instead of paging one-by-one; otherwise the single request surface.
-      const sameClientRequests = coordinator
-        .pendingEntries()
-        .filter(
-          (e) => e.kind === "request" && e.clientPubkey === active.clientPubkey,
-        ).length
-      if (sameClientRequests >= REVIEW_ALL_THRESHOLD) {
-        presentedRef.current = "reviewAll"
-        navigation.navigate("nostrReviewAll")
-      } else {
-        presentedRef.current = "request"
-        navigation.navigate("nostrRequestApproval")
-      }
-      return
-    }
+  const clientDisplay = useClientDisplay(active?.clientPubkey)
+  const clientLabel =
+    clientDisplay.name ??
+    (active?.clientPubkey ? `${active.clientPubkey.slice(0, 12)}…` : "")
 
-    // Entry resolved (or hidden) while a route is up → pop it. EXCEPTION: connection approvals
-    // self-navigate on approve (the route sends the user to Connected clients), so the host must
-    // NOT also pop — that would double-navigate. The review-all route pops itself when the burst
-    // drains. Only auto-pop the single request approval, which has no natural landing screen.
-    if (!shouldShow && presentedRef.current !== null) {
-      const wasSingleRequest = presentedRef.current === "request"
-      presentedRef.current = null
-      if (wasSingleRequest && navigation.canGoBack()) navigation.goBack()
-    }
-  }, [active, visible, navigation, coordinator])
+  // CONNECTION approve: resolve, then land on Connected clients from the stable hub base so the
+  // back button returns to the Nostr Identity hub (not to a resolved approval surface).
+  const onConnectionApprove = useCallback(() => {
+    approve()
+    navigation.navigate("nostrConnectedClients")
+  }, [approve, navigation])
 
-  return null
+  const onReviewApprove = useCallback(
+    (ids: string[]) => coordinator.resolveMany(ids, true),
+    [coordinator],
+  )
+  const onReviewReject = useCallback(
+    (ids: string[]) => coordinator.resolveMany(ids, false),
+    [coordinator],
+  )
+
+  const shouldShow = Boolean(active) && visible
+
+  return (
+    <Modal
+      visible={shouldShow}
+      animationType="slide"
+      transparent={false}
+      onRequestClose={reject}
+    >
+      <Screen>
+        <View style={styles.container}>
+          {active ? (
+            <ActiveSurface
+              active={active}
+              coordinator={coordinator}
+              showReviewAll={showReviewAll}
+              clientLabel={clientLabel}
+              clientImage={clientDisplay.image}
+              depth={depth}
+              onConnectionApprove={onConnectionApprove}
+              onApprove={approve}
+              onReject={reject}
+              onReviewApprove={onReviewApprove}
+              onReviewReject={onReviewReject}
+            />
+          ) : null}
+        </View>
+      </Screen>
+    </Modal>
+  )
 }
+
+/** Renders exactly one surface for the active entry (connection / request / review-all burst). */
+const ActiveSurface: React.FC<{
+  active: ApprovalEntry
+  coordinator: NonNullable<ReturnType<typeof useNostrRuntime>>["coordinator"]
+  showReviewAll: boolean
+  clientLabel: string
+  clientImage?: string
+  depth: number
+  onConnectionApprove: () => void
+  onApprove: () => void
+  onReject: () => void
+  onReviewApprove: (ids: string[]) => void
+  onReviewReject: (ids: string[]) => void
+}> = ({
+  active,
+  coordinator,
+  showReviewAll,
+  clientLabel,
+  clientImage,
+  depth,
+  onConnectionApprove,
+  onApprove,
+  onReject,
+  onReviewApprove,
+  onReviewReject,
+}) => {
+  if (active.kind === "connection") {
+    return (
+      <NostrConnectionApprovalScreen
+        clientName={active.metadata.name}
+        clientImage={active.metadata.image}
+        onApprove={onConnectionApprove}
+        onReject={onReject}
+      />
+    )
+  }
+
+  if (showReviewAll) {
+    const requests = coordinator
+      .pendingEntries()
+      .filter((e) => e.kind === "request" && e.clientPubkey === active.clientPubkey)
+    const items: ReviewAllItem[] = requests.map((r) => ({
+      id: r.id,
+      action: r.kind === "request" ? r.humanAction : "",
+      preview: (r.kind === "request" && r.contentPreview) || "",
+    }))
+    return (
+      <NostrReviewAllScreen
+        clientName={clientLabel}
+        items={items}
+        onApproveSelected={onReviewApprove}
+        onRejectSelected={onReviewReject}
+      />
+    )
+  }
+
+  return (
+    <NostrRequestApprovalScreen
+      clientName={clientLabel}
+      clientImage={clientImage}
+      humanAction={active.humanAction}
+      contentPreview={active.contentPreview ?? ""}
+      index={1}
+      total={depth}
+      onApprove={onApprove}
+      onReject={onReject}
+    />
+  )
+}
+
+const useStyles = makeStyles(() => ({
+  container: {
+    flex: 1,
+  },
+}))

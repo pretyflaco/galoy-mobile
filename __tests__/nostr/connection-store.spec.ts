@@ -75,6 +75,33 @@ describe("ConnectionStore one-record-per-client (AC #4)", () => {
   })
 })
 
+describe("findByIdentity (re-login dedupe, fix #4)", () => {
+  it("finds same-identity records under a DIFFERENT pubkey", async () => {
+    const store = createConnectionStore(memory())
+    await store.upsert(record(CLIENT)) // metadata.name = "Damus"
+    await store.upsert(record(OTHER)) // also "Damus"
+    const dups = await store.findByIdentity("Damus", OTHER)
+    expect(dups.map((r) => r.clientPubkey)).toEqual([CLIENT]) // excludes OTHER itself
+  })
+
+  it("prefers metadata.url over name as the identity key", async () => {
+    const store = createConnectionStore(memory())
+    await store.upsert({
+      ...record(CLIENT),
+      metadata: { name: "Damus", url: "https://damus.io" },
+    })
+    expect(await store.findByIdentity("https://damus.io", OTHER)).toHaveLength(1)
+    // The name no longer matches once a url is present (url is the identity).
+    expect(await store.findByIdentity("Damus", OTHER)).toHaveLength(0)
+  })
+
+  it("returns empty for an empty identity (no stable key → never dedupe)", async () => {
+    const store = createConnectionStore(memory())
+    await store.upsert({ ...record(CLIENT), metadata: {} })
+    expect(await store.findByIdentity("", OTHER)).toEqual([])
+  })
+})
+
 describe("grant/policy reads (AC #5, AD-8)", () => {
   it("hasGrant is true only when grantedScopes includes sign_event:22242", async () => {
     const store = createConnectionStore(memory())

@@ -66,13 +66,12 @@ export type RootStackParamList = {
   nostrImportIdentity: undefined
   nostrBackup: undefined
   nostrConnectedClients: undefined
-  // Approval surfaces are full screens (not overlays) presented by the ApprovalSurfaceHost when
-  // the coordinator has an active entry, and popped when it resolves.
-  nostrConnectionApproval: undefined
-  nostrRequestApproval: undefined
-  // "Review all" burst surface (B5): presented instead of paging one-by-one when a client has
-  // many (>= REVIEW_ALL_THRESHOLD) pending requests queued.
-  nostrReviewAll: undefined
+  // Per-client activity history (Amber-style "Show activity"): metadata-only log of what a
+  // connected client asked us to sign/decrypt and whether we accepted (never content).
+  nostrActivity: { clientPubkey: string }
+  // NB: the connection / request / review-all APPROVAL surfaces are NOT routes — they are
+  // rendered by the ApprovalSurfaceHost as a state-driven full-screen overlay (see
+  // approval-surface-host.tsx), so no stack entries exist for them.
   addressScreen: undefined
   defaultWallet: undefined
   theme: undefined

@@ -87,6 +87,27 @@ export interface ApprovalDecision {
   approved: boolean
 }
 
+/**
+ * How to resolve a re-login by an app that is ALREADY connected under a different (ephemeral)
+ * pubkey. `replace` disconnects the prior record(s) and keeps only the new connection; `keep`
+ * lets both coexist; `cancel` aborts (send rejection, write nothing).
+ */
+export type DuplicateResolution = "replace" | "keep" | "cancel"
+
+/** The duplicate-connection prompt surfaced when an identity re-connects (Replace/Keep/Cancel). */
+export interface DuplicateConnectionRequest {
+  clientPubkey: string
+  metadata: ClientMetadata
+  /** The existing record(s) for the same identity (different pubkey). */
+  existing: ConnectionRecordLike[]
+}
+
+/** Minimal existing-record shape the duplicate prompt needs (identity display). */
+export interface ConnectionRecordLike {
+  clientPubkey: string
+  metadata: ClientMetadata
+}
+
 /** The connect-ack payload (echoes the secret verbatim). */
 export interface ConnectAck {
   clientPubkey: string
@@ -99,6 +120,12 @@ export interface ConnectFlowPorts {
   store: ConnectionStore
   /** Raise the connection-approval decision through the ApprovalCoordinator (Story 3.4). */
   requestApproval: (request: ConnectionApprovalRequest) => Promise<ApprovalDecision>
+  /**
+   * Resolve a re-login by an already-connected identity (Replace / Keep both / Cancel). Injected
+   * so the transport stays UI-free; the runtime binds it to the approval overlay. Optional: when
+   * absent, a duplicate is treated as "keep" (prior, non-deduping behavior).
+   */
+  resolveDuplicate?: (request: DuplicateConnectionRequest) => Promise<DuplicateResolution>
   /** Send the connect-ack (echoing the secret) to the client. */
   sendConnectAck: (ack: ConnectAck) => void
   /** Send the spec-appropriate rejection to the client. */
@@ -118,7 +145,8 @@ const toHumanPerms = (perms: string[]): string[] =>
   perms.includes(GRANTABLE_SCOPE) ? ["sign-in-and-sign"] : []
 
 export const createConnectFlow = (ports: ConnectFlowPorts): ConnectFlow => {
-  const { store, requestApproval, sendConnectAck, sendRejection } = ports
+  const { store, requestApproval, resolveDuplicate, sendConnectAck, sendRejection } =
+    ports
 
   return {
     async handleConnect(uri: string): Promise<void> {
@@ -136,6 +164,34 @@ export const createConnectFlow = (ports: ConnectFlowPorts): ConnectFlow => {
       if (!decision.approved) {
         sendRejection(parsed.clientPubkey)
         return
+      }
+
+      // Same-identity re-login guard: an app reconnecting mints a fresh ephemeral pubkey, so a
+      // naive upsert would accrete a duplicate row every sign-in. If a record already exists for
+      // this identity (metadata.url ?? metadata.name) under a DIFFERENT pubkey, ask the user how
+      // to resolve it before writing anything.
+      const identity = parsed.metadata.url ?? parsed.metadata.name ?? ""
+      const duplicates = await store.findByIdentity(identity, parsed.clientPubkey)
+      if (duplicates.length > 0 && resolveDuplicate) {
+        const resolution = await resolveDuplicate({
+          clientPubkey: parsed.clientPubkey,
+          metadata: parsed.metadata,
+          existing: duplicates.map((r) => ({
+            clientPubkey: r.clientPubkey,
+            metadata: r.metadata,
+          })),
+        })
+        if (resolution === "cancel") {
+          sendRejection(parsed.clientPubkey)
+          return
+        }
+        if (resolution === "replace") {
+          // Drop the stale connection(s) for this identity; only the new one survives.
+          for (const dup of duplicates) {
+            await store.disconnect(dup.clientPubkey)
+          }
+        }
+        // "keep" falls through: both records coexist.
       }
 
       // Approved: echo the secret VERBATIM first — a connection exists ONLY on echo. The ack

@@ -50,6 +50,15 @@ import {
 import { createLocalNsecSigner } from "./core/local-nsec-signer"
 import { signerLogFields } from "./core/redact"
 import { createRequestLedger } from "./core/request-ledger"
+import {
+  createActivityLog,
+  type ActivityEntry,
+  type ActivityStats,
+} from "./core/activity-log"
+import {
+  createDuplicatePromptStore,
+  type DuplicatePromptStore,
+} from "./core/duplicate-prompt"
 import type { ConnectionRecordLike, SignerGateDeps } from "./signer-gate"
 import {
   createConnectFlow,
@@ -110,6 +119,12 @@ export interface SignerRuntime {
   relayHealth(): Record<string, number>
   /** Atomically disconnect a client (delete record + void grant + tombstone) and re-sync. */
   disconnect(clientPubkey: string): Promise<void>
+  /** The re-login Replace/Keep-both/Cancel prompt store (rendered by the ApprovalSurfaceHost). */
+  duplicatePrompt: DuplicatePromptStore
+  /** Metadata-only activity history for a client (newest first) — the "Show activity" screen. */
+  listActivity(clientPubkey: string): Promise<ActivityEntry[]>
+  /** Aggregate accept/reject stats for a client (activity screen stats card). */
+  activityStats(clientPubkey: string): Promise<ActivityStats>
   /** Test-only: grant a scope to a client (simulates a completed connect). */
   grantForTest(clientPubkey: string, grantedScopes: string[]): Promise<void>
 }
@@ -173,7 +188,20 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   const store: ConnectionStore = createConnectionStore(deps.storage)
   const signer = createLocalNsecSigner({ readNsecHex: deps.readNsecHex })
   const ledger = createRequestLedger(deps.storage)
+  const activityLog = createActivityLog(deps.storage)
+  const duplicatePrompt = createDuplicatePromptStore()
   const pool = getRelayPool({ createPool: deps.createPool })
+
+  // Metadata-only activity recording (leak-audit safe): log the accept/reject decision for a
+  // client's request. Fire-and-forget — persistence must never block or fail a signer response.
+  const recordActivity = (
+    clientPubkey: string,
+    entry: { method: string; accepted: boolean; eventKind?: number },
+  ): void => {
+    activityLog
+      .record(clientPubkey, { ...entry, time: Date.now() })
+      .catch(() => undefined)
+  }
 
   // The device-local transport secret used to decode inbound / encode outbound (AD-4). Falls
   // back to the identity key ONLY in tests that never exercise real decode (decodeForTest).
@@ -276,8 +304,27 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     )
   }
 
+  // At-most-once surfacing for approval-gated flows (fix #6). The STAGE_TIMEOUT retry re-delivers
+  // the SAME request id ~10s later; without this guard the retry would raise a SECOND approval
+  // surface for a request whose first surface is still open (pending) or already resolved
+  // (answered). Register through the same ledger the transport dispatcher uses: `pending-duplicate`
+  // → drop (the first surface still owns it); `answered` → replay the stored response WITHOUT
+  // re-executing / re-surfacing. Returns true when the caller should proceed (status "new").
+  const admitApprovalGated = async (decoded: DecodedRequest): Promise<boolean> => {
+    const seen = await ledger.register(decoded.clientPubkey, decoded.request.id)
+    if (seen.status === "pending-duplicate") return false
+    if (seen.status === "answered") {
+      if (seen.storedResponse !== undefined) {
+        await sendResponse(JSON.parse(seen.storedResponse) as Nip46Response, decoded)
+      }
+      return false
+    }
+    return true
+  }
+
   // -- sign_event flow (Story 3.5): approval-gated, signs through the seam only.
   const runSignEvent = async (decoded: DecodedRequest): Promise<void> => {
+    if (!(await admitApprovalGated(decoded))) return
     const userNpub = await signer.getPublicKey()
     const flow = createSignEventFlow({
       signer,
@@ -297,17 +344,28 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     })
     const raw = JSON.parse(decoded.request.params[0] ?? "{}")
     const result = await flow.handle(raw)
+    // Metadata-only activity: method + signed kind + accept/reject (NEVER the event content).
+    recordActivity(decoded.clientPubkey, {
+      method: "sign_event",
+      accepted: result.ok,
+      eventKind: typeof raw?.kind === "number" ? raw.kind : undefined,
+    })
     // Respond in-kind: the signed event JSON on success, a spec error on rejection.
-    await sendResponse(
-      result.ok
-        ? { id: decoded.request.id, result: JSON.stringify(result.event) }
-        : { id: decoded.request.id, error: result.error },
-      decoded,
+    const response: Nip46Response = result.ok
+      ? { id: decoded.request.id, result: JSON.stringify(result.event) }
+      : { id: decoded.request.id, error: result.error }
+    // Record the answer so a later STAGE_TIMEOUT retry replays it instead of re-surfacing (fix #6).
+    await ledger.recordResponse(
+      decoded.clientPubkey,
+      decoded.request.id,
+      JSON.stringify(response),
     )
+    await sendResponse(response, decoded)
   }
 
   // -- encrypt/decrypt flow (Story 3.6): each op raises its OWN fresh approval.
   const runCapability = async (decoded: DecodedRequest): Promise<void> => {
+    if (!(await admitApprovalGated(decoded))) return
     const flow = createEncryptDecryptFlow({
       signer,
       log,
@@ -327,12 +385,21 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
       peerPubkey: decoded.request.params[0] ?? "",
       payload: decoded.request.params[1] ?? "",
     })
-    await sendResponse(
-      result.ok
-        ? { id: decoded.request.id, result: result.result }
-        : { id: decoded.request.id, error: result.error },
-      decoded,
+    // Metadata-only activity: op + accept/reject (NEVER the counterparty or payload).
+    recordActivity(decoded.clientPubkey, {
+      method: decoded.request.method,
+      accepted: result.ok,
+    })
+    const response: Nip46Response = result.ok
+      ? { id: decoded.request.id, result: result.result }
+      : { id: decoded.request.id, error: result.error }
+    // Record the answer so a STAGE_TIMEOUT retry replays it instead of re-surfacing (fix #6).
+    await ledger.recordResponse(
+      decoded.clientPubkey,
+      decoded.request.id,
+      JSON.stringify(response),
     )
+    await sendResponse(response, decoded)
   }
 
   // The user's x-only pubkey as HEX (NIP-46 get_public_key wire format). The seam returns npub
@@ -445,6 +512,9 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
         clientPubkey: request.clientPubkey,
         metadata: request.metadata,
       }).then((approved) => ({ approved })),
+    // Same-identity re-login: surface the Replace / Keep both / Cancel prompt via the runtime's
+    // duplicate-prompt store (rendered by the ApprovalSurfaceHost as its own overlay).
+    resolveDuplicate: (request) => duplicatePrompt.prompt(request),
     sendConnectAck: (ack) => fireAndForget(() => sendConnectAckImpl(ack), log),
     sendRejection: () => undefined,
   })
@@ -556,6 +626,9 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
       await syncSnapshots()
       resubscribe()
     },
+    duplicatePrompt,
+    listActivity: (clientPubkey) => activityLog.list(clientPubkey),
+    activityStats: (clientPubkey) => activityLog.stats(clientPubkey),
     grantForTest: async (clientPubkey, grantedScopes) => {
       await store.upsert({
         clientPubkey,

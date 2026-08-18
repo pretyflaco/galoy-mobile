@@ -133,8 +133,8 @@ export const NostrCreateIdentityResultScreen: React.FC<Props> = ({
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  container: { padding: 24, rowGap: 16 },
-  identiconWrap: { alignItems: "center", marginVertical: 16 },
+  container: { padding: 20, rowGap: 14 },
+  identiconWrap: { alignItems: "center", marginVertical: 14 },
   // Gradient hero ring (the ceremony ownership moment). The 12px pad forms the ring;
   // the white inner keeps the identicon on its own surface, off the gradient.
   heroRing: {
@@ -155,7 +155,7 @@ const useStyles = makeStyles(({ colors }) => ({
   },
   ownership: { color: colors.grey0, textAlign: "center" },
   body: { color: colors.grey1 },
-  addressBlock: { marginTop: 8, rowGap: 4 },
+  addressBlock: { marginTop: 8, rowGap: 5 },
   addressLabel: { color: colors.grey2 },
   // Bordered "your public address" row: de-emphasized npub + a copy affordance.
   addressRow: {
@@ -167,16 +167,16 @@ const useStyles = makeStyles(({ colors }) => ({
     borderColor: colors.grey4,
     borderRadius: 8,
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
   },
   npubTap: { flexShrink: 1 },
   npub: { color: colors.grey2 },
   backupCard: {
-    marginTop: 16,
-    padding: 16,
+    marginTop: 14,
+    padding: 20,
     borderRadius: 16,
     backgroundColor: colors.grey5,
-    rowGap: 12,
+    rowGap: 14,
   },
   backupTitle: { color: colors.grey0 },
 }))

@@ -128,8 +128,8 @@ export const NostrReviewAllScreen: React.FC<Props> = ({
 
 const useStyles = makeStyles(({ colors }) => ({
   container: {
-    padding: 24,
-    rowGap: 12,
+    padding: 20,
+    rowGap: 14,
   },
   header: {
     flexDirection: "row",
@@ -146,7 +146,7 @@ const useStyles = makeStyles(({ colors }) => ({
     borderWidth: 1,
     borderRadius: 999,
     paddingVertical: 3,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
   },
   counterChipText: {
     color: colors.grey0,
@@ -163,7 +163,7 @@ const useStyles = makeStyles(({ colors }) => ({
   checkbox: {
     width: 22,
     height: 22,
-    borderRadius: 4,
+    borderRadius: 8,
     borderWidth: 2,
     borderColor: colors.grey2,
     backgroundColor: colors.white,
@@ -179,7 +179,7 @@ const useStyles = makeStyles(({ colors }) => ({
   },
   rowMain: {
     flex: 1,
-    rowGap: 2,
+    rowGap: 3,
   },
   action: {
     color: colors.grey1,

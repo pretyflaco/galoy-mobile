@@ -38,7 +38,10 @@ import {
   useNostrRuntime,
   type NostrRuntimeContextValue,
 } from "@app/nostr/nostr-runtime-provider"
-import { getApprovalCoordinator, __resetApprovalCoordinatorForTest } from "@app/nostr/approval/coordinator"
+import {
+  getApprovalCoordinator,
+  __resetApprovalCoordinatorForTest,
+} from "@app/nostr/approval/coordinator"
 import { __resetRelayPoolForTest } from "@app/nostr/transport/relay-pool"
 
 let captured: NostrRuntimeContextValue | null = null
@@ -90,6 +93,8 @@ describe("NostrRuntimeProvider (A2)", () => {
   it("the gate deps expose NO clear() on the connection store (records retained on toggle)", () => {
     renderProvider()
     const [, deps] = initSignerGate.mock.calls[0]
-    expect((deps as { connectionStore: { clear?: unknown } }).connectionStore.clear).toBeUndefined()
+    expect(
+      (deps as { connectionStore: { clear?: unknown } }).connectionStore.clear,
+    ).toBeUndefined()
   })
 })

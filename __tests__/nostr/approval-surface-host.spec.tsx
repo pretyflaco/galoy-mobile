@@ -1,23 +1,24 @@
 /**
- * Story A6 / fix #1 — ApprovalSurfaceHost is now a HEADLESS navigator: on an active+visible
- * coordinator entry it navigates to a FULL-SCREEN approval route (not a modal overlay), and pops
- * when the entry resolves. This guards the regression where scanning did "nothing" (no presenter)
- * AND the fix where the approval must be a proper screen, not an overlay over the camera.
+ * ApprovalSurfaceHost — render-from-state overlay (the fix for the stale-route + dead-reject
+ * bugs). The host is NO LONGER a navigator that pushes/pops approval routes; it renders the
+ * active coordinator surface inside a full-screen Modal. Approve/Reject resolve the coordinator,
+ * which clears the active entry and hides the surface — no navigate/goBack pair to desync.
+ *
+ * These tests assert the RENDERED surface for each active entry + the burst threshold routing,
+ * and the ONE deliberate navigation (connection approve → Connected clients).
  */
 import React from "react"
 import { AppState } from "react-native"
-import { render, waitFor } from "@testing-library/react-native"
+import { render, waitFor, fireEvent } from "@testing-library/react-native"
 
 // Force the presentation gate open (android-parity): jest reports ios + unknown appstate, which
 // would suppress presentation.
 ;(AppState as unknown as { currentState: string }).currentState = "active"
 
 const navigate = jest.fn()
-const goBack = jest.fn()
-const canGoBack = jest.fn(() => true)
 jest.mock("@react-navigation/native", () => ({
   ...jest.requireActual("@react-navigation/native"),
-  useNavigation: () => ({ navigate, goBack, canGoBack }),
+  useNavigation: () => ({ navigate, goBack: jest.fn(), canGoBack: () => true }),
 }))
 
 import {
@@ -27,7 +28,18 @@ import {
 
 let testCoordinator: ApprovalCoordinator
 jest.mock("@app/nostr/nostr-runtime-provider", () => ({
-  useNostrRuntime: () => ({ coordinator: testCoordinator, enabled: true, runtime: {} }),
+  useNostrRuntime: () => ({
+    coordinator: testCoordinator,
+    enabled: true,
+    runtime: {
+      listConnections: async () => [],
+      duplicatePrompt: {
+        subscribe: () => () => undefined,
+        current: () => null,
+        prompt: async () => "cancel",
+      },
+    },
+  }),
 }))
 
 import { ApprovalSurfaceHost } from "@app/nostr/approval-surface-host"
@@ -43,29 +55,32 @@ const renderHost = () =>
 
 beforeEach(() => {
   navigate.mockClear()
-  goBack.mockClear()
   testCoordinator = createApprovalCoordinator({ present: async () => undefined })
 })
 
-describe("ApprovalSurfaceHost (A6 fix #1 — full-screen route, not overlay)", () => {
-  it("navigates nowhere when there is no active entry", async () => {
-    renderHost()
-    await waitFor(() => expect(navigate).not.toHaveBeenCalled())
+describe("ApprovalSurfaceHost (render-from-state overlay)", () => {
+  it("renders NOTHING when there is no active entry", async () => {
+    const { queryByTestId } = renderHost()
+    await waitFor(() => {
+      expect(queryByTestId("nostr-connection-approval")).toBeNull()
+      expect(queryByTestId("nostr-request-approval")).toBeNull()
+      expect(queryByTestId("nostr-review-all")).toBeNull()
+    })
   })
 
-  it("navigates to the CONNECTION approval route on a connection entry", async () => {
-    renderHost()
+  it("renders the CONNECTION approval surface for a connection entry", async () => {
+    const { queryByTestId } = renderHost()
     testCoordinator.enqueue({
       id: "c1",
       kind: "connection",
       clientPubkey: "c1",
       metadata: { name: "BTCPay Server" },
     })
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrConnectionApproval"))
+    await waitFor(() => expect(queryByTestId("nostr-connection-approval")).toBeTruthy())
   })
 
-  it("navigates to the REQUEST approval route on a request entry", async () => {
-    renderHost()
+  it("renders the REQUEST approval surface for a single request entry", async () => {
+    const { queryByTestId } = renderHost()
     testCoordinator.enqueue({
       id: "r1",
       kind: "request",
@@ -73,48 +88,42 @@ describe("ApprovalSurfaceHost (A6 fix #1 — full-screen route, not overlay)", (
       method: "nip44_decrypt",
       humanAction: "decrypt a message",
     })
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrRequestApproval"))
+    await waitFor(() => expect(queryByTestId("nostr-request-approval")).toBeTruthy())
+    expect(queryByTestId("nostr-review-all")).toBeNull()
   })
 
-  it("pops a REQUEST route when the active entry resolves (requests have no landing screen)", async () => {
-    renderHost()
+  it("CONNECTION approve resolves + navigates to Connected clients (deliberate, from the hub base)", async () => {
+    const { getByTestId } = renderHost()
     const decision = testCoordinator.enqueue({
-      id: "r3",
-      kind: "request",
+      id: "c3",
+      kind: "connection",
       clientPubkey: "c3",
-      method: "nip44_decrypt",
-      humanAction: "decrypt a message",
+      metadata: { name: "BTCPay Server" },
     })
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrRequestApproval"))
-
-    testCoordinator.resolveActive({ approved: true })
-    await decision
-    await waitFor(() => expect(goBack).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(getByTestId("nostr-connection-approve")).toBeTruthy())
+    fireEvent.press(getByTestId("nostr-connection-approve"))
+    await expect(decision).resolves.toEqual({ approved: true, epoch: 0 })
+    expect(navigate).toHaveBeenCalledWith("nostrConnectedClients")
   })
 
-  it("does NOT auto-pop a CONNECTION route on resolve (the route self-navigates)", async () => {
-    renderHost()
+  it("REJECT resolves the connection and dismisses the surface (no navigation)", async () => {
+    const { getByTestId, queryByTestId } = renderHost()
     const decision = testCoordinator.enqueue({
       id: "c4",
       kind: "connection",
       clientPubkey: "c4",
       metadata: {},
     })
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrConnectionApproval"))
-
-    // Resolving a connection must NOT trigger a host goBack — the approval route drives its own
-    // navigation (approve → Connected clients, reject → back), avoiding a double-navigate.
-    testCoordinator.resolveActive({ approved: true })
-    await decision
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, 0)
-    })
-    expect(goBack).not.toHaveBeenCalled()
+    await waitFor(() => expect(getByTestId("nostr-connection-reject")).toBeTruthy())
+    fireEvent.press(getByTestId("nostr-connection-reject"))
+    await expect(decision).resolves.toEqual({ approved: false, epoch: 0 })
+    // Surface is gone (state cleared) and reject never navigates.
+    await waitFor(() => expect(queryByTestId("nostr-connection-approval")).toBeNull())
+    expect(navigate).not.toHaveBeenCalled()
   })
 
-  it("presents the REVIEW-ALL burst route when one client has 3+ pending requests (B5)", async () => {
-    renderHost()
-    // Three requests from the SAME client queued before the host presents.
+  it("renders the REVIEW-ALL burst surface when one client has 3+ pending requests (B5)", async () => {
+    const { queryByTestId } = renderHost()
     for (const id of ["b1", "b2", "b3"]) {
       testCoordinator.enqueue({
         id,
@@ -124,12 +133,12 @@ describe("ApprovalSurfaceHost (A6 fix #1 — full-screen route, not overlay)", (
         humanAction: "decrypt a message",
       })
     }
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrReviewAll"))
-    expect(navigate).not.toHaveBeenCalledWith("nostrRequestApproval")
+    await waitFor(() => expect(queryByTestId("nostr-review-all")).toBeTruthy())
+    expect(queryByTestId("nostr-request-approval")).toBeNull()
   })
 
-  it("still pages one-by-one below the burst threshold (2 pending requests)", async () => {
-    renderHost()
+  it("still renders the single request surface below the burst threshold (2 pending)", async () => {
+    const { queryByTestId } = renderHost()
     for (const id of ["t1", "t2"]) {
       testCoordinator.enqueue({
         id,
@@ -139,7 +148,7 @@ describe("ApprovalSurfaceHost (A6 fix #1 — full-screen route, not overlay)", (
         humanAction: "decrypt a message",
       })
     }
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith("nostrRequestApproval"))
-    expect(navigate).not.toHaveBeenCalledWith("nostrReviewAll")
+    await waitFor(() => expect(queryByTestId("nostr-request-approval")).toBeTruthy())
+    expect(queryByTestId("nostr-review-all")).toBeNull()
   })
 })

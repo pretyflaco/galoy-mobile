@@ -9,7 +9,7 @@
  */
 import React, { useCallback, useEffect, useState } from "react"
 
-import { useNavigation } from "@react-navigation/native"
+import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native"
 import {
   createNativeStackNavigator,
   NativeStackNavigationProp,
@@ -23,17 +23,11 @@ import { NostrBackupScreen } from "@app/screens/nostr/backup/nostr-backup-screen
 import {
   NostrConnectedClientsSection,
   type ConnectedClient,
-  type RelayHealth,
 } from "@app/screens/nostr/connected-clients-section"
-import { NostrConnectionApprovalScreen } from "@app/screens/nostr/connection-approval-screen"
-import { NostrRequestApprovalScreen } from "@app/screens/nostr/request-approval-screen"
-import {
-  NostrReviewAllScreen,
-  type ReviewAllItem,
-} from "@app/screens/nostr/review-all-screen"
+import { NostrActivityScreen } from "@app/screens/nostr/activity-screen"
+import type { ActivityEntry, ActivityStats } from "@app/nostr/core/activity-log"
 import { NostrIdentityHubScreen } from "@app/screens/nostr/identity-hub/nostr-identity-hub-screen"
 import { useNostrIdentity } from "@app/screens/nostr/identity-hub/use-nostr-identity"
-import { useApprovalCoordinator } from "@app/nostr/hooks/use-approval-coordinator"
 import { useNostrRuntime } from "@app/nostr/nostr-runtime-provider"
 import { Screen } from "@app/components/screen"
 
@@ -77,20 +71,13 @@ export const NostrRootScreens = (
       options={{ title: LL.NostrConnectedClientsScreen.sectionTitle() }}
     />
     <RootNavigator.Screen
-      name="nostrConnectionApproval"
-      component={NostrConnectionApproval}
-      options={{ title: LL.NostrConnectionApprovalScreen.title(), headerShown: false }}
+      name="nostrActivity"
+      component={NostrActivity}
+      options={{ title: LL.NostrActivityScreen.title() }}
     />
-    <RootNavigator.Screen
-      name="nostrRequestApproval"
-      component={NostrRequestApproval}
-      options={{ title: LL.NostrRequestApprovalScreen.title(), headerShown: false }}
-    />
-    <RootNavigator.Screen
-      name="nostrReviewAll"
-      component={NostrReviewAll}
-      options={{ title: LL.NostrReviewAllScreen.title(), headerShown: false }}
-    />
+    {/* Approval surfaces (connection / request / review-all) are rendered by the
+        ApprovalSurfaceHost as a state-driven full-screen overlay — NOT pushed routes — so a
+        resolved approval never lingers underneath another screen. See approval-surface-host.tsx. */}
   </>
 )
 
@@ -162,9 +149,9 @@ export const NostrBackup: React.FC = () => {
 
 /** Connected clients list-and-revoke, reading from the runtime's ConnectionStore. */
 export const NostrConnectedClients: React.FC = () => {
+  const navigation = useNavigation<Nav>()
   const runtime = useNostrRuntime()
   const [clients, setClients] = useState<ConnectedClient[]>([])
-  const [relayHealth, setRelayHealth] = useState<RelayHealth>({})
 
   const reload = useCallback(async () => {
     const records = (await runtime?.runtime.listConnections()) ?? []
@@ -177,17 +164,11 @@ export const NostrConnectedClients: React.FC = () => {
         createdAt: r.createdAt,
       })),
     )
-    setRelayHealth(runtime?.runtime.relayHealth() ?? {})
   }, [runtime])
 
   useEffect(() => {
     reload().catch(() => undefined)
-    // Poll relay health so the badges update as our published events get ACKed.
-    const id = setInterval(() => {
-      setRelayHealth(runtime?.runtime.relayHealth() ?? {})
-    }, 2000)
-    return () => clearInterval(id)
-  }, [reload, runtime])
+  }, [reload])
 
   const handleDisconnect = useCallback(
     (clientPubkey: string) => {
@@ -200,158 +181,55 @@ export const NostrConnectedClients: React.FC = () => {
     [runtime, reload],
   )
 
+  const handleClientPress = useCallback(
+    (clientPubkey: string) => navigation.navigate("nostrActivity", { clientPubkey }),
+    [navigation],
+  )
+
   return (
-    <Screen>
+    <Screen preset="fixed">
       <NostrConnectedClientsSection
         clients={clients}
         onDisconnect={handleDisconnect}
-        relayHealth={relayHealth}
+        onClientPress={handleClientPress}
       />
     </Screen>
   )
 }
 
-/**
- * Full-screen CONNECTION approval route (Story A6 / fix #1). Presented by the ApprovalSurfaceHost
- * when the coordinator's active entry is a connection; renders the approval content full-bleed (a
- * proper screen, not a camera overlay). Approve/Reject resolve the coordinator, which unmounts
- * the route (the host pops it when active clears).
- */
-export const NostrConnectionApproval: React.FC = () => {
-  const navigation = useNavigation<Nav>()
+/** Per-client activity history ("Show activity"), reading the metadata-only log from runtime. */
+export const NostrActivity: React.FC = () => {
+  const route = useRoute<RouteProp<RootStackParamList, "nostrActivity">>()
+  const { clientPubkey } = route.params
   const runtime = useNostrRuntime()
-  const coordinator = runtime?.coordinator
-  const { active, approve, reject } = useApprovalCoordinator(coordinator ?? ({} as never))
-  const clientName = active?.kind === "connection" ? active.metadata.name : undefined
-  const clientImage = active?.kind === "connection" ? active.metadata.image : undefined
+  const [entries, setEntries] = useState<ActivityEntry[]>([])
+  const [stats, setStats] = useState<ActivityStats>({
+    total: 0,
+    accepted: 0,
+    rejected: 0,
+  })
 
-  // On approve, resolve the coordinator (the host pops this route) and land the user on the
-  // Connected clients screen so they see the app they just connected — rather than popping back
-  // to wherever the scan was launched from (e.g. Home).
-  const onApprove = useCallback(() => {
-    approve()
-    navigation.navigate("nostrConnectedClients")
-  }, [approve, navigation])
-
-  return (
-    <Screen>
-      <NostrConnectionApprovalScreen
-        clientName={clientName}
-        clientImage={clientImage}
-        onApprove={onApprove}
-        onReject={reject}
-      />
-    </Screen>
-  )
-}
-
-/**
- * Resolve a connected client's friendly display (name + avatar) from the ConnectionStore by
- * pubkey, so the approval surfaces show "BTCPay Server" + logo rather than a raw hex pubkey.
- * Falls back to a truncated pubkey when the client is not (yet) a stored connection.
- */
-const useClientDisplay = (clientPubkey?: string): { name?: string; image?: string } => {
-  const runtime = useNostrRuntime()
-  const [display, setDisplay] = useState<{ name?: string; image?: string }>({})
   useEffect(() => {
     let cancelled = false
-    if (!clientPubkey) {
-      setDisplay({})
-      return
-    }
-    runtime?.runtime
-      .listConnections()
-      .then((records) => {
+    Promise.all([
+      runtime?.runtime.listActivity(clientPubkey) ?? Promise.resolve([]),
+      runtime?.runtime.activityStats(clientPubkey) ??
+        Promise.resolve({ total: 0, accepted: 0, rejected: 0 }),
+    ])
+      .then(([e, s]) => {
         if (cancelled) return
-        const match = records.find((r) => r.clientPubkey === clientPubkey)
-        setDisplay({ name: match?.metadata.name, image: match?.metadata.image })
+        setEntries(e)
+        setStats(s)
       })
       .catch(() => undefined)
     return () => {
       cancelled = true
     }
   }, [runtime, clientPubkey])
-  return display
-}
-
-/** Full-screen REQUEST approval route (sign/decrypt) — same pattern as the connection route. */
-export const NostrRequestApproval: React.FC = () => {
-  const runtime = useNostrRuntime()
-  const coordinator = runtime?.coordinator
-  const { active, depth, approve, reject } = useApprovalCoordinator(
-    coordinator ?? ({} as never),
-  )
-  const req = active?.kind === "request" ? active : null
-  const display = useClientDisplay(req?.clientPubkey)
-  const clientLabel =
-    display.name ?? (req?.clientPubkey ? `${req.clientPubkey.slice(0, 12)}…` : "")
-  // Real queue position: the active entry is always first in pendingEntries() (B5 API).
-  const index = 1
-  return (
-    <Screen>
-      <NostrRequestApprovalScreen
-        clientName={clientLabel}
-        clientImage={display.image}
-        humanAction={req?.humanAction ?? ""}
-        contentPreview={req?.contentPreview ?? ""}
-        index={index}
-        total={depth}
-        onApprove={approve}
-        onReject={reject}
-      />
-    </Screen>
-  )
-}
-
-/**
- * Full-screen "Review all" burst route (B5 / Flow 4). Presented by the ApprovalSurfaceHost when
- * a client has REVIEW_ALL_THRESHOLD+ pending REQUEST approvals queued. Expands the serialized
- * queue into a selectable list and batch-resolves the chosen requests via the coordinator's
- * resolveMany (no "approve all remaining"). When the queue drains below 2, the host pops back to
- * one-by-one paging.
- */
-export const NostrReviewAll: React.FC = () => {
-  const navigation = useNavigation<Nav>()
-  const runtime = useNostrRuntime()
-  const coordinator = runtime?.coordinator
-  // Subscribe for re-render on queue changes; read the full pending snapshot from the coordinator.
-  const { depth } = useApprovalCoordinator(coordinator ?? ({} as never))
-  const pending = coordinator?.pendingEntries() ?? []
-  const requests = pending.filter((e) => e.kind === "request")
-  const clientPubkey = requests[0]?.clientPubkey
-  const display = useClientDisplay(clientPubkey)
-  const clientLabel =
-    display.name ?? (clientPubkey ? `${clientPubkey.slice(0, 12)}…` : "")
-
-  const items: ReviewAllItem[] = requests.map((r) => ({
-    id: r.id,
-    action: r.kind === "request" ? r.humanAction : "",
-    preview: (r.kind === "request" && r.contentPreview) || "",
-  }))
-
-  const onApproveSelected = useCallback(
-    (ids: string[]) => coordinator?.resolveMany(ids, true),
-    [coordinator],
-  )
-  const onRejectSelected = useCallback(
-    (ids: string[]) => coordinator?.resolveMany(ids, false),
-    [coordinator],
-  )
-
-  // When the burst has drained (depth < 2), leave the review-all surface (the host resumes
-  // one-by-one paging for any remainder).
-  useEffect(() => {
-    if (depth < 2 && navigation.canGoBack()) navigation.goBack()
-  }, [depth, navigation])
 
   return (
-    <Screen>
-      <NostrReviewAllScreen
-        clientName={clientLabel}
-        items={items}
-        onApproveSelected={onApproveSelected}
-        onRejectSelected={onRejectSelected}
-      />
+    <Screen preset="fixed">
+      <NostrActivityScreen entries={entries} stats={stats} />
     </Screen>
   )
 }

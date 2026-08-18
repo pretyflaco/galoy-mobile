@@ -90,8 +90,8 @@ export const NostrConnectionApprovalScreen: React.FC<Props> = ({
 
 const useStyles = makeStyles(({ colors }) => ({
   container: {
-    padding: 24,
-    rowGap: 16,
+    padding: 20,
+    rowGap: 14,
   },
   title: {
     color: colors.black,
@@ -99,14 +99,14 @@ const useStyles = makeStyles(({ colors }) => ({
   appRow: {
     flexDirection: "row",
     alignItems: "center",
-    columnGap: 12,
+    columnGap: 10,
   },
   avatar: {
     backgroundColor: colors.grey4,
   },
   appMeta: {
     flexShrink: 1,
-    rowGap: 2,
+    rowGap: 3,
   },
   clientName: {
     fontWeight: "600",

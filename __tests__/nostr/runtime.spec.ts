@@ -18,6 +18,7 @@ import { finalizeEvent, generateSecretKey, getPublicKey } from "nostr-tools/pure
 import { createSignerRuntime, type SignerRuntimeDeps } from "../../app/nostr/runtime"
 import { NIP46_KIND } from "../../app/nostr/transport/nip46-codec"
 import { __resetRelayPoolForTest } from "../../app/nostr/transport/relay-pool"
+import { __resetApprovalCoordinatorForTest } from "../../app/nostr/approval/coordinator"
 
 // A deterministic client identity for the inbound events.
 const clientSk = generateSecretKey()
@@ -92,6 +93,10 @@ const makeInbound = (payloadCiphertext: string) =>
 
 beforeEach(() => {
   __resetRelayPoolForTest()
+  // The approval coordinator is a process singleton; reset it so an unresolved surface from a
+  // prior test (approval-gated flows intentionally leave handleInbound pending) does not pause
+  // the queue for the next test's enqueue → pump → present path.
+  __resetApprovalCoordinatorForTest()
 })
 
 describe("signer runtime assembly (A1)", () => {
@@ -177,6 +182,33 @@ describe("signer runtime assembly (A1)", () => {
     await new Promise<void>((resolve) => {
       setTimeout(resolve, 0)
     })
+    expect(present).toHaveBeenCalledTimes(1)
+  })
+
+  it("does NOT raise a SECOND surface when the SAME request id is re-delivered while pending (fix #6)", async () => {
+    const present = jest.fn(async () => undefined)
+    // Same decoded request id on every delivery — this is what the STAGE_TIMEOUT retry looks
+    // like: the client re-publishes the same kind-24133 event ~10s later.
+    const decodeForTest = () => ({
+      scheme: "nip44" as const,
+      clientPubkey,
+      request: {
+        id: "retry-1",
+        method: "nip44_decrypt",
+        params: [clientPubkey, "ciphertext"],
+      },
+    })
+    const runtime = createSignerRuntime(makeDeps({ present, decodeForTest }))
+
+    // First delivery: raises exactly one surface (stays pending on approval).
+    runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
+    await new Promise<void>((resolve) => setTimeout(resolve, 0))
+    expect(present).toHaveBeenCalledTimes(1)
+
+    // Retry while the first surface is still open (pending) → ledger returns pending-duplicate,
+    // the flow drops it, and NO second surface is presented.
+    runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
+    await new Promise<void>((resolve) => setTimeout(resolve, 0))
     expect(present).toHaveBeenCalledTimes(1)
   })
 

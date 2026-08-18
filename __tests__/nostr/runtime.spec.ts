@@ -218,6 +218,55 @@ describe("signer runtime assembly (A1)", () => {
     expect(present).toHaveBeenCalledTimes(1)
   })
 
+  it("clears the sign-in waiting overlay when a general client sends a capability op (Ditto fix)", async () => {
+    const present = jest.fn(async () => undefined)
+    const decodeForTest = () => ({
+      scheme: "nip44" as const,
+      clientPubkey,
+      request: {
+        id: "cap-1",
+        method: "nip44_decrypt",
+        params: [clientPubkey, "ciphertext"],
+      },
+    })
+    const runtime = createSignerRuntime(makeDeps({ present, decodeForTest }))
+    // Simulate the post-connect waiting overlay being up for this client.
+    runtime.awaitingFollowup.set({ clientPubkey, name: "Ditto" })
+    expect(runtime.awaitingFollowup.current()?.clientPubkey).toBe(clientPubkey)
+
+    // A nip44_decrypt is a general-client signal (no login challenge coming) → overlay clears
+    // immediately, even though the approval surface itself stays pending on the human.
+    runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
+    await flushAsync()
+
+    expect(runtime.awaitingFollowup.current()).toBeNull()
+    expect(present).toHaveBeenCalledTimes(1) // the op still raises its own approval surface
+  })
+
+  it("does NOT clear the waiting overlay for a sign_event challenge that is still pending approval", async () => {
+    const present = jest.fn(async () => undefined)
+    // Non-granted sign_event → the surface stays PENDING on the human, so the sign path's own
+    // confirmed-publish clear (runSignEvent) has not fired. The capability early-clear must NOT
+    // apply to a sign_event, so the overlay stays up while the login challenge awaits approval.
+    const decodeForTest = () => ({
+      scheme: "nip44" as const,
+      clientPubkey,
+      request: {
+        id: "sign-1",
+        method: "sign_event",
+        params: [JSON.stringify({ kind: 9999, content: "", tags: [] })],
+      },
+    })
+    const runtime = createSignerRuntime(makeDeps({ present, decodeForTest }))
+    runtime.awaitingFollowup.set({ clientPubkey, name: "vezir" })
+
+    runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
+    await flushAsync()
+
+    expect(present).toHaveBeenCalledTimes(1) // sign_event challenge is surfaced (not pre-granted)
+    expect(runtime.awaitingFollowup.current()?.clientPubkey).toBe(clientPubkey) // overlay stays up
+  })
+
   it("listConnections + disconnect manage the store (fix #3)", async () => {
     const runtime = createSignerRuntime(makeDeps())
     await runtime.grantForTest(clientPubkey, ["sign_event:22242"])

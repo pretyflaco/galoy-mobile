@@ -13592,7 +13592,7 @@ type RootTranslation = {
 	}
 	NostrConnectedClientsScreen: {
 		/**
-		 * C​o​n​n​e​c​t​e​d​ ​c​l​i​e​n​t​s
+		 * C​o​n​n​e​c​t​e​d​ ​a​p​p​s
 		 */
 		sectionTitle: string
 		/**
@@ -13724,6 +13724,14 @@ type RootTranslation = {
 		 * R​e​a​d​ ​y​o​u​r​ ​p​u​b​l​i​c​ ​k​e​y
 		 */
 		methodReadPubkey: string
+		/**
+		 * E​n​c​r​y​p​t​ ​a​ ​m​e​s​s​a​g​e
+		 */
+		methodEncrypt: string
+		/**
+		 * D​e​c​r​y​p​t​ ​a​ ​m​e​s​s​a​g​e
+		 */
+		methodDecrypt: string
 		/**
 		 * {​a​c​t​i​o​n​}​ ​—​ ​{​d​e​c​i​s​i​o​n​}​ ​a​t​ ​{​w​h​e​n​}​.
 		 * @param {string} action
@@ -13955,7 +13963,7 @@ type RootTranslation = {
 		 */
 		summaryReplace: string
 		/**
-		 * C​o​n​n​e​c​t​e​d​ ​c​l​i​e​n​t​s
+		 * C​o​n​n​e​c​t​e​d​ ​a​p​p​s
 		 */
 		summaryConnectedClients: string
 		/**
@@ -27428,7 +27436,7 @@ export type TranslationFunctions = {
 	}
 	NostrConnectedClientsScreen: {
 		/**
-		 * Connected clients
+		 * Connected apps
 		 */
 		sectionTitle: () => LocalizedString
 		/**
@@ -27551,6 +27559,14 @@ export type TranslationFunctions = {
 		 * Read your public key
 		 */
 		methodReadPubkey: () => LocalizedString
+		/**
+		 * Encrypt a message
+		 */
+		methodEncrypt: () => LocalizedString
+		/**
+		 * Decrypt a message
+		 */
+		methodDecrypt: () => LocalizedString
 		/**
 		 * {action} — {decision} at {when}.
 		 */
@@ -27760,7 +27776,7 @@ export type TranslationFunctions = {
 		 */
 		summaryReplace: () => LocalizedString
 		/**
-		 * Connected clients
+		 * Connected apps
 		 */
 		summaryConnectedClients: () => LocalizedString
 		/**

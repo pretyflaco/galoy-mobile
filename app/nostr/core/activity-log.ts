@@ -91,16 +91,35 @@ export const createActivityLog = (
   const writeAll = (map: ActivityMap): Promise<void> =>
     storage.saveJson(ACTIVITY_STORAGE_KEY, map)
 
+  // Serialize ALL storage mutations through a single promise chain. `record` is a
+  // read-modify-write over ONE shared key (all clients), and the runtime fires it
+  // fire-and-forget for connect → get_public_key → decrypt in a burst. Without this mutex those
+  // overlapping read-modify-writes interleave and later writes clobber earlier ones — silently
+  // dropping entries (the "accepted decrypt missing from Activity" bug). The chain makes each
+  // record atomic w.r.t. the others; a rejected op in the chain never breaks the next link.
+  let writeChain: Promise<void> = Promise.resolve()
+  const serialize = (task: () => Promise<void>): Promise<void> => {
+    const run = writeChain.then(task, task)
+    // Keep the chain alive regardless of this task's outcome (don't propagate rejections onward).
+    writeChain = run.then(
+      () => undefined,
+      () => undefined,
+    )
+    return run
+  }
+
   return {
     async record(clientPubkey, entry): Promise<void> {
-      const map = await readAll()
-      const next = [sanitize(entry), ...(map[clientPubkey] ?? [])].slice(
-        0,
-        ACTIVITY_RING_SIZE,
-      )
-      map[clientPubkey] = next
-      await writeAll(map)
-      notify()
+      await serialize(async () => {
+        const map = await readAll()
+        const next = [sanitize(entry), ...(map[clientPubkey] ?? [])].slice(
+          0,
+          ACTIVITY_RING_SIZE,
+        )
+        map[clientPubkey] = next
+        await writeAll(map)
+        notify()
+      })
     },
 
     async list(clientPubkey): Promise<ActivityEntry[]> {

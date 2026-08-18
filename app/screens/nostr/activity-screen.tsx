@@ -76,6 +76,11 @@ export const NostrActivityScreen: React.FC<Props> = ({ entries, stats }) => {
     }
     if (e.method === "connect") return T.methodConnect()
     if (e.method === "get_public_key") return T.methodReadPubkey()
+    // Human labels for the nip04/nip44 capability ops (a general client like Ditto asks these).
+    if (e.method === "nip04_encrypt" || e.method === "nip44_encrypt")
+      return T.methodEncrypt()
+    if (e.method === "nip04_decrypt" || e.method === "nip44_decrypt")
+      return T.methodDecrypt()
     return e.method
   }
 

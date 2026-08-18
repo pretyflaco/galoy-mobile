@@ -9,7 +9,10 @@
 import React from "react"
 import { render, fireEvent, within } from "@testing-library/react-native"
 
-import { NostrConnectedClientsSection } from "@app/screens/nostr/connected-clients-section"
+import {
+  NostrConnectedClientsSection,
+  sortConnectedClientsByNewest,
+} from "@app/screens/nostr/connected-clients-section"
 
 import { ContextForScreen } from "../screens/helper"
 import { flushEffects } from "../helpers/flush-effects"
@@ -132,5 +135,41 @@ describe("disconnect confirm dialog (AC #2)", () => {
     const dialog = getByTestId("nostr-disconnect-confirm")
     expect(dialog.props.accessible).toBe(true)
     expect(dialog.props).toHaveProperty("accessibilityLabel")
+  })
+})
+
+describe("sortConnectedClientsByNewest", () => {
+  const c = (name: string, createdAt?: number) => ({
+    clientPubkey: name.padEnd(64, "0"),
+    name,
+    createdAt,
+  })
+
+  it("orders newest-connected first (descending createdAt)", () => {
+    const out = sortConnectedClientsByNewest([
+      c("old", 100),
+      c("new", 300),
+      c("mid", 200),
+    ])
+    expect(out.map((x) => x.name)).toEqual(["new", "mid", "old"])
+  })
+
+  it("sorts entries without createdAt last, and is stable for ties", () => {
+    const out = sortConnectedClientsByNewest([
+      c("noTsA"),
+      c("has", 500),
+      c("noTsB"),
+      c("tieA", 200),
+      c("tieB", 200),
+    ])
+    // Newest real timestamp first, equal timestamps keep incoming order, undefined last.
+    expect(out.map((x) => x.name)).toEqual(["has", "tieA", "tieB", "noTsA", "noTsB"])
+  })
+
+  it("does not mutate the input array", () => {
+    const input = [c("a", 1), c("b", 2)]
+    const snapshot = input.map((x) => x.name)
+    sortConnectedClientsByNewest(input)
+    expect(input.map((x) => x.name)).toEqual(snapshot)
   })
 })

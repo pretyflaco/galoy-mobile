@@ -93,6 +93,40 @@ describe("activity log", () => {
     expect(await log.stats("empty")).toEqual({ total: 0, accepted: 0, rejected: 0 })
   })
 
+  it("serializes concurrent records so none are lost (lost-update race, fix)", async () => {
+    // Storage whose reads/writes defer to a real macrotask, so overlapping read-modify-writes
+    // genuinely interleave without the mutex. Fire the whole connect→pubkey→decrypt burst WITHOUT
+    // awaiting between calls (as the runtime does, fire-and-forget), then await them all.
+    const backing = new Map<string, unknown>()
+    const slowStorage: ActivityStorage = {
+      loadJson: (k) =>
+        new Promise((resolve) => {
+          setTimeout(() => resolve(backing.get(k) ?? null), 0)
+        }),
+      saveJson: (k, v) =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            backing.set(k, v)
+            resolve()
+          }, 0)
+        }),
+    }
+    const log = createActivityLog(slowStorage)
+    await Promise.all([
+      log.record("A", { method: "connect", accepted: true, time: 1 }),
+      log.record("A", { method: "get_public_key", accepted: true, time: 2 }),
+      log.record("A", { method: "nip44_decrypt", accepted: true, time: 3 }),
+    ])
+    const a = await log.list("A")
+    // All three survive (an unserialized read-modify-write would clobber two of them).
+    expect(a).toHaveLength(3)
+    expect(a.map((e) => e.method).sort()).toEqual([
+      "connect",
+      "get_public_key",
+      "nip44_decrypt",
+    ])
+  })
+
   it("notifies subscribers on each record so a live screen can re-read", async () => {
     const log = createActivityLog(memoryStorage())
     const listener = jest.fn()

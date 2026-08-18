@@ -4283,7 +4283,7 @@ const en: BaseTranslation = {
     statusNotBackedUp: "Not backed up",
   },
   NostrConnectedClientsScreen: {
-    sectionTitle: "Connected clients",
+    sectionTitle: "Connected apps",
     empty: "No apps connected yet.",
     disconnect: "Disconnect",
     confirmTitle: "Disconnect {client:string}?",
@@ -4320,6 +4320,8 @@ const en: BaseTranslation = {
     methodConnect: "Connect",
     methodConnectAck: "ack",
     methodReadPubkey: "Read your public key",
+    methodEncrypt: "Encrypt a message",
+    methodDecrypt: "Decrypt a message",
     rowA11y: "{action:string} — {decision:string} at {when:string}.",
   },
   NostrAwaitingFollowupScreen: {
@@ -4388,7 +4390,7 @@ const en: BaseTranslation = {
     summaryPublicAddressLabel: "Your public address",
     summaryBackup: "Back up your key",
     summaryReplace: "Replace your identity",
-    summaryConnectedClients: "Connected clients",
+    summaryConnectedClients: "Connected apps",
     summarySettings: "Settings",
     summaryCopyNpub: "Copy your public address",
     summaryNpubCopied: "Public address copied",

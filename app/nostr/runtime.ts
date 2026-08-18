@@ -457,6 +457,14 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
 
   // -- encrypt/decrypt flow (Story 3.6): each op raises its OWN fresh approval.
   const runCapability = async (decoded: DecodedRequest): Promise<void> => {
+    // A capability op (nip04/nip44 encrypt|decrypt) is a GENERAL-client signal, not a login:
+    // such a client (e.g. Ditto) will never send a 27235 sign-in challenge, so the "Waiting for
+    // sign-in challenge from app…" overlay would otherwise hang until the idle timeout. Clear it
+    // now — the client is clearly active and this op's own approval surface takes over. Login apps
+    // (vezir/btcpay) reach sign-in via connect → get_public_key → sign_event(27235) with NO
+    // capability op, so their overlay still bridges to the challenge and clears at stopAwaiting
+    // on the confirmed sign (see runSignEvent).
+    stopAwaiting(decoded.clientPubkey)
     if (!(await admitApprovalGated(decoded))) return
     const flow = createEncryptDecryptFlow({
       signer,
@@ -505,7 +513,8 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   // indexer relays (Amber/Amethyst parity). Cached in-memory with a short TTL so the hub doesn't
   // re-hit relays on every focus. Metadata-only; never touches the nsec.
   const PROFILE_CACHE_TTL_MS = 5 * 60_000
-  let profileCache: { pubkeyHex: string; picture: string | null; at: number } | null = null
+  let profileCache: { pubkeyHex: string; picture: string | null; at: number } | null =
+    null
   const fetchOwnProfilePicture = async (): Promise<string | null> => {
     const pubkeyHex = await getUserPubkeyHex()
     const now = Date.now()
@@ -520,6 +529,10 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     const picture = pool.get
       ? await fetchProfilePicture(pubkeyHex, { get: pool.get.bind(pool) })
       : null
+    // Best-effort memo: two concurrent focus-triggered fetches could each write here after their
+    // await. That is harmless — worst case is a redundant relay fetch; the value written is
+    // deterministic for a given pubkey. No invariant depends on last-writer-wins here.
+    // eslint-disable-next-line require-atomic-updates
     profileCache = { pubkeyHex, picture, at: now }
     return picture
   }

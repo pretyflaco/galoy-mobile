@@ -61,14 +61,28 @@ describe("activity screen", () => {
     expect(getByTestId("nostr-activity-accepted")).toBeTruthy()
   })
 
-  it("renders a capability method label and a rejected badge", async () => {
-    const { getByText, getByTestId } = renderScreen({
+  it("renders a decrypt capability row (friendly label) and a rejected badge", async () => {
+    const { getByTestId } = renderScreen({
       entries: [{ method: "nip44_decrypt", accepted: false, time: 1_700_000_000_000 }],
       stats: { total: 1, accepted: 0, rejected: 1 },
     })
     await flushEffects()
-    expect(getByText("nip44_decrypt")).toBeTruthy()
+    // Row is keyed by method testID; the label copy is i18n ("Decrypt a message").
+    expect(getByTestId("nostr-activity-method-nip44_decrypt")).toBeTruthy()
     expect(getByTestId("nostr-activity-rejected")).toBeTruthy()
+  })
+
+  it("labels encrypt/decrypt capability methods (nip04 + nip44) with human copy", async () => {
+    const { getByTestId } = renderScreen({
+      entries: [
+        { method: "nip44_encrypt", accepted: true, time: 1_700_000_000_000 },
+        { method: "nip04_decrypt", accepted: true, time: 1_700_000_000_000 },
+      ],
+      stats: { total: 2, accepted: 2, rejected: 0 },
+    })
+    await flushEffects()
+    expect(getByTestId("nostr-activity-method-nip44_encrypt")).toBeTruthy()
+    expect(getByTestId("nostr-activity-method-nip04_decrypt")).toBeTruthy()
   })
 
   it("labels connect / get_public_key entries (Amber parity) with an ack subtitle on connect", async () => {

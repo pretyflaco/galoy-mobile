@@ -24,6 +24,23 @@ export interface ConnectedClient {
 const pubkeyPair = (pubkey: string): string =>
   pubkey.length >= 16 ? `${pubkey.slice(0, 8)}:${pubkey.slice(-8)}` : pubkey
 
+/**
+ * Order the list newest-connected first (descending `createdAt`, unix seconds). Entries with no
+ * `createdAt` sort last (treated as oldest). Non-mutating (returns a new array) and stable for
+ * ties, so identical timestamps keep their incoming order. Pure + exported for unit testing.
+ */
+export const sortConnectedClientsByNewest = (
+  clients: ConnectedClient[],
+): ConnectedClient[] =>
+  clients
+    .map((client, index) => ({ client, index }))
+    .sort((a, b) => {
+      const at = b.client.createdAt ?? -Infinity
+      const bt = a.client.createdAt ?? -Infinity
+      return at === bt ? a.index - b.index : at - bt
+    })
+    .map(({ client }) => client)
+
 /** "HH:MM - DD Mon" (Amber-style connected-at). */
 const formatConnectedAt = (createdAt?: number): string => {
   if (!createdAt) return ""
@@ -156,7 +173,7 @@ export const NostrConnectedClientsSection: React.FC<Props> = ({
         </Text>
       ) : (
         <FlatList
-          data={clients}
+          data={sortConnectedClientsByNewest(clients)}
           keyExtractor={(c) => c.clientPubkey}
           renderItem={({ item }) => renderRow(item)}
           contentContainerStyle={styles.listContent}

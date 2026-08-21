@@ -17,13 +17,20 @@
  */
 import React, { createContext, useContext, useEffect, useMemo, useRef } from "react"
 
+import { useApolloClient } from "@apollo/client"
+
 import { useFeatureFlags } from "@app/config/feature-flags-context"
+import { GetUsernamesDocument } from "@app/graphql/generated"
+import { useAppConfig } from "@app/hooks"
 
 import { setNostrConnectHandler } from "./connect-link-handler"
-import { NOSTR_NSEC_SERVICE, NOSTR_TRANSPORT_SERVICE, readSecret } from "./core/keystore"
+import { nostrNsecService } from "./core/account-scope"
+import { NOSTR_TRANSPORT_SERVICE, readSecret } from "./core/keystore"
+import { setNpubPushScopeResolver } from "./core/npub-push-runtime"
 import { createSignerRuntime, type SignerRuntime } from "./runtime"
 import { provisionTransportKey } from "./transport/transport-key"
 import { initSignerGate } from "./signer-gate"
+import { useNostrAccountKey } from "./use-nostr-account-key"
 import type { ApprovalCoordinator } from "./approval/coordinator"
 
 export interface NostrRuntimeContextValue {
@@ -31,19 +38,19 @@ export interface NostrRuntimeContextValue {
   coordinator: ApprovalCoordinator
   /** Whether the signer is currently enabled by the remote flag (AD-13). */
   enabled: boolean
+  /**
+   * THE single shared account-scope resolution (2026-08-20): every consumer (identity hub,
+   * create/import ceremonies, BTCPay setup) MUST read the scope from here — never instantiate
+   * `useNostrAccountKey` independently. Independent instances resolve the session profile at
+   * different times and can disagree (observed: ceremony wrote to the correct slot while the
+   * provider still held a stale null → signing failed → loop back to the hub).
+   */
+  accountKey: string | null
+  /** False while the scope is unresolved/healing — identity creation stays gated. */
+  accountReady: boolean
 }
 
 const NostrRuntimeContext = createContext<NostrRuntimeContextValue | null>(null)
-
-/**
- * Read the identity nsec as lowercase hex from the keystore (the sole NostrSigner-seam input).
- * Throws if absent so the seam surfaces `unavailable` rather than signing with a missing key.
- */
-const readNsecHex = async (): Promise<string> => {
-  const hex = await readSecret(NOSTR_NSEC_SERVICE)
-  if (!hex) throw new Error("nostr identity key unavailable")
-  return hex
-}
 
 /**
  * Read the device-local transport secret as hex (AD-4), provisioning it on first use.
@@ -66,16 +73,56 @@ const readTransportSkHex = async (): Promise<string> => {
 export const NostrRuntimeProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const featureFlags = useFeatureFlags()
   const enabled = featureFlags.nostrSignerEnabled
+  const apolloClient = useApolloClient()
+  const { accountKey, ready: accountScopeReady } = useNostrAccountKey()
+  const accountReady = accountScopeReady && accountKey !== null
+  const {
+    appConfig: {
+      galoyInstance: { lnAddressHostname },
+    },
+  } = useAppConfig()
+
+  // The runtime is constructed ONCE, so the account scope reaches it through a ref —
+  // consulted per access (readNsecHex + storage keys), current after every account switch.
+  const accountKeyRef = useRef<string | null>(null)
+  accountKeyRef.current = accountKey
+  setNpubPushScopeResolver(() => accountKeyRef.current)
 
   // Construct the runtime exactly once for the app's lifetime (AD-11 single-owner substrate).
   const runtimeRef = useRef<SignerRuntime | null>(null)
   if (runtimeRef.current === null) {
     runtimeRef.current = createSignerRuntime({
-      readNsecHex,
+      // Account-scoped identity (2026-08-20): the nsec lives under `nostr.nsec.<accountKey>`.
+      // Null scope (account unresolvable) ⇒ unavailable — fail-closed, never a shared slot.
+      readNsecHex: async () => {
+        const key = accountKeyRef.current
+        if (!key) throw new Error("nostr identity key unavailable")
+        const hex = await readSecret(nostrNsecService(key))
+        if (!hex) throw new Error("nostr identity key unavailable")
+        return hex
+      },
       readTransportSkHex,
+      accountScopeKey: () => accountKeyRef.current,
+      // One-click BTCPay setup: the signed-in account's lightning address is username@host
+      // (custodial accounts only; device accounts have no username → no tag → no provisioning).
+      // cache-first: the profile query runs at sign-in, so later reads are cache hits and add
+      // no latency to the login sign path.
+      readLightningAddress: async () => {
+        const { data } = await apolloClient.query({
+          query: GetUsernamesDocument,
+          fetchPolicy: "cache-first",
+        })
+        const username = data?.me?.username
+        return username ? `${username}@${lnAddressHostname}` : undefined
+      },
     })
   }
   const runtime = runtimeRef.current
+
+  // Account switched: re-read the new account's scoped connections + resubscribe its relays.
+  useEffect(() => {
+    runtime.reloadAccountScope().catch(() => undefined)
+  }, [runtime, accountKey])
 
   // Apply the flag on every change (initSignerGate is idempotent per init). Flag toggles never
   // clear connection records — the gate deps expose no clear() (retention, AD-13). Register the
@@ -88,8 +135,14 @@ export const NostrRuntimeProvider: React.FC<React.PropsWithChildren> = ({ childr
   }, [enabled, runtime])
 
   const value = useMemo<NostrRuntimeContextValue>(
-    () => ({ runtime, coordinator: runtime.coordinator, enabled }),
-    [runtime, enabled],
+    () => ({
+      runtime,
+      coordinator: runtime.coordinator,
+      enabled,
+      accountKey,
+      accountReady,
+    }),
+    [runtime, enabled, accountKey, accountReady],
   )
 
   return (

@@ -9,6 +9,8 @@ import { testProps } from "@app/utils/testProps"
 type Props = {
   onBackup: () => void
   onReplace: () => void
+  /** Subtitle under the backup row (e.g. "Backed up: Password manager"), or null. */
+  backupStatus: string | null
 }
 
 /**
@@ -16,7 +18,11 @@ type Props = {
  * hub — "Back up your key" and "Replace your identity" — behind a single Settings entry, keeping
  * the hub focused on the profile + connected clients. All copy is i18n-sourced.
  */
-export const NostrSettingsScreen: React.FC<Props> = ({ onBackup, onReplace }) => {
+export const NostrSettingsScreen: React.FC<Props> = ({
+  onBackup,
+  onReplace,
+  backupStatus,
+}) => {
   const { LL } = useI18nContext()
   const styles = useStyles()
   const T = LL.NostrSettingsScreen
@@ -26,6 +32,11 @@ export const NostrSettingsScreen: React.FC<Props> = ({ onBackup, onReplace }) =>
       <ListItem bottomDivider onPress={onBackup} {...testProps("nostr-settings-backup")}>
         <ListItem.Content>
           <ListItem.Title>{T.backup()}</ListItem.Title>
+          {backupStatus ? (
+            <ListItem.Subtitle {...testProps("nostr-settings-backup-status")}>
+              {backupStatus}
+            </ListItem.Subtitle>
+          ) : null}
         </ListItem.Content>
         <ListItem.Chevron />
       </ListItem>

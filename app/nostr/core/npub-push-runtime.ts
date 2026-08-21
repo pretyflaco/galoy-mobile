@@ -15,15 +15,23 @@
  *
  * AD-1: core is UI-free.
  */
+import { loadJson, saveJson } from "@app/utils/storage"
+
+import { scopedStorageKey } from "./account-scope"
 import { createNpubPush, type NpubPush } from "./npub-push"
 import { createOutboxDrain } from "./outbox-drain"
-import { createPersistentNpubOutbox, type PersistentNpubOutbox } from "./outbox"
+import {
+  createPersistentNpubOutbox,
+  type OutboxStorage,
+  type PersistentNpubOutbox,
+} from "./outbox"
 
 /**
- * The endpoint is not yet built (A7). This is the honest v1 steady state: attempting to obtain a
- * challenge fails, so the drain treats the push as an endpoint-absent transport failure and
- * re-queues with backoff. When btcpay-blink lands the endpoint + the joint-contract wire-format,
- * these ports are replaced with the real challenge/sign/push implementations (no consumer change).
+ * The endpoint is not yet built (A7). This is the honest v1 steady state: attempting to obtain
+ * a challenge fails, so the drain treats the push as an endpoint-absent transport failure and
+ * re-queues with backoff. When btcpay-blink lands the endpoint + the joint-contract
+ * wire-format, these ports are replaced with the real challenge/sign/push implementations
+ * (no consumer change).
  */
 const endpointNotYetAvailable = (): Promise<never> =>
   Promise.reject(
@@ -32,11 +40,32 @@ const endpointNotYetAvailable = (): Promise<never> =>
     ),
   )
 
+// Account-scoped outbox (2026-08-20): the outbox slot is per-account (each account's identity
+// pushes its OWN npub; a global single-slot would let one account's identity supersede
+// another's). The resolver is wired by the NostrRuntimeProvider; null scope = inert.
+let accountScopeResolver: (() => string | null) | null = null
+
+/** Wire the active-account scope resolver (called once by the runtime provider). */
+export const setNpubPushScopeResolver = (resolver: () => string | null): void => {
+  accountScopeResolver = resolver
+}
+
+const scopedOutboxStorage: OutboxStorage = {
+  loadJson: (key) => {
+    const scoped = scopedStorageKey(key, accountScopeResolver?.() ?? null)
+    return scoped ? loadJson(scoped) : Promise.resolve(null)
+  },
+  saveJson: async (key, value) => {
+    const scoped = scopedStorageKey(key, accountScopeResolver?.() ?? null)
+    if (scoped) await saveJson(scoped, value)
+  },
+}
+
 let outboxSingleton: PersistentNpubOutbox | null = null
 let pushSingleton: NpubPush | null = null
 
 const buildRuntime = (): { outbox: PersistentNpubOutbox; push: NpubPush } => {
-  const outbox = createPersistentNpubOutbox()
+  const outbox = createPersistentNpubOutbox(scopedOutboxStorage)
   const drain = createOutboxDrain({
     outbox,
     // Endpoint-absent v1 ports (A7): getChallenge rejects → drain re-queues gracefully. The

@@ -31,6 +31,8 @@ const renderHub = (
         onImport={jest.fn()}
         onConnectedClients={jest.fn()}
         onSettings={jest.fn()}
+        onAddPhoto={jest.fn()}
+        photoBusy={false}
         {...props}
       />
     </ContextForScreen>,

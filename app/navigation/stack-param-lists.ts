@@ -74,6 +74,8 @@ export type RootStackParamList = {
   // Per-client activity history (Amber-style "Show activity"): metadata-only log of what a
   // connected client asked us to sign/decrypt and whether we accepted (never content).
   nostrActivity: { clientPubkey: string }
+  // One-click BTCPay setup interstitial (first/returning explainer → magic-link sign-in).
+  btcpaySetup: undefined
   // NB: the connection / request / review-all APPROVAL surfaces are NOT routes — they are
   // rendered by the ApprovalSurfaceHost as a state-driven full-screen overlay (see
   // approval-surface-host.tsx), so no stack entries exist for them.

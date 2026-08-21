@@ -68,7 +68,15 @@ export const createRequestDispatcher = (ports: DispatcherPorts): RequestDispatch
       }
 
       // status === "new": execute the handler exactly once, answer, and record.
-      const response = await dispatchNip46Method(request, methodPorts)
+      let response: Nip46Response
+      try {
+        response = await dispatchNip46Method(request, methodPorts)
+      } catch {
+        // F2a fix (audit WP2): a throwing handler (e.g. identity read failure inside
+        // get_public_key) previously skipped recordResponse, stranding the entry PENDING
+        // forever — later redeliveries were then dropped as pending-duplicate. Resolve it.
+        response = { id: request.id, error: "internal signer error" }
+      }
       await ledger.recordResponse(clientPubkey, request.id, JSON.stringify(response))
       sendResponse(response, decoded)
     },

@@ -31,6 +31,16 @@ jest.mock("@app/nostr/analytics", () => ({
   logNostrIdentityCeremonyCompleted: jest.fn(),
 }))
 
+// Account-scoped persistence (2026-08-20): the ceremony reads the account scope from the
+// runtime provider context; fix it to a test account. The runtime stub carries the H3
+// voidAllConnections hook the ceremony calls after a successful commit.
+jest.mock("@app/nostr/nostr-runtime-provider", () => ({
+  useNostrRuntime: () => ({
+    accountKey: "test-account",
+    runtime: { voidAllConnections: jest.fn().mockResolvedValue(undefined) },
+  }),
+}))
+
 // npub for pubkey "a".repeat(64) is deterministic via nip19; assert it is shown truncated.
 
 const renderNav = () =>

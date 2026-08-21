@@ -48,6 +48,36 @@ export interface NostrConnectUri {
 /** Cap on any single URI-derived string we keep (defensive: the URI is attacker-influenced). */
 const MAX_FIELD_LEN = 2048
 
+/** M4/F5 fix (audit): relay hygiene for URI-supplied relay endpoints. */
+const MAX_RELAYS = 10
+
+/** A nostr NIP-46 client pubkey is a 32-byte x-only key: 64 lowercase/uppercase hex chars. */
+const isClientPubkeyHex = (value: string): boolean => /^[0-9a-fA-F]{64}$/.test(value)
+
+/**
+ * Keep only ws://|wss:// relay URLs (F5: a crafted URI must not make the device open
+ * arbitrary-protocol sockets, and cleartext ws is at least explicit), dedupe, and cap the
+ * count (M4: unbounded relay lists are a cheap resource-exhaustion vector).
+ */
+export const sanitizeRelaySet = (rawRelays: string[]): string[] => {
+  const seen = new Set<string>()
+  return rawRelays
+    .filter(
+      (raw): raw is string =>
+        typeof raw === "string" &&
+        raw.length > 0 &&
+        raw.length <= MAX_FIELD_LEN &&
+        /^wss?:\/\//i.test(raw),
+    )
+    .filter((raw) => {
+      const key = raw.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .slice(0, MAX_RELAYS)
+}
+
 /** Keep only http(s) urls (origin-binding + display); anything else is dropped. */
 const sanitizeHttpUrl = (raw: unknown): string | undefined => {
   if (typeof raw !== "string" || raw.length === 0 || raw.length > MAX_FIELD_LEN) return
@@ -109,7 +139,14 @@ export const parseNostrConnectUri = (uri: string): NostrConnectUri | null => {
   const queryStart = withoutScheme.indexOf("?")
   const clientPubkey =
     queryStart === -1 ? withoutScheme : withoutScheme.slice(0, queryStart)
-  if (!clientPubkey) return null
+  // M4 fix (audit): the pubkey is used as a store key AND as the ECDH peer for the ack —
+  // anything that is not a 64-char hex key is rejected outright (no side effects), instead of
+  // poisoning the ConnectionStore and losing the ack in a thrown conversation-key derivation.
+  if (!isClientPubkeyHex(clientPubkey)) return null
+  // Normalize to lowercase: inbound event pubkeys are lowercase hex (NIP-01), and every
+  // consumer (isConnected, grants, tombstones) matches by exact string — an uppercase URI
+  // would otherwise create a connection record that never matches its own requests.
+  const clientPubkeyNormalized = clientPubkey.toLowerCase()
 
   const params = new URLSearchParams(
     queryStart === -1 ? "" : withoutScheme.slice(queryStart + 1),
@@ -135,8 +172,9 @@ export const parseNostrConnectUri = (uri: string): NostrConnectUri | null => {
   if (image) metadata.image = image
 
   return {
-    clientPubkey,
-    relays: params.getAll("relay"),
+    clientPubkey: clientPubkeyNormalized,
+    // M4/F5 fix: ws(s)-only, deduped, capped (see sanitizeRelaySet).
+    relays: sanitizeRelaySet(params.getAll("relay")),
     secret,
     perms: effectivePerms,
     metadata,

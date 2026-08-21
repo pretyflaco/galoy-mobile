@@ -5,10 +5,11 @@
  * Later on, this will support switching between accounts
  */
 import React from "react"
-import { TouchableOpacity, View } from "react-native"
+import { Image, TouchableOpacity, View } from "react-native"
 import { TouchableWithoutFeedback } from "react-native-gesture-handler"
 
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
+import { useFeatureFlags } from "@app/config/feature-flags-context"
 import { useSettingsScreenQuery } from "@app/graphql/generated"
 import { useIsAuthed } from "@app/graphql/is-authed-context"
 import { AccountLevel, useLevel } from "@app/graphql/level-context"
@@ -16,9 +17,11 @@ import { useAppConfig, useClipboard } from "@app/hooks"
 import { useAccountRegistry } from "@app/hooks/use-account-registry"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
+import { useNostrProfilePicture } from "@app/nostr/use-nostr-profile-picture"
 import { useSelfCustodialWallet } from "@app/self-custodial/providers/wallet"
+import { useNostrIdentity } from "@app/screens/nostr/identity-hub/use-nostr-identity"
 import { AccountType } from "@app/types/wallet"
-import { useNavigation } from "@react-navigation/native"
+import { useNavigation, useIsFocused } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Text, makeStyles, useTheme, Skeleton } from "@rn-vui/themed"
 
@@ -70,7 +73,7 @@ const CustodialAccountBanner: React.FC = () => {
     >
       <View style={styles.outer}>
         <View style={styles.iconContainer}>
-          <AccountIcon size={25} />
+          <NostrAwareAccountIcon size={25} />
         </View>
         <Text type="p2">
           {isUserLoggedIn ? usernameTitle : LL.SettingsScreen.logInOrCreateAccount()}
@@ -100,7 +103,7 @@ const SelfCustodialAccountBanner: React.FC = () => {
   return (
     <TouchableOpacity onPress={handleCopy} style={styles.outer}>
       <View style={styles.iconContainer}>
-        <AccountIcon size={25} />
+        <NostrAwareAccountIcon size={25} />
       </View>
       <View style={styles.textContainer}>
         <Text type="p2" numberOfLines={1} ellipsizeMode="middle">
@@ -120,6 +123,30 @@ export const AccountIcon: React.FC<{ size: number }> = ({ size }) => {
     theme: { colors },
   } = useTheme()
   return <GaloyIcon name="user" size={size} backgroundColor={colors.grey4} />
+}
+
+/**
+ * Account icon with the ACTIVE account's nostr-identity profile photo when one exists
+ * (kind-0 `picture`, 2026-08-21) — falls back to the generic placeholder. Inert when the
+ * signer flag is off (upstream builds unchanged).
+ */
+const NostrAwareAccountIcon: React.FC<{ size: number }> = ({ size }) => {
+  const { nostrSignerEnabled } = useFeatureFlags()
+  const { pubkeyHex } = useNostrIdentity()
+  // Re-read when the containing screen regains focus (e.g. returning from the identity hub
+  // right after an avatar upload) instead of only on mount.
+  const isFocused = useIsFocused()
+  const [pictureUrl] = useNostrProfilePicture(
+    nostrSignerEnabled ? pubkeyHex : null,
+    isFocused,
+  )
+  if (!pictureUrl) return <AccountIcon size={size} />
+  return (
+    <Image
+      source={{ uri: pictureUrl }}
+      style={{ width: size + 6, height: size + 6, borderRadius: (size + 6) / 2 }}
+    />
+  )
 }
 
 const useStyles = makeStyles((theme) => ({

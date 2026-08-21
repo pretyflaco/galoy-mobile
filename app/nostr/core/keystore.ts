@@ -12,13 +12,17 @@
 // eslint-disable-next-line no-restricted-imports
 import * as Keychain from "react-native-keychain"
 
-/** Keychain service namespaces (AD-7 / Consistency conventions: nostr.*). */
+/** Keychain service namespaces (AD-7 / Consistency conventions: nostr.*).
+ *
+ * NOTE (2026-08-20, per-account scoping): the identity nsec is now stored under
+ * per-account services built by `nostrNsecService(accountKey)` (see account-scope.ts).
+ * `NOSTR_NSEC_SERVICE` is the abandoned pre-scoping global slot — kept exported only to
+ * mark it; nothing may read or write it (POC no-migration decision; GA cleanup: delete).
+ * The transport key stays device-global. */
 export const NOSTR_NSEC_SERVICE = "nostr.nsec"
 export const NOSTR_TRANSPORT_SERVICE = "nostr.transportKey"
 
-export type NostrKeychainService =
-  | typeof NOSTR_NSEC_SERVICE
-  | typeof NOSTR_TRANSPORT_SERVICE
+export type NostrKeychainService = string
 
 // Account label is fixed per service; the service is the addressing key.
 const ACCOUNT = "nostr"

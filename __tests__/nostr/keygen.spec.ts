@@ -11,7 +11,7 @@
  * constant fill. Tests override it per-case to exercise valid/invalid/absent RNG.
  */
 import Crypto from "react-native-quick-crypto"
-import { secp256k1 } from "@noble/curves/secp256k1.js"
+import { schnorr } from "@noble/curves/secp256k1.js"
 
 import {
   generateNostrKey,
@@ -45,11 +45,12 @@ describe("generateNostrKey — explicit entropy injection (AC-1)", () => {
     const { privKeyHex, pubKeyHex } = generateNostrKey()
 
     expect(mockedRandomBytes).toHaveBeenCalledWith(32)
-    // pub derived explicitly from the injected bytes (compressed, 33 bytes = 66 hex)
-    const expectedPub = Buffer.from(secp256k1.getPublicKey(known)).toString("hex")
+    // pub derived explicitly from the injected bytes (x-only BIP-340, 32 bytes = 64 hex —
+    // Nostr's canonical pubkey form; the signer/hub derive it the same way)
+    const expectedPub = Buffer.from(schnorr.getPublicKey(known)).toString("hex")
     expect(privKeyHex).toBe(Buffer.from(known).toString("hex"))
     expect(pubKeyHex).toBe(expectedPub)
-    expect(pubKeyHex).toMatch(/^[0-9a-f]{66}$/)
+    expect(pubKeyHex).toMatch(/^[0-9a-f]{64}$/)
     expect(privKeyHex).toMatch(/^[0-9a-f]{64}$/)
   })
 

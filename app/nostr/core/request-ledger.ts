@@ -12,6 +12,11 @@
  * `recordResponse` is write-once: a second call for an already-answered entry is ignored, so
  * a request is answered exactly once even under a redelivery race.
  *
+ * Concurrency (F1 fix): register/recordResponse are read-modify-write cycles serialized
+ * through a single promise chain — concurrent sightings of one request cannot both win.
+ * Storage is bounded (REQUESTS_MAX_ENTRIES, oldest evicted) so an attacker minting request
+ * ids cannot grow persistence without limit (audit WP2).
+ *
  * AD-1: core is UI-free. AD-17: persists as JSON via `app/utils/storage` (AsyncStorage). The
  * storage port is injected so the ledger is unit-testable; the default binds to that util.
  */
@@ -19,6 +24,13 @@ import { loadJson, saveJson } from "@app/utils/storage"
 
 /** AD-17 storage key. */
 export const REQUESTS_STORAGE_KEY = "nostr.requests.v1"
+
+/**
+ * Bounded total entries (F1/audit WP2): the ledger is attacker-inflatable (each inbound
+ * request mints a `(clientPubkey, requestId)` entry), so writes evict the OLDEST entries
+ * beyond this bound. Insertion order of the Record keys is the eviction order.
+ */
+export const REQUESTS_MAX_ENTRIES = 500
 
 /** The narrow persistence port (injected; defaults to app/utils/storage). */
 export interface LedgerStorage {
@@ -56,6 +68,15 @@ const compositeKey = (clientPubkey: string, requestId: string): string =>
 
 const defaultStorage: LedgerStorage = { loadJson, saveJson }
 
+/** Evict the oldest entries beyond the bound (insertion order = age order). */
+const evictOverflow = (map: LedgerMap): void => {
+  const keys = Object.keys(map)
+  if (keys.length <= REQUESTS_MAX_ENTRIES) return
+  for (const key of keys.slice(0, keys.length - REQUESTS_MAX_ENTRIES)) {
+    delete map[key]
+  }
+}
+
 export const createRequestLedger = (
   storage: LedgerStorage = defaultStorage,
 ): RequestLedger => {
@@ -66,31 +87,53 @@ export const createRequestLedger = (
   const writeAll = (map: LedgerMap): Promise<void> =>
     storage.saveJson(REQUESTS_STORAGE_KEY, map)
 
+  // F1 fix: serialize ALL read-modify-write mutations through ONE promise chain. register()
+  // is check-then-write across async bridge hops; two concurrent redeliveries of the same
+  // captured event both saw "new" without this mutex and BOTH executed — for grant-covered
+  // sign_event that means two silently-signed auth events from one request. The chain makes
+  // each mutation atomic w.r.t. the others; a rejected op never breaks the next link
+  // (same pattern as activity-log.ts).
+  let writeChain: Promise<unknown> = Promise.resolve()
+  const serialize = <T>(task: () => Promise<T>): Promise<T> => {
+    const run = writeChain.then(task, task)
+    writeChain = run.then(
+      () => undefined,
+      () => undefined,
+    )
+    return run
+  }
+
   return {
     async register(clientPubkey, requestId): Promise<RegisterResult> {
-      const map = await readAll()
-      const key = compositeKey(clientPubkey, requestId)
-      const existing = map[key]
+      return serialize(async () => {
+        const map = await readAll()
+        const key = compositeKey(clientPubkey, requestId)
+        const existing = map[key]
 
-      if (!existing) {
-        map[key] = { state: "pending" }
-        await writeAll(map)
-        return { status: "new" }
-      }
-      if (existing.state === "answered") {
-        return { status: "answered", storedResponse: existing.response }
-      }
-      return { status: "pending-duplicate" }
+        if (!existing) {
+          map[key] = { state: "pending" }
+          evictOverflow(map)
+          await writeAll(map)
+          return { status: "new" }
+        }
+        if (existing.state === "answered") {
+          return { status: "answered", storedResponse: existing.response }
+        }
+        return { status: "pending-duplicate" }
+      })
     },
 
     async recordResponse(clientPubkey, requestId, response): Promise<void> {
-      const map = await readAll()
-      const key = compositeKey(clientPubkey, requestId)
-      const existing = map[key]
-      // Write-once: never overwrite an already-answered entry (answered exactly once).
-      if (existing?.state === "answered") return
-      map[key] = { state: "answered", response }
-      await writeAll(map)
+      await serialize(async () => {
+        const map = await readAll()
+        const key = compositeKey(clientPubkey, requestId)
+        const existing = map[key]
+        // Write-once: never overwrite an already-answered entry (answered exactly once).
+        if (existing?.state === "answered") return
+        map[key] = { state: "answered", response }
+        evictOverflow(map)
+        await writeAll(map)
+      })
     },
 
     async lookup(clientPubkey, requestId): Promise<LedgerEntry | null> {

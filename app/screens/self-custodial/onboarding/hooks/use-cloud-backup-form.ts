@@ -6,9 +6,9 @@ import { useI18nContext } from "@app/i18n/i18n-react"
 
 import { validateCloudBackupForm } from "../cloud-backup-validation"
 
-export const useCloudBackupForm = () => {
+export const useCloudBackupForm = (initialEncrypted = false) => {
   const { LL } = useI18nContext()
-  const [isEncrypted, setIsEncrypted] = useState(false)
+  const [isEncrypted, setIsEncrypted] = useState(initialEncrypted)
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordTouched, setPasswordTouched] = useState(false)

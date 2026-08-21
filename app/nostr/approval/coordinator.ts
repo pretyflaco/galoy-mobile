@@ -26,6 +26,14 @@
  */
 export const REVIEW_ALL_THRESHOLD = 3
 
+/**
+ * Auto-reject timeout for a PRESENTED approval (F2 fix / audit WP2). The docstring always
+ * promised "approve / reject / timeout / disconnect" resolution; without a timer one
+ * unattended modal pins the strictly-FIFO head and blocks every later approval from every
+ * client forever. 120s matches Amber's generous sign-in pacing; injectable via ports.
+ */
+export const DEFAULT_APPROVAL_TIMEOUT_MS = 120_000
+
 /** Client metadata carried on a connection-approval entry. */
 export interface EntryMetadata {
   name?: string
@@ -75,6 +83,9 @@ export interface ApprovalCoordinatorPorts {
   isCoveredByGrant?: (entry: ApprovalEntry) => Promise<boolean>
   /** The current identity epoch (stamped onto each approval). Defaults to 0. */
   currentEpoch?: () => number
+  /** Auto-reject timeout for a presented entry. Defaults to DEFAULT_APPROVAL_TIMEOUT_MS;
+   *  pass a smaller value in tests. */
+  approvalTimeoutMs?: number
 }
 
 interface QueueItem {
@@ -174,6 +185,15 @@ export const createApprovalCoordinator = (
   let active: QueueItem | null = null
   let paused = false
 
+  // F2 fix: the presented entry auto-rejects after the timeout so an unattended modal can
+  // never pin the FIFO head. The timer is armed only while an entry is ACTIVE (presented);
+  // queued entries are not timed until they surface.
+  let activeTimer: ReturnType<typeof setTimeout> | null = null
+  const clearActiveTimer = (): void => {
+    if (activeTimer) clearTimeout(activeTimer)
+    activeTimer = null
+  }
+
   const notify = (): void => {
     for (const listener of listeners) listener()
   }
@@ -183,11 +203,29 @@ export const createApprovalCoordinator = (
     const next = queue.shift()
     if (!next) return
     active = next
+    clearActiveTimer()
+    activeTimer = setTimeout(() => {
+      // Timeout = rejection (the docstring's fourth resolution path). The shared impl clears
+      // the fired handle and advances the FIFO.
+      resolveActiveDecision({ approved: false })
+    }, getPorts().approvalTimeoutMs ?? DEFAULT_APPROVAL_TIMEOUT_MS)
     // Present asynchronously; the surface stays until resolveActive is called. The returned
     // promise is intentionally not awaited (presentation resolves via resolveActive).
     present(next.entry).catch(() => undefined)
     // Notify so the UI reflects the newly-presented active entry (post-drain).
     notify()
+  }
+
+  // Shared by the public method and the F2 timeout path.
+  const resolveActiveDecision = (decision: { approved: boolean }): void => {
+    const current = active
+    if (!current) return
+    clearActiveTimer()
+    active = null
+    // Stamp the identity epoch at the moment of approval (AD-9).
+    current.resolve({ approved: decision.approved, epoch: epochOf() })
+    notify()
+    pump()
   }
 
   return {
@@ -207,13 +245,7 @@ export const createApprovalCoordinator = (
     },
 
     resolveActive(decision: { approved: boolean }): void {
-      const current = active
-      if (!current) return
-      active = null
-      // Stamp the identity epoch at the moment of approval (AD-9).
-      current.resolve({ approved: decision.approved, epoch: epochOf() })
-      notify()
-      pump()
+      resolveActiveDecision(decision)
     },
 
     queueDepth(): number {
@@ -236,6 +268,7 @@ export const createApprovalCoordinator = (
       const epoch = epochOf()
       // Resolve the active entry if selected (mirrors resolveActive: clear active first).
       if (active && idSet.has(active.entry.id)) {
+        clearActiveTimer()
         const current = active
         active = null
         current.resolve({ approved, epoch })

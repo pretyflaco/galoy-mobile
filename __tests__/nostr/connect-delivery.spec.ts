@@ -97,6 +97,8 @@ const makeDeps = (
   over: Partial<SignerRuntimeDeps> = {},
 ): SignerRuntimeDeps => ({
   readNsecHex,
+  // M2 fix: transport reader is REQUIRED (distinct key per runtime).
+  readTransportSkHex: async () => Buffer.from(generateSecretKey()).toString("hex"),
   storage: makeMemoryStorage(),
   createPool: () => pool,
   log: () => undefined,

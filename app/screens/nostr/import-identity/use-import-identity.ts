@@ -5,9 +5,12 @@ import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
 import * as nip19 from "nostr-tools/nip19"
 
 import { getApprovalCoordinator } from "@app/nostr/approval/coordinator"
+import { nostrNsecService } from "@app/nostr/core/account-scope"
 import { importIdentity, validateNsec, type ImportPorts } from "@app/nostr/core/identity"
-import { NOSTR_NSEC_SERVICE, writeSecret } from "@app/nostr/core/keystore"
+import { writeSecret } from "@app/nostr/core/keystore"
 import { getNpubPush } from "@app/nostr/core/npub-push-runtime"
+import { makeSignerError } from "@app/nostr/core/signer"
+import { useNostrRuntime } from "@app/nostr/nostr-runtime-provider"
 
 type Phase = "input" | "confirm" | "invalid" | "done"
 
@@ -25,10 +28,19 @@ export const useImportIdentity = () => {
     null,
   )
   const [busy, setBusy] = useState(false)
+  // Shared scope from the provider context — never an independent resolver instance.
+  const runtimeContext = useNostrRuntime()
+  const accountKey = runtimeContext?.accountKey ?? null
 
   const ports = useMemo<ImportPorts>(
     () => ({
-      persistNsec: (privKeyHex) => writeSecret(NOSTR_NSEC_SERVICE, privKeyHex),
+      // Account-scoped (2026-08-20): persist under `nostr.nsec.<accountKey>`; fail closed
+      // when the account scope is unresolvable (the hub normally gates entry first).
+      persistNsec: async (privKeyHex) => {
+        if (!accountKey)
+          throw makeSignerError("unavailable", "account is still being set up")
+        await writeSecret(nostrNsecService(accountKey), privKeyHex)
+      },
       derivePubKeyHex: (privKeyHex) =>
         bytesToHex(schnorr.getPublicKey(hexToBytes(privKeyHex))),
       toNpub: (pubKeyHex) => nip19.npubEncode(pubKeyHex),
@@ -40,7 +52,7 @@ export const useImportIdentity = () => {
       // (single slot — a re-import supersedes the prior mapping) + fire a non-blocking drain.
       pushNpub: (npub) => getNpubPush().push(npub),
     }),
-    [],
+    [accountKey],
   )
 
   /** Validate a pasted/scanned value; advance to confirm or the invalid state. */
@@ -61,11 +73,19 @@ export const useImportIdentity = () => {
     try {
       await importIdentity(candidate.privKeyHex, ports)
       setPhase("done")
+      // H3 fix (audit): the replaced key invalidates every existing connection — grants
+      // issued against the PRIOR identity must never be served by the imported one without
+      // fresh consent. Best-effort: the import is already committed.
+      runtimeContext?.runtime.voidAllConnections().catch(() => undefined)
+    } catch {
+      // Commit failed (e.g. account scope unresolvable or keystore write failure) —
+      // back to the input step; nothing was persisted.
+      setPhase("input")
     } finally {
       setBusy(false)
       setCandidate(null)
     }
-  }, [candidate, ports])
+  }, [candidate, ports, runtimeContext])
 
   const cancel = useCallback(() => {
     setCandidate(null)

@@ -18,6 +18,7 @@ import { hexToBytes } from "@noble/hashes/utils.js"
 import { getEventHash } from "nostr-tools/pure"
 import * as nip19 from "nostr-tools/nip19"
 
+import { withLightningAddressTag } from "@app/nostr/core/lightning-address"
 import type { NostrSigner, SignedEvent } from "@app/nostr/core/signer"
 
 /** The canonical unsigned event the seam signs (NIP-01 fields + recomputed id). */
@@ -49,6 +50,12 @@ export interface NormalizeContext {
   userNpub: string
   /** Injected clock (seconds) for `created_at` defaulting. */
   now: () => number
+  /**
+   * The user's Blink lightning address (username@domain), when known. Appended as an
+   * `lnaddress` tag on LOGIN kinds (27235/22242) so a supporting BTCPay instance can
+   * auto-provision a store. Absent ⇒ no tag (fail-open).
+   */
+  lightningAddress?: string
 }
 
 export type NormalizeResult =
@@ -79,7 +86,10 @@ export const normalizeSignEventParams = (
 
   const createdAt = params.created_at ?? context.now()
   const kind = params.kind
-  const tags = params.tags ?? []
+  // One-click BTCPay setup: advertise the user's Blink lightning address on login challenges
+  // (27235/22242). Runs BEFORE id recomputation so the tag is part of the signed payload; a
+  // client-supplied lnaddress tag is replaced (the signer is the authority on the address).
+  const tags = withLightningAddressTag(params.tags ?? [], kind, context.lightningAddress)
   const content = params.content
 
   // Recompute the id unconditionally from the normalized fields (never trust a client id).
@@ -136,6 +146,8 @@ export interface SignEventFlowPorts {
   userNpub: string
   /** Injected clock (seconds) for created_at defaulting. */
   now: () => number
+  /** The user's Blink lightning address, when known (login-kind lnaddress tag; see NormalizeContext). */
+  lightningAddress?: string
   /**
    * Raise the sign approval through the ApprovalCoordinator (Story 3.4). Omitted / pre-approved
    * (connect-time grant) callers can pass a decision that is always approved.
@@ -159,11 +171,15 @@ export interface SignEventFlow {
  * and never repairs it (AD-16).
  */
 export const createSignEventFlow = (ports: SignEventFlowPorts): SignEventFlow => {
-  const { signer, userNpub, now, requestApproval } = ports
+  const { signer, userNpub, now, lightningAddress, requestApproval } = ports
 
   return {
     async handle(params: RawSignEventParams): Promise<SignEventResult> {
-      const normalized = normalizeSignEventParams(params, { userNpub, now })
+      const normalized = normalizeSignEventParams(params, {
+        userNpub,
+        now,
+        lightningAddress,
+      })
       if (!normalized.ok) return normalized
 
       const canonical = normalized.event

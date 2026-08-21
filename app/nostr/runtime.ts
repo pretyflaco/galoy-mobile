@@ -47,10 +47,15 @@ import {
   type ConnectionStorage,
   type ConnectionStore,
 } from "./core/connection-store"
+import { loadJson, saveJson } from "@app/utils/storage"
+
+import { scopedStorageKey } from "./core/account-scope"
 import { createLocalNsecSigner } from "./core/local-nsec-signer"
+import type { EventTemplate, SignedEvent } from "./core/signer"
 import { NIP98_KIND } from "./core/policy-check"
 import { normalizeHost } from "./core/url-origin"
 import { fetchProfilePicture } from "./core/profile-fetch"
+import { PROFILE_INDEXER_RELAYS } from "./core/profile-relays"
 import { signerLogFields } from "./core/redact"
 import { createRequestLedger } from "./core/request-ledger"
 import {
@@ -92,8 +97,24 @@ import { createSignEventFlow } from "./transport/sign-event"
 export interface SignerRuntimeDeps {
   /** Read the IDENTITY nsec as lowercase hex (keystore-backed; drives the NostrSigner seam). */
   readNsecHex: (signal?: AbortSignal) => Promise<string>
-  /** Read the DEVICE-LOCAL transport secret as hex (drives NIP-46 decode/encode, AD-4). */
-  readTransportSkHex?: () => Promise<string>
+  /** Read the DEVICE-LOCAL transport secret as hex (drives NIP-46 decode/encode, AD-4).
+   *  M2 fix (audit): REQUIRED — no fallback to the identity nsec. The transport keypair is
+   *  distinct from the identity by design (AD-4); a silent downgrade would concentrate all
+   *  NIP-46 traffic on the identity key. The RN provider provisions it on first use. */
+  readTransportSkHex: () => Promise<string>
+  /**
+   * The ACTIVE account's scope key (account-scoped identity, 2026-08-20) — consulted per
+   * access so an account switch takes effect without rebuilding the runtime. Connections /
+   * activity / ledger storage keys are suffixed with it; null = unresolvable account ⇒ the
+   * signer is INERT (empty reads, dropped writes), never a shared namespace.
+   */
+  accountScopeKey?: () => string | null
+  /**
+   * Read the signed-in account's Blink lightning address (username@domain), when available
+   * (custodial account with a username). Advertised as an `lnaddress` tag on signed LOGIN
+   * events (27235/22242) for one-click BTCPay store provisioning. Absent/failing ⇒ no tag.
+   */
+  readLightningAddress?: () => Promise<string | undefined>
   /** Persistence port for the ConnectionStore / ledger (defaults injected by the RN provider). */
   storage?: ConnectionStorage
   /** Injectable relay-pool factory (defaults to the real SimplePool via getRelayPool). */
@@ -126,10 +147,27 @@ export interface SignerRuntime {
   relayHealth(): Record<string, number>
   /** Atomically disconnect a client (delete record + void grant + tombstone) and re-sync. */
   disconnect(clientPubkey: string): Promise<void>
+  /**
+   * H3 fix (audit): disconnect EVERY connection of the active account scope — delete + void
+   * grant + tombstone + activity purge, then re-sync/resubscribe. Called after an identity
+   * create/replace commit so a grant issued against the PRIOR key can never be served by the
+   * new one without fresh consent.
+   */
+  voidAllConnections(): Promise<void>
   /** The re-login Replace/Keep-both/Cancel prompt store (rendered by the ApprovalSurfaceHost). */
   duplicatePrompt: DuplicatePromptStore
   /** The sign-in "waiting for login request" store (rendered by the ApprovalSurfaceHost). */
   awaitingFollowup: AwaitingFollowupStore
+  /** Re-read account-scoped state + resubscribe relays after an account switch. */
+  reloadAccountScope(): Promise<void>
+  /**
+   * Record a same-device magic-link (NIP-98 GET) sign-in as a SYNTHETIC connection so the
+   * service shows up in Connected apps — the magic link creates no NIP-46 connection (no
+   * relays, no handshake), but users expect the linked service to be listed. The record is
+   * inert in the pipeline (relays: [], no grants; subscriptions key off OUR transport pubkey,
+   * never clientPubkey) and removable via the normal disconnect path.
+   */
+  recordWebSignIn(input: { name: string; url: string; image?: string }): Promise<void>
   /** Metadata-only activity history for a client (newest first) — the "Show activity" screen. */
   listActivity(clientPubkey: string): Promise<ActivityEntry[]>
   /** Aggregate accept/reject stats for a client (activity screen stats card). */
@@ -138,6 +176,21 @@ export interface SignerRuntime {
   subscribeActivity(listener: () => void): () => void
   /** Fetch the LOCAL identity's avatar (kind-0 `picture`) from profile relays, or null. */
   fetchOwnProfilePicture(): Promise<string | null>
+  /**
+   * Sign an event locally through the signer seam (no NIP-46 round trip, no approval) for
+   * SELF-INITIATED app flows — e.g. the one-tap BTCPay magic-link login, where the explicit
+   * user tap IS the consent. Never used for client-requested signing (that path is always
+   * approval-gated through runSignEvent).
+   */
+  signAuthEvent(template: EventTemplate): Promise<SignedEvent>
+  /**
+   * Sign locally (seam) AND publish to the given relays with confirmed+retried delivery
+   * (publishConfirmed). For self-initiated profile writes (kind-0 after avatar upload) —
+   * not a client-requested path. Returns true when >=1 relay ACKed.
+   */
+  signAndPublish(template: EventTemplate, relays: string[]): Promise<boolean>
+  /** The LOCAL identity's CURRENT raw kind-0 content (for merge-before-publish), or null. */
+  fetchOwnProfileMetadata(): Promise<string | null>
   /** Test-only: grant a scope to a client (simulates a completed connect). */
   grantForTest(clientPubkey: string, grantedScopes: string[]): Promise<void>
 }
@@ -210,62 +263,102 @@ export const retryWithBackoff = async (
   return false
 }
 
-export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
-  const log = deps.log ?? ((): void => undefined)
-  const store: ConnectionStore = createConnectionStore(deps.storage)
-  const signer = createLocalNsecSigner({ readNsecHex: deps.readNsecHex })
-  const ledger = createRequestLedger(deps.storage)
-  const activityLog = createActivityLog(deps.storage)
-  const duplicatePrompt = createDuplicatePromptStore()
-  const awaitingFollowup = createAwaitingFollowupStore()
-  const pool = getRelayPool({ createPool: deps.createPool })
-
-  // Sliding-window auto-clear for the sign-in waiting overlay. A slow app (e.g. vezir over 5
-  // relays with clock-offset learning + republish) sequences connect → get_public_key →
-  // sign_event(27235) with real gaps between steps; a single fixed timeout would drop the spinner
-  // mid-handshake. Instead we treat the wait as an IDLE window that RESETS on each inbound request
-  // from the awaited client (bumpAwaiting, called from recordActivity): as long as the flow is
-  // still progressing the overlay stays up, and only a genuine stall (no step within the idle
-  // window) falls back to the Activity screen. An absolute cap bounds a pathological loop.
+/**
+ * Sliding-window auto-clear for the sign-in waiting overlay. A slow app (e.g. vezir over 5
+ * relays with clock-offset learning + republish) sequences connect → get_public_key →
+ * sign_event(27235) with real gaps between steps; a single fixed timeout would drop the spinner
+ * mid-handshake. Instead we treat the wait as an IDLE window that RESETS on each inbound request
+ * from the awaited client (bump, called from recordActivity): as long as the flow is still
+ * progressing the overlay stays up, and only a genuine stall (no step within the idle window)
+ * falls back to the Activity screen. An absolute cap bounds a pathological loop.
+ */
+const createFollowupWaitController = (
+  store: AwaitingFollowupStore,
+): {
+  stop: (clientPubkey: string) => void
+  start: (state: { clientPubkey: string; name?: string; image?: string }) => void
+  bump: (clientPubkey: string) => void
+} => {
   const FOLLOWUP_IDLE_TIMEOUT_MS = 90_000
   const FOLLOWUP_ABSOLUTE_CAP_MS = 180_000
-  const followupTimers = new Map<string, ReturnType<typeof setTimeout>>()
-  const followupDeadlines = new Map<string, number>()
-  const stopAwaiting = (clientPubkey: string): void => {
-    const timer = followupTimers.get(clientPubkey)
+  const timers = new Map<string, ReturnType<typeof setTimeout>>()
+  const deadlines = new Map<string, number>()
+
+  const stop = (clientPubkey: string): void => {
+    const timer = timers.get(clientPubkey)
     if (timer) {
       clearTimeout(timer)
-      followupTimers.delete(clientPubkey)
+      timers.delete(clientPubkey)
     }
-    followupDeadlines.delete(clientPubkey)
-    awaitingFollowup.clear(clientPubkey)
+    deadlines.delete(clientPubkey)
+    store.clear(clientPubkey)
   }
-  // (Re)arm the idle timer for a client, clamped to the absolute cap set at startAwaiting.
-  const armFollowupTimer = (clientPubkey: string): void => {
-    const prior = followupTimers.get(clientPubkey)
+  // (Re)arm the idle timer for a client, clamped to the absolute cap set at start.
+  const arm = (clientPubkey: string): void => {
+    const prior = timers.get(clientPubkey)
     if (prior) clearTimeout(prior)
-    const cap =
-      followupDeadlines.get(clientPubkey) ?? Date.now() + FOLLOWUP_ABSOLUTE_CAP_MS
+    const cap = deadlines.get(clientPubkey) ?? Date.now() + FOLLOWUP_ABSOLUTE_CAP_MS
     const delay = Math.max(0, Math.min(FOLLOWUP_IDLE_TIMEOUT_MS, cap - Date.now()))
-    followupTimers.set(
+    timers.set(
       clientPubkey,
-      setTimeout(() => stopAwaiting(clientPubkey), delay),
+      setTimeout(() => stop(clientPubkey), delay),
     )
   }
-  const startAwaiting = (state: {
+  const start = (state: {
     clientPubkey: string
     name?: string
     image?: string
   }): void => {
-    awaitingFollowup.set(state)
-    followupDeadlines.set(state.clientPubkey, Date.now() + FOLLOWUP_ABSOLUTE_CAP_MS)
-    armFollowupTimer(state.clientPubkey)
+    store.set(state)
+    deadlines.set(state.clientPubkey, Date.now() + FOLLOWUP_ABSOLUTE_CAP_MS)
+    arm(state.clientPubkey)
   }
   // Reset the idle window when a request from the awaited client arrives (still progressing).
-  const bumpAwaiting = (clientPubkey: string): void => {
-    if (awaitingFollowup.current()?.clientPubkey !== clientPubkey) return
-    armFollowupTimer(clientPubkey)
+  const bump = (clientPubkey: string): void => {
+    if (store.current()?.clientPubkey !== clientPubkey) return
+    arm(clientPubkey)
   }
+  return { stop, start, bump }
+}
+
+export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
+  const log = deps.log ?? ((): void => undefined)
+  // Account-scoped persistence (2026-08-20): every storage key is suffixed with the ACTIVE
+  // account's scope key, resolved per access — an account switch changes what the signer
+  // sees with no runtime rebuild. A null scope is INERT (null reads, dropped writes): no
+  // cross-account state leakage, ever. This also closes the cross-identity signing leak —
+  // a client connected under account A's npub is invisible (and thus unservable) under B.
+  const baseStorage: ConnectionStorage = deps.storage ?? { loadJson, saveJson }
+  const scopedStorage: ConnectionStorage = {
+    loadJson: (key) => {
+      // No scope dep (tests/legacy consumers) → unscoped keys, historical behavior.
+      if (!deps.accountScopeKey) return baseStorage.loadJson(key)
+      const scoped = scopedStorageKey(key, deps.accountScopeKey())
+      return scoped ? baseStorage.loadJson(scoped) : Promise.resolve(null)
+    },
+    saveJson: async (key, value) => {
+      if (!deps.accountScopeKey) {
+        await baseStorage.saveJson(key, value)
+        return
+      }
+      const scoped = scopedStorageKey(key, deps.accountScopeKey())
+      if (scoped) await baseStorage.saveJson(scoped, value)
+    },
+  }
+  const store: ConnectionStore = createConnectionStore(scopedStorage)
+  const signer = createLocalNsecSigner({ readNsecHex: deps.readNsecHex })
+  const ledger = createRequestLedger(scopedStorage)
+  const activityLog = createActivityLog(scopedStorage)
+  const duplicatePrompt = createDuplicatePromptStore()
+  const awaitingFollowup = createAwaitingFollowupStore()
+  const pool = getRelayPool({ createPool: deps.createPool })
+
+  // Sliding-window auto-clear for the sign-in waiting overlay (see the factory doc below).
+  const {
+    stop: stopAwaiting,
+    start: startAwaiting,
+    bump: bumpAwaiting,
+  } = createFollowupWaitController(awaitingFollowup)
 
   // Metadata-only activity recording (leak-audit safe): log the accept/reject decision for a
   // client's request. Fire-and-forget — persistence must never block or fail a signer response.
@@ -281,9 +374,10 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
       .catch(() => undefined)
   }
 
-  // The device-local transport secret used to decode inbound / encode outbound (AD-4). Falls
-  // back to the identity key ONLY in tests that never exercise real decode (decodeForTest).
-  const readTransportSk = deps.readTransportSkHex ?? deps.readNsecHex
+  // The device-local transport secret used to decode inbound / encode outbound (AD-4).
+  // M2 fix (audit): no fallback to the identity nsec — the transport keypair is REQUIRED and
+  // distinct from the identity key by design. Tests inject their own reader.
+  const readTransportSk = deps.readTransportSkHex
 
   // -- the ONE process-wide coordinator (AD-9): bind the real surface + connect-time grant
   //    predicate onto the singleton so ceremony `runExclusive` and this runtime SHARE it.
@@ -293,6 +387,9 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   })
   const raiseApproval = async (entry: ApprovalEntry): Promise<boolean> =>
     (await coordinator.enqueue(entry)).approved
+  // H3 fix (audit WP3): identity/scope-bound paths need the full decision object, not just
+  // the boolean.
+  const raiseApprovalDecision = (entry: ApprovalEntry) => coordinator.enqueue(entry)
 
   // Relays are taken per-connection from the ConnectionStore records (AD-11: never a global
   // hardcoded list). A synchronous snapshot backs the gate's sync list() + publish targets.
@@ -409,12 +506,23 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   const runSignEvent = async (decoded: DecodedRequest): Promise<void> => {
     if (!(await admitApprovalGated(decoded))) return
     const userNpub = await signer.getPublicKey()
+    // Resolve per request (the account's username can appear after a sign-in); fail-open.
+    const lightningAddress = deps.readLightningAddress
+      ? await deps.readLightningAddress().catch(() => undefined)
+      : undefined
     const flow = createSignEventFlow({
       signer,
       userNpub,
       now: () => Math.floor(Date.now() / 1000),
-      requestApproval: (event) =>
-        raiseApproval({
+      lightningAddress,
+      requestApproval: (event) => {
+        // H3 fix (audit WP3): bind the human decision to the identity + account scope it was
+        // raised under. A decision made against identity N / scope A must never execute
+        // against a replacement identity or after an account switch — the approval resolves
+        // as NOT approved and the client gets the standard rejection instead of a signature
+        // from a key the user never consented to serve.
+        const scopeAtRaise = deps.accountScopeKey?.() ?? null
+        return raiseApprovalDecision({
           id: decoded.request.id,
           kind: "request",
           clientPubkey: decoded.clientPubkey,
@@ -427,32 +535,57 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
           humanAction: "sign-in-and-sign",
           // Structured "what will be signed" panel (B4): the exact fields being signed.
           contentPreview: formatSignEventPanel(buildSignEventPreview(event)),
-        }).then((approved) => ({ approved })),
+        }).then(async (decision) => {
+          if (!decision.approved) return { approved: false }
+          const [scopeNow, npubNow] = await Promise.all([
+            Promise.resolve(deps.accountScopeKey?.() ?? null),
+            signer.getPublicKey().catch(() => null),
+          ])
+          return { approved: scopeNow === scopeAtRaise && npubNow === userNpub }
+        })
+      },
     })
-    const raw = JSON.parse(decoded.request.params[0] ?? "{}")
-    const result = await flow.handle(raw)
-    // Metadata-only activity: method + signed kind + accept/reject (NEVER the event content).
-    recordActivity(decoded.clientPubkey, {
-      method: "sign_event",
-      accepted: result.ok,
-      eventKind: typeof raw?.kind === "number" ? raw.kind : undefined,
-    })
-    // Respond in-kind: the signed event JSON on success, a spec error on rejection.
-    const response: Nip46Response = result.ok
-      ? { id: decoded.request.id, result: JSON.stringify(result.event) }
-      : { id: decoded.request.id, error: result.error }
-    // Record the answer so a later STAGE_TIMEOUT retry replays it instead of re-surfacing (fix #6).
-    await ledger.recordResponse(
-      decoded.clientPubkey,
-      decoded.request.id,
-      JSON.stringify(response),
-    )
-    const confirmed = await sendResponse(response, decoded)
-    // Sign-in delivered: the login sign_event was approved AND its signed response was
-    // confirmed-published (>=1 relay ACK). This is the moment to stop waiting — the client will
-    // complete login over HTTP with no further signer involvement. On rejection or an unconfirmed
-    // publish we leave the timeout to clear the wait (the client may retry / the user backed out).
-    if (result.ok && confirmed) stopAwaiting(decoded.clientPubkey)
+    try {
+      const raw = JSON.parse(decoded.request.params[0] ?? "{}")
+      const result = await flow.handle(raw)
+      // Metadata-only activity: method + signed kind + accept/reject (NEVER the event content).
+      recordActivity(decoded.clientPubkey, {
+        method: "sign_event",
+        accepted: result.ok,
+        eventKind: typeof raw?.kind === "number" ? raw.kind : undefined,
+      })
+      // Respond in-kind: the signed event JSON on success, a spec error on rejection.
+      const response: Nip46Response = result.ok
+        ? { id: decoded.request.id, result: JSON.stringify(result.event) }
+        : { id: decoded.request.id, error: result.error }
+      // Record the answer so a later STAGE_TIMEOUT retry replays it instead of re-surfacing (fix #6).
+      await ledger.recordResponse(
+        decoded.clientPubkey,
+        decoded.request.id,
+        JSON.stringify(response),
+      )
+      const confirmed = await sendResponse(response, decoded)
+      // Sign-in delivered: the login sign_event was approved AND its signed response was
+      // confirmed-published (>=1 relay ACK). This is the moment to stop waiting — the client will
+      // complete login over HTTP with no further signer involvement. On rejection or an unconfirmed
+      // publish we leave the timeout to clear the wait (the client may retry / the user backed out).
+      if (result.ok && confirmed) stopAwaiting(decoded.clientPubkey)
+    } catch {
+      // F2a fix (audit WP2): a throw here (malformed params JSON, shape errors) previously left
+      // the ledger entry PENDING forever — every legitimate retry of that id was then dropped
+      // as pending-duplicate. Resolve the entry with a spec error instead of stranding it.
+      recordActivity(decoded.clientPubkey, { method: "sign_event", accepted: false })
+      const response: Nip46Response = {
+        id: decoded.request.id,
+        error: "malformed request",
+      }
+      await ledger.recordResponse(
+        decoded.clientPubkey,
+        decoded.request.id,
+        JSON.stringify(response),
+      )
+      await sendResponse(response, decoded)
+    }
   }
 
   // -- encrypt/decrypt flow (Story 3.6): each op raises its OWN fresh approval.
@@ -466,40 +599,72 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     // on the confirmed sign (see runSignEvent).
     stopAwaiting(decoded.clientPubkey)
     if (!(await admitApprovalGated(decoded))) return
-    const flow = createEncryptDecryptFlow({
-      signer,
-      log,
-      requestApproval: (req) =>
-        raiseApproval({
-          id: decoded.request.id,
-          kind: "request",
-          clientPubkey: decoded.clientPubkey,
-          method: req.method,
-          humanAction: req.method,
-          // Metadata-only preview (B4): op + counterparty; NEVER the payload (leak-audit gate).
-          contentPreview: buildCapabilityPreview(req.method, req.peerPubkey),
-        }).then((approved) => ({ approved })),
-    })
-    const result = await flow.handle({
-      method: decoded.request.method as CapabilityMethod,
-      peerPubkey: decoded.request.params[0] ?? "",
-      payload: decoded.request.params[1] ?? "",
-    })
-    // Metadata-only activity: op + accept/reject (NEVER the counterparty or payload).
-    recordActivity(decoded.clientPubkey, {
-      method: decoded.request.method,
-      accepted: result.ok,
-    })
-    const response: Nip46Response = result.ok
-      ? { id: decoded.request.id, result: result.result }
-      : { id: decoded.request.id, error: result.error }
-    // Record the answer so a STAGE_TIMEOUT retry replays it instead of re-surfacing (fix #6).
-    await ledger.recordResponse(
-      decoded.clientPubkey,
-      decoded.request.id,
-      JSON.stringify(response),
-    )
-    await sendResponse(response, decoded)
+    try {
+      const flow = createEncryptDecryptFlow({
+        signer,
+        log,
+        requestApproval: async (req) => {
+          // H3 fix (audit WP3): same identity/scope binding as the sign path — an approval
+          // captured under identity N / scope A is voided if either changed by resolve time.
+          const scopeAtRaise = deps.accountScopeKey?.() ?? null
+          const npubAtRaise = await signer.getPublicKey().catch(() => null)
+          const decision = await raiseApprovalDecision({
+            id: decoded.request.id,
+            kind: "request",
+            clientPubkey: decoded.clientPubkey,
+            method: req.method,
+            humanAction: req.method,
+            // Metadata-only preview (B4): op + counterparty; NEVER the payload (leak-audit gate).
+            contentPreview: buildCapabilityPreview(req.method, req.peerPubkey),
+          })
+          if (!decision.approved) return { approved: false }
+          const [scopeNow, npubNow] = await Promise.all([
+            Promise.resolve(deps.accountScopeKey?.() ?? null),
+            signer.getPublicKey().catch(() => null),
+          ])
+          return {
+            approved: scopeNow === scopeAtRaise && npubNow === npubAtRaise,
+          }
+        },
+      })
+      const result = await flow.handle({
+        method: decoded.request.method as CapabilityMethod,
+        peerPubkey: decoded.request.params[0] ?? "",
+        payload: decoded.request.params[1] ?? "",
+      })
+      // Metadata-only activity: op + accept/reject (NEVER the counterparty or payload).
+      recordActivity(decoded.clientPubkey, {
+        method: decoded.request.method,
+        accepted: result.ok,
+      })
+      const response: Nip46Response = result.ok
+        ? { id: decoded.request.id, result: result.result }
+        : { id: decoded.request.id, error: result.error }
+      // Record the answer so a STAGE_TIMEOUT retry replays it instead of re-surfacing (fix #6).
+      await ledger.recordResponse(
+        decoded.clientPubkey,
+        decoded.request.id,
+        JSON.stringify(response),
+      )
+      await sendResponse(response, decoded)
+    } catch {
+      // F2a fix (audit WP2): never strand the pending ledger entry on a throw — resolve it
+      // with a spec error so legitimate redeliveries are not dropped as pending-duplicate.
+      recordActivity(decoded.clientPubkey, {
+        method: decoded.request.method,
+        accepted: false,
+      })
+      const response: Nip46Response = {
+        id: decoded.request.id,
+        error: "malformed request",
+      }
+      await ledger.recordResponse(
+        decoded.clientPubkey,
+        decoded.request.id,
+        JSON.stringify(response),
+      )
+      await sendResponse(response, decoded)
+    }
   }
 
   // The user's x-only pubkey as HEX (NIP-46 get_public_key wire format). The seam returns npub
@@ -564,6 +729,32 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
       }),
     )
     const method = decoded.request.method
+
+    // H2 fix (audit WP2): connection-state gate BEFORE any handler routing. Previously the
+    // PolicyCheck's drop-silent / error-disconnected decisions were dead code on this path —
+    // a stranger who encrypts to the transport pubkey could silently harvest get_public_key
+    // (npub disclosure), raise approval modals for sign_event/capability requests, and
+    // receive signed error replies from unknown methods (liveness oracle). Now:
+    //  - never-connected → silent drop (no reply, no surface, no liveness oracle — AC #7);
+    //  - tombstoned (disconnected) → spec error reply so the client learns it was cut off;
+    //    never auto-honored against the voided grant (Story 3.7 / AD-16).
+    //
+    // Deliberately NO ledger write on the tombstone branch: the entry was never register()ed,
+    // the error reply is idempotent and cheap to re-send on redelivery, and recording it would
+    // let a tombstoned ex-client mint unbounded unique-id "answered" entries that FIFO-evict
+    // live clients' dedupe entries (weakening the exactly-once guarantee F1 restored).
+    if (!(await store.isConnected(decoded.clientPubkey))) {
+      if (await store.isTombstoned(decoded.clientPubkey)) {
+        recordActivity(decoded.clientPubkey, { method, accepted: false })
+        const response: Nip46Response = {
+          id: decoded.request.id,
+          error: "client disconnected",
+        }
+        await sendResponse(response, decoded)
+      }
+      return
+    }
+
     if (method === "sign_event") return runSignEvent(decoded)
     if (CAPABILITY_METHODS.has(method)) return runCapability(decoded)
     const transportSk = await readTransportSk()
@@ -776,15 +967,77 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     relayHealth: () => Object.fromEntries(relayAccepts),
     disconnect: async (clientPubkey) => {
       await store.disconnect(clientPubkey)
+      // L2 residual (audit): reclaim the client's activity entries — the per-client ring
+      // bounded growth, but disconnected clients' keys were never removed from the map.
+      await activityLog.purge(clientPubkey).catch(() => undefined)
+      await syncSnapshots()
+      resubscribe()
+    },
+    voidAllConnections: async () => {
+      const records = await store.list()
+      for (const record of records) {
+        await store.disconnect(record.clientPubkey)
+        await activityLog.purge(record.clientPubkey).catch(() => undefined)
+      }
       await syncSnapshots()
       resubscribe()
     },
     duplicatePrompt,
     awaitingFollowup,
+    reloadAccountScope: async () => {
+      // Account switched: scoped storage keys now resolve to the new account's namespace —
+      // re-sync the in-memory snapshots and re-subscribe to the new account's relays.
+      await syncSnapshots()
+      resubscribe()
+    },
+    recordWebSignIn: async ({ name, url, image }) => {
+      // Synthetic connection for a magic-link sign-in (see interface doc). Stable id per
+      // service → repeat sign-ins update the same record. Bypasses recordActivity on purpose:
+      // its bumpAwaiting side effect arms the QR-flow waiting overlay, which a web sign-in
+      // must never touch.
+      const host = normalizeHost(url) ?? url
+      const clientPubkey = `web-login:${host}`
+      await store.upsert({
+        clientPubkey,
+        relays: [],
+        grantedScopes: [],
+        metadata: { name, url, image },
+        createdAt: Math.floor(Date.now() / 1000),
+      })
+      activityLog
+        .record(clientPubkey, { method: "web_login", accepted: true, time: Date.now() })
+        .catch(() => undefined)
+      await syncSnapshots()
+    },
     listActivity: (clientPubkey) => activityLog.list(clientPubkey),
     activityStats: (clientPubkey) => activityLog.stats(clientPubkey),
     subscribeActivity: (listener) => activityLog.subscribe(listener),
     fetchOwnProfilePicture,
+    signAuthEvent: (template) => signer.signEvent(template),
+    // Self-initiated profile writes (avatar upload → kind-0): local sign through the seam,
+    // then confirmed+retried publish. Never used for client-requested events.
+    signAndPublish: async (template, relays) => {
+      const signed = await signer.signEvent(template)
+      const published = await publishConfirmed(relays, () => signed)
+      // A kind-0 publish changes our own profile — drop the cached picture so the next read
+      // (hub, settings banner) sees the update instead of the TTL-stale value.
+      if (published && template.kind === 0) {
+        profileCache = null
+      }
+      return published
+    },
+    // Raw kind-0 content of the local identity (merge-before-publish in profile updates).
+    // Shares the picture cache's relay path; not cached (fresh read before every write).
+    fetchOwnProfileMetadata: async () => {
+      const pubkeyHex = await getUserPubkeyHex()
+      if (!pool.get) return null
+      const evt = (await pool.get([...PROFILE_INDEXER_RELAYS], {
+        kinds: [0],
+        authors: [pubkeyHex],
+        limit: 1,
+      })) as { content?: string } | null
+      return evt?.content ?? null
+    },
     grantForTest: async (clientPubkey, grantedScopes) => {
       await store.upsert({
         clientPubkey,

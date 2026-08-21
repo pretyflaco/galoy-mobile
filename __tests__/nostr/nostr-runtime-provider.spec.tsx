@@ -33,6 +33,22 @@ jest.mock("@app/config/feature-flags-context", () => ({
   useFeatureFlags: () => useFeatureFlags(),
 }))
 
+// The provider composes Apollo (ln-address read) + the account-scope resolver + app config;
+// none exist in this bare render — fix them to test doubles.
+jest.mock("@apollo/client", () => ({
+  ...jest.requireActual("@apollo/client"),
+  useApolloClient: () => ({ query: jest.fn() }),
+}))
+jest.mock("@app/nostr/use-nostr-account-key", () => ({
+  useNostrAccountKey: () => ({ accountKey: "test-account", ready: true }),
+}))
+jest.mock("@app/hooks", () => ({
+  ...jest.requireActual("@app/hooks"),
+  useAppConfig: () => ({
+    appConfig: { token: "", galoyInstance: { lnAddressHostname: "blink.sv" } },
+  }),
+}))
+
 import {
   NostrRuntimeProvider,
   useNostrRuntime,

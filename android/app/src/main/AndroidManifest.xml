@@ -115,6 +115,15 @@
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="lapp" />
         </intent-filter>
+        <!-- NIP-46 remote signing (nostrconnect://): lets a BTCPay login page (or any NIP-46
+             client) open this app as the signer via an "Open signer app" link. Runtime-gated:
+             with the signer flag off the intake ignores the URL (AD-13/NFR-9). -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="nostrconnect" />
+        </intent-filter>
         <intent-filter>
             <action android:name="android.intent.action.VIEW" />
             <action android:name="android.nfc.action.NDEF_DISCOVERED" />

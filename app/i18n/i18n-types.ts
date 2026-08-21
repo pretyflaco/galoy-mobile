@@ -13546,6 +13546,50 @@ type RootTranslation = {
 		 */
 		methodManual: string
 		/**
+		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 */
+		methodTitle: string
+		/**
+		 * C​h​o​o​s​e​ ​w​h​e​r​e​ ​t​o​ ​k​e​e​p​ ​a​ ​b​a​c​k​u​p​ ​o​f​ ​y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​k​e​y​.​ ​O​n​l​y​ ​y​o​u​ ​c​a​n​ ​a​c​c​e​s​s​ ​i​t​.
+		 */
+		methodSubtitle: string
+		/**
+		 * B​a​c​k​i​n​g​ ​u​p​ ​i​s​ ​o​p​t​i​o​n​a​l​ ​—​ ​y​o​u​ ​c​a​n​ ​a​l​w​a​y​s​ ​d​o​ ​i​t​ ​l​a​t​e​r​ ​f​r​o​m​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​s​e​t​t​i​n​g​s​.
+		 */
+		methodFootnote: string
+		/**
+		 * T​h​e​ ​b​a​c​k​u​p​ ​f​i​l​e​ ​i​s​ ​s​t​o​r​e​d​ ​i​n​ ​y​o​u​r​ ​o​w​n​ ​c​l​o​u​d​ ​d​r​i​v​e​.​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​s​e​e​s​ ​t​h​e​ ​k​e​y​ ​o​r​ ​t​h​e​ ​p​a​s​s​w​o​r​d​.
+		 */
+		cloudFootnote: string
+		/**
+		 * Y​o​u​r​ ​N​o​s​t​r​ ​s​e​c​r​e​t​ ​k​e​y
+		 */
+		manualTitle: string
+		/**
+		 * A​n​y​o​n​e​ ​w​i​t​h​ ​t​h​i​s​ ​k​e​y​ ​c​o​n​t​r​o​l​s​ ​y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​.​ ​S​t​o​r​e​ ​i​t​ ​s​o​m​e​w​h​e​r​e​ ​s​a​f​e​ ​a​n​d​ ​n​e​v​e​r​ ​s​h​a​r​e​ ​i​t​.
+		 */
+		manualBody: string
+		/**
+		 * T​a​p​ ​t​o​ ​r​e​v​e​a​l
+		 */
+		manualReveal: string
+		/**
+		 * L​o​a​d​i​n​g​…
+		 */
+		manualLoading: string
+		/**
+		 * C​o​p​y​ ​n​s​e​c
+		 */
+		manualCopy: string
+		/**
+		 * n​s​e​c​ ​c​o​p​i​e​d
+		 */
+		manualCopied: string
+		/**
+		 * D​o​n​e
+		 */
+		manualDone: string
+		/**
 		 * S​e​t​ ​a​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​.​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​s​e​e​s​ ​i​t​ ​—​ ​s​o​ ​k​e​e​p​ ​i​t​ ​s​o​m​e​w​h​e​r​e​ ​s​a​f​e​,​ ​b​e​c​a​u​s​e​ ​w​e​ ​c​a​n​'​t​ ​r​e​c​o​v​e​r​ ​i​t​ ​f​o​r​ ​y​o​u​.
 		 */
 		passwordPrompt: string
@@ -13582,9 +13626,25 @@ type RootTranslation = {
 		 */
 		notNow: string
 		/**
+		 * S​a​v​e​d​ ​t​o​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​ ​m​a​n​a​g​e​r​ ​a​s​ ​"​{​n​a​m​e​}​"
+		 * @param {string} name
+		 */
+		savedToPasswordManager: RequiredParams<'name'>
+		/**
+		 * S​a​v​e​d​ ​t​o​ ​{​p​r​o​v​i​d​e​r​}​ ​a​s​ ​"​{​n​a​m​e​}​"
+		 * @param {string} name
+		 * @param {string} provider
+		 */
+		savedToCloud: RequiredParams<'name' | 'provider'>
+		/**
 		 * B​a​c​k​e​d​ ​u​p
 		 */
 		statusBackedUp: string
+		/**
+		 * B​a​c​k​e​d​ ​u​p​ ​(​{​m​e​t​h​o​d​}​)
+		 * @param {string} method
+		 */
+		statusBackedUpMethod: RequiredParams<'method'>
 		/**
 		 * N​o​t​ ​b​a​c​k​e​d​ ​u​p
 		 */
@@ -14002,6 +14062,18 @@ type RootTranslation = {
 		 * P​r​o​f​i​l​e​ ​p​h​o​t​o​ ​u​p​l​o​a​d​ ​i​s​ ​c​o​m​i​n​g​ ​s​o​o​n
 		 */
 		summaryProfileImageComingSoon: string
+		/**
+		 * U​p​l​o​a​d​i​n​g​ ​p​h​o​t​o​…
+		 */
+		summaryProfileImageUploading: string
+		/**
+		 * P​r​o​f​i​l​e​ ​p​h​o​t​o​ ​u​p​d​a​t​e​d
+		 */
+		summaryProfileImageUpdated: string
+		/**
+		 * P​h​o​t​o​ ​u​p​l​o​a​d​ ​f​a​i​l​e​d​ ​—​ ​t​r​y​ ​a​g​a​i​n
+		 */
+		summaryProfileImageFailed: string
 	}
 	NostrSettingsScreen: {
 		/**
@@ -14054,6 +14126,82 @@ type RootTranslation = {
 		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​.​ ​T​h​i​s​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​i​s​c​a​r​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​k​e​y​.​ ​C​a​n​c​e​l​ ​o​r​ ​c​o​n​t​i​n​u​e​.
 		 */
 		confirmSrLabel: string
+	}
+	BtcpaySetupScreen: {
+		/**
+		 * B​T​C​P​a​y​ ​S​e​r​v​e​r
+		 */
+		title: string
+		/**
+		 * Y​o​u​r​ ​o​w​n​ ​B​T​C​P​a​y​ ​S​e​r​v​e​r
+		 */
+		introTitle: string
+		/**
+		 * B​T​C​P​a​y​ ​S​e​r​v​e​r​ ​i​s​ ​y​o​u​r​ ​o​w​n​ ​o​n​l​i​n​e​ ​s​t​o​r​e​ ​a​n​d​ ​b​i​t​c​o​i​n​ ​c​h​e​c​k​o​u​t​.​ ​W​e​'​l​l​ ​s​e​t​ ​o​n​e​ ​u​p​ ​f​o​r​ ​y​o​u​ ​a​n​d​ ​o​p​e​n​ ​i​t​ ​i​n​ ​y​o​u​r​ ​b​r​o​w​s​e​r​ ​—​ ​a​l​r​e​a​d​y​ ​s​i​g​n​e​d​ ​i​n​,​ ​r​e​a​d​y​ ​t​o​ ​r​e​c​e​i​v​e​.
+		 */
+		introBody: string
+		/**
+		 * Y​o​u​r​ ​s​t​o​r​e​ ​i​s​ ​w​i​r​e​d​ ​t​o​ ​y​o​u​r​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​{​l​n​A​d​d​r​e​s​s​}​ ​—​ ​e​v​e​r​y​t​h​i​n​g​ ​y​o​u​ ​r​e​c​e​i​v​e​ ​l​a​n​d​s​ ​s​t​r​a​i​g​h​t​ ​i​n​ ​y​o​u​r​ ​B​l​i​n​k​ ​w​a​l​l​e​t​.
+		 * @param {string} lnAddress
+		 */
+		introLightningAddress: RequiredParams<'lnAddress'>
+		/**
+		 * Y​o​u​ ​s​i​g​n​ ​i​n​ ​w​i​t​h​ ​y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.​ ​N​o​ ​p​a​s​s​w​o​r​d​,​ ​a​n​d​ ​y​o​u​r​ ​k​e​y​s​ ​n​e​v​e​r​ ​l​e​a​v​e​ ​y​o​u​r​ ​p​h​o​n​e​.
+		 */
+		introIdentity: string
+		/**
+		 * 2​1​0​0​ ​s​a​t​s​ ​p​e​r​ ​m​o​n​t​h​.
+		 */
+		introPrice: string
+		/**
+		 * S​e​t​ ​u​p​ ​m​y​ ​B​T​C​P​a​y​ ​S​e​r​v​e​r
+		 */
+		introCta: string
+		/**
+		 * Y​o​u​r​ ​B​T​C​P​a​y​ ​S​e​r​v​e​r​ ​i​s​ ​r​e​a​d​y
+		 */
+		readyTitle: string
+		/**
+		 * Y​o​u​r​ ​s​t​o​r​e​ ​i​s​ ​w​i​r​e​d​ ​t​o​ ​y​o​u​r​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​{​l​n​A​d​d​r​e​s​s​}​ ​—​ ​e​v​e​r​y​t​h​i​n​g​ ​y​o​u​ ​r​e​c​e​i​v​e​ ​l​a​n​d​s​ ​i​n​ ​y​o​u​r​ ​B​l​i​n​k​ ​w​a​l​l​e​t​.
+		 * @param {string} lnAddress
+		 */
+		readyBody: RequiredParams<'lnAddress'>
+		/**
+		 * O​p​e​n​ ​m​y​ ​B​T​C​P​a​y​ ​d​a​s​h​b​o​a​r​d
+		 */
+		readyCta: string
+		/**
+		 * Y​o​u​r​ ​p​l​a​n
+		 */
+		planLabel: string
+		/**
+		 * 2​1​0​0​ ​s​a​t​s​/​m​o​n​t​h
+		 */
+		planValue: string
+		/**
+		 * P​l​a​n​ ​m​a​n​a​g​e​m​e​n​t​ ​a​n​d​ ​r​e​n​e​w​a​l​ ​a​r​e​ ​c​o​m​i​n​g​ ​s​o​o​n​.
+		 */
+		planNote: string
+		/**
+		 * S​e​t​t​i​n​g​ ​t​h​i​n​g​s​ ​u​p​…
+		 */
+		workingTitle: string
+		/**
+		 * S​i​g​n​i​n​g​ ​y​o​u​ ​i​n​ ​w​i​t​h​ ​y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​—​ ​y​o​u​r​ ​s​t​o​r​e​ ​w​i​l​l​ ​o​p​e​n​ ​i​n​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​i​n​ ​a​ ​m​o​m​e​n​t​.
+		 */
+		workingBody: string
+		/**
+		 * Y​o​u​'​r​e​ ​a​l​l​ ​s​e​t
+		 */
+		doneTitle: string
+		/**
+		 * W​e​ ​o​p​e​n​e​d​ ​y​o​u​r​ ​B​T​C​P​a​y​ ​d​a​s​h​b​o​a​r​d​ ​i​n​ ​t​h​e​ ​b​r​o​w​s​e​r​.
+		 */
+		doneBody: string
+		/**
+		 * O​p​e​n​ ​i​t​ ​a​g​a​i​n
+		 */
+		doneAgain: string
 	}
 }
 
@@ -27390,6 +27538,50 @@ export type TranslationFunctions = {
 		 */
 		methodManual: () => LocalizedString
 		/**
+		 * Back up your key
+		 */
+		methodTitle: () => LocalizedString
+		/**
+		 * Choose where to keep a backup of your Nostr identity key. Only you can access it.
+		 */
+		methodSubtitle: () => LocalizedString
+		/**
+		 * Backing up is optional — you can always do it later from Nostr identity settings.
+		 */
+		methodFootnote: () => LocalizedString
+		/**
+		 * The backup file is stored in your own cloud drive. Blink never sees the key or the password.
+		 */
+		cloudFootnote: () => LocalizedString
+		/**
+		 * Your Nostr secret key
+		 */
+		manualTitle: () => LocalizedString
+		/**
+		 * Anyone with this key controls your Nostr identity. Store it somewhere safe and never share it.
+		 */
+		manualBody: () => LocalizedString
+		/**
+		 * Tap to reveal
+		 */
+		manualReveal: () => LocalizedString
+		/**
+		 * Loading…
+		 */
+		manualLoading: () => LocalizedString
+		/**
+		 * Copy nsec
+		 */
+		manualCopy: () => LocalizedString
+		/**
+		 * nsec copied
+		 */
+		manualCopied: () => LocalizedString
+		/**
+		 * Done
+		 */
+		manualDone: () => LocalizedString
+		/**
 		 * Set a backup password. Blink never sees it — so keep it somewhere safe, because we can't recover it for you.
 		 */
 		passwordPrompt: () => LocalizedString
@@ -27426,9 +27618,21 @@ export type TranslationFunctions = {
 		 */
 		notNow: () => LocalizedString
 		/**
+		 * Saved to your password manager as "{name}"
+		 */
+		savedToPasswordManager: (arg: { name: string }) => LocalizedString
+		/**
+		 * Saved to {provider} as "{name}"
+		 */
+		savedToCloud: (arg: { name: string, provider: string }) => LocalizedString
+		/**
 		 * Backed up
 		 */
 		statusBackedUp: () => LocalizedString
+		/**
+		 * Backed up ({method})
+		 */
+		statusBackedUpMethod: (arg: { method: string }) => LocalizedString
 		/**
 		 * Not backed up
 		 */
@@ -27815,6 +28019,18 @@ export type TranslationFunctions = {
 		 * Profile photo upload is coming soon
 		 */
 		summaryProfileImageComingSoon: () => LocalizedString
+		/**
+		 * Uploading photo…
+		 */
+		summaryProfileImageUploading: () => LocalizedString
+		/**
+		 * Profile photo updated
+		 */
+		summaryProfileImageUpdated: () => LocalizedString
+		/**
+		 * Photo upload failed — try again
+		 */
+		summaryProfileImageFailed: () => LocalizedString
 	}
 	NostrSettingsScreen: {
 		/**
@@ -27867,6 +28083,80 @@ export type TranslationFunctions = {
 		 * Replace your current identity. This permanently discards your current key. Cancel or continue.
 		 */
 		confirmSrLabel: () => LocalizedString
+	}
+	BtcpaySetupScreen: {
+		/**
+		 * BTCPay Server
+		 */
+		title: () => LocalizedString
+		/**
+		 * Your own BTCPay Server
+		 */
+		introTitle: () => LocalizedString
+		/**
+		 * BTCPay Server is your own online store and bitcoin checkout. We'll set one up for you and open it in your browser — already signed in, ready to receive.
+		 */
+		introBody: () => LocalizedString
+		/**
+		 * Your store is wired to your Lightning Address {lnAddress} — everything you receive lands straight in your Blink wallet.
+		 */
+		introLightningAddress: (arg: { lnAddress: string }) => LocalizedString
+		/**
+		 * You sign in with your Nostr identity on this device. No password, and your keys never leave your phone.
+		 */
+		introIdentity: () => LocalizedString
+		/**
+		 * 2100 sats per month.
+		 */
+		introPrice: () => LocalizedString
+		/**
+		 * Set up my BTCPay Server
+		 */
+		introCta: () => LocalizedString
+		/**
+		 * Your BTCPay Server is ready
+		 */
+		readyTitle: () => LocalizedString
+		/**
+		 * Your store is wired to your Lightning Address {lnAddress} — everything you receive lands in your Blink wallet.
+		 */
+		readyBody: (arg: { lnAddress: string }) => LocalizedString
+		/**
+		 * Open my BTCPay dashboard
+		 */
+		readyCta: () => LocalizedString
+		/**
+		 * Your plan
+		 */
+		planLabel: () => LocalizedString
+		/**
+		 * 2100 sats/month
+		 */
+		planValue: () => LocalizedString
+		/**
+		 * Plan management and renewal are coming soon.
+		 */
+		planNote: () => LocalizedString
+		/**
+		 * Setting things up…
+		 */
+		workingTitle: () => LocalizedString
+		/**
+		 * Signing you in with your Nostr identity — your store will open in the browser in a moment.
+		 */
+		workingBody: () => LocalizedString
+		/**
+		 * You're all set
+		 */
+		doneTitle: () => LocalizedString
+		/**
+		 * We opened your BTCPay dashboard in the browser.
+		 */
+		doneBody: () => LocalizedString
+		/**
+		 * Open it again
+		 */
+		doneAgain: () => LocalizedString
 	}
 }
 

@@ -57,6 +57,12 @@ export interface ActivityLog {
    * are recorded in sequence. Returns an unsubscribe.
    */
   subscribe(listener: () => void): () => void
+  /**
+   * Remove ALL entries for a client and drop its key entirely (audit L2 residual: the ring
+   * bounds per-client growth, but the client-key map was unbounded and entries for
+   * disconnected clients were never reclaimed). Called from the disconnect path.
+   */
+  purge(clientPubkey: string): Promise<void>
 }
 
 type ActivityMap = Record<string, ActivityEntry[]>
@@ -138,6 +144,16 @@ export const createActivityLog = (
       return () => {
         listeners.delete(listener)
       }
+    },
+
+    async purge(clientPubkey): Promise<void> {
+      await serialize(async () => {
+        const map = await readAll()
+        if (!(clientPubkey in map)) return
+        delete map[clientPubkey]
+        await writeAll(map)
+        notify()
+      })
     },
   }
 }

@@ -1,5 +1,12 @@
 import React, { useState } from "react"
-import { Image, Modal, ScrollView, TouchableOpacity, View } from "react-native"
+import {
+  ActivityIndicator,
+  Image,
+  Modal,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native"
 
 import { Text, makeStyles } from "@rn-vui/themed"
 
@@ -9,7 +16,6 @@ import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-but
 import { QrCodeComponent } from "@app/components/totp-export/totp-qr"
 import { useClipboard } from "@app/hooks/use-clipboard"
 import { useI18nContext } from "@app/i18n/i18n-react"
-import { toastShow } from "@app/utils/toast"
 import { testProps } from "@app/utils/testProps"
 
 import { IdenticonView } from "@app/screens/nostr/create-identity/identicon-view"
@@ -26,6 +32,10 @@ type Props = {
   onImport: () => void
   onConnectedClients: () => void
   onSettings: () => void
+  /** Pick → NIP-96 upload → kind-0 publish (2026-08-21). */
+  onAddPhoto: () => void
+  /** True while the upload/publish flow is running (disables the affordance). */
+  photoBusy: boolean
 }
 
 const truncateNpub = (npub: string): string =>
@@ -50,6 +60,8 @@ export const NostrIdentityHubScreen: React.FC<Props> = ({
   onImport,
   onConnectedClients,
   onSettings,
+  onAddPhoto,
+  photoBusy,
 }) => {
   const { LL } = useI18nContext()
   const styles = useStyles()
@@ -119,17 +131,16 @@ export const NostrIdentityHubScreen: React.FC<Props> = ({
           <TouchableOpacity
             style={styles.editBadge}
             accessibilityRole="button"
-            onPress={() =>
-              toastShow({
-                type: "success",
-                message: T.summaryProfileImageComingSoon(),
-                LL,
-              })
-            }
+            disabled={photoBusy}
+            onPress={onAddPhoto}
             {...testProps("nostr-identity-add-photo")}
             accessibilityLabel={T.summaryAddProfileImage()}
           >
-            <GaloyIcon name="pencil" size={16} color={styles.editIcon.color} />
+            {photoBusy ? (
+              <ActivityIndicator size="small" color={styles.editIcon.color} />
+            ) : (
+              <GaloyIcon name="pencil" size={16} color={styles.editIcon.color} />
+            )}
           </TouchableOpacity>
         </View>
       </View>

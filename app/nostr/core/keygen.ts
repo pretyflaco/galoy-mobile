@@ -19,7 +19,7 @@
 // entropy source on the signer path — the one allowed react-native-* import in core.
 // eslint-disable-next-line no-restricted-imports
 import Crypto from "react-native-quick-crypto"
-import { secp256k1 } from "@noble/curves/secp256k1.js"
+import { secp256k1, schnorr } from "@noble/curves/secp256k1.js"
 
 import { makeSignerError, type SignerError } from "./signer"
 
@@ -91,8 +91,11 @@ export const generateNostrKey = (): { privKeyHex: string; pubKeyHex: string } =>
   for (let attempt = 0; attempt < MAX_SCALAR_DRAWS; attempt += 1) {
     const bytes = nativeRandomBytes(32)
     if (isValidSecpScalar(bytes)) {
-      // Explicit injection — NEVER secp256k1.utils.randomSecretKey().
-      const pubKey = secp256k1.getPublicKey(bytes)
+      // Explicit injection — NEVER secp256k1.utils.randomSecretKey(). X-only (BIP-340,
+      // 32-byte) pubkey: Nostr's canonical form. secp256k1.getPublicKey() returns the
+      // 33-byte COMPRESSED key — encoding that as npub produced a bogus address that
+      // mismatched the identity hub (hub/import/signing all use schnorr x-only).
+      const pubKey = schnorr.getPublicKey(bytes)
       return { privKeyHex: toHexLower(bytes), pubKeyHex: toHexLower(pubKey) }
     }
   }

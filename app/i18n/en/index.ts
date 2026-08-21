@@ -4267,6 +4267,21 @@ const en: BaseTranslation = {
     methodCloud: "Cloud backup",
     methodKeychain: "Password manager",
     methodManual: "Write it down",
+    methodTitle: "Back up your key",
+    methodSubtitle:
+      "Choose where to keep a backup of your Nostr identity key. Only you can access it.",
+    methodFootnote:
+      "Backing up is optional — you can always do it later from Nostr identity settings.",
+    cloudFootnote:
+      "The backup file is stored in your own cloud drive. Blink never sees the key or the password.",
+    manualTitle: "Your Nostr secret key",
+    manualBody:
+      "Anyone with this key controls your Nostr identity. Store it somewhere safe and never share it.",
+    manualReveal: "Tap to reveal",
+    manualLoading: "Loading…",
+    manualCopy: "Copy nsec",
+    manualCopied: "nsec copied",
+    manualDone: "Done",
     passwordPrompt:
       "Set a backup password. Blink never sees it — so keep it somewhere safe, because we can't recover it for you.",
     passwordLabel: "Backup password",
@@ -4279,7 +4294,10 @@ const en: BaseTranslation = {
     plaintextSrLabel:
       "Back up without a password. Your key is stored unprotected. Continue or cancel.",
     notNow: "Not now",
+    savedToPasswordManager: "Saved to your password manager as \"{name:string}\"",
+    savedToCloud: "Saved to {provider:string} as \"{name:string}\"",
     statusBackedUp: "Backed up",
+    statusBackedUpMethod: "Backed up ({method:string})",
     statusNotBackedUp: "Not backed up",
   },
   NostrConnectedClientsScreen: {
@@ -4400,6 +4418,9 @@ const en: BaseTranslation = {
     summaryAvatarA11y: "Your Nostr identity avatar",
     summaryAddProfileImage: "Add a profile photo",
     summaryProfileImageComingSoon: "Profile photo upload is coming soon",
+    summaryProfileImageUploading: "Uploading photo…",
+    summaryProfileImageUpdated: "Profile photo updated",
+    summaryProfileImageFailed: "Photo upload failed — try again",
   },
   NostrSettingsScreen: {
     title: "Settings",
@@ -4418,6 +4439,31 @@ const en: BaseTranslation = {
     confirmContinue: "Create a new identity",
     confirmSrLabel:
       "Replace your current identity. This permanently discards your current key. Cancel or continue.",
+  },
+  BtcpaySetupScreen: {
+    title: "BTCPay Server",
+    introTitle: "Your own BTCPay Server",
+    introBody:
+      "BTCPay Server is your own online store and bitcoin checkout. We'll set one up for you and open it in your browser — already signed in, ready to receive.",
+    introLightningAddress:
+      "Your store is wired to your Lightning Address {lnAddress: string} — everything you receive lands straight in your Blink wallet.",
+    introIdentity:
+      "You sign in with your Nostr identity on this device. No password, and your keys never leave your phone.",
+    introPrice: "2100 sats per month.",
+    introCta: "Set up my BTCPay Server",
+    readyTitle: "Your BTCPay Server is ready",
+    readyBody:
+      "Your store is wired to your Lightning Address {lnAddress: string} — everything you receive lands in your Blink wallet.",
+    readyCta: "Open my BTCPay dashboard",
+    planLabel: "Your plan",
+    planValue: "2100 sats/month",
+    planNote: "Plan management and renewal are coming soon.",
+    workingTitle: "Setting things up…",
+    workingBody:
+      "Signing you in with your Nostr identity — your store will open in the browser in a moment.",
+    doneTitle: "You're all set",
+    doneBody: "We opened your BTCPay dashboard in the browser.",
+    doneAgain: "Open it again",
   },
 }
 

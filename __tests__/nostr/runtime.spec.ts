@@ -65,6 +65,8 @@ const readNsecHex = async () => Buffer.from(userSk).toString("hex")
 
 const makeDeps = (over: Partial<SignerRuntimeDeps> = {}): SignerRuntimeDeps => ({
   readNsecHex,
+  // M2 fix: the transport key reader is REQUIRED. Tests get their own distinct key.
+  readTransportSkHex: async () => Buffer.from(generateSecretKey()).toString("hex"),
   storage: makeMemoryStorage(),
   createPool: () => makeFakePool().pool,
   log: () => undefined,
@@ -178,6 +180,8 @@ describe("signer runtime assembly (A1)", () => {
       },
     })
     const runtime = createSignerRuntime(makeDeps({ present, decodeForTest }))
+    // H2 policy gate: the client must be CONNECTED for its requests to be serviced at all.
+    await runtime.grantForTest(clientPubkey, [])
     // No grant covers nip44_decrypt (only sign_event:22242 is grantable) → one surface. The
     // handleInbound promise stays PENDING until the human resolves the surface (correct: the
     // request blocks on approval), so we deliberately do NOT await it — attach a catch only to
@@ -205,6 +209,8 @@ describe("signer runtime assembly (A1)", () => {
       },
     })
     const runtime = createSignerRuntime(makeDeps({ present, decodeForTest }))
+    // H2 policy gate: connected (but un-granted for this op) client.
+    await runtime.grantForTest(clientPubkey, [])
 
     // First delivery: raises exactly one surface (stays pending on approval).
     runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
@@ -230,6 +236,8 @@ describe("signer runtime assembly (A1)", () => {
       },
     })
     const runtime = createSignerRuntime(makeDeps({ present, decodeForTest }))
+    // H2 policy gate: connected client (the Ditto scenario is post-connect).
+    await runtime.grantForTest(clientPubkey, [])
     // Simulate the post-connect waiting overlay being up for this client.
     runtime.awaitingFollowup.set({ clientPubkey, name: "Ditto" })
     expect(runtime.awaitingFollowup.current()?.clientPubkey).toBe(clientPubkey)
@@ -258,6 +266,8 @@ describe("signer runtime assembly (A1)", () => {
       },
     })
     const runtime = createSignerRuntime(makeDeps({ present, decodeForTest }))
+    // H2 policy gate: connected client (vezir is post-connect at this point in the flow).
+    await runtime.grantForTest(clientPubkey, [])
     runtime.awaitingFollowup.set({ clientPubkey, name: "vezir" })
 
     runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
@@ -288,6 +298,9 @@ describe("signer runtime assembly (A1)", () => {
       request: { id: "gpk-1", method: "get_public_key", params: [] },
     })
     const runtime = createSignerRuntime(makeDeps({ decodeForTest }))
+    // H2 policy gate: only a CONNECTED client's get_public_key is answered/recorded
+    // (never-connected traffic is dropped silently — AC #7).
+    await runtime.grantForTest(clientPubkey, [])
     await runtime.handleInbound(makeInbound("verified") as never)
     await flushAsync()
     const activity = await runtime.listActivity(clientPubkey)

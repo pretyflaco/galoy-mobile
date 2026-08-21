@@ -47,6 +47,60 @@ describe("parseNostrConnectUri (AC #1/#2)", () => {
     expect(parseNostrConnectUri("nostrconnect://?secret=x")).toBeNull()
   })
 
+  // M4 fix (audit): the pubkey is a store key AND the ack's ECDH peer — non-hex garbage is
+  // rejected outright instead of poisoning state.
+  describe("clientPubkey hex validation (M4)", () => {
+    it("rejects a non-hex pubkey", () => {
+      expect(
+        parseNostrConnectUri(`nostrconnect://${"z".repeat(64)}?relay=wss%3A%2F%2Fr`),
+      ).toBeNull()
+    })
+
+    it("rejects a wrong-length pubkey (63 and 65 chars)", () => {
+      expect(parseNostrConnectUri(`nostrconnect://${CLIENT.slice(0, 63)}`)).toBeNull()
+      expect(parseNostrConnectUri(`nostrconnect://${CLIENT}aa`)).toBeNull()
+    })
+
+    it("accepts uppercase hex and normalizes to lowercase (consumers match by exact string)", () => {
+      // Inbound event pubkeys are lowercase hex (NIP-01); isConnected/grants/tombstones key on
+      // the exact string — an un-normalized uppercase record would never match its own requests.
+      expect(
+        parseNostrConnectUri(`nostrconnect://${CLIENT.toUpperCase()}`)?.clientPubkey,
+      ).toBe(CLIENT)
+    })
+  })
+
+  // M4/F5 fix (audit): relays are ws(s)-only, deduped, and capped — a crafted URI must not
+  // open arbitrary-protocol sockets or unbounded connections.
+  describe("relay set sanitization (M4/F5)", () => {
+    it("drops non-ws(s) relay values", () => {
+      const uri =
+        `nostrconnect://${CLIENT}` +
+        "?relay=https%3A%2F%2Fevil.example&relay=wss%3A%2F%2Fgood.example"
+      expect(parseNostrConnectUri(uri)?.relays).toEqual(["wss://good.example"])
+    })
+
+    it("dedupes repeated relay values (case-insensitive)", () => {
+      const uri =
+        `nostrconnect://${CLIENT}` +
+        "?relay=wss%3A%2F%2Fr.example&relay=WSS%3A%2F%2Fr.example"
+      expect(parseNostrConnectUri(uri)?.relays).toEqual(["wss://r.example"])
+    })
+
+    it("caps the relay count at 10", () => {
+      const many = Array.from({ length: 15 }, (_, i) =>
+        encodeURIComponent(`wss://relay-${i}.example`),
+      ).join("&relay=")
+      const uri = `nostrconnect://${CLIENT}?relay=${many}`
+      expect(parseNostrConnectUri(uri)?.relays).toHaveLength(10)
+    })
+
+    it("keeps ws:// explicitly present (cleartext is visible in the record, not smuggled)", () => {
+      const uri = `nostrconnect://${CLIENT}?relay=ws%3A%2F%2Finsecure.example`
+      expect(parseNostrConnectUri(uri)?.relays).toEqual(["ws://insecure.example"])
+    })
+  })
+
   it("parses with empty perms when none are supplied", () => {
     const uri = `nostrconnect://${CLIENT}?relay=wss%3A%2F%2Fr&secret=s`
     expect(parseNostrConnectUri(uri)?.perms).toEqual([])

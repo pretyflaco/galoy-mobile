@@ -30,7 +30,12 @@ import {
   buildNsecCloudBackup,
   restoreNsecFromCloud,
   isForbiddenPlaintextWrite,
+  buildBackupEntryName,
+  buildCloudBackupFilename,
+  nsecToHex,
+  toNsecBech32,
 } from "../../app/nostr/core/backup-export"
+import { buildBackupPayload } from "@app/utils/backup-payload"
 
 const sk = new Uint8Array(32)
 sk[31] = 11
@@ -121,5 +126,53 @@ describe("restore round-trip (AC-2)", () => {
   it("wrong password fails to restore an encrypted blob", () => {
     const blob = buildNsecCloudBackup({ nsecHex: NSEC_HEX, npub: NPUB, password: "pw" })
     expect(() => restoreNsecFromCloud(blob, "wrong")).toThrow()
+  })
+})
+
+describe("bech32 payload + naming (2026-08-21)", () => {
+  it("stores the secret as bech32 nsec, never raw hex", () => {
+    const blob = buildNsecCloudBackup({
+      nsecHex: NSEC_HEX,
+      npub: NPUB,
+      acknowledgePlaintext: true,
+    })
+    const parsed = JSON.parse(blob)
+    expect(parsed.mnemonic).toBe(toNsecBech32(NSEC_HEX))
+    expect(parsed.mnemonic.startsWith("nsec1")).toBe(true)
+    expect(blob).not.toContain(NSEC_HEX)
+  })
+
+  it("carries the lightning address as metadata when provided", () => {
+    const blob = buildNsecCloudBackup({
+      nsecHex: NSEC_HEX,
+      npub: NPUB,
+      acknowledgePlaintext: true,
+      lightningAddress: "pretyflaco@blink.sv",
+    })
+    expect(JSON.parse(blob).lightningAddress).toBe("pretyflaco@blink.sv")
+  })
+
+  it("restores a LEGACY raw-hex payload (backwards compatibility)", () => {
+    const legacy = buildBackupPayload(NSEC_HEX, { walletIdentifier: NPUB })
+    expect(restoreNsecFromCloud(legacy).nsecHex).toBe(NSEC_HEX)
+  })
+
+  it("nsecToHex decodes bech32 and passes hex through", () => {
+    expect(nsecToHex(toNsecBech32(NSEC_HEX))).toBe(NSEC_HEX)
+    expect(nsecToHex(NSEC_HEX.toUpperCase())).toBe(NSEC_HEX)
+  })
+
+  it("entry name puts the human-readable account first, npub embedded", () => {
+    expect(buildBackupEntryName("pretyflaco@blink.sv", NPUB)).toBe(
+      `Nostr identity pretyflaco@blink.sv (${NPUB})`,
+    )
+    // fallback: account id when no username
+    expect(buildBackupEntryName("acc-123", NPUB)).toContain("acc-123")
+  })
+
+  it("cloud filename is Drive-searchable by account name", () => {
+    expect(buildCloudBackupFilename("pretyflaco@blink.sv")).toBe(
+      "nostr-identity-backup-pretyflaco@blink.sv.json",
+    )
   })
 })

@@ -28,6 +28,18 @@ let mockRootState:
   | undefined
 let mockOnReady: (() => void) | undefined
 let mockOnStateChange: ((state: unknown) => void) | undefined
+/** Captured from the linking prop so tests can drive deep-link delivery through the REAL
+ *  subscribe closure (which registers on react-native's Linking). */
+let mockLinkingConfig: unknown
+
+/** H1 fix coverage: observe (and control) nostrconnect forwarding without touching the
+ *  runtime. Recognition mirrors the pure predicate; forwarding is a spy. */
+const mockForwardNostrConnect = jest.fn((_rawUri: string) => Promise.resolve(true))
+jest.mock("@app/nostr/connect-link-handler", () => ({
+  __esModule: true,
+  isNostrConnectLink: (raw: string) => raw.startsWith("nostrconnect://"),
+  handleNostrConnectLink: (raw: string) => mockForwardNostrConnect(raw),
+}))
 
 /** The navigationRef is module-level, so the container ref is stubbed. The stub APPLIES the
  *  reset to the stack it serves, as the real container does, so a second evaluation sees the
@@ -47,13 +59,16 @@ jest.mock("@react-navigation/native", () => ({
     children,
     onReady,
     onStateChange,
+    linking,
   }: {
     children?: React.ReactNode
     onReady?: () => void
     onStateChange?: (state: unknown) => void
+    linking?: unknown
   }) => {
     mockOnReady = onReady
     mockOnStateChange = onStateChange
+    mockLinkingConfig = linking
     return children ?? null
   },
 }))
@@ -81,7 +96,7 @@ jest.mock("@rn-vui/themed", () => ({
 }))
 
 import * as React from "react"
-import { Text } from "react-native"
+import { Linking, Text } from "react-native"
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react-native"
 
 import { Action } from "@app/components/actions"
@@ -821,5 +836,120 @@ describe("NavigationContainerWrapper armed-gate reset", () => {
     )
 
     await waitFor(() => expect(mockReset).toHaveBeenCalledWith(RESET_TO_PRIMARY))
+  })
+})
+
+describe("NavigationContainerWrapper nostrconnect deep-link lock gate (H1)", () => {
+  const consoleLogSpy = jest.spyOn(console, "log")
+  beforeAll(() => consoleLogSpy.mockImplementation(() => {}))
+  afterAll(() => consoleLogSpy.mockRestore())
+
+  /** The linking config's subscribe registers on react-native's Linking; capture that
+   *  handler so tests can deliver warm deep links exactly as the OS would. */
+  let linkListener: ((e: { url: string }) => void) | undefined
+  let addEventListenerSpy: jest.SpyInstance
+
+  const fireUrl = (url: string) => act(() => linkListener?.({ url }))
+
+  beforeEach(async () => {
+    jest.clearAllMocks()
+    mockBlockerVisible = false
+    mockIsReady = true
+    mockOnReady = undefined
+    mockOnStateChange = undefined
+    mockRootState = STACK_AT_BLOCKER
+    mockLinkingConfig = undefined
+    linkListener = undefined
+    addEventListenerSpy = jest.spyOn(Linking, "addEventListener").mockImplementation(((
+      _type: string,
+      handler: (e: { url: string }) => void,
+    ) => {
+      linkListener = handler
+      return { remove: jest.fn() }
+    }) as never)
+    await Promise.resolve()
+  })
+
+  afterEach(() => {
+    addEventListenerSpy.mockRestore()
+  })
+
+  const subscribeDeepLinks = () => {
+    const config = mockLinkingConfig as {
+      subscribe?: (listener: (url: string) => void) => () => void
+    }
+    expect(config?.subscribe).toBeInstanceOf(Function)
+    config.subscribe?.(() => undefined)
+  }
+
+  it("defers a warm nostrconnect link received while locked, and forwards it once after unlock", async () => {
+    const uri = "nostrconnect://a".padEnd(66, "0") + "?relay=wss%3A%2F%2Frelay.example"
+    renderWrapper(<UnlockProbe />)
+    subscribeDeepLinks()
+    expect(linkListener).toBeInstanceOf(Function)
+
+    // Locked: nothing is forwarded — no approval surface may rise over the PIN pad.
+    fireUrl(uri)
+    expect(mockForwardNostrConnect).not.toHaveBeenCalled()
+
+    // Unlock through the real context: the deferred URI is delivered exactly once.
+    unlock()
+    await waitFor(() =>
+      expect(screen.getByTestId("lock-state").props.children).toBe("unlocked"),
+    )
+    expect(mockForwardNostrConnect).toHaveBeenCalledTimes(1)
+    expect(mockForwardNostrConnect).toHaveBeenCalledWith(uri)
+
+    // No double delivery on a later re-render.
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(mockForwardNostrConnect).toHaveBeenCalledTimes(1)
+  })
+
+  it("forwards immediately when a nostrconnect link arrives already unlocked", async () => {
+    renderWrapper(<UnlockProbe />)
+    subscribeDeepLinks()
+
+    unlock()
+    await waitFor(() =>
+      expect(screen.getByTestId("lock-state").props.children).toBe("unlocked"),
+    )
+
+    const uri = "nostrconnect://b".padEnd(66, "0")
+    fireUrl(uri)
+
+    expect(mockForwardNostrConnect).toHaveBeenCalledTimes(1)
+    expect(mockForwardNostrConnect).toHaveBeenCalledWith(uri)
+  })
+
+  it("keeps only the latest URI when several arrive while locked", async () => {
+    renderWrapper(<UnlockProbe />)
+    subscribeDeepLinks()
+
+    fireUrl("nostrconnect://c".padEnd(66, "0"))
+    const last = "nostrconnect://d".padEnd(66, "0")
+    fireUrl(last)
+    expect(mockForwardNostrConnect).not.toHaveBeenCalled()
+
+    unlock()
+    await waitFor(() => expect(mockForwardNostrConnect).toHaveBeenCalledTimes(1))
+    expect(mockForwardNostrConnect).toHaveBeenCalledWith(last)
+  })
+
+  it("does not swallow non-nostrconnect urls into the deferral slot", async () => {
+    renderWrapper(<UnlockProbe />)
+    subscribeDeepLinks()
+
+    fireUrl("lightning:lnbc1exampleinvoice")
+
+    expect(mockForwardNostrConnect).not.toHaveBeenCalled()
+    // The payment branch still owns the URL: with payments enabled and app locked, it is
+    // queued in urlAfterUnlockAndAuth (existing behavior), not dropped.
+    unlock()
+    await waitFor(() =>
+      expect(screen.getByTestId("lock-state").props.children).toBe("unlocked"),
+    )
+    expect(mockForwardNostrConnect).not.toHaveBeenCalled()
   })
 })

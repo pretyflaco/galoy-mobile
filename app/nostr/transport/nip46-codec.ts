@@ -24,6 +24,20 @@ import * as nip44 from "nostr-tools/nip44"
 /** The NIP-46 remote-signing event kind. */
 export const NIP46_KIND = 24133
 
+/**
+ * Wire-size caps on attacker-influenced decoded fields (audit WP2). The event envelope is
+ * already relay-bounded, but the DECODED strings are persisted (request ledger) and rendered,
+ * so an uncapped id alone would let one request bloat storage. Caps sit well above anything
+ * legitimate: NIP-46 ids are client-chosen short strings; sign_event's params[0] (the unsigned
+ * event JSON) fits comfortably under 128 KiB.
+ */
+export const MAX_ID_LENGTH = 256
+export const MAX_METHOD_LENGTH = 64
+export const MAX_PARAMS_COUNT = 4
+export const MAX_PARAM_LENGTH = 131_072
+
+const oversize = (value: string): boolean => value.length > MAX_PARAM_LENGTH
+
 /** The two transport encryption schemes the signer must interoperate with (AD-10). */
 export type TransportScheme = "nip04" | "nip44"
 
@@ -85,14 +99,22 @@ export const decodeRequest = (
       ? nip04.decrypt(skBytes, clientPubkey, event.content)
       : nip44.decrypt(event.content, nip44.getConversationKey(skBytes, clientPubkey))
   const parsed = JSON.parse(json) as Partial<Nip46Request>
+  const id = String(parsed.id ?? "")
+  const method = String(parsed.method ?? "")
+  const params = Array.isArray(parsed.params) ? parsed.params.map(String) : []
+  // Fail-closed on oversize fields (audit WP2): throw → the pipeline drops the request
+  // silently (its inbound handler swallows into a metadata log), consistent with the
+  // never-connected posture. Never persist or surface an oversized attacker field.
+  if (id.length > MAX_ID_LENGTH || method.length > MAX_METHOD_LENGTH) {
+    throw new Error("nip46 request id/method exceeds size limits")
+  }
+  if (params.length > MAX_PARAMS_COUNT || params.some((p) => oversize(p))) {
+    throw new Error("nip46 request params exceed size limits")
+  }
   return {
     clientPubkey,
     scheme,
-    request: {
-      id: String(parsed.id ?? ""),
-      method: String(parsed.method ?? ""),
-      params: Array.isArray(parsed.params) ? parsed.params.map(String) : [],
-    },
+    request: { id, method, params },
   }
 }
 

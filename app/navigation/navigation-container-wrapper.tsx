@@ -134,6 +134,15 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
   const [urlAfterUnlockAndAuth, setUrlAfterUnlockAndAuth] = React.useState<string | null>(
     null,
   )
+  /** A nostrconnect:// URI received while locked/unauthenticated (H1 fix): held here and
+   *  forwarded ONLY once the app is unlocked + authed. Approval surfaces are RN Modals
+   *  mounted outside RootStack, so without this deferral a warm deep link pops a full-screen
+   *  connection approval over the lock screen. Forwarding goes through
+   *  handleNostrConnectLink directly (no Linking.openURL round-trip, so no scheme-hijack or
+   *  chooser window between deferral and delivery). Latest-wins, like urlAfterUnlockAndAuth. */
+  const [nostrConnectAfterUnlock, setNostrConnectAfterUnlock] = React.useState<
+    string | null
+  >(null)
   const { setActiveAction } = useActionsContext()
 
   /** Keyed on the blocker's own visibility, not the raw armed status: when the kill-switch
@@ -237,6 +246,23 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
       setUrlAfterUnlockAndAuth(null)
     }
   }, [canHandlePayments, isAppLocked, urlAfterUnlockAndAuth])
+
+  /** Deliver a nostrconnect:// URI that arrived while locked, once unlock + auth land
+   *  (same conditions as the generic deferred-URL effect above). */
+  useEffect(() => {
+    if (!nostrConnectAfterUnlock) return
+    if (!canHandlePayments || isAppLocked) return
+    handleNostrConnectLink(nostrConnectAfterUnlock).catch(() => undefined)
+    setNostrConnectAfterUnlock(null)
+  }, [canHandlePayments, isAppLocked, nostrConnectAfterUnlock])
+
+  /** Current "may a nostrconnect link be forwarded right now?" for the linking listener.
+   *  The listener closes over first-render values; this ref mirrors the live gate the same
+   *  way isAppLockedRef mirrors the lock. */
+  const canForwardNostrConnectRef = useRef(false)
+  useEffect(() => {
+    canForwardNostrConnectRef.current = canHandlePayments && !isAppLocked
+  }, [canHandlePayments, isAppLocked])
 
   const setAppUnlocked = React.useMemo(
     () => async () => {
@@ -354,8 +380,17 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
         // ConnectFlow (via the runtime handler the provider registers while the signer is on).
         // Never route it through the payment/nav listener. If the signer is off, no handler is
         // registered and this is a no-op — the URL falls through unchanged.
+        //
+        // H1 fix: a warm nostrconnect link is DEFERRED behind unlock + auth like every other
+        // URL. Approval overlays are RN Modals mounted outside RootStack; forwarding while
+        // locked would pop a full-screen connection approval over the PIN/biometric screen
+        // and let a grant exist before first auth.
         if (isNostrConnectLink(url)) {
-          handleNostrConnectLink(url).catch(() => undefined)
+          if (canForwardNostrConnectRef.current) {
+            handleNostrConnectLink(url).catch(() => undefined)
+          } else {
+            setNostrConnectAfterUnlock(url)
+          }
           return
         }
 

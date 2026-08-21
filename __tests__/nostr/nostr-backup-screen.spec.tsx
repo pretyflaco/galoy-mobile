@@ -1,81 +1,141 @@
 /**
- * Story 1.7 — backup screen UI + i18n (Tasks 1,3,4,5). Encrypted-by-default; the
- * plaintext path requires the {consent-danger} acknowledgment (destructive control off
- * default focus); "Not now" never blocks. Verbatim copy + SR label from i18n.
+ * Nostr backup flow (2026-08-21 rework) — method chooser (Drive / Password Manager / Manual)
+ * with Spark-flow parity, cloud screen with encrypt-by-default (AD-7), the two-step plaintext
+ * acknowledgment, and i18n sourcing checks.
  */
 import React from "react"
+import { Platform } from "react-native"
 import { render, fireEvent, waitFor } from "@testing-library/react-native"
 import { readFileSync } from "fs"
 import { join } from "path"
 
-import { NostrBackupScreen } from "@app/screens/nostr/backup"
+import { NostrBackupMethodScreen } from "@app/screens/nostr/backup/backup-method-screen"
+import { NostrCloudBackupScreen } from "@app/screens/nostr/backup/cloud-backup-screen"
 
 import { ContextForScreen } from "../screens/helper"
 import { flushEffects } from "../helpers/flush-effects"
 
-const renderScreen = (
-  props: Partial<React.ComponentProps<typeof NostrBackupScreen>> = {},
+const renderMethod = (
+  props: Partial<React.ComponentProps<typeof NostrBackupMethodScreen>> = {},
 ) =>
   render(
     <ContextForScreen>
-      <NostrBackupScreen
-        onEncryptedBackup={jest.fn()}
-        onPlaintextAcknowledged={jest.fn()}
+      <NostrBackupMethodScreen
+        busy={false}
+        onCloud={jest.fn()}
+        onPasswordManager={jest.fn()}
+        onManual={jest.fn()}
         onNotNow={jest.fn()}
         {...props}
       />
     </ContextForScreen>,
   )
 
-describe("backup screen (AC-1/AC-3/AC-4)", () => {
-  it("encrypted backup requires a password (CTA disabled until entered)", async () => {
-    const onEncryptedBackup = jest.fn()
-    const { getByTestId } = renderScreen({ onEncryptedBackup })
-    await flushEffects()
-    fireEvent.press(getByTestId("nostr-backup-encrypt")) // disabled, no password
-    expect(onEncryptedBackup).not.toHaveBeenCalled()
-    fireEvent.changeText(getByTestId("nostr-backup-password"), "s3cret")
-    fireEvent.press(getByTestId("nostr-backup-encrypt"))
-    expect(onEncryptedBackup).toHaveBeenCalledWith("s3cret")
-  })
+const renderCloud = (
+  props: Partial<React.ComponentProps<typeof NostrCloudBackupScreen>> = {},
+) =>
+  render(
+    <ContextForScreen>
+      <NostrCloudBackupScreen
+        busy={false}
+        onUpload={jest.fn()}
+        onCancel={jest.fn()}
+        {...props}
+      />
+    </ContextForScreen>,
+  )
 
-  it("plaintext path requires the consent-danger acknowledgment (two deliberate steps)", async () => {
-    const onPlaintextAcknowledged = jest.fn()
-    const { getByTestId } = renderScreen({ onPlaintextAcknowledged })
-    await flushEffects()
-    // step 1: choosing "without a password" only OPENS the ack surface, does not back up
-    fireEvent.press(getByTestId("nostr-backup-without-password"))
-    await waitFor(() =>
-      expect(getByTestId("nostr-backup-plaintext-confirm")).toBeTruthy(),
-    )
-    expect(onPlaintextAcknowledged).not.toHaveBeenCalled()
-    // cancel returns to the safe default path
-    expect(getByTestId("nostr-backup-plaintext-cancel")).toBeTruthy()
-    // step 2: the deliberate confirm acknowledges plaintext
-    fireEvent.press(getByTestId("nostr-backup-plaintext-confirm"))
-    expect(onPlaintextAcknowledged).toHaveBeenCalledTimes(1)
-  })
-
-  it("'Not now' declines without blocking", async () => {
+describe("backup method screen", () => {
+  it("offers cloud, password manager, and manual; every callback fires", async () => {
+    // Password Manager is Android-only for the POC; jest defaults Platform.OS to ios.
+    jest.replaceProperty(Platform, "OS", "android")
+    const onCloud = jest.fn()
+    const onPasswordManager = jest.fn()
+    const onManual = jest.fn()
     const onNotNow = jest.fn()
-    const { getByTestId } = renderScreen({ onNotNow })
+    const { getByTestId } = renderMethod({
+      onCloud,
+      onPasswordManager,
+      onManual,
+      onNotNow,
+    })
     await flushEffects()
+    fireEvent.press(getByTestId("nostr-backup-cloud"))
+    expect(onCloud).toHaveBeenCalledTimes(1)
+    fireEvent.press(getByTestId("nostr-backup-password-manager"))
+    expect(onPasswordManager).toHaveBeenCalledTimes(1)
+    fireEvent.press(getByTestId("nostr-backup-manual"))
+    expect(onManual).toHaveBeenCalledTimes(1)
     fireEvent.press(getByTestId("nostr-backup-not-now"))
     expect(onNotNow).toHaveBeenCalledTimes(1)
+    jest.replaceProperty(Platform, "OS", "ios")
   })
 })
 
-describe("backup copy is i18n-sourced (AC-5)", () => {
-  const screen = join(process.cwd(), "app/screens/nostr/backup/nostr-backup-screen.tsx")
+describe("cloud backup screen (AD-7)", () => {
+  it("encrypts by default: password fields shown, CTA gated until a valid pair", async () => {
+    const onUpload = jest.fn()
+    const { getByTestId, queryByTestId } = renderCloud({ onUpload })
+    await flushEffects()
+    // encrypted by default → password inputs visible, continue disabled until valid
+    expect(getByTestId("nostr-cloud-password-input")).toBeTruthy()
+    fireEvent.press(getByTestId("nostr-cloud-backup-continue"))
+    expect(onUpload).not.toHaveBeenCalled()
+    fireEvent.changeText(getByTestId("nostr-cloud-password-input"), "s3cret-s3cret")
+    fireEvent.changeText(
+      getByTestId("nostr-cloud-confirm-password-input"),
+      "s3cret-s3cret",
+    )
+    fireEvent.press(getByTestId("nostr-cloud-backup-continue"))
+    await waitFor(() =>
+      expect(onUpload).toHaveBeenCalledWith({ password: "s3cret-s3cret" }),
+    )
+    // plaintext ack surface is NOT shown on the encrypted path
+    expect(queryByTestId("nostr-backup-plaintext-confirm")).toBeNull()
+  })
+
+  it("plaintext path requires the two-step acknowledgment before any upload", async () => {
+    const onUpload = jest.fn()
+    const { getByTestId } = renderCloud({ onUpload })
+    await flushEffects()
+    // step 0: uncheck encryption → password fields disappear
+    fireEvent.press(getByTestId("nostr-cloud-encrypt-checkbox"))
+    // step 1: continue only OPENS the ack surface, does not upload
+    fireEvent.press(getByTestId("nostr-cloud-backup-continue"))
+    await waitFor(() =>
+      expect(getByTestId("nostr-backup-plaintext-confirm")).toBeTruthy(),
+    )
+    expect(onUpload).not.toHaveBeenCalled()
+    // cancel returns to the form
+    fireEvent.press(getByTestId("nostr-backup-plaintext-cancel"))
+    await waitFor(() => expect(getByTestId("nostr-cloud-backup-continue")).toBeTruthy())
+    // step 2: reopen + the deliberate confirm acknowledges plaintext
+    fireEvent.press(getByTestId("nostr-cloud-backup-continue"))
+    await waitFor(() =>
+      expect(getByTestId("nostr-backup-plaintext-confirm")).toBeTruthy(),
+    )
+    fireEvent.press(getByTestId("nostr-backup-plaintext-confirm"))
+    expect(onUpload).toHaveBeenCalledWith({ acknowledgePlaintext: true })
+  })
+})
+
+describe("backup copy is i18n-sourced", () => {
+  const files = [
+    "app/screens/nostr/backup/backup-method-screen.tsx",
+    "app/screens/nostr/backup/cloud-backup-screen.tsx",
+    "app/screens/nostr/backup/manual-backup-screen.tsx",
+  ]
 
   it("no hardcoded JSX text / literal button titles", () => {
-    const src = readFileSync(screen, "utf8")
-    const jsxText = [...src.matchAll(/>\s*([A-Za-z][A-Za-z ,.'"!?]{3,})\s*</g)]
-      .map((m) => m[1].trim())
-      .filter((t) => !/^(string|number|boolean|View|Text|Svg|Input)$/.test(t))
-    expect(jsxText).toEqual([])
-    const literalTitles = [...src.matchAll(/title=\s*"([^"]+)"/g)].map((m) => m[1])
-    expect(literalTitles).toEqual([])
+    for (const file of files) {
+      const src = readFileSync(join(process.cwd(), file), "utf8")
+      const jsxText = [...src.matchAll(/>\s*([A-Za-z][A-Za-z ,.'"!?]{3,})\s*</g)]
+        .map((m) => m[1].trim())
+        .filter((t) => !/^(string|number|boolean|View|Text|Svg|Input|Promise)$/.test(t))
+      expect(jsxText).toEqual([])
+      const literalTitles = [...src.matchAll(/title=\s*"([^"]+)"/g)].map((m) => m[1])
+      expect(literalTitles).toEqual([])
+    }
   })
 
   it("verbatim plaintext consequence + SR label match the spec", () => {
@@ -89,6 +149,5 @@ describe("backup copy is i18n-sourced (AC-5)", () => {
     expect(ns.plaintextSrLabel).toBe(
       "Back up without a password. Your key is stored unprotected. Continue or cancel.",
     )
-    expect(ns.passwordPrompt).toContain("Blink never sees it")
   })
 })

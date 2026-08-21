@@ -1,9 +1,13 @@
 import React from "react"
 import { Linking } from "react-native"
+import { useNavigation } from "@react-navigation/native"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { useTheme } from "@rn-vui/themed"
 
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
+import { useFeatureFlags } from "@app/config/feature-flags-context"
 import { useI18nContext } from "@app/i18n/i18n-react"
+import { RootStackParamList } from "@app/navigation/stack-param-lists"
 
 import { SettingsRow } from "../row"
 import { usePayLinks } from "./use-pay-links"
@@ -16,6 +20,8 @@ export const AccountBtcpay: React.FC = () => {
   } = useTheme()
   const { LL } = useI18nContext()
   const { username, loading } = usePayLinks()
+  const { nostrSignerEnabled } = useFeatureFlags()
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
   // The plugin page itself takes no username, but it is only actionable once the
   // account has an address to connect, so it follows the rest of the group.
@@ -28,7 +34,14 @@ export const AccountBtcpay: React.FC = () => {
       leftGaloyIcon="btcpay"
       rightIcon={<GaloyIcon name="arrow-square-out" size={20} color={colors.primary} />}
       action={() => {
-        Linking.openURL(BTCPAY_PLUGIN_URL)
+        // Signer flag on (POC): route to the one-tap setup interstitial, which signs a
+        // NIP-98 magic link locally and opens the mobile browser signed in. Flag off
+        // (upstream/default builds): keep the informational blog link.
+        if (nostrSignerEnabled) {
+          navigation.navigate("btcpaySetup")
+        } else {
+          Linking.openURL(BTCPAY_PLUGIN_URL)
+        }
       }}
     />
   )

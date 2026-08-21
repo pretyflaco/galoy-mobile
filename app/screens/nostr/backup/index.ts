@@ -1,1 +1,1 @@
-export { NostrBackupScreen } from "./nostr-backup-screen"
+export { NostrBackupNavigator } from "./nostr-backup-navigator"

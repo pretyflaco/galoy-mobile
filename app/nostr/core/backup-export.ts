@@ -17,6 +17,9 @@
  *
  * AD-1: core is UI-free — this is a pure adapter; screens/hooks wire it to the backup UI.
  */
+import { hexToBytes } from "@noble/hashes/utils.js"
+import * as nip19 from "nostr-tools/nip19"
+
 import {
   buildBackupPayload,
   isEncryptedBackup,
@@ -70,11 +73,42 @@ export interface BuildNsecCloudBackupInput {
   password?: string
   /** Explicit plaintext-exposure acknowledgment — required for an unencrypted write. */
   acknowledgePlaintext?: boolean
+  /** The Blink lightning address — metadata only, names the backup in restore dialogs. */
+  lightningAddress?: string
+}
+
+/**
+ * The password-manager/Drive entry name (2026-08-21): the human-readable Blink account name
+ * FIRST (password-manager list views show the beginning), with the full npub embedded for
+ * restore-parsing. Android Credential Manager only carries (username, password) for password
+ * entries — this composite is the only per-entry naming lever.
+ */
+export const buildBackupEntryName = (display: string, npub: string): string =>
+  `Nostr identity ${display} (${npub})`
+
+/** The Drive filename for an identity backup, named for findability in Drive search. */
+export const buildCloudBackupFilename = (display: string): string =>
+  `nostr-identity-backup-${display}.json`
+
+/** Hex → bech32 nsec (the portable, self-describing form stored in backups). */
+export const toNsecBech32 = (nsecHex: string): string =>
+  nip19.nsecEncode(hexToBytes(nsecHex))
+
+/** Accepts bech32 nsec (current) or legacy raw hex; returns lowercase hex. */
+export const nsecToHex = (value: string): string => {
+  const trimmed = value.trim()
+  if (trimmed.startsWith("nsec1")) {
+    const decoded = nip19.decode(trimmed)
+    if (decoded.type !== "nsec") throw new Error("not an nsec")
+    return Buffer.from(decoded.data as Uint8Array).toString("hex")
+  }
+  return trimmed.toLowerCase()
 }
 
 /**
  * Build a cloud backup blob for the nsec. Encrypts when a password is given; otherwise
  * writes plaintext ONLY if the user explicitly acknowledged. Throws on the forbidden path.
+ * The secret travels as bech32 nsec (portable; restores into any nsec-aware tool).
  */
 export const buildNsecCloudBackup = (input: BuildNsecCloudBackupInput): string => {
   const hasPassword = Boolean(input.password)
@@ -87,17 +121,19 @@ export const buildNsecCloudBackup = (input: BuildNsecCloudBackupInput): string =
     )
   }
 
-  // Reuse the existing crypto; the nsec hex travels in the `mnemonic` secret field.
-  return buildBackupPayload(input.nsecHex, {
+  // Reuse the existing crypto; the bech32 nsec travels in the `mnemonic` secret field.
+  return buildBackupPayload(toNsecBech32(input.nsecHex), {
     walletIdentifier: input.npub,
+    lightningAddress: input.lightningAddress,
     password: input.password, // undefined ⇒ plaintext (allowed only past the guard above)
   })
 }
 
 /**
  * Restore the nsec from a cloud backup blob. Encrypted blobs require the backup password
- * (decrypted locally; Blink never receives it). Returns the nsec hex; the caller writes it
- * back into the keystore confinement (Story 1.3), NOT wallet-mnemonic storage.
+ * (decrypted locally; Blink never receives it). Returns the nsec HEX; the caller writes it
+ * back into the keystore confinement (Story 1.3), NOT wallet-mnemonic storage. Accepts
+ * bech32 (current) and legacy raw-hex payloads.
  */
 export const restoreNsecFromCloud = (
   blob: string,
@@ -106,8 +142,8 @@ export const restoreNsecFromCloud = (
   if (isEncryptedBackup(blob)) {
     if (!password) throw new Error("encrypted nsec backup requires the backup password")
     const { mnemonic } = parseEncryptedBackupPayload(blob, password)
-    return { nsecHex: mnemonic }
+    return { nsecHex: nsecToHex(mnemonic) }
   }
   const { mnemonic } = parseBackupPayload(blob)
-  return { nsecHex: mnemonic }
+  return { nsecHex: nsecToHex(mnemonic) }
 }

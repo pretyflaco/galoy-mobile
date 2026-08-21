@@ -16,7 +16,12 @@ const renderScreen = (
 ) =>
   render(
     <ContextForScreen>
-      <NostrSettingsScreen onBackup={jest.fn()} onReplace={jest.fn()} {...props} />
+      <NostrSettingsScreen
+        onBackup={jest.fn()}
+        onReplace={jest.fn()}
+        backupStatus={null}
+        {...props}
+      />
     </ContextForScreen>,
   )
 

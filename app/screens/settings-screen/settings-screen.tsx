@@ -52,6 +52,7 @@ import { StableBalanceSetting } from "./settings/stable-balance"
 import { ViewBackupPhraseSetting } from "./settings/view-backup-phrase"
 import { BackupWalletSetting } from "./settings/backup-wallet"
 import { NostrIdentitySetting } from "./settings/nostr-identity"
+import { DelegatedGrantsSetting } from "./settings/delegated-grants"
 
 // All queries in settings have to be set here so that the server is not hit with
 // multiple requests for each query
@@ -138,6 +139,7 @@ export const SettingsScreen: React.FC = () => {
       ViewBackupPhraseSetting,
       BackupWalletSetting,
       NostrIdentitySetting,
+      DelegatedGrantsSetting,
     ],
     advanced: [ExportCsvSetting, ApiAccessSetting],
     community: [NeedHelpSetting, JoinCommunitySetting],

@@ -1,5 +1,6 @@
 import {
   RegisterLightningAddressRequest,
+  SignMessageRequest,
   SyncWalletRequest,
   defaultExternalSigner,
   type BreezSdkInterface,
@@ -87,3 +88,20 @@ export const checkLightningAddressAvailable = (
 
 export const registerLightningAddress = (sdk: BreezSdkInterface, username: string) =>
   sdk.registerLightningAddress(RegisterLightningAddressRequest.create({ username }))
+
+/**
+ * Sign a message with the wallet's Spark IDENTITY key (D2 delegated grants). The SDK
+ * sha256-hashes the message before signing and returns a DER-encoded hex signature plus
+ * the 33-byte compressed identity pubkey — the exact scheme the lnurl-server grant
+ * endpoints verify. Requires the CONNECTED sdk instance (identity-key signing is not
+ * exposed on defaultExternalSigner). Tests inject a stub BreezSdkInterface.
+ */
+export const signMessageWithIdentityKey = async (
+  sdk: BreezSdkInterface,
+  message: string,
+): Promise<{ pubkey: string; signature: string }> => {
+  const response = await sdk.signMessage(
+    SignMessageRequest.create({ message, compact: false }),
+  )
+  return { pubkey: response.pubkey, signature: response.signature }
+}

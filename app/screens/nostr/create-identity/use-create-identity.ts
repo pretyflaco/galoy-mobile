@@ -21,6 +21,12 @@ import {
 import { writeSecret } from "@app/nostr/core/keystore"
 import { makeSignerError } from "@app/nostr/core/signer"
 import { useNostrRuntime } from "@app/nostr/nostr-runtime-provider"
+import { useNostrAccountMode } from "@app/nostr/use-nostr-account-key"
+import { deriveNsecFromMnemonic } from "@app/self-custodial/derive-nostr-key"
+import KeyStoreWrapper from "@app/utils/storage/secureStorage"
+
+/** Where the ceremony's new nsec comes from (self-custodial accounts may bind it to the wallet seed). */
+export type IdentityKeySource = "seed" | "random"
 
 /**
  * React binding for the creation-ceremony controller (Story 1.5). The screens call
@@ -31,13 +37,32 @@ export const useCreateIdentity = () => {
   const [state, setState] = useState<CeremonyState>(initialCeremonyState)
   const [busy, setBusy] = useState(false)
   const epochRef = useRef(0)
+  // Chosen at `start(source)` — the confirm action reads it through the ports closure.
+  const sourceRef = useRef<IdentityKeySource>("random")
   // Shared scope from the provider context — never an independent resolver instance.
   const runtimeContext = useNostrRuntime()
   const accountKey = runtimeContext?.accountKey ?? null
+  const { isSelfCustodial, accountKey: selfCustodialAccountId } = useNostrAccountMode()
 
   const ports = useMemo<CeremonyPorts>(
     () => ({
-      generateKey: generateNostrKey,
+      // Primary path for self-custodial accounts ("Use wallet seed"): NIP-06 derivation
+      // m/44'/1237'/0'/0/0 from the account's Spark mnemonic. Custodial accounts and the
+      // explicit "random" choice keep the fail-closed CSPRNG keygen. Both land in the same
+      // keystore path; only provenance differs.
+      generateKey: async () => {
+        if (!(isSelfCustodial && sourceRef.current === "seed")) return generateNostrKey()
+        if (!selfCustodialAccountId)
+          throw makeSignerError("unavailable", "account is still being set up")
+        const mnemonic =
+          await KeyStoreWrapper.getMnemonicForAccount(selfCustodialAccountId)
+        if (!mnemonic)
+          throw makeSignerError(
+            "unavailable",
+            "wallet seed unavailable for this account — restore the wallet first",
+          )
+        return deriveNsecFromMnemonic(mnemonic)
+      },
       // Account-scoped (2026-08-20): persist under `nostr.nsec.<accountKey>`; fail closed
       // when the account scope is unresolvable (the hub normally gates entry first).
       persistNsec: async (privKeyHex) => {
@@ -59,11 +84,12 @@ export const useCreateIdentity = () => {
       // ceremony — the push awaits only the durable enqueue.
       pushNpub: (npub) => getNpubPush().push(npub),
     }),
-    [accountKey],
+    [accountKey, isSelfCustodial, selfCustodialAccountId],
   )
 
-  const start = useCallback(() => {
+  const start = useCallback((source: IdentityKeySource) => {
     logNostrIdentityCeremonyStarted()
+    sourceRef.current = source
     setState((s) => toConfirm(s))
   }, [])
 
@@ -94,5 +120,5 @@ export const useCreateIdentity = () => {
 
   const retry = useCallback(() => setState((s) => retryAfterError(s)), [])
 
-  return { state, busy, start, confirm, retry }
+  return { state, busy, start, confirm, retry, canDeriveFromSeed: isSelfCustodial }
 }

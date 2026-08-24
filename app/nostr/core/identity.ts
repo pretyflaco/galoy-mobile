@@ -40,8 +40,14 @@ export const initialCeremonyState = (): CeremonyState => ({
 
 /** Ports the ceremony depends on — injected so the flow is testable and seam-clean. */
 export interface CeremonyPorts {
-  /** Story 1.2 keygen (throws fail-closed on CSPRNG failure). */
-  generateKey(): { privKeyHex: string; pubKeyHex: string }
+  /**
+   * Story 1.2 keygen (throws fail-closed on CSPRNG failure). May be async so a
+   * self-custodial session can resolve its mnemonic and derive NIP-06 — the await is
+   * still inside the confirm action; no key material exists before it.
+   */
+  generateKey():
+    | { privKeyHex: string; pubKeyHex: string }
+    | Promise<{ privKeyHex: string; pubKeyHex: string }>
   /** Persist the identity secret (Story 1.3 keychain path). */
   persistNsec(privKeyHex: string): Promise<void>
   /** Encode an x-only pubkey hex to npub (nip19 at the edge). */
@@ -73,7 +79,7 @@ export const confirmCreate = async (
   let privKeyHex: string
   let pubKeyHex: string
   try {
-    const key = ports.generateKey() // throws fail-closed if CSPRNG unavailable
+    const key = await ports.generateKey() // throws fail-closed if the source is unavailable
     privKeyHex = key.privKeyHex
     pubKeyHex = key.pubKeyHex
   } catch (cause) {

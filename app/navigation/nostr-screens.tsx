@@ -29,6 +29,7 @@ import {
   type BtcpaySetupVariant,
 } from "@app/screens/nostr/btcpay-setup/btcpay-setup-screen"
 import { CreateIdentityNavigator } from "@app/screens/nostr/create-identity/create-identity-navigator"
+import { DelegatedGrantsScreen } from "@app/screens/self-custodial/grants/delegated-grants-screen"
 import { useProfilePictureUpload } from "@app/screens/nostr/identity-hub/use-profile-picture-upload"
 import { NostrImportIdentityScreen } from "@app/screens/nostr/import-identity/import-identity-screen"
 import { NostrBackupNavigator } from "@app/screens/nostr/backup/nostr-backup-navigator"
@@ -118,6 +119,11 @@ export const NostrRootScreens = (
       component={NostrBtcpaySetup}
       options={{ title: LL.BtcpaySetupScreen.title() }}
     />
+    <RootNavigator.Screen
+      name="delegatedGrants"
+      component={DelegatedGrants}
+      options={{ title: LL.DelegatedGrantsScreen.title() }}
+    />
     {/* Approval surfaces (connection / request / review-all) are rendered by the
         ApprovalSurfaceHost as a state-driven full-screen overlay — NOT pushed routes — so a
         resolved approval never lingers underneath another screen. See approval-surface-host.tsx. */}
@@ -190,6 +196,12 @@ export const NostrCreateIdentity: React.FC = () => {
     </Screen>
   )
 }
+
+/**
+ * LNbits delegated receive grants (D2 POC). Entry is gated at the settings row
+ * (self-custodial + delegatedGrantsEnabled); the screen itself re-checks both gates.
+ */
+export const DelegatedGrants: React.FC = () => <DelegatedGrantsScreen />
 
 /** nsec import / replace, wired to the existing QR scanner + exit back to the hub. */
 export const NostrImportIdentity: React.FC = () => {

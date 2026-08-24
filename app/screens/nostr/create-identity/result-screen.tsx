@@ -18,6 +18,8 @@ import { IdenticonView } from "./identicon-view"
 
 type Props = {
   identity: NostrIdentity
+  /** Seed-derived (NIP-06) identities get the re-derivation note in the backup card. */
+  derivedFromSeed?: boolean
   onBackup: () => void
   onNotNow: () => void
 }
@@ -33,6 +35,7 @@ const truncateNpub = (npub: string): string =>
  */
 export const NostrCreateIdentityResultScreen: React.FC<Props> = ({
   identity,
+  derivedFromSeed = false,
   onBackup,
   onNotNow,
 }) => {
@@ -117,6 +120,11 @@ export const NostrCreateIdentityResultScreen: React.FC<Props> = ({
         <Text type="p2" style={styles.body}>
           {T.backupBody()}
         </Text>
+        {derivedFromSeed ? (
+          <Text type="p2" style={styles.body}>
+            {T.backupDerivedNote()}
+          </Text>
+        ) : null}
         <GaloyPrimaryButton
           title={T.backupCta()}
           onPress={onBackup}

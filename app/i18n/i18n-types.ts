@@ -13374,6 +13374,14 @@ type RootTranslation = {
 		 */
 		introCreate: string
 		/**
+		 * D​e​r​i​v​e​ ​f​r​o​m​ ​m​y​ ​w​a​l​l​e​t​ ​s​e​e​d
+		 */
+		introCreateFromSeed: string
+		/**
+		 * G​e​n​e​r​a​t​e​ ​a​ ​r​a​n​d​o​m​ ​k​e​y
+		 */
+		introCreateRandom: string
+		/**
 		 * I​m​p​o​r​t​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​k​e​y
 		 */
 		introImport: string
@@ -13457,6 +13465,10 @@ type RootTranslation = {
 		 * I​f​ ​y​o​u​ ​l​o​s​e​ ​t​h​i​s​ ​d​e​v​i​c​e​,​ ​a​ ​b​a​c​k​u​p​ ​i​s​ ​t​h​e​ ​o​n​l​y​ ​w​a​y​ ​t​o​ ​r​e​c​o​v​e​r​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y​.
 		 */
 		backupBody: string
+		/**
+		 * T​h​i​s​ ​k​e​y​ ​i​s​ ​d​e​r​i​v​e​d​ ​f​r​o​m​ ​y​o​u​r​ ​w​a​l​l​e​t​ ​s​e​e​d​ ​—​ ​y​o​u​ ​c​a​n​ ​a​l​w​a​y​s​ ​r​e​-​c​r​e​a​t​e​ ​i​t​ ​f​r​o​m​ ​t​h​e​ ​s​a​m​e​ ​s​e​e​d​.​ ​A​ ​s​e​p​a​r​a​t​e​ ​b​a​c​k​u​p​ ​i​s​ ​s​t​i​l​l​ ​r​e​c​o​m​m​e​n​d​e​d​.
+		 */
+		backupDerivedNote: string
 		/**
 		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
 		 */
@@ -14088,6 +14100,139 @@ type RootTranslation = {
 		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
 		 */
 		replace: string
+	}
+	DelegatedGrantsScreen: {
+		/**
+		 * R​e​c​e​i​v​e​-​o​n​l​y​ ​a​c​c​e​s​s
+		 */
+		title: string
+		/**
+		 * R​e​c​e​i​v​e​-​o​n​l​y​ ​a​c​c​e​s​s
+		 */
+		settingsRow: string
+		/**
+		 * C​o​n​n​e​c​t​ ​L​N​b​i​t​s​ ​t​o​ ​r​e​q​u​e​s​t​ ​i​n​v​o​i​c​e​s​ ​f​o​r​ ​y​o​u​r​ ​a​d​d​r​e​s​s
+		 */
+		settingsRowSubtitle: string
+		/**
+		 * N​o​ ​c​o​n​n​e​c​t​e​d​ ​s​e​r​v​i​c​e​s​ ​y​e​t​.​ ​C​r​e​a​t​e​ ​a​ ​d​e​l​e​g​a​t​i​o​n​ ​t​o​ ​l​e​t​ ​a​n​ ​L​N​b​i​t​s​ ​i​n​s​t​a​n​c​e​ ​r​e​c​e​i​v​e​ ​p​a​y​m​e​n​t​s​ ​f​o​r​ ​y​o​u​r​ ​L​i​g​h​t​n​i​n​g​ ​a​d​d​r​e​s​s​.
+		 */
+		listEmpty: string
+		/**
+		 * N​e​w​ ​d​e​l​e​g​a​t​i​o​n
+		 */
+		newGrant: string
+		/**
+		 * C​o​n​n​e​c​t​ ​a​ ​s​e​r​v​i​c​e
+		 */
+		createTitle: string
+		/**
+		 * T​h​e​ ​c​o​n​n​e​c​t​e​d​ ​s​e​r​v​i​c​e​ ​w​i​l​l​ ​b​e​ ​a​b​l​e​ ​t​o​ ​R​E​Q​U​E​S​T​ ​I​N​V​O​I​C​E​S​ ​f​o​r​ ​{​a​d​d​r​e​s​s​}​ ​u​n​t​i​l​ ​{​d​a​t​e​}​.​ ​I​t​ ​c​a​n​n​o​t​ ​s​p​e​n​d​ ​y​o​u​r​ ​f​u​n​d​s​.
+		 * @param {string} address
+		 * @param {string} date
+		 */
+		capabilityNotice: RequiredParams<'address' | 'date'>
+		/**
+		 * D​e​l​e​g​a​t​e​d​ ​k​e​y​ ​(​f​i​n​g​e​r​p​r​i​n​t​)
+		 */
+		fingerprintLabel: string
+		/**
+		 * E​x​p​i​r​e​s
+		 */
+		expiryLabel: string
+		/**
+		 * {​d​a​y​s​}​ ​d​a​y​s
+		 * @param {number} days
+		 */
+		expiryOption: RequiredParams<'days'>
+		/**
+		 * A​p​p​r​o​v​e​ ​a​n​d​ ​g​e​n​e​r​a​t​e​ ​k​e​y
+		 */
+		confirmCta: string
+		/**
+		 * S​i​g​n​i​n​g​ ​a​n​d​ ​r​e​g​i​s​t​e​r​i​n​g​…
+		 */
+		creating: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		cancel: string
+		/**
+		 * D​e​l​e​g​a​t​i​o​n​ ​c​r​e​a​t​e​d
+		 */
+		successTitle: string
+		/**
+		 * T​h​i​s​ ​o​n​e​-​t​i​m​e​ ​k​e​y​ ​l​e​t​s​ ​t​h​e​ ​s​e​r​v​i​c​e​ ​r​e​c​e​i​v​e​ ​p​a​y​m​e​n​t​s​ ​f​o​r​ ​{​a​d​d​r​e​s​s​}​ ​u​n​t​i​l​ ​{​d​a​t​e​}​.​ ​P​a​s​t​e​ ​i​t​ ​i​n​t​o​ ​L​N​b​i​t​s​ ​→​ ​A​d​m​i​n​ ​→​ ​F​u​n​d​i​n​g​ ​S​o​u​r​c​e​ ​→​ ​B​l​i​n​k​ ​(​n​o​n​-​c​u​s​t​o​d​i​a​l​)​ ​→​ ​D​e​l​e​g​a​t​e​d​ ​R​e​c​e​i​v​e​ ​G​r​a​n​t​ ​K​e​y​.
+		 * @param {string} address
+		 * @param {string} date
+		 */
+		successBody: RequiredParams<'address' | 'date'>
+		/**
+		 * G​r​a​n​t​ ​k​e​y​ ​(​{​f​i​n​g​e​r​p​r​i​n​t​}​)
+		 * @param {string} fingerprint
+		 */
+		keyLabel: RequiredParams<'fingerprint'>
+		/**
+		 * C​o​p​y​ ​k​e​y
+		 */
+		copyKey: string
+		/**
+		 * G​r​a​n​t​ ​k​e​y​ ​c​o​p​i​e​d​ ​—​ ​i​t​ ​w​i​l​l​ ​b​e​ ​c​l​e​a​r​e​d​ ​f​r​o​m​ ​y​o​u​r​ ​c​l​i​p​b​o​a​r​d​ ​i​n​ ​6​0​ ​s​e​c​o​n​d​s
+		 */
+		copiedToast: string
+		/**
+		 * A​n​y​o​n​e​ ​w​i​t​h​ ​t​h​i​s​ ​k​e​y​ ​c​a​n​ ​r​e​q​u​e​s​t​ ​i​n​v​o​i​c​e​s​ ​(​n​e​v​e​r​ ​s​p​e​n​d​)​.​ ​R​e​v​o​k​e​ ​i​t​ ​a​n​y​ ​t​i​m​e​ ​f​r​o​m​ ​t​h​i​s​ ​s​c​r​e​e​n​.
+		 */
+		instructions: string
+		/**
+		 * D​o​n​e
+		 */
+		done: string
+		/**
+		 * R​e​v​o​k​e
+		 */
+		revoke: string
+		/**
+		 * E​x​p​i​r​e​s​ ​i​n​ ​{​d​a​y​s​}​ ​d​a​y​s
+		 * @param {number} days
+		 */
+		expiresInDays: RequiredParams<'days'>
+		/**
+		 * T​h​i​s​ ​f​e​a​t​u​r​e​ ​i​s​ ​o​n​l​y​ ​a​v​a​i​l​a​b​l​e​ ​o​n​ ​a​ ​s​e​l​f​-​c​u​s​t​o​d​i​a​l​ ​w​a​l​l​e​t​ ​w​i​t​h​ ​S​p​a​r​k​ ​e​n​a​b​l​e​d​.
+		 */
+		errorUnavailable: string
+		/**
+		 * S​e​t​ ​a​ ​L​i​g​h​t​n​i​n​g​ ​a​d​d​r​e​s​s​ ​f​o​r​ ​t​h​i​s​ ​a​c​c​o​u​n​t​ ​f​i​r​s​t​.
+		 */
+		errorNoAddress: string
+		/**
+		 * T​o​o​ ​m​a​n​y​ ​a​t​t​e​m​p​t​s​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​ ​l​a​t​e​r​.
+		 */
+		errorRateLimit: string
+		/**
+		 * T​h​i​s​ ​k​e​y​ ​i​s​ ​a​l​r​e​a​d​y​ ​r​e​g​i​s​t​e​r​e​d​ ​t​o​ ​a​n​o​t​h​e​r​ ​a​c​c​o​u​n​t​.
+		 */
+		errorConflict: string
+		/**
+		 * I​n​v​a​l​i​d​ ​e​x​p​i​r​y​ ​—​ ​c​h​o​o​s​e​ ​a​ ​d​u​r​a​t​i​o​n​ ​o​f​ ​o​n​e​ ​y​e​a​r​ ​o​r​ ​l​e​s​s​.
+		 */
+		errorInvalidExpiry: string
+		/**
+		 * T​h​e​ ​s​e​r​v​e​r​ ​r​e​j​e​c​t​e​d​ ​t​h​i​s​ ​k​e​y​.​ ​G​e​n​e​r​a​t​e​ ​a​ ​n​e​w​ ​d​e​l​e​g​a​t​i​o​n​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		errorInvalidKey: string
+		/**
+		 * T​h​i​s​ ​a​d​d​r​e​s​s​ ​i​s​ ​r​e​g​i​s​t​e​r​e​d​ ​o​n​ ​a​ ​s​e​r​v​e​r​ ​t​h​a​t​ ​d​o​e​s​n​'​t​ ​s​u​p​p​o​r​t​ ​d​e​l​e​g​a​t​e​d​ ​g​r​a​n​t​s​.
+		 */
+		errorUnsupportedServer: string
+		/**
+		 * T​h​e​ ​s​e​r​v​e​r​ ​r​e​j​e​c​t​e​d​ ​t​h​e​ ​s​i​g​n​a​t​u​r​e​.​ ​C​h​e​c​k​ ​t​h​a​t​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​o​w​n​s​ ​t​h​i​s​ ​a​d​d​r​e​s​s​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		errorSignature: string
+		/**
+		 * C​o​u​l​d​n​'​t​ ​r​e​a​c​h​ ​t​h​e​ ​g​r​a​n​t​ ​s​e​r​v​e​r​.​ ​C​h​e​c​k​ ​y​o​u​r​ ​c​o​n​n​e​c​t​i​o​n​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		errorNetwork: string
 	}
 	NostrReplaceChoiceScreen: {
 		/**
@@ -27366,6 +27511,14 @@ export type TranslationFunctions = {
 		 */
 		introCreate: () => LocalizedString
 		/**
+		 * Derive from my wallet seed
+		 */
+		introCreateFromSeed: () => LocalizedString
+		/**
+		 * Generate a random key
+		 */
+		introCreateRandom: () => LocalizedString
+		/**
 		 * Import an existing key
 		 */
 		introImport: () => LocalizedString
@@ -27449,6 +27602,10 @@ export type TranslationFunctions = {
 		 * If you lose this device, a backup is the only way to recover your identity.
 		 */
 		backupBody: () => LocalizedString
+		/**
+		 * This key is derived from your wallet seed — you can always re-create it from the same seed. A separate backup is still recommended.
+		 */
+		backupDerivedNote: () => LocalizedString
 		/**
 		 * Back up your key
 		 */
@@ -28045,6 +28202,132 @@ export type TranslationFunctions = {
 		 * Replace your identity
 		 */
 		replace: () => LocalizedString
+	}
+	DelegatedGrantsScreen: {
+		/**
+		 * Receive-only access
+		 */
+		title: () => LocalizedString
+		/**
+		 * Receive-only access
+		 */
+		settingsRow: () => LocalizedString
+		/**
+		 * Connect LNbits to request invoices for your address
+		 */
+		settingsRowSubtitle: () => LocalizedString
+		/**
+		 * No connected services yet. Create a delegation to let an LNbits instance receive payments for your Lightning address.
+		 */
+		listEmpty: () => LocalizedString
+		/**
+		 * New delegation
+		 */
+		newGrant: () => LocalizedString
+		/**
+		 * Connect a service
+		 */
+		createTitle: () => LocalizedString
+		/**
+		 * The connected service will be able to REQUEST INVOICES for {address} until {date}. It cannot spend your funds.
+		 */
+		capabilityNotice: (arg: { address: string, date: string }) => LocalizedString
+		/**
+		 * Delegated key (fingerprint)
+		 */
+		fingerprintLabel: () => LocalizedString
+		/**
+		 * Expires
+		 */
+		expiryLabel: () => LocalizedString
+		/**
+		 * {days} days
+		 */
+		expiryOption: (arg: { days: number }) => LocalizedString
+		/**
+		 * Approve and generate key
+		 */
+		confirmCta: () => LocalizedString
+		/**
+		 * Signing and registering…
+		 */
+		creating: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		cancel: () => LocalizedString
+		/**
+		 * Delegation created
+		 */
+		successTitle: () => LocalizedString
+		/**
+		 * This one-time key lets the service receive payments for {address} until {date}. Paste it into LNbits → Admin → Funding Source → Blink (non-custodial) → Delegated Receive Grant Key.
+		 */
+		successBody: (arg: { address: string, date: string }) => LocalizedString
+		/**
+		 * Grant key ({fingerprint})
+		 */
+		keyLabel: (arg: { fingerprint: string }) => LocalizedString
+		/**
+		 * Copy key
+		 */
+		copyKey: () => LocalizedString
+		/**
+		 * Grant key copied — it will be cleared from your clipboard in 60 seconds
+		 */
+		copiedToast: () => LocalizedString
+		/**
+		 * Anyone with this key can request invoices (never spend). Revoke it any time from this screen.
+		 */
+		instructions: () => LocalizedString
+		/**
+		 * Done
+		 */
+		done: () => LocalizedString
+		/**
+		 * Revoke
+		 */
+		revoke: () => LocalizedString
+		/**
+		 * Expires in {days} days
+		 */
+		expiresInDays: (arg: { days: number }) => LocalizedString
+		/**
+		 * This feature is only available on a self-custodial wallet with Spark enabled.
+		 */
+		errorUnavailable: () => LocalizedString
+		/**
+		 * Set a Lightning address for this account first.
+		 */
+		errorNoAddress: () => LocalizedString
+		/**
+		 * Too many attempts. Please try again later.
+		 */
+		errorRateLimit: () => LocalizedString
+		/**
+		 * This key is already registered to another account.
+		 */
+		errorConflict: () => LocalizedString
+		/**
+		 * Invalid expiry — choose a duration of one year or less.
+		 */
+		errorInvalidExpiry: () => LocalizedString
+		/**
+		 * The server rejected this key. Generate a new delegation and try again.
+		 */
+		errorInvalidKey: () => LocalizedString
+		/**
+		 * This address is registered on a server that doesn't support delegated grants.
+		 */
+		errorUnsupportedServer: () => LocalizedString
+		/**
+		 * The server rejected the signature. Check that the account owns this address and try again.
+		 */
+		errorSignature: () => LocalizedString
+		/**
+		 * Couldn't reach the grant server. Check your connection and try again.
+		 */
+		errorNetwork: () => LocalizedString
 	}
 	NostrReplaceChoiceScreen: {
 		/**

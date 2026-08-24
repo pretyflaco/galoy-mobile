@@ -40,6 +40,7 @@ const SparkCompatibleWalletsUrlKey = "sparkCompatibleWalletsUrl"
 const BackupNudgeBannerThresholdKey = "backupNudgeBannerThreshold"
 const BackupNudgeModalThresholdKey = "backupNudgeModalThreshold"
 const NonCustodialEnabledKey = "nonCustodialEnabled"
+const DelegatedGrantsEnabledKey = "delegatedGrantsEnabled"
 const StableBalanceEnabledKey = "stableBalanceEnabled"
 const DollarRestrictionCacheEnabledKey = "dollarRestrictionCacheEnabled"
 const AutoConvertMaxAttemptsKey = "autoConvertMaxAttempts"
@@ -82,6 +83,7 @@ type FeatureFlags = {
   nonCustodialEnabled: boolean
   stableBalanceEnabled: boolean
   nostrSignerEnabled: boolean
+  delegatedGrantsEnabled: boolean
   remoteConfigReady: boolean
 }
 
@@ -111,6 +113,7 @@ type RemoteConfig = {
   [BackupNudgeBannerThresholdKey]: number
   [BackupNudgeModalThresholdKey]: number
   [NonCustodialEnabledKey]: boolean
+  [DelegatedGrantsEnabledKey]: boolean
   [StableBalanceEnabledKey]: boolean
   [SignerEnabledKey]: boolean
   [DollarRestrictionCacheEnabledKey]: boolean
@@ -216,8 +219,10 @@ export const defaultRemoteConfig: RemoteConfig = {
   backupNudgeBannerThreshold: 2100,
   backupNudgeModalThreshold: 21000,
   nonCustodialEnabled: false,
+  delegatedGrantsEnabled: false,
   stableBalanceEnabled: false,
-  nostrSignerEnabled: false,
+  // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
+  nostrSignerEnabled: true,
   dollarRestrictionCacheEnabled: true,
   autoConvertMaxAttempts: 3,
   autoConvertPollMaxAttempts: 30,
@@ -246,8 +251,10 @@ export const defaultRemoteConfig: RemoteConfig = {
 const defaultFeatureFlags: FeatureFlags = {
   deviceAccountEnabled: false,
   nonCustodialEnabled: false,
+  delegatedGrantsEnabled: false,
   stableBalanceEnabled: false,
-  nostrSignerEnabled: false,
+  // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
+  nostrSignerEnabled: true,
   remoteConfigReady: false,
 }
 
@@ -404,6 +411,10 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           .getValue(NonCustodialEnabledKey)
           .asBoolean()
 
+        const delegatedGrantsEnabled = remoteConfigInstance()
+          .getValue(DelegatedGrantsEnabledKey)
+          .asBoolean()
+
         const stableBalanceEnabled = remoteConfigInstance()
           .getValue(StableBalanceEnabledKey)
           .asBoolean()
@@ -526,6 +537,7 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           backupNudgeBannerThreshold,
           backupNudgeModalThreshold,
           nonCustodialEnabled,
+          delegatedGrantsEnabled,
           stableBalanceEnabled,
           nostrSignerEnabled,
           dollarRestrictionCacheEnabled,
@@ -566,6 +578,7 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
     stableBalanceEnabled:
       remoteConfig.nonCustodialEnabled && remoteConfig.stableBalanceEnabled,
     nostrSignerEnabled: remoteConfig.nostrSignerEnabled,
+    delegatedGrantsEnabled: remoteConfig.delegatedGrantsEnabled,
     remoteConfigReady,
   }
 

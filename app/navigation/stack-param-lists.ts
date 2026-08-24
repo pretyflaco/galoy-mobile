@@ -71,6 +71,9 @@ export type RootStackParamList = {
   // Replace-identity choice: import an existing key OR create a brand-new one (destructive
   // consent shown in-screen before entering the create ceremony).
   nostrReplaceChoice: undefined
+  // LNbits delegated receive grants (D2 POC) — self-custodial accounts only, gated by the
+  // delegatedGrantsEnabled flag at the settings-row entry point.
+  delegatedGrants: undefined
   // Per-client activity history (Amber-style "Show activity"): metadata-only log of what a
   // connected client asked us to sign/decrypt and whether we accepted (never content).
   nostrActivity: { clientPubkey: string }

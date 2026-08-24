@@ -4215,6 +4215,8 @@ const en: BaseTranslation = {
     introLearnMoreBody:
       "Your identity is a cryptographic key kept on this device. Blink never sees the private part. You get one identity per account, and you can have as many accounts as you like.",
     introCreate: "Create my identity",
+    introCreateFromSeed: "Derive from my wallet seed",
+    introCreateRandom: "Generate a random key",
     introImport: "Import an existing key",
     confirmTitle: "Ready to create your identity",
     confirmBody:
@@ -4239,6 +4241,8 @@ const en: BaseTranslation = {
     identiconA11y: "Identity picture for your public address",
     backupTitle: "Back up your key",
     backupBody: "If you lose this device, a backup is the only way to recover your identity.",
+    backupDerivedNote:
+      "This key is derived from your wallet seed — you can always re-create it from the same seed. A separate backup is still recommended.",
     backupCta: "Back up your key",
     backupNotNow: "Not now",
   },
@@ -4426,6 +4430,45 @@ const en: BaseTranslation = {
     title: "Settings",
     backup: "Back up your key",
     replace: "Replace your identity",
+  },
+  DelegatedGrantsScreen: {
+    title: "Receive-only access",
+    settingsRow: "Receive-only access",
+    settingsRowSubtitle: "Connect LNbits to request invoices for your address",
+    listEmpty:
+      "No connected services yet. Create a delegation to let an LNbits instance receive payments for your Lightning address.",
+    newGrant: "New delegation",
+    createTitle: "Connect a service",
+    capabilityNotice:
+      "The connected service will be able to REQUEST INVOICES for {address: string} until {date: string}. It cannot spend your funds.",
+    fingerprintLabel: "Delegated key (fingerprint)",
+    expiryLabel: "Expires",
+    expiryOption: "{days: number} days",
+    confirmCta: "Approve and generate key",
+    creating: "Signing and registering…",
+    cancel: "Cancel",
+    successTitle: "Delegation created",
+    successBody:
+      "This one-time key lets the service receive payments for {address: string} until {date: string}. Paste it into LNbits → Admin → Funding Source → Blink (non-custodial) → Delegated Receive Grant Key.",
+    keyLabel: "Grant key ({fingerprint: string})",
+    copyKey: "Copy key",
+    copiedToast: "Grant key copied — it will be cleared from your clipboard in 60 seconds",
+    instructions:
+      "Anyone with this key can request invoices (never spend). Revoke it any time from this screen.",
+    done: "Done",
+    revoke: "Revoke",
+    expiresInDays: "Expires in {days: number} days",
+    errorUnavailable: "This feature is only available on a self-custodial wallet with Spark enabled.",
+    errorNoAddress: "Set a Lightning address for this account first.",
+    errorRateLimit: "Too many attempts. Please try again later.",
+    errorConflict: "This key is already registered to another account.",
+    errorInvalidExpiry: "Invalid expiry — choose a duration of one year or less.",
+    errorInvalidKey: "The server rejected this key. Generate a new delegation and try again.",
+    errorUnsupportedServer:
+      "This address is registered on a server that doesn't support delegated grants.",
+    errorSignature:
+      "The server rejected the signature. Check that the account owns this address and try again.",
+    errorNetwork: "Couldn't reach the grant server. Check your connection and try again.",
   },
   NostrReplaceChoiceScreen: {
     title: "Replace your identity",

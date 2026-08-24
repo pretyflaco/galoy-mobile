@@ -22,6 +22,16 @@ export interface NostrAccountScope {
   ready: boolean
 }
 
+export interface NostrAccountMode {
+  /** True when the ACTIVE account is a self-custodial (Spark) account. */
+  isSelfCustodial: boolean
+  /**
+   * The self-custodial scope key when active (null otherwise). Deliberately NOT
+   * use-active-wallet's `isSelfCustodial`, which conflates SDK availability with account type.
+   */
+  accountKey: string | null
+}
+
 export const useNostrAccountKey = (): NostrAccountScope => {
   const { persistentState } = usePersistentStateContext()
   const activeAccountId = persistentState?.activeAccountId
@@ -75,4 +85,17 @@ export const useNostrAccountKey = (): NostrAccountScope => {
     return { accountKey: activeAccountId ?? null, ready: true }
   }
   return { accountKey: custodialAccountId, ready: profilesReady }
+}
+
+/**
+ * Custody-mode detection for wallet-facing nostr features (delegated grants, seed-derived
+ * nsec). Uses the SAME predicate as useNostrAccountKey's custody split so mode and scope can
+ * never disagree.
+ */
+export const useNostrAccountMode = (): NostrAccountMode => {
+  const { persistentState } = usePersistentStateContext()
+  const activeAccountId = persistentState?.activeAccountId
+  const isSelfCustodial =
+    Boolean(activeAccountId) && activeAccountId !== DefaultAccountId.Custodial
+  return { isSelfCustodial, accountKey: isSelfCustodial ? activeAccountId ?? null : null }
 }

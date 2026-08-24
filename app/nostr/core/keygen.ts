@@ -105,3 +105,35 @@ export const generateNostrKey = (): { privKeyHex: string; pubKeyHex: string } =>
   )
   throw err
 }
+
+/**
+ * Generate a Delegated Receive Grant Key (DRGK) keypair for LNbits delegated grants.
+ *
+ * Same fail-closed CSPRNG discipline as generateNostrKey, with two deliberate differences:
+ *  - the public key is the 33-byte COMPRESSED form (`secp256k1.getPublicKey(bytes, true)`) —
+ *    the lnurl-server grant endpoints parse delegated keys with a strict secp256k1 parser
+ *    and expect compressed hex, NOT Nostr's x-only BIP-340 encoding;
+ *  - the caller must treat the private key as EPHEMERAL display material (shown once for
+ *    copy/paste into LNbits): this module never persists it, and it must NEVER be derived
+ *    from or stored alongside the Spark seed (leak-audit AC-3).
+ */
+export const generateDrgkKeypair = (): {
+  privKeyHex: string
+  compressedPubKeyHex: string
+} => {
+  for (let attempt = 0; attempt < MAX_SCALAR_DRAWS; attempt += 1) {
+    const bytes = nativeRandomBytes(32)
+    if (isValidSecpScalar(bytes)) {
+      // Explicit injection — never a library-default generator.
+      const pubKey = secp256k1.getPublicKey(bytes, true)
+      return {
+        privKeyHex: toHexLower(bytes),
+        compressedPubKeyHex: toHexLower(pubKey),
+      }
+    }
+  }
+  throw makeSignerError(
+    "unavailable",
+    `no valid secp256k1 scalar after ${MAX_SCALAR_DRAWS} draws (never weaken the RNG source)`,
+  )
+}

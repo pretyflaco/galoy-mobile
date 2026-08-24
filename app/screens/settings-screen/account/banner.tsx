@@ -18,8 +18,8 @@ import { useAccountRegistry } from "@app/hooks/use-account-registry"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 import { useNostrProfilePicture } from "@app/nostr/use-nostr-profile-picture"
-import { useSelfCustodialWallet } from "@app/self-custodial/providers/wallet"
 import { useNostrIdentity } from "@app/screens/nostr/identity-hub/use-nostr-identity"
+import { useSelfCustodialLightningAddress } from "@app/screens/settings-screen/settings/use-self-custodial-lightning-address"
 import { AccountType } from "@app/types/wallet"
 import { useNavigation, useIsFocused } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -89,7 +89,9 @@ const SelfCustodialAccountBanner: React.FC = () => {
     theme: { colors },
   } = useTheme()
   const { LL } = useI18nContext()
-  const { lightningAddress } = useSelfCustodialWallet()
+  // Live SDK value with the domain-matched persisted fallback — the SDK can lose its
+  // local address record across a restart while the registration stays valid.
+  const lightningAddress = useSelfCustodialLightningAddress()
   const { copyToClipboard } = useClipboard()
 
   if (!lightningAddress) return null

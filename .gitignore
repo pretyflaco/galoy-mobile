@@ -66,6 +66,16 @@ android/fastlane/metadata/android/en-US/
 android/app/release/
 android/vendor/bundle
 
+# React Native / Gradle generated drawable + raw resources (copied from node_modules
+# and app assets at build time; regenerated on every build)
+android/app/src/main/res/drawable-*/node_modules_*
+android/app/src/main/res/drawable-*/app_assets_*
+android/app/src/main/res/raw/
+
+# Local POC side-by-side build Firebase config (device-local, never committed)
+android/app/src/debug/google-services.json
+android/app/src/debug/res/
+
 galoy.code-workspace
 
 .phrase.yml

@@ -17,11 +17,41 @@ const mockNavigationReset = jest.fn()
 jest.mock("@react-navigation/native", () => ({
   ...jest.requireActual("@react-navigation/native"),
   useNavigation: () => ({ reset: mockNavigationReset }),
+  // The fork's nostr-aware account icon re-reads on focus; stub it so the banner renders
+  // without a NavigationContainer.
+  useIsFocused: () => true,
 }))
 
 let mockLightningAddress: string | null = "satoshi@blink.sv"
 jest.mock("@app/self-custodial/providers/wallet", () => ({
   useSelfCustodialWallet: () => ({ lightningAddress: mockLightningAddress }),
+}))
+
+// The fork's banner resolves the displayed address through this domain-matched hook
+// (nostr-signer branch) rather than reading the wallet provider directly.
+jest.mock(
+  "@app/screens/settings-screen/settings/use-self-custodial-lightning-address",
+  () => ({
+    useSelfCustodialLightningAddress: () => mockLightningAddress,
+  }),
+)
+
+// The fork renders a nostr-identity-aware account icon. Keep it inert in this test so the
+// banner's address/gating behavior is exercised without the nostr runtime + keychain.
+jest.mock("@app/config/feature-flags-context", () => ({
+  useFeatureFlags: () => ({ nostrSignerEnabled: false }),
+}))
+jest.mock("@app/screens/nostr/identity-hub/use-nostr-identity", () => ({
+  useNostrIdentity: () => ({
+    loading: false,
+    npub: null,
+    pubkeyHex: null,
+    accountReady: false,
+    reload: jest.fn(),
+  }),
+}))
+jest.mock("@app/nostr/use-nostr-profile-picture", () => ({
+  useNostrProfilePicture: () => [null, jest.fn()],
 }))
 
 const mockCopyToClipboard = jest.fn()

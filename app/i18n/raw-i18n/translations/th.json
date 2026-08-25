@@ -2097,17 +2097,57 @@
       "sendingLimit": "Reduced daily sending limit",
       "noOnchain": "No receiving bitcoin onchain",
       "recoveryOption": "กู้คืนเงินผ่าน SMS หรืออีเมล",
-      "dailyLimit": "วงเงินธุรกรรมรายวัน USD 1,000",
+      "dailyLimit": "วงเงินธุรกรรมรายวัน USD {limit: string}",
       "onchainReceive": "รับ Bitcoin แบบ Onchain"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "สิทธิ์การเข้าถึงตำแหน่ง",
     "navToSettingsText": "หากคุณต้องการอนุญาตให้ Blink เข้าถึงตำแหน่งของคุณ กรุณาไปที่การตั้งค่าและเปิดใช้งาน",
-    "payBusiness": "จ่ายเงินให้ร้านนี้",
     "openSettings": "เปิดการตั้งค่า",
     "title": "แผนที่",
-    "error": "เกิดข้อผิดพลาดขณะรับตำแหน่งของคุณ"
+    "error": "เกิดข้อผิดพลาดขณะรับตำแหน่งของคุณ",
+    "attribution": "สถานที่จาก BTC Map, © ผู้ร่วมสร้าง OpenStreetMap",
+    "unnamedPlace": "สถานที่ไม่มีชื่อ",
+    "loadingPlaces": "กำลังโหลดสถานที่จาก BTC Map",
+    "placesError": "โหลดสถานที่จาก BTC Map ไม่สำเร็จ",
+    "detailsError": "โหลดสถานที่นี้ไม่สำเร็จ",
+    "cannotOpenLink": "ไม่มีแอปในเครื่องนี้ที่เปิดลิงก์นี้ได้",
+    "openNow": "เปิดอยู่ตอนนี้",
+    "closedNow": "ปิด",
+    "navigate": "นำทาง",
+    "payMerchant": "จ่ายเงินให้ร้านนี้",
+    "requiresApp": "ต้องใช้แอปเฉพาะในการจ่าย",
+    "boosted": "ไฮไลต์",
+    "verifiedOn": "ยืนยันเมื่อ {date: string}",
+    "lastVerifiedOn": "ยืนยันครั้งล่าสุดเมื่อ {date: string}",
+    "needsSurvey": "สถานที่นี้ต้องได้รับการยืนยัน",
+    "searchError": "ค้นหาในพื้นที่นี้ไม่สำเร็จ",
+    "clearSearch": "ล้างการค้นหา",
+    "nothingToShow": "ไม่มีอะไรแสดง",
+    "metersAway": "ห่างออกไป {distance: string} เมตร",
+    "kilometersAway": "ห่างออกไป {distance: string} กม.",
+    "filters": "ตัวกรอง",
+    "categories": "หมวดหมู่",
+    "selectAll": "เลือกทั้งหมด",
+    "clearAll": "ล้างทั้งหมด",
+    "category": {
+      "restaurants": "ร้านอาหาร",
+      "cafes": "ร้านกาแฟ",
+      "bakeries": "เบเกอรี่และของหวาน",
+      "bars": "บาร์และสถานบันเทิง",
+      "groceries": "ของชำ",
+      "shops": "ร้านค้า",
+      "money": "ตู้เอทีเอ็มและแลกเงิน",
+      "lodging": "โรงแรมและที่พัก",
+      "automotive": "รถยนต์และน้ำมัน",
+      "health": "สุขภาพ",
+      "beauty": "ความงามและสุขภาวะ",
+      "services": "บริการ",
+      "sports": "กีฬาและกิจกรรมกลางแจ้ง",
+      "leisure": "สันทนาการและวัฒนธรรม",
+      "other": "อื่น ๆ"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} อยู่ระหว่างดำเนินการ",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "พินนี้ผิด มีโอกาสใส่พินอีก {attemptsRemaining: number} ครั้ง",
+    "lockoutUnavailable": "ไม่สามารถบันทึกการพยายามที่ผิดพลาดได้อย่างปลอดภัย ทำการออกจากระบบ",
     "oneAttemptRemaining": "พินนี้ผิด โอกาสสุดท้าย",
+    "pinUnreadable": "ไม่สามารถตรวจสอบพินของคุณได้ กรุณาลองอีกครั้ง",
     "setPin": "ตั้งค่าพินโค้ด",
     "setPinFailedMatch": "พินไม่ตรงกัน - ตั้งค่าพินโค้ดอีกครั้ง",
     "storePinFailed": "ไม่สามารถเก็บพินได้",
     "tooManyAttempts": "คุณใส่ผิดมากเกินไป ทำการออกจากระบบ",
+    "tryAgainIn": "ลองอีกครั้งใน {seconds: number} วินาที",
     "verifyPin": "ยืนยันพินโค้ด"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "สร้างแอดเดรส",
+    "addressDisabled": "(ปิดใช้งาน)",
     "donationButton": "ปุ่มบริจาค",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "การเชื่อมต่อ API",
     "apiDocumentation": "เอกสาร API",
     "apiDashboard": "การเข้าถึงและแดชบอร์ด API",
+    "mode": "โหมด",
     "pos": "จุดขาย",
     "posCopied": "คัดลอกลิงก์จุดขายของคุณแล้ว",
     "activated": "เปิดใช้งานเป็นที่เรียบร้อย",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "บัญชีของคุณมีมากกว่า $5",
     "itsATrialAccount": "บัญชีทดลองมีวงเงินธุรกรรมที่จำกัดและไม่มีวิธีกู้คืน หากคุณทำโทรศัพท์หายหรือถอนการติดตั้งแอป เงินของคุณจะไม่สามารถกู้คืนได้",
-    "accountBeingDeleted": "บัญชีของคุณกำลังถูกลบ กรุณารอสักครู่...",
+    "accountBeingDeleted": "บัญชีของคุณกำลังถูกปิด กรุณารอสักครู่...",
     "dangerZone": "โซนอันตราย",
     "phoneDeletedSuccessfully": "ลบหมายเลขโทรศัพท์สำเร็จแล้ว",
     "phoneNumber": "หมายเลขโทรศัพท์",
@@ -2517,7 +2562,28 @@
     "removedAccount": "คุณได้ลบบัญชี {identifier: string} แล้ว"
   },
   "StablesatsRestriction": {
-    "walletLabel": "ไม่พร้อมใช้งานในภูมิภาคของคุณ"
+    "walletLabel": "ไม่พร้อมใช้งานในภูมิภาคของคุณ",
+    "anonModeWalletLabel": "ไม่พร้อมใช้งานในโหมด Incognito"
+  },
+  "AnonModeConvertModal": {
+    "title": "โอนยอดคงเหลือดอลลาร์ของคุณก่อน",
+    "body": "โหมด Incognito รองรับเฉพาะยอดคงเหลือ Bitcoin เท่านั้น โอนยอดคงเหลือดอลลาร์ของคุณไปยังยอดคงเหลือ Bitcoin เพื่อสลับโหมด"
+  },
+  "EnhancedModePrompt": {
+    "title": "ฟีเจอร์นี้ต้องใช้โหมด Enhanced",
+    "body": "คุณอยู่ในโหมด Incognito Blink ไม่ทราบภูมิภาคของคุณ ฟีเจอร์บางอย่างจึงใช้งานไม่ได้ สลับไปใช้ Enhanced เพื่อตรวจสอบตำแหน่งและปลดล็อกฟีเจอร์ทั้งหมดสำหรับภูมิภาคของคุณ",
+    "switchButton": "สลับไปใช้ Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "สลับไปใช้โหมด Enhanced\nควบคุมด้วยตัวเองแล้ว",
+    "anon": "สลับไปใช้โหมด Incognito\nควบคุมด้วยตัวเองแล้ว"
+  },
+  "RestrictedRegion": {
+    "title": "ตรวจพบภูมิภาคที่ถูกจำกัด",
+    "body": "การเชื่อมต่อของคุณดูเหมือนจะมาจากภูมิภาคที่ถูกจำกัด Blink ไม่สามารถให้บริการจากตำแหน่งนี้ได้ ยอดคงเหลือของคุณไม่ได้รับผลกระทบ",
+    "bodyReturn": "เมื่อคุณออกจากภูมิภาคนี้ ฟังก์ชันทั้งหมดจะกลับมาเป็นปกติ",
+    "learnMore": "เรียนรู้เพิ่มเติม",
+    "contactSupport": "ติดต่อฝ่ายสนับสนุน"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "ยอดเงินดอลลาร์ไม่พร้อมใช้งานในภูมิภาคของคุณ"
@@ -2643,7 +2709,6 @@
     "letsGo": "Let's go!",
     "stayInTrialMode": "Stay in trial mode",
     "upgradeToLevel": "อัปเกรดเป็นระดับ {level: number}",
-    "notNow": "ไม่ใช่ตอนนี้",
     "setUpLevelAccount": "ตั้งค่าบัญชีระดับ {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "ยินดีต้อนรับสู่ระดับ 1",
       "title": "ฟีเจอร์ใหม่ที่ปลดล็อคสำหรับบัญชีของคุณ:",
       "receiveBitcoinDescription": "รับ Bitcoin โดยใช้หมายเลขโทรศัพท์ของคุณ",
-      "dailyLimitDescription": "ส่งได้สูงสุด USD 1,000 ต่อวัน",
+      "dailyLimitDescription": "ส่งได้สูงสุด USD {limit: string} ต่อวัน",
       "onchainDescription": "รับการชำระเงินแบบ On-chain"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "ราคาบิตคอยน์",
     "btcAccount": "บัญชีบิตคอยน์",
     "cancel": "ยกเลิก",
+    "notNow": "ไม่ใช่ตอนนี้",
     "card": "บัตร",
     "close": "ปิด",
     "confirm": "ยืนยัน",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Support",
     "defaultSupportMessage": "Hey there! I need some help with {bankName: string}, I'm using the version {version: string} on {os: string}.",
     "emailCopied": "email {email: string} ปยังคลิปบอร์ดแล้ว",
-    "deleteAccount": "Delete account",
+    "deleteAccount": "ปิดบัญชี",
     "delete": "delete",
-    "typeDelete": "Please type \"{delete: string}\" to confirm account deletion",
+    "typeDelete": "โปรดพิมพ์ \"{delete: string}\" เพื่อยืนยันการปิดบัญชี",
     "finalConfirmationAccountDeletionTitle": "Final Confirmation Required",
-    "finalConfirmationAccountDeletionMessage": "Are you sure you want to delete your account? This action is irreversible.",
-    "deleteAccountBalanceWarning": "Deleting your account will cause you to lose access to your current balance. Are you sure you want to proceed?",
-    "deleteAccountConfirmation": "Your account has been written for deletion.\n\nWhen the probation period related to regulatory requirement is over, the remaining data related to your account will be permanently deleted.",
-    "deleteAccountFromPhone": "Hey there!, please delete my account. My phone number is {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "หลังจากปิดบัญชีแล้ว คุณจะไม่สามารถเข้าถึงหรือใช้งานบัญชีของคุณได้ เราอาจเก็บรักษาบันทึกบางอย่างตามที่กฎหมายและข้อผูกพันด้านการเก็บรักษาของเรากำหนด คุณแน่ใจหรือไม่ว่าต้องการปิดบัญชีของคุณ?",
+    "deleteAccountBalanceWarning": "การปิดบัญชีของคุณจะทำให้คุณสูญเสียการเข้าถึงยอดคงเหลือปัจจุบัน คุณแน่ใจหรือไม่ว่าต้องการดำเนินการต่อ?",
+    "deleteAccountConfirmation": "บัญชีของคุณถูกปิดแล้ว\n\nเราอาจเก็บรักษาบันทึกบางอย่างตามที่กฎหมายและข้อผูกพันด้านการเก็บรักษาของเรากำหนด",
+    "deleteAccountFromPhone": "สวัสดี! โปรดปิดบัญชีของฉัน หมายเลขโทรศัพท์ของฉันคือ {phoneNumber: string}",
     "deleteAccountError": "Something went wrong. Contact {email: string} for further assistance.",
     "bye": "Bye!",
-    "deleteAccountWarning": "คำเตือน: การลบบัญชีเป็นการถาวร!\nตรวจสอบว่ากระเป๋าไม่มีเงินเหลือก่อนลบ\nบัญชีที่ถูกลบไม่สามารถกู้คืนได้"
+    "deleteAccountWarning": "ข้อควรระวัง: การปิดบัญชีเป็นการกระทำถาวร!\nตรวจสอบให้แน่ใจว่ากระเป๋าเงินไม่มีเงินคงเหลือก่อนปิดบัญชี\nบัญชีที่ปิดแล้วไม่สามารถกู้คืนได้\nเราอาจเก็บรักษาบันทึกบางอย่างตามที่กฎหมายกำหนด"
   },
   "lnurl": {
     "overLimit": "คุณไม่สามารถส่งเงินได้เกินกว่านี้",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "สำคัญ",
       "body": "ย้ายไปยังบัญชีแบบไม่ฝากดูแลผ่านการย้ายแบบมีคำแนะนำ หรือถอนเงินของคุณ ก่อน {date} การรับจะหยุดในวันที่ {receiveStopsDate}",
+      "bodyReceiveDisabled": "การรับหยุดแล้ว ย้ายไปยังบัญชีแบบไม่ฝากดูแลผ่านการย้ายแบบมีคำแนะนำ หรือถอนเงินของคุณ ก่อน {date}",
       "migrateCta": "ย้าย"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "สร้างกระเป๋าเงินไม่สำเร็จ กรุณาลองอีกครั้ง",
     "selfCustodialDisabled": "ไม่ใช่การคุ้มครองไม่พร้อมใช้งานชั่วคราว"
   },
+  "ChooseExperienceScreen": {
+    "title": "เลือกโหมดควบคุมด้วยตัวเอง",
+    "subtitle": "ตัวเลือกของคุณกำหนดว่าฟีเจอร์ใดใช้ได้ คุณเปลี่ยนได้ทุกเมื่อ",
+    "enhancedLabel": "Enhanced\nโหมด",
+    "enhancedDescription": "เราใช้ภูมิภาคของคุณเพื่อปลดล็อกบริการที่มีคุณค่าซึ่งใช้ได้ในที่ที่คุณอยู่",
+    "anonLabel": "Incognito\nโหมด",
+    "anonDescription": "เพื่อความเป็นส่วนตัวสูงสุด ฟีเจอร์น้อยลง",
+    "continueButton": "ดำเนินการต่อ"
+  },
   "UnsupportedRegionScreen": {
     "title": "ภูมิภาคที่ไม่รองรับ",
-    "description": "ขออภัย เราไม่สามารถให้บริการผู้ใช้จากภูมิภาคปัจจุบันของคุณได้"
+    "description": "ขออภัย เราไม่สามารถให้บริการผู้ใช้จากภูมิภาคปัจจุบันของคุณได้",
+    "custodialSignupDescription": "ขออภัย เราไม่สามารถสร้างบัญชีแบบมีผู้ดูแลใหม่ในภูมิภาคปัจจุบันของคุณได้ คุณสามารถใช้บัญชีแบบดูแลตนเองแทนได้",
+    "custodialSignupOnlyDescription": "ขออภัย เราไม่สามารถสร้างบัญชีแบบมีผู้ดูแลใหม่ในภูมิภาคปัจจุบันของคุณได้",
+    "unknownRegionTitle": "ไม่สามารถระบุภูมิภาคได้",
+    "unknownRegionDescription": "เราไม่สามารถระบุภูมิภาคของคุณได้ โปรดตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
   },
   "RestoreScreen": {
     "title": "กู้คืนกระเป๋าเงิน",

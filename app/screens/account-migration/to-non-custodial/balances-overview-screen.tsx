@@ -25,7 +25,7 @@ import {
 } from "@app/screens/account-migration/hooks"
 import { useCustodialOwnerId } from "@app/screens/account-migration/hooks/use-custodial-owner-id"
 import { useEnsureMigrationStarted } from "@app/screens/account-migration/hooks/use-ensure-migration-started"
-import { armMigrationConversion } from "@app/screens/account-migration/hooks/use-migration-conversion"
+import { armMigrationConversion } from "@app/screens/conversion-flow/drain-conversion"
 import { useMigrationLnAddressTransfer } from "@app/screens/account-migration/hooks/use-migration-ln-address-transfer"
 import { useMigrationStatus } from "@app/screens/account-migration/hooks/use-migration-status"
 import { MigrationSupportOrigin, MigrationSupportReason } from "@app/types/migration"
@@ -46,15 +46,18 @@ export const MigrationBalancesOverviewScreen: React.FC = () => {
   } = useTheme()
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
-  /** The commit screen must never present unknown balances as zeros: until the preview
-   *  is ready, its area holds a spinner and Approve stays off. */
-  const preview = useMigrationBalancesPreview()
-  const { openSupport } = useContactSupport()
   const {
     accountId: selfCustodialAccountId,
     loading: checkpointLoading,
     saveCheckpoint,
   } = useMigrationCheckpoint()
+  /** The commit screen must never present unknown balances as zeros: until the preview
+   *  is ready, its area holds a spinner and Approve stays off. */
+  const preview = useMigrationBalancesPreview({
+    provisionedAccountId: selfCustodialAccountId,
+    isProvisionedAccountLoading: checkpointLoading,
+  })
+  const { openSupport } = useContactSupport()
   const isFocused = useIsFocused()
 
   /** The commit point has no return path: the gesture is disabled on the
@@ -187,9 +190,14 @@ export const MigrationBalancesOverviewScreen: React.FC = () => {
 
   /** Approve commits against a server-side flow, so it stays off until the server has
    *  confirmed one exists and the lightning address has moved, not merely until the
-   *  figures render. */
+   *  figures render. The dollar verdict is held to the same bar: the figures may render
+   *  before it lands, but nothing irreversible may be approved against a dollar balance
+   *  the region has not ruled on. */
   const isApproveDisabled =
-    !preview.isReady || !migrationStart.isStarted || !lnAddressTransfer.isTransferred
+    !preview.isReady ||
+    preview.isDollarRegionPending ||
+    !migrationStart.isStarted ||
+    !lnAddressTransfer.isTransferred
 
   return (
     <Screen preset="fixed" headerShown={false}>
@@ -210,6 +218,7 @@ export const MigrationBalancesOverviewScreen: React.FC = () => {
               dollarLabel={LLOverview.currentDollarBalance()}
               dollarValue={preview.currentDollarBalance}
               isDollarValueMuted={preview.isCurrentDollarBalanceRestricted}
+              isDollarValuePending={preview.isDollarRegionPending}
             />
 
             <RichText text={preview.networkFeeLine} style={styles.networkFee} />
@@ -224,7 +233,8 @@ export const MigrationBalancesOverviewScreen: React.FC = () => {
               bitcoinFiat={preview.newBitcoinFiat}
               dollarLabel={LLOverview.newDollarBalance()}
               dollarValue={preview.newDollarBalance}
-              isDollarValueMuted={preview.isNewDollarBalanceRestricted}
+              isDollarValueMuted={preview.isNewDollarBalanceUnavailable}
+              isDollarValuePending={preview.isDollarRegionPending}
             />
           </ScrollView>
         ) : (

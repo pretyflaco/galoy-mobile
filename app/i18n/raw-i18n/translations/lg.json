@@ -2097,17 +2097,57 @@
       "sendingLimit": "Okukendeeza ku kkomo ku kusindika buli lunaku",
       "noOnchain": "Teri kufuna bitcoin onchain",
       "recoveryOption": "Zza ssente zo nga okozesa SMS oba email",
-      "dailyLimit": "Omusasula gw'obusuubuzi gwa buli lunaku gwa USD 1,000",
+      "dailyLimit": "Omusasula gw'obusuubuzi gwa buli lunaku gwa USD {limit: string}",
       "onchainReceive": "Funa Bitcoin ku onchain"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Olukusa okufuna ekifo w'oli",
     "navToSettingsText": "Bwoba oyagala okuwa Blink olukusa lw'ekifo, nsaba ogende mu settings zo ogisobozesa awo",
-    "payBusiness": "Sasula bizinensi eno",
     "openSettings": "Gulawo entegekka",
     "title": "Mmaapu",
-    "error": "Oops. Waliwo ekyatambude bulungi kukufuna ekifo kyo"
+    "error": "Oops. Waliwo ekyatambude bulungi kukufuna ekifo kyo",
+    "attribution": "Ebifo okuva ku BTC Map, © abawagizi ba OpenStreetMap",
+    "unnamedPlace": "Ekifo ekitali na linnya",
+    "loadingPlaces": "Tutikka ebifo okuva ku BTC Map",
+    "placesError": "Tetusobodde kutikka bifo kuva ku BTC Map",
+    "detailsError": "Tetusobodde kutikka kifo kino",
+    "cannotOpenLink": "Tewali kintu ku ssimu eno kisobola kuggulawo kunyweza kuno",
+    "openNow": "Kiggule kati",
+    "closedNow": "Kiggaddwa",
+    "navigate": "Laga ekkubo",
+    "payMerchant": "Sasula omusuubuzi ono",
+    "requiresApp": "Kyetaaga app enkalu okusasula",
+    "boosted": "Kinnyonnyoddwa",
+    "verifiedOn": "Kikakasiddwa ku {date: string}",
+    "lastVerifiedOn": "Kikakasiddwa okusembayo ku {date: string}",
+    "needsSurvey": "Ekifo kino kyetaaga okukakasibwa",
+    "searchError": "Tekisobose kunoonya mu kitundu kino",
+    "clearSearch": "Sazaamu okunoonya",
+    "nothingToShow": "Tewali kya kulaga",
+    "metersAway": "mita {distance: string} okuva wano",
+    "kilometersAway": "kilomita {distance: string} okuva wano",
+    "filters": "Ebisengejja",
+    "categories": "Ebika",
+    "selectAll": "Londa byonna",
+    "clearAll": "Sazaamu byonna",
+    "category": {
+      "restaurants": "Eby'okuliirwamu",
+      "cafes": "Wooteeri za kaawa",
+      "bakeries": "Emigaati n'ebiwoomerera",
+      "bars": "Baala n'obulamu bw'ekiro",
+      "groceries": "Emmere",
+      "shops": "Amaduuka",
+      "money": "ATM n'okuwaanyisa ssente",
+      "lodging": "Wooteeri n'ebisulo",
+      "automotive": "Emmotoka n'amafuta",
+      "health": "Obulamu",
+      "beauty": "Obulungi n'okwerabirira",
+      "services": "Obuweereza",
+      "sports": "Emizannyo n'eby'ebweru",
+      "leisure": "Okuwummula n'obuwangwa",
+      "other": "Ebirala"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} tekinagwa",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "PIN enkyamu. {attemptsRemaining: number} okugezaako okusigaddewo.",
+    "lockoutUnavailable": "Tetusobodde kuwandiika kugezaako okulemeredwa mu bukuumi. Logging out.",
     "oneAttemptRemaining": "PIN enkyamu. mulundi 1 ogw'okugezaako ogusigaddewo.",
+    "pinUnreadable": "Tetusobodde kukebera PIN yo. Gezaako nate.",
     "setPin": "Kola PIN yo",
     "setPinFailedMatch": "Pins tezikwatagana - Kola PIN yo",
     "storePinFailed": "Tetusobodde kutereka pin yo",
     "tooManyAttempts": "Okugezaako okungi ennyo okulemeredwa. Logging out.",
+    "tryAgainIn": "Gezaako nate mu {seconds: number} s.",
     "verifyPin": "Kakasa pini koodi yo"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Kola endagiriro",
+    "addressDisabled": "(tekikola)",
     "donationButton": "Bbatani y'okuwaayo",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "Okutuuka ku API",
     "apiDocumentation": "Ebiwandiiko bya API",
     "apiDashboard": "Okuyingira mu API ne dashiboodi",
+    "mode": "Modu",
     "pos": "Ekifo we Batunda",
     "posCopied": "Ennyunga ku kifo kyo eky'okutunda ekoppeddwa",
     "activated": "Ekoleddwa",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Akawunti yo erina omuwendo ogusoba mu $5",
     "itsATrialAccount": "Akawunti z'okugezesa zikendeezezza ku nkola y'okutunda era tewali ngeri ya kuzzaawo. Bw'ofiirwa essimu yo oba okuggyawo app, ssente zo zijja kuba tezisobola kufunibwa.",
-    "accountBeingDeleted": "Akawunti yo eri mu kusazibwaamu, tukusaba olinde...",
+    "accountBeingDeleted": "Akawunti yo eri mu kugaazibwawo, tukusaba olinde...",
     "dangerZone": "Ekitundu Eky'akabi",
     "phoneDeletedSuccessfully": "Essimu eggyiddwaawo bulungi",
     "phoneNumber": "Ennamba Y'essimu",
@@ -2517,7 +2562,28 @@
     "removedAccount": "Oggyewo akawunti {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "teriiwo mu kitundu kyo"
+    "walletLabel": "teriiwo mu kitundu kyo",
+    "anonModeWalletLabel": "tekiriiwo mu modu ya Incognito"
+  },
+  "AnonModeConvertModal": {
+    "title": "Sooka okyuse ssente zo eza Doola",
+    "body": "Modu ya Incognito ekola ku balansi ya Bitcoin yokka. Kyusa balansi yo eya Doola ku balansi ya Bitcoin okusobola okukyuka."
+  },
+  "EnhancedModePrompt": {
+    "title": "Ekintu kino kyetaaga modu ya Enhanced",
+    "body": "Oli mu modu ya Incognito, Blink temanyi kitundu kyo, n'olwekyo ebintu ebimu tebiriiwo. Kyusa ku Enhanced okukola okukebera ekifo n'okusumulula ebintu byonna eby'ekitundu kyo.",
+    "switchButton": "Kyusa ku Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Okyusizza ku modu ya Enhanced\neyeefuga",
+    "anon": "Okyusizza ku modu ya Incognito\neyeefuga"
+  },
+  "RestrictedRegion": {
+    "title": "Ekitundu ekikugirwa kizuuliddwa",
+    "body": "Okuyunga kwo kulabika nga kuva mu kitundu ekikugirwa. Blink tesobola kuwa buweereza okuva mu kifo kino. Ssente zo tezikoseddwa.",
+    "bodyReturn": "Bw'onoova mu kitundu kino, byonna bijja kudda mu nkola eya bulijjo.",
+    "learnMore": "Manya ebisingawo",
+    "contactSupport": "Tuukirira abayambi"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Bbalansi ya doola teriiwo mu kitundu kyo"
@@ -2643,7 +2709,6 @@
     "letsGo": "Ka tugende!",
     "stayInTrialMode": "Sigala mu nkola ey'okugezesa",
     "upgradeToLevel": "Yimusa eri Omutendera {level: number}",
-    "notNow": "Si kati",
     "setUpLevelAccount": "Teekateeka akawunti ey'Omutendera {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "Tukusanyukira ku Mutendera 1",
       "title": "Ebipya ebikugguddwaako ku akawunti yo:",
       "receiveBitcoinDescription": "Funa Bitcoin ng'okozesa ennamba y'essimu yo",
-      "dailyLimitDescription": "Senda okutuuka ku USD 1,000 buli lunaku",
+      "dailyLimitDescription": "Senda okutuuka ku USD {limit: string} buli lunaku",
       "onchainDescription": "Funa okusasula kwa on-chain"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Okulamula kwa Bitcoin",
     "btcAccount": "Akawunti ya Bitcoin",
     "cancel": "Sazaamu",
+    "notNow": "Si kati",
     "card": "Kaadi",
     "close": "Ggalawo",
     "confirm": "Kakasa",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Okuwagira",
     "defaultSupportMessage": "Ab'eyo! Nze nneetaaga obuyambi ku {bankName: string}, nkozesa enkyusa {type: string} ku {os: string}.",
     "emailCopied": "email {email: string} ekoppedwa ku clipboard",
-    "deleteAccount": "Sazaamu akawunti",
+    "deleteAccount": "Ggalawo akawunti",
     "delete": "siimuula",
-    "typeDelete": "Tukusaba wandiika \"{delete: string}\" okukakasa okuggyawo kwa akawunti",
+    "typeDelete": "Wandika \"{delete: string}\" okukakasa okuggalawo akawunti",
     "finalConfirmationAccountDeletionTitle": "Okukakasa Okusembayo Kwetaagisa",
-    "finalConfirmationAccountDeletionMessage": "Kakasa nti oyagala kusazaamu akawunti yo? Ekikolwa kino tekikyuka.",
-    "deleteAccountBalanceWarning": "Okusazaamu akawunti yo kijja kukuleetera okufiirwa bbalansi gw’olina kati. Kakasa nti oyagala kugenda mu maaso?",
-    "deleteAccountConfirmation": "Akawunti yo ewandiikiddwa okusazibwamu.\n\nEkiseera ky’okugezesebwa ekikwatagana n’obwetaavu bw’okulungamya bwe kinaaba kiwedde, eby'okunoonyereza ebigaddewo ebikwata ku akawunti yo bijja kusazibwamu enkalakkalira.",
-    "deleteAccountFromPhone": "Abeeyo!, nsaba osazeemu akawunti yange. Ennamba yange ey'essimu ye {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Oluvanyuma lw'okuggalawo, tojjakuba na kufuna akawunti yo wadde okugikozesa. Tuyinza kukuuma ebiwandiiko ebimu nga amateeka n'obuvunaanyizibwa bwaffe mu kukuuma ebiwandiiko bwe bitawaana. Okakasa nti oyagala okuggalawo akawunti yo?",
+    "deleteAccountBalanceWarning": "Okuggalawo akawunti yo kujjakukufiirwa okufuna ssente zo ez'omu kaseera kano. Okakasa nti oyagala okweyongerayo?",
+    "deleteAccountConfirmation": "Akawunti yo egaaziddwawo.\n\nTuyinza kukuuma ebiwandiiko ebimu nga amateeka n'obuvunaanyizibwa bwaffe mu kukuuma ebiwandiiko bwe bitawaana.",
+    "deleteAccountFromPhone": "Nkulamusizza! Nkusaba oggalawo akawunti yange. Ennamba yange ey'essimu ye {phoneNumber: string}.",
     "deleteAccountError": "Waliwo ekitatambudde bulungi. Tukirira {email: string} okufuna obuyambi.",
     "bye": "Tweelaba!",
-    "deleteAccountWarning": "Weetegereze: Okusazaamu akawunti tekukyusika!\nKakasa nti waleti zo tezirina ssente nga tonnasazaamu.\nAkawunti eyasaziddwaamu tesobola kuddizibwa."
+    "deleteAccountWarning": "Kulabula: Okuggalawo akawunti kwa lubeerera!\nKakasa nti walooti tezirina ssente nga tonnaggalawo.\nAkawunti egaaziddwawo teyinza kuddizibwa.\nTuyinza kukuuma ebiwandiiko ebimu nga amateeka bwe galagira."
   },
   "lnurl": {
     "overLimit": "Tosobola kusindika ssente ezisukka mu muwendo ogusinga obunene",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Kikulu",
       "body": "Kyusa ogende ku akawunti etakuumibwa ng'oyita mu ntambuza erungamizibwa, oba oggyeyo ssente zo, nga {date} tennatuuka. Okufuna kukoma nga {receiveStopsDate}.",
+      "bodyReceiveDisabled": "Okufuna kukomye. Kyusa ogende ku akawunti etakuumibwa ng'oyita mu ntambuza erungamizibwa, oba oggyeyo ssente zo, nga {date} tennatuuka.",
       "migrateCta": "Kyusa"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Tekisobose okukola wallet. Tugezeeyo nate.",
     "selfCustodialDisabled": "Tekikola kati ku non-custodial."
   },
+  "ChooseExperienceScreen": {
+    "title": "Londa engeri ey'okweefuga",
+    "subtitle": "Ky'olonda kye kisalawo ebikozesebwa ebiriwo. Osobola okukyusa buli lw'oyagala.",
+    "enhancedLabel": "Enhanced\nEngeri",
+    "enhancedDescription": "Tukozesa ekitundu kyo okuggulawo obuweereza obw'omugaso obuli mu kifo mw'oli.",
+    "anonLabel": "Incognito\nEngeri",
+    "anonDescription": "Olw'eby'ekyama ebisingayo. Ebikozesebwa bitono.",
+    "continueButton": "Weyongerayo"
+  },
   "UnsupportedRegionScreen": {
     "title": "Ekitundu ekitawagirwa",
-    "description": "Eky'embi, tetusobola kuweereza bakozesa abava mu kitundu kyo eky'okaakano."
+    "description": "Eky'embi, tetusobola kuweereza bakozesa abava mu kitundu kyo eky'okaakano.",
+    "custodialSignupDescription": "Tetusobola kutondawo akkawunti empya eza kkampuni mu kitundu kyo. Osobola okukozesa akkawunti eyeefuga.",
+    "custodialSignupOnlyDescription": "Tetusobola kutondawo akkawunti empya eza kkampuni mu kitundu kyo.",
+    "unknownRegionTitle": "Ekitundu tekimanyiddwa",
+    "unknownRegionDescription": "Tetusobodde kumanya kitundu kyo. Kebera enkolagana yo ogezeeko nate."
   },
   "RestoreScreen": {
     "title": "Zzaawo wallet",

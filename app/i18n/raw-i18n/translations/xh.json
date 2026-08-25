@@ -2097,17 +2097,57 @@
       "sendingLimit": "Reduced daily sending limit",
       "noOnchain": "No receiving bitcoin onchain",
       "recoveryOption": "Buyisela imali nge-SMS okanye i-imeyili",
-      "dailyLimit": "USD 1,000 umda wentengiselo yosuku",
+      "dailyLimit": "USD {limit: string} umda wentengiselo yosuku",
       "onchainReceive": "Fumana iBitcoin kwi-onchain"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Iimvume zendawo",
     "navToSettingsText": "Ukuba ungathanda ukunika Blink iimvume zendawo, nceda uye kwiisethingi zakho kwaye uzivule khona",
-    "payBusiness": "hlawula eli shishini",
     "openSettings": "Vula iisethingi",
     "title": "Imephu",
-    "error": "Owu. Kukho into engahambanga kakuhle ngelixa sifumana indawo yakho"
+    "error": "Owu. Kukho into engahambanga kakuhle ngelixa sifumana indawo yakho",
+    "attribution": "Iindawo ezivela kwiBTC Map, © abanikeli be-OpenStreetMap",
+    "unnamedPlace": "Indawo engenagama",
+    "loadingPlaces": "Kulayishwa iindawo kwiBTC Map",
+    "placesError": "Azikwazanga ukulayishwa iindawo kwiBTC Map",
+    "detailsError": "Ayikwazanga ukulayishwa le ndawo",
+    "cannotOpenLink": "Akukho nto kule fowuni inokuvula elo khonkco",
+    "openNow": "Ivulile ngoku",
+    "closedNow": "Ivaliwe",
+    "navigate": "Khokela",
+    "payMerchant": "Hlawula lo rhwebi",
+    "requiresApp": "Ifuna usetyenziso oluthile ukuze uhlawule",
+    "boosted": "Igqanyisiwe",
+    "verifiedOn": "Iqinisekisiwe nge-{date: string}",
+    "lastVerifiedOn": "Iqinisekiswe okokugqibela nge-{date: string}",
+    "needsSurvey": "Le ndawo ifuna ukuqinisekiswa",
+    "searchError": "Akukwazekanga ukukhangela kule ndawo",
+    "clearSearch": "Cima ukhangelo",
+    "nothingToShow": "Akukho nto yokubonisa",
+    "metersAway": "iimitha ezingu-{distance: string} ukusuka apha",
+    "kilometersAway": "ii-km ezingu-{distance: string} ukusuka apha",
+    "filters": "Izihluzi",
+    "categories": "Iindidi",
+    "selectAll": "Khetha konke",
+    "clearAll": "Cima konke",
+    "category": {
+      "restaurants": "Iindawo zokutyela",
+      "cafes": "Iikhefi",
+      "bakeries": "Iibhekari nezimuncumuncu",
+      "bars": "Iibha nobomi basebusuku",
+      "groceries": "Ukutya",
+      "shops": "Iivenkile",
+      "money": "Ii-ATM notshintshiselwano",
+      "lodging": "Iihotele neendawo zokuhlala",
+      "automotive": "Iimoto nepetroli",
+      "health": "Impilo",
+      "beauty": "Ubuhle nokuzikhathalela",
+      "services": "Iinkonzo",
+      "sports": "Imidlalo nezinto zangaphandle",
+      "leisure": "Ukuzonwabisa nenkcubeko",
+      "other": "Ezinye"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} pending",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "I-PIN engalunganga. {attemptsRemaining: number} imizamo eseleyo.",
+    "lockoutUnavailable": "Akukwazekanga ukurekhoda umzamo ongaphumelelanga ngokukhuselekileyo. Ukuloga ngaphandle.",
     "oneAttemptRemaining": "PIN engalunganga. Kushiyeke umzamo “1”.",
+    "pinUnreadable": "Ayikwazanga ukujonga i-PIN yakho. Nceda uzame kwakhona.",
     "setPin": "Seta ikhowudi yakho ye-PIN",
     "setPinFailedMatch": "Pin azihambelani  - Seta ikhowudi yakho ye-PIN",
     "storePinFailed": "Ayikwazanga ukugcina iphini yakho.",
     "tooManyAttempts": "Mininzi kakhulu imizamo engaphumeleliyo. Ukuloga ngaphandle.",
+    "tryAgainIn": "Zama kwakhona emva kwe-{seconds: number} s.",
     "verifyPin": "Qinisekisa ikhowudi yakho ye-PIN"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Yenza idilesi",
+    "addressDisabled": "(icimile)",
     "donationButton": "Iqhosha lomnikelo",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "Udityaniswo lwe-API",
     "apiDocumentation": "Amaxwebhu e-API",
     "apiDashboard": "Ukufikelela kwi-API nedashbhodi",
+    "mode": "Imo",
     "pos": "Indawo Yokuthengisa",
     "posCopied": "Ilinki yakho yendawo yokuthengisa ikopishiwe",
     "activated": "Yenziwe yasebenza",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "I-akhawunti yakho inangaphezulu kwe-$5",
     "itsATrialAccount": "Ii-akhawunti zovavanyo zineemida ezincitshisiweyo zentlawulo kwaye azinandlela yokubuyisela. Ukuba ulahlekelwa yifowuni yakho okanye ususa i-app, imali yakho ayizukubuyiseka.",
-    "accountBeingDeleted": "I-akhawunti yakho iyacinywa, nceda ulinde...",
+    "accountBeingDeleted": "I-akhawunti yakho iyavalwa, nceda ulinde...",
     "dangerZone": "Indawo eyingozi",
     "phoneDeletedSuccessfully": "Inombolo yomnxeba icinywe ngempumelelo",
     "phoneNumber": "Inombolo Yomnxeba",
@@ -2517,7 +2562,28 @@
     "removedAccount": "Ususile i-akhawunti {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "ayifumaneki kummandla wakho"
+    "walletLabel": "ayifumaneki kummandla wakho",
+    "anonModeWalletLabel": "ayifumaneki kwimo ye-Incognito"
+  },
+  "AnonModeConvertModal": {
+    "title": "Qala udlulisele ibhalansi yakho yeDola",
+    "body": "Imo ye-Incognito ixhasa ibhalansi ye-Bitcoin kuphela. Dlulisela ibhalansi yakho yeDola kwibhalansi ye-Bitcoin ukuze utshintshe."
+  },
+  "EnhancedModePrompt": {
+    "title": "Olu phawu lufuna imo ye-Enhanced",
+    "body": "Ukwimo ye-Incognito, uBlink akawazi ummandla wakho, ngoko amanye amaphawu awafumaneki. Tshintshela kwi-Enhanced ukuze kwenziwe ukhangelo lwendawo kuvulwe onke amaphawu ommandla wakho.",
+    "switchButton": "Tshintshela kwi-Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Utshintshele kwimo ye-Enhanced\nengagciniwe",
+    "anon": "Utshintshele kwimo ye-Incognito\nengagciniwe"
+  },
+  "RestrictedRegion": {
+    "title": "Kufunyenwe ummandla onezithintelo",
+    "body": "Uqhagamshelo lwakho lubonakala luvela kummandla onezithintelo. UBlink akakwazi ukunikezela ngeenkonzo kule ndawo. Iibhalansi zakho azichaphazelekanga.",
+    "bodyReturn": "Wakuba uwushiyile lo mmandla, yonke imisebenzi iya kubuyela esiqhelweni.",
+    "learnMore": "Funda okungakumbi",
+    "contactSupport": "Qhagamshelana nenkxaso"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Ibhalansi yedola ayifumaneki kummandla wakho"
@@ -2643,7 +2709,6 @@
     "letsGo": "Let's go!",
     "stayInTrialMode": "Stay in trial mode",
     "upgradeToLevel": "Nyusela kwiNqanaba {level: number}",
-    "notNow": "Hayi ngoku",
     "setUpLevelAccount": "Cwangcisa i-akhawunti yeNqanaba {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "Wamkelekile kwiNqanaba 1",
       "title": "Iimpawu ezintsha ezivuliweyo kwi-akhawunti yakho:",
       "receiveBitcoinDescription": "Fumana Bitcoin usebenzisa inombolo yakho yomnxeba",
-      "dailyLimitDescription": "Thumela ukuya kuthi ga USD 1,000 ngosuku",
+      "dailyLimitDescription": "Thumela ukuya kuthi ga USD {limit: string} ngosuku",
       "onchainDescription": "Fumana iintlawulo ze-onchain"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Bitcoin Price",
     "btcAccount": "I-Akhawunti ye-Bitcoin",
     "cancel": "Rhoxisa",
+    "notNow": "Hayi ngoku",
     "card": "Ikhadi",
     "close": "Close",
     "confirm": "Confirm",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Support",
     "defaultSupportMessage": "Hey there! I need some help with {bankName: string}, I'm using the version {version: string} on {os: string}.",
     "emailCopied": "email {email: string} copied to clipboard",
-    "deleteAccount": "Delete account",
+    "deleteAccount": "Vala i-akhawunti",
     "delete": "delete",
-    "typeDelete": "Please type \"{delete: string}\" to confirm account deletion",
+    "typeDelete": "Nceda chwetheza \"{delete: string}\" ukuze uqinisekise ukuvalwa kwe-akhawunti",
     "finalConfirmationAccountDeletionTitle": "Final Confirmation Required",
-    "finalConfirmationAccountDeletionMessage": "Are you sure you want to delete your account? This action is irreversible.",
-    "deleteAccountBalanceWarning": "Deleting your account will cause you to lose access to your current balance. Are you sure you want to proceed?",
-    "deleteAccountConfirmation": "Your account has been written for deletion.\n\nWhen the probation period related to regulatory requirement is over, the remaining data related to your account will be permanently deleted.",
-    "deleteAccountFromPhone": "Hey there!, please delete my account. My phone number is {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Emva kokuvalwa, awukwazi ukufikelela okanye usebenzise i-akhawunti yakho. Sinokugcina iirekhodi ezithile njengoko kufunwa yil umthetho kunye neembopheleko zethu zokugcina. Uqinisekile ukuba ufuna ukuvala i-akhawunti yakho?",
+    "deleteAccountBalanceWarning": "Ukuvala i-akhawunti yakho kuya kukwenza ulahlekelwe ukufikelela kwibhalansi yakho yangoku. Uqinisekile ukuba ufuna ukuqhubeka?",
+    "deleteAccountConfirmation": "I-akhawunti yakho ivaliwe.\n\nSinokugcina iirekhodi ezithile njengoko kufunwa yil umthetho kunye neembopheleko zethu zokugcina.",
+    "deleteAccountFromPhone": "Molo!, nceda uvale i-akhawunti yam. Inombolo yam yefowuni ngu {phoneNumber: string}.",
     "deleteAccountError": "Something went wrong. Contact {email: string} for further assistance.",
     "bye": "Bye!",
-    "deleteAccountWarning": "Qaphela: Ukucinywa kwe-akhawunti kusisigxina!\nQinisekisa ukuba iiwoleti azinayo imali ngaphambi kokucima.\nI-akhawunti ecinyiweyo ayinakubuyiselwa."
+    "deleteAccountWarning": "Qaphela: Ukuvalwa kwe-akhawunti kusisigxina!\nQinisekisa ukuba iiwoleti azinayo imali ngaphambi kokuvala.\nI-akhawunti evaliweyo ayinakubuyiselwa.\nSinokugcina iirekhodi ezithile njengoko kufunwa luluthetho."
   },
   "lnurl": {
     "overLimit": "You can't send more than max amount",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Kubalulekile",
       "body": "Yiya kwiakhawunti engagcinwanga ngofuduko olukhokelwayo, okanye ukhuphe imali yakho, phambi kwe-{date}. Ukufumana kuyakuma nge-{receiveStopsDate}.",
+      "bodyReceiveDisabled": "Ukufumana kumile. Yiya kwiakhawunti engagcinwanga ngofuduko olukhokelwayo, okanye ukhuphe imali yakho, phambi kwe-{date}.",
       "migrateCta": "Fuduka"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Ayikwazanga ukudala iwallet. Nceda zama kwakhona.",
     "selfCustodialDisabled": "I-non-custodial ayifumaneki okwexeshana."
   },
+  "ChooseExperienceScreen": {
+    "title": "Khetha imowudi engagciniwe",
+    "subtitle": "Ukhetho lwakho lugqiba ukuba zeziphi iimpawu ezifumanekayo. Ungatshintsha nanini na.",
+    "enhancedLabel": "Enhanced\nImowudi",
+    "enhancedDescription": "Sisebenzisa ummandla wakho ukuvula iinkonzo ezixabisekileyo ezifumaneka apho ukhoyo.",
+    "anonLabel": "Incognito\nImowudi",
+    "anonDescription": "Ukufumana ubumfihlo obuphezulu. Iimpawu ezimbalwa.",
+    "continueButton": "Qhubeka"
+  },
   "UnsupportedRegionScreen": {
     "title": "Ummandla ongaxhaswanga",
-    "description": "Ngelishwa asikwazi ukunceda abasebenzisi abavela kummandla wakho wangoku."
+    "description": "Ngelishwa asikwazi ukunceda abasebenzisi abavela kummandla wakho wangoku.",
+    "custodialSignupDescription": "Ngelishwa asikwazi ukuvula iiakhawunti ezintsha ezigcinwa ngathi kummandla wakho wangoku. Ungasebenzisa iakhawunti ozigcinela yona endaweni yoko.",
+    "custodialSignupOnlyDescription": "Ngelishwa asikwazi ukuvula iiakhawunti ezintsha ezigcinwa ngathi kummandla wakho wangoku.",
+    "unknownRegionTitle": "Ummandla awufunyanwanga",
+    "unknownRegionDescription": "Asikwazanga ukufumanisa ummandla wakho. Nceda ujonge uqhagamshelwano lwakho uzame kwakhona."
   },
   "RestoreScreen": {
     "title": "Buyisela isikhwama",

@@ -188,6 +188,20 @@ export const AccountLevel = {
 } as const;
 
 export type AccountLevel = typeof AccountLevel[keyof typeof AccountLevel];
+/** Daily transaction limits enforced for a given account level. */
+export type AccountLevelLimits = {
+  readonly __typename: 'AccountLevelLimits';
+  /** Max amount that can be converted between currencies among an account's own wallets. */
+  readonly convert: Scalars['CentAmount']['output'];
+  /** Max amount that can be sent to other internal accounts. */
+  readonly internalSend: Scalars['CentAmount']['output'];
+  /** The rolling time interval in seconds that the limits apply for. */
+  readonly interval: Scalars['Seconds']['output'];
+  readonly level: AccountLevel;
+  /** Max amount that can be withdrawn to external onchain or lightning destinations. */
+  readonly withdrawal: Scalars['CentAmount']['output'];
+};
+
 export type AccountLimit = {
   /** The rolling time interval in seconds that the limits would apply for. */
   readonly interval?: Maybe<Scalars['Seconds']['output']>;
@@ -952,6 +966,8 @@ export type FeesInformation = {
 /** Provides global settings for the application which might have an impact for the user. */
 export type Globals = {
   readonly __typename: 'Globals';
+  /** Daily transaction limits enforced for each account level, in USD cents. */
+  readonly accountLimitsByLevel: ReadonlyArray<AccountLevelLimits>;
   /** Current block height and block hash */
   readonly blockInfo?: Maybe<BlockInfo>;
   readonly buildInformation: BuildInformation;
@@ -3361,6 +3377,11 @@ export type LevelQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type LevelQuery = { readonly __typename: 'Query', readonly me?: { readonly __typename: 'User', readonly id: string, readonly defaultAccount: { readonly __typename: 'ConsumerAccount', readonly id: string, readonly level: AccountLevel } } | null };
 
+export type CustodialRestrictionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CustodialRestrictionsQuery = { readonly __typename: 'Query', readonly custodialRestrictions: { readonly __typename: 'CustodialRestrictions', readonly dollarBalance: boolean, readonly transfer: boolean } };
+
 export type DisplayCurrencyQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -3395,12 +3416,22 @@ export type KycFlowStartMutationVariables = Exact<{
 
 export type KycFlowStartMutation = { readonly __typename: 'Mutation', readonly kycFlowStart: { readonly __typename: 'OnboardingFlowStartResult', readonly workflowRunId: string, readonly tokenWeb: string } };
 
+export type AccountLimitsByLevelQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AccountLimitsByLevelQuery = { readonly __typename: 'Query', readonly globals?: { readonly __typename: 'Globals', readonly accountLimitsByLevel: ReadonlyArray<{ readonly __typename: 'AccountLevelLimits', readonly level: AccountLevel, readonly withdrawal: number }> } | null };
+
 export type UserLogoutMutationVariables = Exact<{
   input: UserLogoutInput;
 }>;
 
 
 export type UserLogoutMutation = { readonly __typename: 'Mutation', readonly userLogout: { readonly __typename: 'SuccessPayload', readonly success?: boolean | null } };
+
+export type RegionCheckQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RegionCheckQuery = { readonly __typename: 'Query', readonly regionCheck: { readonly __typename: 'RegionCheck', readonly countryCode?: string | null, readonly custodialCreationAllowed: boolean, readonly restricted: boolean } };
 
 export type TransactionOwnershipProbeQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -3600,11 +3631,6 @@ export type BulletinsQueryVariables = Exact<{
 
 
 export type BulletinsQuery = { readonly __typename: 'Query', readonly me?: { readonly __typename: 'User', readonly id: string, readonly unacknowledgedStatefulNotificationsWithBulletinEnabled: { readonly __typename: 'StatefulNotificationConnection', readonly pageInfo: { readonly __typename: 'PageInfo', readonly endCursor?: string | null, readonly hasNextPage: boolean, readonly hasPreviousPage: boolean, readonly startCursor?: string | null }, readonly edges: ReadonlyArray<{ readonly __typename: 'StatefulNotificationEdge', readonly cursor: string, readonly node: { readonly __typename: 'StatefulNotification', readonly id: string, readonly title: string, readonly body: string, readonly createdAt: number, readonly acknowledgedAt?: number | null, readonly bulletinEnabled: boolean, readonly icon?: Icon | null, readonly action?: { readonly __typename: 'OpenDeepLinkAction', readonly deepLink: string, readonly label?: string | null } | { readonly __typename: 'OpenExternalLinkAction', readonly url: string, readonly label?: string | null } | null } }> } } | null };
-
-export type BusinessMapMarkersQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type BusinessMapMarkersQuery = { readonly __typename: 'Query', readonly businessMapMarkers: ReadonlyArray<{ readonly __typename: 'MapMarker', readonly username: string, readonly mapInfo: { readonly __typename: 'MapInfo', readonly title: string, readonly coordinates: { readonly __typename: 'Coordinates', readonly longitude: number, readonly latitude: number } } }> };
 
 export type StatefulNotificationAcknowledgeMutationVariables = Exact<{
   input: StatefulNotificationAcknowledgeInput;
@@ -5133,6 +5159,46 @@ export type LevelQueryHookResult = ReturnType<typeof useLevelQuery>;
 export type LevelLazyQueryHookResult = ReturnType<typeof useLevelLazyQuery>;
 export type LevelSuspenseQueryHookResult = ReturnType<typeof useLevelSuspenseQuery>;
 export type LevelQueryResult = Apollo.QueryResult<LevelQuery, LevelQueryVariables>;
+export const CustodialRestrictionsDocument = gql`
+    query custodialRestrictions {
+  custodialRestrictions {
+    dollarBalance
+    transfer
+  }
+}
+    `;
+
+/**
+ * __useCustodialRestrictionsQuery__
+ *
+ * To run a query within a React component, call `useCustodialRestrictionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCustodialRestrictionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCustodialRestrictionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useCustodialRestrictionsQuery(baseOptions?: Apollo.QueryHookOptions<CustodialRestrictionsQuery, CustodialRestrictionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CustodialRestrictionsQuery, CustodialRestrictionsQueryVariables>(CustodialRestrictionsDocument, options);
+      }
+export function useCustodialRestrictionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CustodialRestrictionsQuery, CustodialRestrictionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CustodialRestrictionsQuery, CustodialRestrictionsQueryVariables>(CustodialRestrictionsDocument, options);
+        }
+export function useCustodialRestrictionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<CustodialRestrictionsQuery, CustodialRestrictionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CustodialRestrictionsQuery, CustodialRestrictionsQueryVariables>(CustodialRestrictionsDocument, options);
+        }
+export type CustodialRestrictionsQueryHookResult = ReturnType<typeof useCustodialRestrictionsQuery>;
+export type CustodialRestrictionsLazyQueryHookResult = ReturnType<typeof useCustodialRestrictionsLazyQuery>;
+export type CustodialRestrictionsSuspenseQueryHookResult = ReturnType<typeof useCustodialRestrictionsSuspenseQuery>;
+export type CustodialRestrictionsQueryResult = Apollo.QueryResult<CustodialRestrictionsQuery, CustodialRestrictionsQueryVariables>;
 export const DisplayCurrencyDocument = gql`
     query displayCurrency {
   me {
@@ -5380,6 +5446,48 @@ export function useKycFlowStartMutation(baseOptions?: Apollo.MutationHookOptions
 export type KycFlowStartMutationHookResult = ReturnType<typeof useKycFlowStartMutation>;
 export type KycFlowStartMutationResult = Apollo.MutationResult<KycFlowStartMutation>;
 export type KycFlowStartMutationOptions = Apollo.BaseMutationOptions<KycFlowStartMutation, KycFlowStartMutationVariables>;
+export const AccountLimitsByLevelDocument = gql`
+    query accountLimitsByLevel {
+  globals {
+    accountLimitsByLevel {
+      level
+      withdrawal
+    }
+  }
+}
+    `;
+
+/**
+ * __useAccountLimitsByLevelQuery__
+ *
+ * To run a query within a React component, call `useAccountLimitsByLevelQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAccountLimitsByLevelQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAccountLimitsByLevelQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useAccountLimitsByLevelQuery(baseOptions?: Apollo.QueryHookOptions<AccountLimitsByLevelQuery, AccountLimitsByLevelQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<AccountLimitsByLevelQuery, AccountLimitsByLevelQueryVariables>(AccountLimitsByLevelDocument, options);
+      }
+export function useAccountLimitsByLevelLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AccountLimitsByLevelQuery, AccountLimitsByLevelQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<AccountLimitsByLevelQuery, AccountLimitsByLevelQueryVariables>(AccountLimitsByLevelDocument, options);
+        }
+export function useAccountLimitsByLevelSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<AccountLimitsByLevelQuery, AccountLimitsByLevelQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<AccountLimitsByLevelQuery, AccountLimitsByLevelQueryVariables>(AccountLimitsByLevelDocument, options);
+        }
+export type AccountLimitsByLevelQueryHookResult = ReturnType<typeof useAccountLimitsByLevelQuery>;
+export type AccountLimitsByLevelLazyQueryHookResult = ReturnType<typeof useAccountLimitsByLevelLazyQuery>;
+export type AccountLimitsByLevelSuspenseQueryHookResult = ReturnType<typeof useAccountLimitsByLevelSuspenseQuery>;
+export type AccountLimitsByLevelQueryResult = Apollo.QueryResult<AccountLimitsByLevelQuery, AccountLimitsByLevelQueryVariables>;
 export const UserLogoutDocument = gql`
     mutation userLogout($input: UserLogoutInput!) {
   userLogout(input: $input) {
@@ -5413,6 +5521,47 @@ export function useUserLogoutMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UserLogoutMutationHookResult = ReturnType<typeof useUserLogoutMutation>;
 export type UserLogoutMutationResult = Apollo.MutationResult<UserLogoutMutation>;
 export type UserLogoutMutationOptions = Apollo.BaseMutationOptions<UserLogoutMutation, UserLogoutMutationVariables>;
+export const RegionCheckDocument = gql`
+    query regionCheck {
+  regionCheck {
+    countryCode
+    custodialCreationAllowed
+    restricted
+  }
+}
+    `;
+
+/**
+ * __useRegionCheckQuery__
+ *
+ * To run a query within a React component, call `useRegionCheckQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRegionCheckQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRegionCheckQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useRegionCheckQuery(baseOptions?: Apollo.QueryHookOptions<RegionCheckQuery, RegionCheckQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<RegionCheckQuery, RegionCheckQueryVariables>(RegionCheckDocument, options);
+      }
+export function useRegionCheckLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<RegionCheckQuery, RegionCheckQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<RegionCheckQuery, RegionCheckQueryVariables>(RegionCheckDocument, options);
+        }
+export function useRegionCheckSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<RegionCheckQuery, RegionCheckQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<RegionCheckQuery, RegionCheckQueryVariables>(RegionCheckDocument, options);
+        }
+export type RegionCheckQueryHookResult = ReturnType<typeof useRegionCheckQuery>;
+export type RegionCheckLazyQueryHookResult = ReturnType<typeof useRegionCheckLazyQuery>;
+export type RegionCheckSuspenseQueryHookResult = ReturnType<typeof useRegionCheckSuspenseQuery>;
+export type RegionCheckQueryResult = Apollo.QueryResult<RegionCheckQuery, RegionCheckQueryVariables>;
 export const TransactionOwnershipProbeDocument = gql`
     query transactionOwnershipProbe($first: Int) {
   me {
@@ -6910,52 +7059,6 @@ export type BulletinsQueryHookResult = ReturnType<typeof useBulletinsQuery>;
 export type BulletinsLazyQueryHookResult = ReturnType<typeof useBulletinsLazyQuery>;
 export type BulletinsSuspenseQueryHookResult = ReturnType<typeof useBulletinsSuspenseQuery>;
 export type BulletinsQueryResult = Apollo.QueryResult<BulletinsQuery, BulletinsQueryVariables>;
-export const BusinessMapMarkersDocument = gql`
-    query businessMapMarkers {
-  businessMapMarkers {
-    username
-    mapInfo {
-      title
-      coordinates {
-        longitude
-        latitude
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useBusinessMapMarkersQuery__
- *
- * To run a query within a React component, call `useBusinessMapMarkersQuery` and pass it any options that fit your needs.
- * When your component renders, `useBusinessMapMarkersQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useBusinessMapMarkersQuery({
- *   variables: {
- *   },
- * });
- */
-export function useBusinessMapMarkersQuery(baseOptions?: Apollo.QueryHookOptions<BusinessMapMarkersQuery, BusinessMapMarkersQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<BusinessMapMarkersQuery, BusinessMapMarkersQueryVariables>(BusinessMapMarkersDocument, options);
-      }
-export function useBusinessMapMarkersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<BusinessMapMarkersQuery, BusinessMapMarkersQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<BusinessMapMarkersQuery, BusinessMapMarkersQueryVariables>(BusinessMapMarkersDocument, options);
-        }
-export function useBusinessMapMarkersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<BusinessMapMarkersQuery, BusinessMapMarkersQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<BusinessMapMarkersQuery, BusinessMapMarkersQueryVariables>(BusinessMapMarkersDocument, options);
-        }
-export type BusinessMapMarkersQueryHookResult = ReturnType<typeof useBusinessMapMarkersQuery>;
-export type BusinessMapMarkersLazyQueryHookResult = ReturnType<typeof useBusinessMapMarkersLazyQuery>;
-export type BusinessMapMarkersSuspenseQueryHookResult = ReturnType<typeof useBusinessMapMarkersSuspenseQuery>;
-export type BusinessMapMarkersQueryResult = Apollo.QueryResult<BusinessMapMarkersQuery, BusinessMapMarkersQueryVariables>;
 export const StatefulNotificationAcknowledgeDocument = gql`
     mutation StatefulNotificationAcknowledge($input: StatefulNotificationAcknowledgeInput!) {
   statefulNotificationAcknowledge(input: $input) {
@@ -10437,6 +10540,7 @@ export type ResolversTypes = {
   AccountEnableNotificationCategoryInput: AccountEnableNotificationCategoryInput;
   AccountEnableNotificationChannelInput: AccountEnableNotificationChannelInput;
   AccountLevel: AccountLevel;
+  AccountLevelLimits: ResolverTypeWrapper<AccountLevelLimits>;
   AccountLimit: ResolverTypeWrapper<ResolversInterfaceTypes<ResolversTypes>['AccountLimit']>;
   AccountLimits: ResolverTypeWrapper<AccountLimits>;
   AccountMigration: ResolverTypeWrapper<AccountMigration>;
@@ -10747,6 +10851,7 @@ export type ResolversParentTypes = {
   AccountDisableNotificationChannelInput: AccountDisableNotificationChannelInput;
   AccountEnableNotificationCategoryInput: AccountEnableNotificationCategoryInput;
   AccountEnableNotificationChannelInput: AccountEnableNotificationChannelInput;
+  AccountLevelLimits: AccountLevelLimits;
   AccountLimit: ResolversInterfaceTypes<ResolversParentTypes>['AccountLimit'];
   AccountLimits: AccountLimits;
   AccountMigration: AccountMigration;
@@ -11048,6 +11153,15 @@ export type AccountResolvers<ContextType = any, ParentType extends ResolversPare
 export type AccountDeletePayloadResolvers<ContextType = any, ParentType extends ResolversParentTypes['AccountDeletePayload'] = ResolversParentTypes['AccountDeletePayload']> = {
   errors?: Resolver<ReadonlyArray<ResolversTypes['Error']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccountLevelLimitsResolvers<ContextType = any, ParentType extends ResolversParentTypes['AccountLevelLimits'] = ResolversParentTypes['AccountLevelLimits']> = {
+  convert?: Resolver<ResolversTypes['CentAmount'], ParentType, ContextType>;
+  internalSend?: Resolver<ResolversTypes['CentAmount'], ParentType, ContextType>;
+  interval?: Resolver<ResolversTypes['Seconds'], ParentType, ContextType>;
+  level?: Resolver<ResolversTypes['AccountLevel'], ParentType, ContextType>;
+  withdrawal?: Resolver<ResolversTypes['CentAmount'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -11533,6 +11647,7 @@ export type FeesInformationResolvers<ContextType = any, ParentType extends Resol
 };
 
 export type GlobalsResolvers<ContextType = any, ParentType extends ResolversParentTypes['Globals'] = ResolversParentTypes['Globals']> = {
+  accountLimitsByLevel?: Resolver<ReadonlyArray<ResolversTypes['AccountLevelLimits']>, ParentType, ContextType>;
   blockInfo?: Resolver<Maybe<ResolversTypes['BlockInfo']>, ParentType, ContextType>;
   buildInformation?: Resolver<ResolversTypes['BuildInformation'], ParentType, ContextType>;
   feesInformation?: Resolver<ResolversTypes['FeesInformation'], ParentType, ContextType>;
@@ -12488,6 +12603,7 @@ export type WelcomeProfileResolvers<ContextType = any, ParentType extends Resolv
 export type Resolvers<ContextType = any> = {
   Account?: AccountResolvers<ContextType>;
   AccountDeletePayload?: AccountDeletePayloadResolvers<ContextType>;
+  AccountLevelLimits?: AccountLevelLimitsResolvers<ContextType>;
   AccountLimit?: AccountLimitResolvers<ContextType>;
   AccountLimits?: AccountLimitsResolvers<ContextType>;
   AccountMigration?: AccountMigrationResolvers<ContextType>;

@@ -2097,17 +2097,57 @@
       "sendingLimit": "Nedsat daglig afsendelsesgrænse.",
       "noOnchain": "Ingen modtagelse af bitcoin onchain.",
       "recoveryOption": "Gendan midler via SMS eller e-mail",
-      "dailyLimit": "USD 1,000 daglig transaktionsgrænse",
+      "dailyLimit": "USD {limit: string} daglig transaktionsgrænse",
       "onchainReceive": "Modtag bitcoin onchain"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Location permissions",
     "navToSettingsText": "If you'd like to give Blink location permissions, please navigate to your settings and enable it there",
-    "payBusiness": "Betal denne forretning",
     "openSettings": "Open settings",
     "title": "Kort",
-    "error": "Oops. Something went wrong while getting your location"
+    "error": "Oops. Something went wrong while getting your location",
+    "attribution": "Steder fra BTC Map, © OpenStreetMap-bidragydere",
+    "unnamedPlace": "Sted uden navn",
+    "loadingPlaces": "Indlæser steder fra BTC Map",
+    "placesError": "Kunne ikke indlæse steder fra BTC Map",
+    "detailsError": "Kunne ikke indlæse dette sted",
+    "cannotOpenLink": "Intet på denne telefon kan åbne det link",
+    "openNow": "Åbent nu",
+    "closedNow": "Lukket",
+    "navigate": "Naviger",
+    "payMerchant": "Betal denne forretning",
+    "requiresApp": "Kræver en bestemt app for at betale",
+    "boosted": "Fremhævet",
+    "verifiedOn": "Verificeret {date: string}",
+    "lastVerifiedOn": "Sidst verificeret {date: string}",
+    "needsSurvey": "Dette sted skal verificeres",
+    "searchError": "Kunne ikke søge i dette område",
+    "clearSearch": "Ryd søgning",
+    "nothingToShow": "Intet at vise",
+    "metersAway": "{distance: string} meter herfra",
+    "kilometersAway": "{distance: string} km herfra",
+    "filters": "Filtre",
+    "categories": "Kategorier",
+    "selectAll": "Vælg alle",
+    "clearAll": "Ryd alle",
+    "category": {
+      "restaurants": "Restauranter",
+      "cafes": "Caféer",
+      "bakeries": "Bagerier og slik",
+      "bars": "Barer og natteliv",
+      "groceries": "Dagligvarer",
+      "shops": "Butikker",
+      "money": "Hæveautomater og veksling",
+      "lodging": "Hoteller og overnatning",
+      "automotive": "Biler og brændstof",
+      "health": "Sundhed",
+      "beauty": "Skønhed og velvære",
+      "services": "Tjenester",
+      "sports": "Sport og friluftsliv",
+      "leisure": "Fritid og kultur",
+      "other": "Andet"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} afventende",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "Forkert PIN-kode. {attemptsRemaining: number} forsøg tilbage.",
+    "lockoutUnavailable": "Det mislykkede forsøg kunne ikke registreres sikkert. Logger ud.",
     "oneAttemptRemaining": "Forkert PIN-kode. 1 forsøg tilbage.",
+    "pinUnreadable": "Din PIN-kode kunne ikke kontrolleres. Prøv venligst igen.",
     "setPin": "Vælg din PIN-kode.",
     "setPinFailedMatch": "PIN-koderne matcher ikke - Vælg din PIN-kode.",
     "storePinFailed": "Kunne ikke gemme din PIN-kode",
     "tooManyAttempts": "For mange fejlede forsøg. Logger ud.",
+    "tryAgainIn": "Prøv igen om {seconds: number} s.",
     "verifyPin": "Bekræft din PIN-kode"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Opret adresse",
+    "addressDisabled": "(deaktiveret)",
     "donationButton": "Donér-knap",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "API-integration",
     "apiDocumentation": "API-dokumentation",
     "apiDashboard": "API-adgang og dashboard",
+    "mode": "Tilstand",
     "pos": "Kasseterminal",
     "posCopied": "Dit kasseterminal-link er blevet kopieret",
     "activated": "Aktiveret",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Din konto har mere end $5",
     "itsATrialAccount": "Prøvekonti har reducerede transaktionsgrænser og ingen gendannelsesmetode. Hvis du mister din telefon eller afinstallerer appen, vil dine midler være uoprettelige.",
-    "accountBeingDeleted": "Din konto er ved at blive slettet, vent venligst...",
+    "accountBeingDeleted": "Din konto er ved at blive lukket, vent venligst...",
     "dangerZone": "Farezone",
     "phoneDeletedSuccessfully": "Telefonnummer slettet",
     "phoneNumber": "Telefonnummer",
@@ -2517,7 +2562,28 @@
     "removedAccount": "Du fjernede kontoen {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "ikke tilgængelig i din region"
+    "walletLabel": "ikke tilgængelig i din region",
+    "anonModeWalletLabel": "ikke tilgængelig i Incognito-tilstand"
+  },
+  "AnonModeConvertModal": {
+    "title": "Overfør først din dollarsaldo",
+    "body": "Incognito-tilstand understøtter kun Bitcoin-saldoen. Overfør din dollarsaldo til din Bitcoin-saldo for at skifte."
+  },
+  "EnhancedModePrompt": {
+    "title": "Denne funktion kræver Enhanced-tilstand",
+    "body": "Du er i Incognito-tilstand, Blink kender ikke din region, så nogle funktioner er ikke tilgængelige. Skift til Enhanced for at køre et positionstjek og låse op for alle funktioner i din region.",
+    "switchButton": "Skift til Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Skiftet til Enhanced\nselvforvaltet tilstand",
+    "anon": "Skiftet til Incognito\nselvforvaltet tilstand"
+  },
+  "RestrictedRegion": {
+    "title": "Begrænset region registreret",
+    "body": "Din forbindelse ser ud til at komme fra en begrænset region. Blink kan ikke levere tjenester fra denne placering. Dine saldi er ikke påvirket.",
+    "bodyReturn": "Når du forlader denne region, vil al funktionalitet vende tilbage til normalen.",
+    "learnMore": "Læs mere",
+    "contactSupport": "Kontakt support"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Dollar-saldo er ikke tilgængelig i din region"
@@ -2643,7 +2709,6 @@
     "letsGo": "Lad os komme i gang!",
     "stayInTrialMode": "Bliv i prøvetilstand",
     "upgradeToLevel": "Opgrader til niveau {level: number}",
-    "notNow": "Ikke nu",
     "setUpLevelAccount": "Opsæt niveau {level: number} konto"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "Velkommen til niveau 1",
       "title": "Nye funktioner låst op for din konto:",
       "receiveBitcoinDescription": "Modtag Bitcoin med dit telefonnummer",
-      "dailyLimitDescription": "Send op til USD 1,000 om dagen",
+      "dailyLimitDescription": "Send op til USD {limit: string} om dagen",
       "onchainDescription": "Modtag on-chain betalinger"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Bitcoin Pris",
     "btcAccount": "Bitcoin-konto",
     "cancel": "Annuller",
+    "notNow": "Ikke nu",
     "card": "Kort",
     "close": "Luk",
     "confirm": "Bekræft",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Support",
     "defaultSupportMessage": "Hej! Jeg har brug for hjælp med {bankName: string}. Jeg bruger version {version: string} på {os: string}.",
     "emailCopied": "email {email: string} kopieret til udklipsholder",
-    "deleteAccount": "Slet konto",
+    "deleteAccount": "Luk konto",
     "delete": "slet",
-    "typeDelete": "Indtast venligst \"{delete: string}\" for at bekræfte sletning af konto",
+    "typeDelete": "Indtast venligst \"{delete: string}\" for at bekræfte lukning af kontoen",
     "finalConfirmationAccountDeletionTitle": "Endelig bekræftelse påkrævet",
-    "finalConfirmationAccountDeletionMessage": "Er du sikker på, at du vil slette din konto? Denne handling kan ikke fortrydes.",
-    "deleteAccountBalanceWarning": "At slette din konto vil medføre, at du mister adgang til din nuværende saldo. Er du sikker på, at du vil fortsætte?",
-    "deleteAccountConfirmation": "Din konto er blevet sendt til sletning.\n\nNår prøvetidsperioden i forbindelse med lovgivningsmæssige krav er slut, vil de resterende data relateret til din konto blive slettet permanent.",
-    "deleteAccountFromPhone": "Hej der!, venligst slet min konto. Mit telefonnummer er {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Efter lukning vil du ikke kunne få adgang til eller bruge din konto. Vi kan opbevare visse oplysninger, som påkrævet af loven og vores opbevaringsforpligtelser. Er du sikker på, at du vil lukke din konto?",
+    "deleteAccountBalanceWarning": "Hvis du lukker din konto, mister du adgangen til din nuværende saldo. Er du sikker på, at du vil fortsætte?",
+    "deleteAccountConfirmation": "Din konto er blevet lukket.\n\nVi kan opbevare visse oplysninger, som påkrævet af loven og vores opbevaringsforpligtelser.",
+    "deleteAccountFromPhone": "Hej! Luk venligst min konto. Mit telefonnummer er {phoneNumber: string}.",
     "deleteAccountError": "Noget gik galt. Kontakt {email: string} for yderligere assistance.",
     "bye": "Farvel!",
-    "deleteAccountWarning": "Bemærk: Kontosletning er permanent!\nSørg for, at wallets ikke har midler, inden du sletter.\nSlettede konti kan ikke gendannes."
+    "deleteAccountWarning": "Bemærk: Lukning af kontoen er permanent!\nSørg for, at tegnebøgerne ikke har penge, før du lukker.\nEn lukket konto kan ikke genoprettes.\nVi kan opbevare visse oplysninger, som påkrævet af loven."
   },
   "lnurl": {
     "overLimit": "Du kan ikke sende mere end maks beløbet",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Vigtigt",
       "body": "Skift til en ikke-depotkonto via guidet migrering, eller hæv dine midler, inden {date}. Modtagelse stopper den {receiveStopsDate}.",
+      "bodyReceiveDisabled": "Modtagelse er stoppet. Skift til en ikke-depotkonto via guidet migrering, eller hæv dine midler, inden {date}.",
       "migrateCta": "Migrér"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Kunne ikke oprette tegnebog. Prøv venligst igen.",
     "selfCustodialDisabled": "Ikke-forvaltning er midlertidigt utilgængelig."
   },
+  "ChooseExperienceScreen": {
+    "title": "Vælg selvforvaltet tilstand",
+    "subtitle": "Dit valg afgør, hvilke funktioner der er tilgængelige. Du kan skifte, når du vil.",
+    "enhancedLabel": "Enhanced\ntilstand",
+    "enhancedDescription": "Vi bruger din region til at låse op for værdifulde tjenester, der er tilgængelige, hvor du er.",
+    "anonLabel": "Incognito\ntilstand",
+    "anonDescription": "For maksimalt privatliv. Færre funktioner.",
+    "continueButton": "Fortsæt"
+  },
   "UnsupportedRegionScreen": {
     "title": "Ikke-understøttet region",
-    "description": "Desværre kan vi ikke betjene brugere fra din nuværende region."
+    "description": "Desværre kan vi ikke betjene brugere fra din nuværende region.",
+    "custodialSignupDescription": "Desværre kan vi ikke oprette nye depotkonti i din nuværende region. Du kan i stedet bruge en selvforvaltet konto.",
+    "custodialSignupOnlyDescription": "Desværre kan vi ikke oprette nye depotkonti i din nuværende region.",
+    "unknownRegionTitle": "Region ikke fastslået",
+    "unknownRegionDescription": "Vi kunne ikke fastslå din region. Tjek din forbindelse, og prøv igen."
   },
   "RestoreScreen": {
     "title": "Gendan tegnebog",

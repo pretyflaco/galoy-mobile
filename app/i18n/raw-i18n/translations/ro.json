@@ -2097,17 +2097,57 @@
       "sendingLimit": "Limită de trimitere zilnică redusă",
       "noOnchain": "Nu primiți bitcoin onchain",
       "recoveryOption": "Recuperați fondurile prin SMS sau email",
-      "dailyLimit": "Limită zilnică de tranzacții de USD 1,000",
+      "dailyLimit": "Limită zilnică de tranzacții de USD {limit: string}",
       "onchainReceive": "Primiți bitcoin onchain"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Permisiuni pentru locație",
     "navToSettingsText": "Dacă doriți să acordați permisiuni de locație pentru Blink, navigați la setările dvs. și activați-le acolo",
-    "payBusiness": "Plătește aceastei firme",
     "openSettings": "Deschideți setările",
     "title": "Harta",
-    "error": "Hopa! A apărut o eroare la obținerea locației dvs"
+    "error": "Hopa! A apărut o eroare la obținerea locației dvs",
+    "attribution": "Locuri din BTC Map, © contribuitorii OpenStreetMap",
+    "unnamedPlace": "Loc fără nume",
+    "loadingPlaces": "Se încarcă locurile din BTC Map",
+    "placesError": "Locurile din BTC Map nu au putut fi încărcate",
+    "detailsError": "Acest loc nu a putut fi încărcat",
+    "cannotOpenLink": "Nimic de pe acest telefon nu poate deschide acel link",
+    "openNow": "Deschis acum",
+    "closedNow": "Închis",
+    "navigate": "Navighează",
+    "payMerchant": "Plătește acest comerciant",
+    "requiresApp": "Necesită o aplicație anume pentru plată",
+    "boosted": "Promovat",
+    "verifiedOn": "Verificat pe {date: string}",
+    "lastVerifiedOn": "Ultima verificare pe {date: string}",
+    "needsSurvey": "Acest loc trebuie verificat",
+    "searchError": "Nu s-a putut căuta în această zonă",
+    "clearSearch": "Șterge căutarea",
+    "nothingToShow": "Nimic de afișat",
+    "metersAway": "la {distance: string} metri",
+    "kilometersAway": "la {distance: string} km",
+    "filters": "Filtre",
+    "categories": "Categorii",
+    "selectAll": "Selectează tot",
+    "clearAll": "Șterge tot",
+    "category": {
+      "restaurants": "Restaurante",
+      "cafes": "Cafenele",
+      "bakeries": "Brutării și dulciuri",
+      "bars": "Baruri și viață de noapte",
+      "groceries": "Alimente",
+      "shops": "Magazine",
+      "money": "Bancomate și schimb valutar",
+      "lodging": "Hoteluri și cazare",
+      "automotive": "Mașini și carburant",
+      "health": "Sănătate",
+      "beauty": "Frumusețe și îngrijire",
+      "services": "Servicii",
+      "sports": "Sport și activități în aer liber",
+      "leisure": "Timp liber și cultură",
+      "other": "Altele"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} în aşteptare",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "PIN incorect. {attemptsRemaining: number} încercări rămase.",
+    "lockoutUnavailable": "Încercarea eșuată nu a putut fi înregistrată în siguranță. Deconectare.",
     "oneAttemptRemaining": "PIN incorect. 1 încercare rămasă.",
+    "pinUnreadable": "Nu am putut verifica PIN-ul. Vă rugăm să încercați din nou.",
     "setPin": "Setează codul PIN",
     "setPinFailedMatch": "Pinurile nu se potrivesc - Setează codul PIN",
     "storePinFailed": "Nu se poate stoca codul PIN.",
     "tooManyAttempts": "Prea multe încercări eșuate. Deconectare.",
+    "tryAgainIn": "Încercați din nou în {seconds: number} s.",
     "verifyPin": "Verificați codul PIN"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Creează adresă",
+    "addressDisabled": "(dezactivat)",
     "donationButton": "Buton de donare",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "Acces API",
     "apiDocumentation": "Documentație API",
     "apiDashboard": "Acces API și panou de control",
+    "mode": "Mod",
     "pos": "Punct de vânzare POS",
     "posCopied": "Link-ul punctului de vânzare a fost copiat",
     "activated": "Activat",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Contul dvs. are mai mult de 5 USD",
     "itsATrialAccount": "Conturile de probă au limite reduse de tranzacție și nicio metodă de recuperare. Dacă vă pierdeți telefonul sau dezinstalați aplicația, fondurile dvs. nu vor putea fi recuperate.",
-    "accountBeingDeleted": "Contul dvs. este în curs de ștergere, vă rugăm să așteptați ...",
+    "accountBeingDeleted": "Contul dvs. este în curs de închidere, vă rugăm să așteptați...",
     "dangerZone": "Zona periculoasă",
     "phoneDeletedSuccessfully": "Numărul de telefon a fost șters cu succes",
     "phoneNumber": "Număr de telefon",
@@ -2517,7 +2562,28 @@
     "removedAccount": "Ați eliminat contul {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "nu este disponibil în regiunea ta"
+    "walletLabel": "nu este disponibil în regiunea ta",
+    "anonModeWalletLabel": "indisponibil în modul Incognito"
+  },
+  "AnonModeConvertModal": {
+    "title": "Transferă mai întâi soldul tău în dolari",
+    "body": "Modul Incognito acceptă doar soldul Bitcoin. Transferă soldul tău în dolari în soldul Bitcoin pentru a comuta."
+  },
+  "EnhancedModePrompt": {
+    "title": "Această funcție necesită modul Enhanced",
+    "body": "Ești în modul Incognito, Blink nu îți cunoaște regiunea, așa că unele funcții nu sunt disponibile. Treci la Enhanced pentru a rula o verificare a locației și a debloca toate funcțiile pentru regiunea ta.",
+    "switchButton": "Treci la Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Ai trecut la modul Enhanced\nfără custodie",
+    "anon": "Ai trecut la modul Incognito\nfără custodie"
+  },
+  "RestrictedRegion": {
+    "title": "Regiune restricționată detectată",
+    "body": "Conexiunea ta pare să provină dintr-o regiune restricționată. Blink nu poate furniza servicii din această locație. Soldurile tale nu sunt afectate.",
+    "bodyReturn": "Odată ce părăsești această regiune, toate funcțiile vor reveni la normal.",
+    "learnMore": "Află mai multe",
+    "contactSupport": "Contactează asistența"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Soldul în dolari nu este disponibil în regiunea ta"
@@ -2643,7 +2709,6 @@
     "letsGo": "Să pornim!",
     "stayInTrialMode": "Rămâneți în modul de test",
     "upgradeToLevel": "Faceți upgrade la Nivelul {level: number}",
-    "notNow": "Nu acum",
     "setUpLevelAccount": "Configurați contul de Nivel {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "Bine ați venit la Nivelul 1",
       "title": "Funcții noi deblocate pentru contul dvs.:",
       "receiveBitcoinDescription": "Primiți Bitcoin folosind numărul dvs. de telefon",
-      "dailyLimitDescription": "Trimite până la USD 1,000 pe zi",
+      "dailyLimitDescription": "Trimite până la USD {limit: string} pe zi",
       "onchainDescription": "Primiți plăți on-chain"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Preț Bitcoin",
     "btcAccount": "Cont Bitcoin",
     "cancel": "Anulare",
+    "notNow": "Nu acum",
     "card": "Card",
     "close": "Închide",
     "confirm": "Confirmare",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Asistență",
     "defaultSupportMessage": "Bună! Am nevoie de ajutor cu {bankName: string}, folosesc versiunea {version: string} pe {os: string}.",
     "emailCopied": "e-mail {email: string} copiat în clipboard",
-    "deleteAccount": "Ștergeți contul",
+    "deleteAccount": "Închide contul",
     "delete": "delete",
-    "typeDelete": "Tastați \"{delete: string}\" pentru a confirma ștergerea contului",
+    "typeDelete": "Te rugăm să tastezi \"{delete: string}\" pentru a confirma închiderea contului",
     "finalConfirmationAccountDeletionTitle": "Este necesară confirmarea finală",
-    "finalConfirmationAccountDeletionMessage": "Sigur doriți să vă ștergeți contul? Această acțiune este ireversibilă.",
-    "deleteAccountBalanceWarning": "Ștergerea contului vă va face să pierdeți accesul la soldul curent. Sunteți sigur că doriți să continuați?",
-    "deleteAccountConfirmation": "Contul dvs. a fost selectat pentru ștergere.\n\nLa încheierea perioadei de probă legate de cerințele de reglementare, datele rămase referitoare la contul dvs. vor fi șterse definitiv.",
-    "deleteAccountFromPhone": "Bună!, Vă rugăm să ștergeți contul meu. Numărul meu de telefon este {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "După închidere, nu veți putea accesa sau utiliza contul. Este posibil să păstrăm anumite înregistrări conform cerințelor legale și obligațiilor noastre de păstrare. Sigur doriți să închideți contul?",
+    "deleteAccountBalanceWarning": "Închiderea contului vă va face să pierdeți accesul la soldul curent. Sigur doriți să continuați?",
+    "deleteAccountConfirmation": "Contul dvs. a fost închis.\n\nEste posibil să păstrăm anumite înregistrări conform cerințelor legale și obligațiilor noastre de păstrare.",
+    "deleteAccountFromPhone": "Bună!, vă rugăm să închideți contul meu. Numărul meu de telefon este {phoneNumber: string}.",
     "deleteAccountError": "Ceva nu a mers bine. Contactați {email: string} pentru asistență suplimentară.",
     "bye": "La revedere!",
-    "deleteAccountWarning": "Atenție: Ștergerea contului este permanentă!\nAsigurați-vă că portofelele nu au fonduri înainte de ștergere.\nContul șters nu poate fi reinstaurat."
+    "deleteAccountWarning": "Atenție: Închiderea contului este permanentă!\nAsigurați-vă că portofelele nu au fonduri înainte de închidere.\nUn cont închis nu poate fi restabilit.\nEste posibil să păstrăm anumite înregistrări conform cerințelor legale."
   },
   "lnurl": {
     "overLimit": "Nu puteți trimite mai mult decât suma maximă",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Important",
       "body": "Treci la un cont non-custodial prin migrarea ghidată sau retrage-ți fondurile înainte de {date}. Primirea se oprește pe {receiveStopsDate}.",
+      "bodyReceiveDisabled": "Primirea s-a oprit. Treci la un cont non-custodial prin migrarea ghidată sau retrage-ți fondurile înainte de {date}.",
       "migrateCta": "Migrează"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Crearea portofelului a eșuat. Vă rugăm să încercați din nou.",
     "selfCustodialDisabled": "Non-custodial este temporar indisponibil."
   },
+  "ChooseExperienceScreen": {
+    "title": "Selectează modul non-custodial",
+    "subtitle": "Alegerea ta decide ce funcții sunt disponibile. Poți schimba oricând.",
+    "enhancedLabel": "Enhanced\nMod",
+    "enhancedDescription": "Folosim regiunea ta pentru a debloca servicii valoroase disponibile acolo unde ești.",
+    "anonLabel": "Incognito\nMod",
+    "anonDescription": "Pentru confidențialitate maximă. Mai puține funcții.",
+    "continueButton": "Continuă"
+  },
   "UnsupportedRegionScreen": {
     "title": "Regiune neacceptată",
-    "description": "Din păcate nu putem deservi utilizatorii din regiunea ta actuală."
+    "description": "Din păcate nu putem deservi utilizatorii din regiunea ta actuală.",
+    "custodialSignupDescription": "Din păcate nu putem crea conturi custodiale noi în regiunea ta actuală. Poți folosi în schimb un cont în auto-custodie.",
+    "custodialSignupOnlyDescription": "Din păcate nu putem crea conturi custodiale noi în regiunea ta actuală.",
+    "unknownRegionTitle": "Regiune nedeterminată",
+    "unknownRegionDescription": "Nu am putut determina regiunea ta. Verifică conexiunea și încearcă din nou."
   },
   "RestoreScreen": {
     "title": "Restaurare portofel",

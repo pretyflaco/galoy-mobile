@@ -2097,17 +2097,57 @@
       "sendingLimit": "Reduced daily sending limit",
       "noOnchain": "No receiving bitcoin onchain",
       "recoveryOption": "Khôi phục tiền qua SMS hoặc email",
-      "dailyLimit": "Giới hạn giao dịch USD 1,000 mỗi ngày",
+      "dailyLimit": "Giới hạn giao dịch USD {limit: string} mỗi ngày",
       "onchainReceive": "Nhận bitcoin trên chuỗi"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Quyền truy cập vị trí",
     "navToSettingsText": "Nếu bạn muốn cấp quyền truy cập vị trí cho Blink, vui lòng vào cài đặt của bạn và bật tính năng này",
-    "payBusiness": "trả tiền cho doanh nghiệp này",
     "openSettings": "Mở cài đặt",
     "title": "Bản đồ",
-    "error": "Rất tiếc. Đã xảy ra lỗi khi lấy vị trí của bạn"
+    "error": "Rất tiếc. Đã xảy ra lỗi khi lấy vị trí của bạn",
+    "attribution": "Địa điểm từ BTC Map, © những người đóng góp OpenStreetMap",
+    "unnamedPlace": "Địa điểm chưa có tên",
+    "loadingPlaces": "Đang tải địa điểm từ BTC Map",
+    "placesError": "Không tải được địa điểm từ BTC Map",
+    "detailsError": "Không tải được địa điểm này",
+    "cannotOpenLink": "Không có ứng dụng nào trên điện thoại này mở được liên kết đó",
+    "openNow": "Đang mở cửa",
+    "closedNow": "Đã đóng cửa",
+    "navigate": "Chỉ đường",
+    "payMerchant": "Trả tiền cho người bán này",
+    "requiresApp": "Cần một ứng dụng riêng để thanh toán",
+    "boosted": "Nổi bật",
+    "verifiedOn": "Đã xác minh ngày {date: string}",
+    "lastVerifiedOn": "Xác minh lần cuối ngày {date: string}",
+    "needsSurvey": "Địa điểm này cần được xác minh",
+    "searchError": "Không thể tìm kiếm ở khu vực này",
+    "clearSearch": "Xóa tìm kiếm",
+    "nothingToShow": "Không có gì để hiển thị",
+    "metersAway": "cách {distance: string} mét",
+    "kilometersAway": "cách {distance: string} km",
+    "filters": "Bộ lọc",
+    "categories": "Danh mục",
+    "selectAll": "Chọn tất cả",
+    "clearAll": "Xóa tất cả",
+    "category": {
+      "restaurants": "Nhà hàng",
+      "cafes": "Quán cà phê",
+      "bakeries": "Tiệm bánh và đồ ngọt",
+      "bars": "Quán bar và giải trí đêm",
+      "groceries": "Tạp hóa",
+      "shops": "Cửa hàng",
+      "money": "ATM và đổi tiền",
+      "lodging": "Khách sạn và lưu trú",
+      "automotive": "Ô tô và nhiên liệu",
+      "health": "Sức khỏe",
+      "beauty": "Làm đẹp và chăm sóc",
+      "services": "Dịch vụ",
+      "sports": "Thể thao và ngoài trời",
+      "leisure": "Giải trí và văn hóa",
+      "other": "Khác"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} đang chờ",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "Mã PIN không chính xác. Còn lại {attemptsRemaining: number} lần thử.",
+    "lockoutUnavailable": "Không thể ghi lại lần thử không thành công một cách an toàn. Đang đăng xuất.",
     "oneAttemptRemaining": "Mã PIN không chính xác. Còn lại 1 lần thử .",
+    "pinUnreadable": "Không thể kiểm tra mã PIN của bạn. Vui lòng thử lại.",
     "setPin": "Đặt mã PIN của bạn",
     "setPinFailedMatch": "Mã PIN không khớp - Đặt mã PIN của bạn",
     "storePinFailed": "Không thể lưu mã pin của bạn.",
     "tooManyAttempts": "Quá nhiều lần thử không thành công. Đang đăng xuất.",
+    "tryAgainIn": "Thử lại sau {seconds: number} giây.",
     "verifyPin": "Xác minh mã PIN của bạn"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Tạo địa chỉ",
+    "addressDisabled": "(đã tắt)",
     "donationButton": "Nút quyên góp",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "Tích hợp API",
     "apiDocumentation": "Tài liệu API",
     "apiDashboard": "Truy cập và bảng điều khiển API",
+    "mode": "Chế độ",
     "pos": "Điểm bán hàng",
     "posCopied": "Liên kết điểm bán hàng của bạn đã được sao chép",
     "activated": "Đã kích hoạt",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Tài khoản của bạn có hơn $5",
     "itsATrialAccount": "Tài khoản dùng thử có giới hạn giao dịch thấp hơn và không có phương thức khôi phục. Nếu bạn mất điện thoại hoặc gỡ cài đặt ứng dụng, tiền của bạn sẽ không thể khôi phục.",
-    "accountBeingDeleted": "Tài khoản của bạn đang được xóa, vui lòng chờ...",
+    "accountBeingDeleted": "Tài khoản của bạn đang được đóng, vui lòng chờ...",
     "dangerZone": "Vùng nguy hiểm",
     "phoneDeletedSuccessfully": "Đã xóa số điện thoại thành công",
     "phoneNumber": "Số Điện thoại",
@@ -2517,7 +2562,28 @@
     "removedAccount": "Bạn đã xóa tài khoản {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "không khả dụng tại khu vực của bạn"
+    "walletLabel": "không khả dụng tại khu vực của bạn",
+    "anonModeWalletLabel": "không khả dụng ở chế độ Incognito"
+  },
+  "AnonModeConvertModal": {
+    "title": "Hãy chuyển số dư Đô la của bạn trước",
+    "body": "Chế độ Incognito chỉ hỗ trợ số dư Bitcoin. Hãy chuyển số dư Đô la của bạn sang số dư Bitcoin để chuyển chế độ."
+  },
+  "EnhancedModePrompt": {
+    "title": "Tính năng này yêu cầu chế độ Enhanced",
+    "body": "Bạn đang ở chế độ Incognito, Blink không biết khu vực của bạn nên một số tính năng không khả dụng. Chuyển sang Enhanced để chạy kiểm tra vị trí và mở khóa mọi tính năng cho khu vực của bạn.",
+    "switchButton": "Chuyển sang Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Đã chuyển sang chế độ Enhanced\nphi lưu ký",
+    "anon": "Đã chuyển sang chế độ Incognito\nphi lưu ký"
+  },
+  "RestrictedRegion": {
+    "title": "Đã phát hiện khu vực bị hạn chế",
+    "body": "Kết nối của bạn có vẻ đến từ một khu vực bị hạn chế. Blink không thể cung cấp dịch vụ từ vị trí này. Số dư của bạn không bị ảnh hưởng.",
+    "bodyReturn": "Khi bạn rời khỏi khu vực này, mọi chức năng sẽ trở lại bình thường.",
+    "learnMore": "Tìm hiểu thêm",
+    "contactSupport": "Liên hệ hỗ trợ"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Số dư đô la không khả dụng tại khu vực của bạn"
@@ -2643,7 +2709,6 @@
     "letsGo": "Let's go!",
     "stayInTrialMode": "Stay in trial mode",
     "upgradeToLevel": "Nâng cấp lên Cấp {level: number}",
-    "notNow": "Không phải bây giờ",
     "setUpLevelAccount": "Thiết lập tài khoản Cấp {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "Chào mừng đến Cấp 1",
       "title": "Các tính năng mới đã được mở khóa cho tài khoản của bạn:",
       "receiveBitcoinDescription": "Nhận Bitcoin bằng số điện thoại của bạn",
-      "dailyLimitDescription": "Gửi tối đa USD 1,000 mỗi ngày",
+      "dailyLimitDescription": "Gửi tối đa USD {limit: string} mỗi ngày",
       "onchainDescription": "Nhận thanh toán trên chuỗi"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Giá Bitcoin",
     "btcAccount": "Số dư Bitcoin",
     "cancel": "Hủy",
+    "notNow": "Không phải bây giờ",
     "card": "Thẻ",
     "close": "Đóng",
     "confirm": "Xác nhận",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Support",
     "defaultSupportMessage": "Hey there! I need some help with {bankName: string}, I'm using the version {version: string} on {os: string}.",
     "emailCopied": "email {email: string} đã sao chép vào bộ nhớ tạm",
-    "deleteAccount": "Delete account",
+    "deleteAccount": "Đóng tài khoản",
     "delete": "delete",
-    "typeDelete": "Please type \"{delete: string}\" to confirm account deletion",
+    "typeDelete": "Vui lòng nhập \"{delete: string}\" để xác nhận đóng tài khoản",
     "finalConfirmationAccountDeletionTitle": "Final Confirmation Required",
-    "finalConfirmationAccountDeletionMessage": "Are you sure you want to delete your account? This action is irreversible.",
-    "deleteAccountBalanceWarning": "Deleting your account will cause you to lose access to your current balance. Are you sure you want to proceed?",
-    "deleteAccountConfirmation": "Your account has been written for deletion.\n\nWhen the probation period related to regulatory requirement is over, the remaining data related to your account will be permanently deleted.",
-    "deleteAccountFromPhone": "Hey there!, please delete my account. My phone number is {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Sau khi đóng, bạn sẽ không thể truy cập hoặc sử dụng tài khoản của mình. Chúng tôi có thể lưu giữ một số hồ sơ theo yêu cầu của pháp luật và nghĩa vụ lưu trữ của chúng tôi. Bạn có chắc chắn muốn đóng tài khoản của mình không?",
+    "deleteAccountBalanceWarning": "Việc đóng tài khoản sẽ khiến bạn mất quyền truy cập vào số dư hiện tại. Bạn có chắc chắn muốn tiếp tục không?",
+    "deleteAccountConfirmation": "Tài khoản của bạn đã được đóng.\n\nChúng tôi có thể lưu giữ một số hồ sơ theo yêu cầu của pháp luật và nghĩa vụ lưu trữ của chúng tôi.",
+    "deleteAccountFromPhone": "Xin chào!, vui lòng đóng tài khoản của tôi. Số điện thoại của tôi là {phoneNumber: string}.",
     "deleteAccountError": "Something went wrong. Contact {email: string} for further assistance.",
     "bye": "Bye!",
-    "deleteAccountWarning": "Chú ý: Việc xóa tài khoản là vĩnh viễn!\nHãy đảm bảo các ví không còn tiền trước khi xóa.\nTài khoản đã xóa không thể khôi phục."
+    "deleteAccountWarning": "Lưu ý: Việc đóng tài khoản là vĩnh viễn!\nHãy đảm bảo ví không còn tiền trước khi đóng.\nTài khoản đã đóng không thể khôi phục.\nChúng tôi có thể lưu giữ một số hồ sơ theo yêu cầu của pháp luật."
   },
   "lnurl": {
     "overLimit": "Bạn không thể gửi quá mức tiền tối đa",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Quan trọng",
       "body": "Hãy chuyển sang tài khoản không lưu ký qua quy trình di chuyển có hướng dẫn, hoặc rút tiền, trước {date}. Việc nhận sẽ dừng vào {receiveStopsDate}.",
+      "bodyReceiveDisabled": "Việc nhận đã dừng. Hãy chuyển sang tài khoản không lưu ký qua quy trình di chuyển có hướng dẫn, hoặc rút tiền, trước {date}.",
       "migrateCta": "Chuyển"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Không thể tạo ví. Vui lòng thử lại.",
     "selfCustodialDisabled": "Phi giám sát hiện không khả dụng."
   },
+  "ChooseExperienceScreen": {
+    "title": "Chọn chế độ phi lưu ký",
+    "subtitle": "Lựa chọn của bạn quyết định những tính năng khả dụng. Bạn có thể chuyển bất cứ lúc nào.",
+    "enhancedLabel": "Enhanced\nChế độ",
+    "enhancedDescription": "Chúng tôi dùng khu vực của bạn để mở khóa các dịch vụ giá trị có sẵn nơi bạn ở.",
+    "anonLabel": "Incognito\nChế độ",
+    "anonDescription": "Để riêng tư tối đa. Ít tính năng hơn.",
+    "continueButton": "Tiếp tục"
+  },
   "UnsupportedRegionScreen": {
     "title": "Khu vực không được hỗ trợ",
-    "description": "Rất tiếc, chúng tôi không thể phục vụ người dùng từ khu vực hiện tại của bạn."
+    "description": "Rất tiếc, chúng tôi không thể phục vụ người dùng từ khu vực hiện tại của bạn.",
+    "custodialSignupDescription": "Rất tiếc, chúng tôi không thể tạo tài khoản lưu ký mới ở khu vực hiện tại của bạn. Bạn có thể dùng tài khoản tự lưu ký thay thế.",
+    "custodialSignupOnlyDescription": "Rất tiếc, chúng tôi không thể tạo tài khoản lưu ký mới ở khu vực hiện tại của bạn.",
+    "unknownRegionTitle": "Chưa xác định được khu vực",
+    "unknownRegionDescription": "Chúng tôi không thể xác định khu vực của bạn. Vui lòng kiểm tra kết nối và thử lại."
   },
   "RestoreScreen": {
     "title": "Khôi phục ví",

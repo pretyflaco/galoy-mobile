@@ -2097,17 +2097,57 @@
       "sendingLimit": "Verlaagde dagelijkse verzendlimiet",
       "noOnchain": "Geen ontvangen van bitcoin onchain",
       "recoveryOption": "Fondsen herstellen via SMS of e-mail",
-      "dailyLimit": "USD 1,000 dagelijkse transactielimiet",
+      "dailyLimit": "USD {limit: string} dagelijkse transactielimiet",
       "onchainReceive": "Bitcoin onchain ontvangen"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Locatietoestemming",
     "navToSettingsText": "Als je Blink locatietoestemming wilt geven, ga dan naar je instellingen en schakel deze daar in",
-    "payBusiness": "betaal dit bedrijf",
     "openSettings": "Open instellingen",
     "title": "Map",
-    "error": "Oeps. Er is iets misgegaan bij het ophalen van je locatie"
+    "error": "Oeps. Er is iets misgegaan bij het ophalen van je locatie",
+    "attribution": "Plaatsen van BTC Map, © OpenStreetMap-bijdragers",
+    "unnamedPlace": "Naamloze plaats",
+    "loadingPlaces": "Plaatsen laden van BTC Map",
+    "placesError": "Kon de plaatsen van BTC Map niet laden",
+    "detailsError": "Kon deze plaats niet laden",
+    "cannotOpenLink": "Niets op deze telefoon kan die link openen",
+    "openNow": "Nu open",
+    "closedNow": "Gesloten",
+    "navigate": "Route",
+    "payMerchant": "Betaal deze handelaar",
+    "requiresApp": "Vereist een specifieke app om te betalen",
+    "boosted": "Uitgelicht",
+    "verifiedOn": "Geverifieerd op {date: string}",
+    "lastVerifiedOn": "Laatst geverifieerd op {date: string}",
+    "needsSurvey": "Deze plaats moet geverifieerd worden",
+    "searchError": "Kon dit gebied niet doorzoeken",
+    "clearSearch": "Zoekopdracht wissen",
+    "nothingToShow": "Niets om te tonen",
+    "metersAway": "{distance: string} meter verderop",
+    "kilometersAway": "{distance: string} km verderop",
+    "filters": "Filters",
+    "categories": "Categorieën",
+    "selectAll": "Alles selecteren",
+    "clearAll": "Alles wissen",
+    "category": {
+      "restaurants": "Restaurants",
+      "cafes": "Cafés",
+      "bakeries": "Bakkerijen en zoetigheid",
+      "bars": "Bars en nachtleven",
+      "groceries": "Boodschappen",
+      "shops": "Winkels",
+      "money": "Geldautomaten en wisselkantoren",
+      "lodging": "Hotels en overnachting",
+      "automotive": "Auto en brandstof",
+      "health": "Gezondheid",
+      "beauty": "Schoonheid en welzijn",
+      "services": "Diensten",
+      "sports": "Sport en buiten",
+      "leisure": "Vrije tijd en cultuur",
+      "other": "Overig"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} In behandeling",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "Onjuiste pincode. {attemptsRemaining: number} resterende pogingen.",
+    "lockoutUnavailable": "Kon de mislukte poging niet veilig vastleggen. Uitloggen.",
     "oneAttemptRemaining": "Onjuiste pincode. 1 poging over.",
+    "pinUnreadable": "Kon je pincode niet controleren. Probeer het opnieuw.",
     "setPin": "Stel uw PIN code in",
     "setPinFailedMatch": "Pincodes komen niet overeen - Stel uw pincode in",
     "storePinFailed": "Kan je pincode niet opslaan.",
     "tooManyAttempts": "Teveel mislukte pogingen. Uitloggen.",
+    "tryAgainIn": "Probeer het over {seconds: number} s opnieuw.",
     "verifyPin": "Verifieer uw pincode"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Adres aanmaken",
+    "addressDisabled": "(uitgeschakeld)",
     "donationButton": "Doneerknop",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "API-integratie",
     "apiDocumentation": "API-documentatie",
     "apiDashboard": "API-toegang en dashboard",
+    "mode": "Modus",
     "pos": "Kassasysteem",
     "posCopied": "Je kassasysteem-link is gekopieerd",
     "activated": "Geactiveerd",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Je account heeft meer dan $5",
     "itsATrialAccount": "Proefaccounts hebben lagere transactielimieten en geen herstelmethode. Als je je telefoon verliest of de app verwijdert, zijn je fondsen onherstelbaar.",
-    "accountBeingDeleted": "Je account wordt verwijderd, even geduld...",
+    "accountBeingDeleted": "Je account wordt gesloten, even geduld...",
     "dangerZone": "Gevarenzone",
     "phoneDeletedSuccessfully": "Telefoonnummer succesvol verwijderd",
     "phoneNumber": "Telefoonnummer",
@@ -2517,7 +2562,28 @@
     "removedAccount": "Je hebt account {identifier: string} verwijderd."
   },
   "StablesatsRestriction": {
-    "walletLabel": "niet beschikbaar in jouw regio"
+    "walletLabel": "niet beschikbaar in jouw regio",
+    "anonModeWalletLabel": "niet beschikbaar in Incognito-modus"
+  },
+  "AnonModeConvertModal": {
+    "title": "Zet eerst je dollarsaldo over",
+    "body": "De Incognito-modus ondersteunt alleen het Bitcoin-saldo. Zet je dollarsaldo over naar je Bitcoin-saldo om te wisselen."
+  },
+  "EnhancedModePrompt": {
+    "title": "Deze functie vereist de Enhanced-modus",
+    "body": "Je bent in Incognito-modus, Blink kent je regio niet, dus sommige functies zijn niet beschikbaar. Schakel over naar Enhanced om een locatiecontrole uit te voeren en alle functies voor je regio te ontgrendelen.",
+    "switchButton": "Overschakelen naar Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Overgeschakeld naar\nzelfbeheerde Enhanced-modus",
+    "anon": "Overgeschakeld naar\nzelfbeheerde Incognito-modus"
+  },
+  "RestrictedRegion": {
+    "title": "Beperkte regio gedetecteerd",
+    "body": "Je verbinding lijkt uit een beperkte regio te komen. Blink kan vanaf deze locatie geen diensten leveren. Je saldi zijn niet aangetast.",
+    "bodyReturn": "Zodra je deze regio verlaat, werkt alles weer normaal.",
+    "learnMore": "Meer informatie",
+    "contactSupport": "Contact opnemen met support"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Dollar-saldo is niet beschikbaar in jouw regio"
@@ -2643,7 +2709,6 @@
     "letsGo": "Let's go!",
     "stayInTrialMode": "Blijf in proefmodus",
     "upgradeToLevel": "Upgraden naar niveau {level: number}",
-    "notNow": "Niet nu",
     "setUpLevelAccount": "Niveau {level: number} account instellen"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "Welkom bij niveau 1",
       "title": "Nieuwe functies ontgrendeld voor je account:",
       "receiveBitcoinDescription": "Bitcoin ontvangen met je telefoonnummer",
-      "dailyLimitDescription": "Verstuur tot USD 1,000 per dag",
+      "dailyLimitDescription": "Verstuur tot USD {limit: string} per dag",
       "onchainDescription": "Onchain betalingen ontvangen"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Bitcoin Prijs",
     "btcAccount": "Bitcoinsaldo",
     "cancel": "Annuleer",
+    "notNow": "Niet nu",
     "card": "Kaart",
     "close": "Sluit",
     "confirm": "Bevestig",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Klantenservice",
     "defaultSupportMessage": "Hallo daar! Ik heb hulp nodig met {bankName: string}, ik gebruik de versie {version: string} op {os: string}.",
     "emailCopied": "email {email: string} gekopieerd naar klembord",
-    "deleteAccount": "Account verwijderen",
+    "deleteAccount": "Account sluiten",
     "delete": "verwijderen",
-    "typeDelete": "Typ '{delete: string}' om de verwijdering van het account te bevestigen",
+    "typeDelete": "Typ '{delete: string}' om het sluiten van het account te bevestigen",
     "finalConfirmationAccountDeletionTitle": "Definitieve bevestiging vereist",
-    "finalConfirmationAccountDeletionMessage": "Weet u zeker dat u uw account wilt verwijderen? Deze actie is onomkeerbaar.",
-    "deleteAccountBalanceWarning": "Als u uw account verwijdert, verliest u de toegang tot uw huidige saldo. Weet je zeker dat je verder wilt gaan?",
-    "deleteAccountConfirmation": "Uw account is geschreven voor verwijdering.\n\nWanneer de proefperiode in verband met de wettelijke vereisten voorbij is, worden de resterende gegevens met betrekking tot uw account permanent verwijderd.",
-    "deleteAccountFromPhone": "Hallo daar!, verwijder alstublieft mijn account. Mijn telefoonnummer is {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Na het sluiten heeft u geen toegang meer tot uw account en kunt u het niet meer gebruiken. Wij kunnen bepaalde gegevens bewaren voor zover dit wettelijk vereist is of voortvloeit uit onze bewaarplicht. Weet u zeker dat u uw account wilt sluiten?",
+    "deleteAccountBalanceWarning": "Als u uw account sluit, verliest u de toegang tot uw huidige saldo. Weet u zeker dat u verder wilt gaan?",
+    "deleteAccountConfirmation": "Uw account is gesloten.\n\nWij kunnen bepaalde gegevens bewaren voor zover dit wettelijk vereist is of voortvloeit uit onze bewaarplicht.",
+    "deleteAccountFromPhone": "Hallo daar!, sluit alstublieft mijn account. Mijn telefoonnummer is {phoneNumber: string}.",
     "deleteAccountError": "Er is iets fout gegaan. Neem contact op met {email: string} voor verdere hulp.",
     "bye": "Doei!",
-    "deleteAccountWarning": "Let op: accountverwijdering is permanent!\nZorg ervoor dat wallets geen fondsen bevatten voordat je verwijdert.\nEen verwijderd account kan niet worden hersteld."
+    "deleteAccountWarning": "Let op: het sluiten van het account is permanent!\nZorg ervoor dat wallets geen fondsen bevatten voordat u sluit.\nEen gesloten account kan niet worden hersteld.\nWij kunnen bepaalde gegevens bewaren als de wet dit vereist."
   },
   "lnurl": {
     "overLimit": "U kunt niet meer dan het maximale bedrag verzenden",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Belangrijk",
       "body": "Stap vóór {date} over naar een niet-bewaarde rekening via begeleide migratie, of neem je tegoed op. Ontvangen stopt op {receiveStopsDate}.",
+      "bodyReceiveDisabled": "Ontvangen is gestopt. Stap vóór {date} over naar een niet-bewaarde rekening via begeleide migratie, of neem je tegoed op.",
       "migrateCta": "Migreer"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Kon portemonnee niet aanmaken. Probeer het opnieuw.",
     "selfCustodialDisabled": "Niet-bewarend is tijdelijk niet beschikbaar."
   },
+  "ChooseExperienceScreen": {
+    "title": "Kies zelfbeheerde modus",
+    "subtitle": "Jouw keuze bepaalt welke functies beschikbaar zijn. Je kunt altijd wisselen.",
+    "enhancedLabel": "Enhanced\nModus",
+    "enhancedDescription": "We gebruiken je regio om waardevolle diensten te ontgrendelen die beschikbaar zijn waar je bent.",
+    "anonLabel": "Incognito\nModus",
+    "anonDescription": "Voor maximale privacy. Minder functies.",
+    "continueButton": "Doorgaan"
+  },
   "UnsupportedRegionScreen": {
     "title": "Niet-ondersteunde regio",
-    "description": "Helaas kunnen we geen gebruikers uit je huidige regio bedienen."
+    "description": "Helaas kunnen we geen gebruikers uit je huidige regio bedienen.",
+    "custodialSignupDescription": "Helaas kunnen we in jouw huidige regio geen nieuwe beheerde accounts aanmaken. Je kunt in plaats daarvan een zelfbeheerd account gebruiken.",
+    "custodialSignupOnlyDescription": "Helaas kunnen we in jouw huidige regio geen nieuwe beheerde accounts aanmaken.",
+    "unknownRegionTitle": "Regio niet vastgesteld",
+    "unknownRegionDescription": "We konden je regio niet bepalen. Controleer je verbinding en probeer het opnieuw."
   },
   "RestoreScreen": {
     "title": "Portemonnee herstellen",

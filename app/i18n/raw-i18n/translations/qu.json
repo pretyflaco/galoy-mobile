@@ -2097,17 +2097,57 @@
       "sendingLimit": "Reduced daily sending limit",
       "noOnchain": "No receiving bitcoin onchain",
       "recoveryOption": "SMS utaq correo electrónico nisqawan qullqiykita kutichiy",
-      "dailyLimit": "USD 1,000 sapa p'unchaw ruwana tope",
+      "dailyLimit": "USD {limit: string} sapa p'unchaw ruwana tope",
       "onchainReceive": "Bitcoin onchain nisqapi chaskiy"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Maypi kasqayki permisokuna",
     "navToSettingsText": "Blink nisqaman maypi kasqayki permisota quyta munaspaykiqa, ama hina kaspa churanakuyki nisqaman riy hinaspa chaypi hapichiy",
-    "payBusiness": "Kay allinmi kuskanchik",
     "openSettings": "Churanakuyta kichay",
     "title": "Pacha mapa",
-    "error": "Uyuyuy. Imapas mana allinchu kasqa maypi kasqaykita maskhashaspa"
+    "error": "Uyuyuy. Imapas mana allinchu kasqa maypi kasqaykita maskhashaspa",
+    "attribution": "BTC Map nisqamanta cheqakuna, © OpenStreetMap yanapaqkuna",
+    "unnamedPlace": "Mana sutiyuq cheqa",
+    "loadingPlaces": "BTC Map nisqamanta cheqakuna chaskichkan",
+    "placesError": "BTC Map nisqamanta cheqakuna mana chaskiy atikurqachu",
+    "detailsError": "Kay cheqa mana chaskiy atikurqachu",
+    "cannotOpenLink": "Kay celularpi mana ima kay t'inkita kichayta atinchu",
+    "openNow": "Kunan kichasqa",
+    "closedNow": "Wichq'asqa",
+    "navigate": "Ñan qhaway",
+    "payMerchant": "Kay qhatuqman qullqi quy",
+    "requiresApp": "Qullqi quypaq huk ruranapaq kaqmi ñawpaqta necesitakun",
+    "boosted": "Riqsichisqa",
+    "verifiedOn": "{date: string} p'unchawpi chiqanchasqa",
+    "lastVerifiedOn": "Qhipa kaq chiqanchay {date: string}",
+    "needsSurvey": "Kay cheqaqa chiqanchana kanan",
+    "searchError": "Kay k'itipi mana maskayta atirqachu",
+    "clearSearch": "Maskayta pichay",
+    "nothingToShow": "Manam ima rikuchinapaqpas kanchu",
+    "metersAway": "{distance: string} metro karupi",
+    "kilometersAway": "{distance: string} km karupi",
+    "filters": "Ch'uyanchaqkuna",
+    "categories": "Rakiykuna",
+    "selectAll": "Llapanta akllay",
+    "clearAll": "Llapanta pichay",
+    "category": {
+      "restaurants": "Mikhuna wasikuna",
+      "cafes": "Kafe wasikuna",
+      "bakeries": "T'anta wasikuna, misk'ikunapas",
+      "bars": "Ujyana wasikuna, tuta kawsaypas",
+      "groceries": "Mikhuna rantina",
+      "shops": "Qhatukuna",
+      "money": "Cajero automático, qullqi t'ijraypas",
+      "lodging": "Hotelkuna, samana wasikunapas",
+      "automotive": "Karrukuna, gasolinapas",
+      "health": "Qhali kay",
+      "beauty": "Sumaq kay, allin qhawaypas",
+      "services": "Yanapaykuna",
+      "sports": "Pukllaykuna, hawapi ruwaykunapas",
+      "leisure": "Samay, kawsay yachaypas",
+      "other": "Huk"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} Kanqaqmi",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "Mana kani PIN. {attemptsRemaining: number} rantiq kani.",
+    "lockoutUnavailable": "Manam allinta waqaychayta atirqanchu pantasqa kutita. Chiqanichu.",
     "oneAttemptRemaining": "Mana kani PIN. 1 rantiq kani.",
+    "pinUnreadable": "Manam PIN nikita qhawayta atirqanchu. Wakmanta ruwaykuy.",
     "setPin": "PIN kodiyan kani",
     "setPinFailedMatch": "PIN kodiyan mana kani - PIN kodiyan kani.",
     "storePinFailed": "Ñuqa PIN kodiyan kawsayninkuqa mana kani.",
     "tooManyAttempts": "Rantiq kawsayninkuqa hukllaqmi. Chiqanichu.",
+    "tryAgainIn": "Wakmanta ruwaykuy {seconds: number} s qhipata.",
     "verifyPin": "PIN qillqinmi qhipanichu"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Tinkunata ruray",
+    "addressDisabled": "(mana atikuq)",
     "donationButton": "Qaray ñit'ana",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "API tinkiy",
     "apiDocumentation": "API qillqasqa",
     "apiDashboard": "API yaykuna dashboard nisqapas",
+    "mode": "Modo",
     "pos": "Rantikuna",
     "posCopied": "Rantikuna t'inkiykita copiasqañam",
     "activated": "Kawsayniyta rikuchiykachkanki",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Cuentaykipi $5 aswan qullqi kachkan",
     "itsATrialAccount": "Prueba cuentakunaqa pisiyachisqa ruwana topekunayuq hinaspa mana kutichiy ñannikunayuq kanku. Celularniykita chinkachispayki utaq app nisqata qichuspayki, qullqiykiqa mana kutichiy atikuqchu kanqa.",
-    "accountBeingDeleted": "Cuentaykita qichushashanku, ama hina kaspa suyay...",
+    "accountBeingDeleted": "Cuentayki wichq'akashan, ama hina kaspa suyay...",
     "dangerZone": "Manchay suyuniq",
     "phoneDeletedSuccessfully": "Teléfonota allinmi qichusqa",
     "phoneNumber": "Teléfono yupay",
@@ -2517,7 +2562,28 @@
     "removedAccount": "{identifier: string} cuentata qichurqanki."
   },
   "StablesatsRestriction": {
-    "walletLabel": "mana kapunchu suyuykipi"
+    "walletLabel": "mana kapunchu suyuykipi",
+    "anonModeWalletLabel": "mana Incognito modopi kanchu"
+  },
+  "AnonModeConvertModal": {
+    "title": "Ñawpaqta Dolar qullqiykita astay",
+    "body": "Incognito modoqa Bitcoin qullqillata sayachin. Dolar qullqiykita Bitcoin qullqiman astay tikranaykipaq."
+  },
+  "EnhancedModePrompt": {
+    "title": "Kay ruray Enhanced modota munan",
+    "body": "Incognito modopi kachkanki, Blink mana region-niykita riqsinchu, chaymi wakin ruraykunaqa mana kanchu. Enhanced-man tikray kiti qhawayta ruranapaq, hinaspa region-niykipaq llapan ruraykunata kichananpaq.",
+    "switchButton": "Enhanced-man tikray"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Enhanced mana waqaychasqa\nmodoman tikrasqa",
+    "anon": "Incognito mana waqaychasqa\nmodoman tikrasqa"
+  },
+  "RestrictedRegion": {
+    "title": "Hark'asqa suyu tarisqa",
+    "body": "Tinkuyniykiqa hark'asqa suyumanta hamusqan rikch'akun. Blinkqa mana atinchu kay kitimanta serviciokunata quyta. Qullqiykikunaqa mana chhikachasqachu.",
+    "bodyReturn": "Kay suyumanta lluqsiptiykiqa, tukuy ruwaykunam kaqmanta allin kanqa.",
+    "learnMore": "Astawan yachay",
+    "contactSupport": "Yanapaqwan rimanakuy"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Dólar saldoqa mana kapunchu suyuykipi"
@@ -2643,7 +2709,6 @@
     "letsGo": "Let's go!",
     "stayInTrialMode": "Stay in trial mode",
     "upgradeToLevel": "Nivel {level: number} man huñachiy",
-    "notNow": "Mana kunan",
     "setUpLevelAccount": "Nivel {level: number} cuentata wakichiy"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "¡Bienvenido Nivel 1 man!",
       "title": "Cuentaykipaq musuq ruwanakuna kichasqa:",
       "receiveBitcoinDescription": "Teléfono yupayniykiwan Bitcoin chaskiy",
-      "dailyLimitDescription": "Apachiy USD 1,000-kama sapa p'unchaw",
+      "dailyLimitDescription": "Apachiy USD {limit: string}-kama sapa p'unchaw",
       "onchainDescription": "On-chain nisqa pagokunata chaskiy"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Bitcoin qillqa k'iru",
     "btcAccount": "Bitcoin qillqa sutiyuq",
     "cancel": "T'akuy",
+    "notNow": "Mana kunan",
     "card": "Tarjeta",
     "close": "Umiy",
     "confirm": "Riqsichiy",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Yachanakuy",
     "defaultSupportMessage": "¡Juyayay! Qanqa atipuni {bankName: string}piyta kani, {os: string}ta allinmi version {version: string}ninchikmi. Kaypi yachanichu.",
     "emailCopied": "Imayna {email: string} qillqanman yuraqchanku chimpusqan.",
-    "deleteAccount": "Delete account",
+    "deleteAccount": "Cuentata wichq'ay",
     "delete": "delete",
-    "typeDelete": "Please type \"{delete: string}\" to confirm account deletion",
+    "typeDelete": "\"{delete: string}\" nisqata qillqay cuenta wichq'asqanpaq",
     "finalConfirmationAccountDeletionTitle": "Final Confirmation Required",
-    "finalConfirmationAccountDeletionMessage": "Are you sure you want to delete your account? This action is irreversible.",
-    "deleteAccountBalanceWarning": "Deleting your account will cause you to lose access to your current balance. Are you sure you want to proceed?",
-    "deleteAccountConfirmation": "Your account has been written for deletion.\n\nWhen the probation period related to regulatory requirement is over, the remaining data related to your account will be permanently deleted.",
-    "deleteAccountFromPhone": "Hey there!, please delete my account. My phone number is {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Wichq'asqa qhipaqa manam cuentaykiqman yaykuyta ni llamk'achiyta atinkiñachu. Icha wakin willakuykunata waqaychasunmi leywan hinallataq waqaychay obligacionniykuwan kamasqa. Cheqaqchu cuentaykita wichq'ayta munanki?",
+    "deleteAccountBalanceWarning": "Cuentaykita wichq'ayqa qullqiykimanta yaykuyta chinkachinqa. Cheqaqchu hinallata ruwayta munanki?",
+    "deleteAccountConfirmation": "Cuentayki wichq'asqañam.\n\nIcha wakin willakuykunata waqaychaykuymi leywan waqaychay obligacionniykuwan kamasqa.",
+    "deleteAccountFromPhone": "Napaykuy!, ama hina kaspa cuentayta wichq'ay. Teléfono numeroyqa {phoneNumber: string}.",
     "deleteAccountError": "Something went wrong. Contact {email: string} for further assistance.",
     "bye": "Bye!",
-    "deleteAccountWarning": "Yuyay: ¡Cuenta qichuyqa wiñaypaqmi!\nQichuypa ñawpaqta walletakunapi mana qullqi kananpaq chiqapchay.\nQichusqa cuentaqa mana kutichiy atikuqchu."
+    "deleteAccountWarning": "Yuyay: Cuenta wichq'ayqa wiñaypaqmi!\nWichq'aypa ñawpaqta walletakunapi mana qullqi kananpaq chiqapchay.\nWichq'asqa cuentaqa mana kutichiy atikunchu.\nIcha wakin willakuykunata waqaychaykuymi ley kamasqan."
   },
   "lnurl": {
     "overLimit": "Monto yachanapaq kachkanman.",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Ancha allin",
       "body": "Astakuy mana waqaychasqa kuentaman pusaykachasqa astakuywan, otaq qullqiykita hurquy, {date} manaraq chayamuchkaptin. Chaskiyqa {receiveStopsDate}-pi tukukunqa.",
+      "bodyReceiveDisabled": "Chaskiyqa tukukunñam. Astakuy mana waqaychasqa kuentaman pusaykachasqa astakuywan, otaq qullqiykita hurquy, {date} manaraq chayamuchkaptin.",
       "migrateCta": "Astakuy"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Manan walletta paqarichiyta atinkuchu. Allinta llamk'apuy.",
     "selfCustodialDisabled": "Mana-waqaychay manaraqmi atikunchu."
   },
+  "ChooseExperienceScreen": {
+    "title": "Akllay mana waqaychasqa modota",
+    "subtitle": "Akllasqayki imakunas atikunqa chayta churan. Mayllapipas t'ikrayta atinki.",
+    "enhancedLabel": "Enhanced\nModo",
+    "enhancedDescription": "Suyuykita llamk'achiyku allin serviciokunata kicharinapaq maypichus kachkanki chaypi.",
+    "anonLabel": "Incognito\nModo",
+    "anonDescription": "Astawan pakasqa kanaykipaq. Aslla ruwaykuna.",
+    "continueButton": "Hinaspa"
+  },
   "UnsupportedRegionScreen": {
     "title": "Mana yanapasqa suyu",
-    "description": "Llakikuypaq, kunan suyuykimanta ruraqkunata mana yanapayta atiykuchu."
+    "description": "Llakikuypaq, kunan suyuykimanta ruraqkunata mana yanapayta atiykuchu.",
+    "custodialSignupDescription": "Llakiypaq, kunan suyuykipi musuq waqaychaq cuentakunata mana kamayta atinikuchu. Kikin waqaychaq cuentata llamk'achiwaqmi.",
+    "custodialSignupOnlyDescription": "Llakiypaq, kunan suyuykipi musuq waqaychaq cuentakunata mana kamayta atinikuchu.",
+    "unknownRegionTitle": "Suyu mana riqsisqa",
+    "unknownRegionDescription": "Suyuykita mana riqsiyta atinikuchu. Tinkiyniykita qhaway, hinaspa yapamanta ruway."
   },
   "RestoreScreen": {
     "title": "Walleta kutichiy",

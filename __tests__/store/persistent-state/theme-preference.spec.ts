@@ -7,7 +7,7 @@ import {
 import { DefaultAccountId } from "@app/types/wallet"
 
 const baseState: PersistentState = {
-  schemaVersion: 16,
+  schemaVersion: 20,
   galoyInstance: { id: "Main" },
   galoyAuthToken: "",
 }

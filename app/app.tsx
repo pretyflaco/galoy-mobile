@@ -22,7 +22,10 @@ import { NotificationsProvider } from "./components/notifications/index"
 import { PushNotificationComponent } from "./components/push-notification"
 import { FeatureFlagContextProvider } from "./config/feature-flags-context"
 import { CustodialWalletProvider } from "./custodial/providers/wallet"
-import { AutoConvertListenerMount } from "./self-custodial/components"
+import {
+  AccountModeSyncMount,
+  AutoConvertListenerMount,
+} from "./self-custodial/components"
 import { AutoConvertStatusProvider } from "./self-custodial/providers/auto-convert-status"
 import { BackupStateProvider } from "./self-custodial/providers/backup-state"
 import { SelfCustodialWalletProvider } from "./self-custodial/providers/wallet"
@@ -42,6 +45,8 @@ import { PersistentStateProvider } from "./store/persistent-state"
 import { detectDefaultLocale } from "./utils/locale-detector"
 import "./utils/logs"
 import { ActionModals, ActionsProvider } from "./components/actions"
+import { EnhancedModePromptProvider } from "./components/enhanced-mode-prompt"
+import { RestrictedRegionProvider } from "./components/restricted-region"
 
 // Lazy load only the default locale instead of all 27 locales
 // This reduces startup time by 3-5 seconds on Android
@@ -71,15 +76,20 @@ export const App = () => (
                             <NavigationContainerWrapper>
                               <ErrorBoundary FallbackComponent={ErrorScreen}>
                                 <RootSiblingParent>
-                                  <NotificationsProvider>
-                                    <AppStateWrapper />
-                                    <PushNotificationComponent />
-                                    <AutoConvertListenerMount />
-                                    <RootStack />
-                                    <NetworkErrorComponent />
-                                    <ActionModals />
-                                    <ApprovalSurfaceHost />
-                                  </NotificationsProvider>
+                                  <EnhancedModePromptProvider>
+                                    <RestrictedRegionProvider>
+                                      <NotificationsProvider>
+                                        <AppStateWrapper />
+                                        <PushNotificationComponent />
+                                        <AutoConvertListenerMount />
+                                        <AccountModeSyncMount />
+                                        <RootStack />
+                                        <NetworkErrorComponent />
+                                        <ActionModals />
+                                        <ApprovalSurfaceHost />
+                                      </NotificationsProvider>
+                                    </RestrictedRegionProvider>
+                                  </EnhancedModePromptProvider>
                                   <GaloyToast />
                                 </RootSiblingParent>
                               </ErrorBoundary>

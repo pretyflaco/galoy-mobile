@@ -2097,17 +2097,57 @@
       "sendingLimit": "Günlük gönderim limitinin kısaltılması",
       "noOnchain": "Zincir üzerinde bitcoin alımı yok",
       "recoveryOption": "SMS veya e-posta ile bakiye kurtarma",
-      "dailyLimit": "Günlük USD 1,000 işlem limiti",
+      "dailyLimit": "Günlük USD {limit: string} işlem limiti",
       "onchainReceive": "Bitcoin onchain olarak al"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Konum izni",
     "navToSettingsText": "Eğer Blink'e konum izni vermek istiyosanız lütfen ayarlarda ilgili yere gidip oradan onay verin",
-    "payBusiness": "Bu işletmeye ödeme yapın",
     "openSettings": "Ayarları aç",
     "title": "Harita",
-    "error": "Hay aksi. Konum bilgini alırken bir şeyler yanlış gitti."
+    "error": "Hay aksi. Konum bilgini alırken bir şeyler yanlış gitti.",
+    "attribution": "Yerler BTC Map'ten, © OpenStreetMap katkıcıları",
+    "unnamedPlace": "İsimsiz yer",
+    "loadingPlaces": "Yerler BTC Map'ten yükleniyor",
+    "placesError": "Yerler BTC Map'ten yüklenemedi",
+    "detailsError": "Bu yer yüklenemedi",
+    "cannotOpenLink": "Bu telefonda o bağlantıyı açabilecek bir uygulama yok",
+    "openNow": "Şu an açık",
+    "closedNow": "Kapalı",
+    "navigate": "Yol tarifi",
+    "payMerchant": "Bu işletmeye ödeme yap",
+    "requiresApp": "Ödeme için belirli bir uygulama gerekiyor",
+    "boosted": "Öne çıkarılmış",
+    "verifiedOn": "{date: string} tarihinde doğrulandı",
+    "lastVerifiedOn": "Son doğrulama {date: string}",
+    "needsSurvey": "Bu yerin doğrulanması gerekiyor",
+    "searchError": "Bu alanda arama yapılamadı",
+    "clearSearch": "Aramayı temizle",
+    "nothingToShow": "Gösterilecek bir şey yok",
+    "metersAway": "{distance: string} metre uzakta",
+    "kilometersAway": "{distance: string} km uzakta",
+    "filters": "Filtreler",
+    "categories": "Kategoriler",
+    "selectAll": "Tümünü seç",
+    "clearAll": "Tümünü temizle",
+    "category": {
+      "restaurants": "Restoranlar",
+      "cafes": "Kafeler",
+      "bakeries": "Fırınlar ve tatlılar",
+      "bars": "Barlar ve gece hayatı",
+      "groceries": "Market",
+      "shops": "Mağazalar",
+      "money": "ATM ve döviz",
+      "lodging": "Oteller ve konaklama",
+      "automotive": "Araba ve yakıt",
+      "health": "Sağlık",
+      "beauty": "Güzellik ve bakım",
+      "services": "Hizmetler",
+      "sports": "Spor ve doğa",
+      "leisure": "Eğlence ve kültür",
+      "other": "Diğer"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} beklemede",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "Yanlış PIN kodu. Kalan deneme hakkınız: {attemptsRemaining: number}",
+    "lockoutUnavailable": "Başarısız deneme güvenli şekilde kaydedilemedi. Çıkış yapılıyor.",
     "oneAttemptRemaining": "Yanlış PIN kodu. Kalan deneme hakkınız: 1",
+    "pinUnreadable": "PIN kodunuz kontrol edilemedi. Lütfen tekrar deneyin.",
     "setPin": "PIN kodunu ayarla",
     "setPinFailedMatch": "Pin kodu eşleşmedi - PIN kodunu ayarla",
     "storePinFailed": "Pin'in kaydedilemedi.",
     "tooManyAttempts": "Çok fazla başarısız deneme. Çıkış yapılıyor.",
+    "tryAgainIn": "{seconds: number} sn sonra tekrar deneyin.",
     "verifyPin": "PIN kodunu onayla"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Adres oluştur",
+    "addressDisabled": "(devre dışı)",
     "donationButton": "Bağış düğmesi",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "API Erişimi",
     "apiDocumentation": "API dokümantasyonu",
     "apiDashboard": "API erişimi ve kontrol paneli",
+    "mode": "Mod",
     "pos": "Satış Noktası",
     "posCopied": "Satış noktası bağlantınız kopyalandı",
     "activated": "Aktive edildi",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Hesabınızda 5 dolardan fazla para var",
     "itsATrialAccount": "Deneme hesaplarının işlem limitleri azaltılmıştır ve kurtarma yöntemi yoktur. Telefonunuzu kaybederseniz veya uygulamayı kaldırırsanız, paranız kurtarılamaz.",
-    "accountBeingDeleted": "Hesabınız siliniyor, lütfen bekleyiniz...",
+    "accountBeingDeleted": "Hesabınız kapatılıyor, lütfen bekleyiniz...",
     "dangerZone": "Tehlikeli Bölge",
     "phoneDeletedSuccessfully": "Telefon başarılı bir şekilde silindi",
     "phoneNumber": "Telefon Numarası",
@@ -2517,7 +2562,28 @@
     "removedAccount": "{identifier: string} hesabını kaldırdınız."
   },
   "StablesatsRestriction": {
-    "walletLabel": "bölgenizde kullanılamıyor"
+    "walletLabel": "bölgenizde kullanılamıyor",
+    "anonModeWalletLabel": "Incognito modunda kullanılamaz"
+  },
+  "AnonModeConvertModal": {
+    "title": "Önce Dolar bakiyeni aktar",
+    "body": "Incognito modu yalnızca Bitcoin bakiyesini destekler. Geçiş yapmak için Dolar bakiyeni Bitcoin bakiyene aktar."
+  },
+  "EnhancedModePrompt": {
+    "title": "Bu özellik Enhanced modu gerektirir",
+    "body": "Incognito modundasın, Blink bölgeni bilmiyor, bu yüzden bazı özellikler kullanılamıyor. Konum denetimi yapılması ve bölgen için tüm özelliklerin açılması için Enhanced moduna geç.",
+    "switchButton": "Enhanced moduna geç"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Emanetsiz Enhanced\nmoduna geçildi",
+    "anon": "Emanetsiz Incognito\nmoduna geçildi"
+  },
+  "RestrictedRegion": {
+    "title": "Kısıtlı bölge tespit edildi",
+    "body": "Bağlantınız kısıtlı bir bölgeden geliyor gibi görünüyor. Blink bu konumdan hizmet sunamıyor. Bakiyeleriniz etkilenmez.",
+    "bodyReturn": "Bu bölgeden ayrıldığınızda tüm işlevler normale dönecek.",
+    "learnMore": "Daha fazla bilgi",
+    "contactSupport": "Destekle iletişime geçin"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Dolar bakiyesi bölgenizde kullanılamıyor"
@@ -2643,7 +2709,6 @@
     "letsGo": "Haydi!",
     "stayInTrialMode": "Deneme modunda kal",
     "upgradeToLevel": "Seviye {level: number}'e yükselt",
-    "notNow": "Şimdi değil",
     "setUpLevelAccount": "Seviye {level: number} hesabını kur"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "Seviye 1'e hoş geldiniz",
       "title": "Hesabınız için kilidi açılan yeni özellikler:",
       "receiveBitcoinDescription": "Telefon numaranızı kullanarak Bitcoin alın",
-      "dailyLimitDescription": "Günde USD 1,000'a kadar gönderin",
+      "dailyLimitDescription": "Günde USD {limit: string}'a kadar gönderin",
       "onchainDescription": "On-chain ödemeler alın"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Bitcoin fiyatı",
     "btcAccount": "Bitcoin Bakiyesi",
     "cancel": "İptal",
+    "notNow": "Şimdi değil",
     "card": "Kart",
     "close": "Kapat",
     "confirm": "Onayla",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string}  - Destek",
     "defaultSupportMessage": "Selamlar! {bankName: string} ile ilgili yardıma ihtiyacım var. {os: string} cihazımda {version: string} sürümünü kullanıyorum.",
     "emailCopied": "E-posta {email: string} panoya kopyalandı",
-    "deleteAccount": "Hesabı sil",
+    "deleteAccount": "Hesabı kapat",
     "delete": "sil",
-    "typeDelete": "Hesap silme işlemini onaylamak için lütfen \"{delete: string}\" yazın",
+    "typeDelete": "Hesap kapatma işlemini onaylamak için lütfen \"{delete: string}\" yazın",
     "finalConfirmationAccountDeletionTitle": "Son Onay Gerekli",
-    "finalConfirmationAccountDeletionMessage": "Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-    "deleteAccountBalanceWarning": "Hesabınızı silmek, mevcut bakiyenize erişiminizi kaybetmenize neden olacaktır. Devam etmek istediğinizden emin misiniz?",
-    "deleteAccountConfirmation": "Hesabınız silinmek üzere yazılmıştır.\n\nYasal gereklilikle ilgili deneme süresi sona erdiğinde, hesabınızla ilgili kalan veriler kalıcı olarak silinecektir.",
-    "deleteAccountFromPhone": "Merhaba!, lütfen hesabımı silin. Telefon numaram {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Hesabınız kapandıktan sonra hesabınıza erişemez veya hesabınızı kullanamazsınız. Yasalar ve saklama yükümlülüklerimiz gereği belirli kayıtları saklayabiliriz. Hesabınızı kapatmak istediğinizden emin misiniz?",
+    "deleteAccountBalanceWarning": "Hesabınızı kapatmak, mevcut bakiyenize erişiminizi kaybetmenize neden olacaktır. Devam etmek istediğinizden emin misiniz?",
+    "deleteAccountConfirmation": "Hesabınız kapatıldı.\n\nYasalar ve saklama yükümlülüklerimiz gereği belirli kayıtları saklayabiliriz.",
+    "deleteAccountFromPhone": "Merhaba!, lütfen hesabımı kapatın. Telefon numaram {phoneNumber: string}.",
     "deleteAccountError": "Bir şeyler yanlış gitti. Daha fazla yardım için {email: string} ile iletişime geçin.",
     "bye": "Güle güle!",
-    "deleteAccountWarning": "Dikkat: Hesap silme işlemi kalıcıdır!\nSilmeden önce cüzdanlarınızda bakiye olmadığından emin olun.\nSilinen hesap geri getirilemez."
+    "deleteAccountWarning": "Dikkat: Hesap kapatma işlemi kalıcıdır!\nKapatmadan önce cüzdanlarınızda bakiye olmadığından emin olun.\nKapatılan hesap geri getirilemez.\nYasal gereklilikler nedeniyle belirli kayıtları saklayabiliriz."
   },
   "lnurl": {
     "overLimit": "Maksimum miktarın üzerinde gönderemezsiniz",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Önemli",
       "body": "{date} tarihinden önce rehberli taşıma ile saklamasız bir hesaba geçin veya paranızı çekin. Alma, {receiveStopsDate} tarihinde durur.",
+      "bodyReceiveDisabled": "Alma durdu. {date} tarihinden önce rehberli taşıma ile saklamasız bir hesaba geçin veya paranızı çekin.",
       "migrateCta": "Taşı"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Cüzdan oluşturulamadı. Lütfen tekrar deneyin.",
     "selfCustodialDisabled": "Saklamasız mod geçici olarak kullanılamıyor."
   },
+  "ChooseExperienceScreen": {
+    "title": "Emanetsiz modu seçin",
+    "subtitle": "Seçiminiz hangi özelliklerin kullanılabilir olduğunu belirler. İstediğiniz zaman değiştirebilirsiniz.",
+    "enhancedLabel": "Enhanced\nMod",
+    "enhancedDescription": "Bulunduğunuz yerde sunulan değerli hizmetlerin kilidini açmak için bölgenizi kullanırız.",
+    "anonLabel": "Incognito\nMod",
+    "anonDescription": "Maksimum gizlilik için. Daha az özellik.",
+    "continueButton": "Devam et"
+  },
   "UnsupportedRegionScreen": {
     "title": "Desteklenmeyen bölge",
-    "description": "Maalesef mevcut bölgenizdeki kullanıcılara hizmet veremiyoruz."
+    "description": "Maalesef mevcut bölgenizdeki kullanıcılara hizmet veremiyoruz.",
+    "custodialSignupDescription": "Maalesef mevcut bölgenizde yeni saklamalı hesap oluşturamıyoruz. Bunun yerine kendi saklamanızdaki bir hesabı kullanabilirsiniz.",
+    "custodialSignupOnlyDescription": "Maalesef mevcut bölgenizde yeni saklamalı hesap oluşturamıyoruz.",
+    "unknownRegionTitle": "Bölge belirlenemedi",
+    "unknownRegionDescription": "Bölgenizi belirleyemedik. Lütfen bağlantınızı kontrol edip tekrar deneyin."
   },
   "RestoreScreen": {
     "title": "Cüzdanı geri yükle",

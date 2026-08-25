@@ -80,6 +80,10 @@ module.exports = {
       "|@noble" +
       "|@scure" +
       "|nostr-tools" +
+      // supercluster (and its kdbush dependency) ship ESM only; Metro handles
+      // that, Jest needs them transformed.
+      "|supercluster" +
+      "|kdbush" +
       ")/)",
   ],
 }

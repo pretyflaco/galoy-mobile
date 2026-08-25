@@ -6501,9 +6501,10 @@ type RootTranslation = {
 			 */
 			recoveryOption: string
 			/**
-			 * U​S​D​ ​1​,​0​0​0​ ​d​a​i​l​y​ ​t​r​a​n​s​a​c​t​i​o​n​ ​l​i​m​i​t
+			 * U​S​D​ ​{​l​i​m​i​t​}​ ​d​a​i​l​y​ ​t​r​a​n​s​a​c​t​i​o​n​ ​l​i​m​i​t
+			 * @param {string} limit
 			 */
-			dailyLimit: string
+			dailyLimit: RequiredParams<'limit'>
 			/**
 			 * R​e​c​e​i​v​e​ ​b​i​t​c​o​i​n​ ​o​n​c​h​a​i​n
 			 */
@@ -6520,10 +6521,6 @@ type RootTranslation = {
 		 */
 		navToSettingsText: string
 		/**
-		 * P​a​y​ ​t​h​i​s​ ​b​u​s​i​n​e​s​s
-		 */
-		payBusiness: string
-		/**
 		 * O​p​e​n​ ​s​e​t​t​i​n​g​s
 		 */
 		openSettings: string
@@ -6535,6 +6532,168 @@ type RootTranslation = {
 		 * O​o​p​s​.​ ​S​o​m​e​t​h​i​n​g​ ​w​e​n​t​ ​w​r​o​n​g​ ​w​h​i​l​e​ ​g​e​t​t​i​n​g​ ​y​o​u​r​ ​l​o​c​a​t​i​o​n
 		 */
 		error: string
+		/**
+		 * P​l​a​c​e​s​ ​f​r​o​m​ ​B​T​C​ ​M​a​p​,​ ​©​ ​O​p​e​n​S​t​r​e​e​t​M​a​p​ ​c​o​n​t​r​i​b​u​t​o​r​s
+		 */
+		attribution: string
+		/**
+		 * U​n​n​a​m​e​d​ ​p​l​a​c​e
+		 */
+		unnamedPlace: string
+		/**
+		 * L​o​a​d​i​n​g​ ​p​l​a​c​e​s​ ​f​r​o​m​ ​B​T​C​ ​M​a​p
+		 */
+		loadingPlaces: string
+		/**
+		 * C​o​u​l​d​n​'​t​ ​l​o​a​d​ ​p​l​a​c​e​s​ ​f​r​o​m​ ​B​T​C​ ​M​a​p
+		 */
+		placesError: string
+		/**
+		 * C​o​u​l​d​n​'​t​ ​l​o​a​d​ ​t​h​i​s​ ​p​l​a​c​e
+		 */
+		detailsError: string
+		/**
+		 * N​o​t​h​i​n​g​ ​o​n​ ​t​h​i​s​ ​p​h​o​n​e​ ​c​a​n​ ​o​p​e​n​ ​t​h​a​t​ ​l​i​n​k
+		 */
+		cannotOpenLink: string
+		/**
+		 * O​p​e​n​ ​n​o​w
+		 */
+		openNow: string
+		/**
+		 * C​l​o​s​e​d
+		 */
+		closedNow: string
+		/**
+		 * N​a​v​i​g​a​t​e
+		 */
+		navigate: string
+		/**
+		 * P​a​y​ ​t​h​i​s​ ​m​e​r​c​h​a​n​t
+		 */
+		payMerchant: string
+		/**
+		 * N​e​e​d​s​ ​a​ ​s​p​e​c​i​f​i​c​ ​a​p​p​ ​t​o​ ​p​a​y
+		 */
+		requiresApp: string
+		/**
+		 * B​o​o​s​t​e​d
+		 */
+		boosted: string
+		/**
+		 * V​e​r​i​f​i​e​d​ ​{​d​a​t​e​}
+		 * @param {string} date
+		 */
+		verifiedOn: RequiredParams<'date'>
+		/**
+		 * L​a​s​t​ ​v​e​r​i​f​i​e​d​ ​{​d​a​t​e​}
+		 * @param {string} date
+		 */
+		lastVerifiedOn: RequiredParams<'date'>
+		/**
+		 * T​h​i​s​ ​l​o​c​a​t​i​o​n​ ​n​e​e​d​s​ ​t​o​ ​b​e​ ​s​u​r​v​e​y​e​d
+		 */
+		needsSurvey: string
+		/**
+		 * C​o​u​l​d​n​'​t​ ​s​e​a​r​c​h​ ​t​h​i​s​ ​a​r​e​a
+		 */
+		searchError: string
+		/**
+		 * C​l​e​a​r​ ​s​e​a​r​c​h
+		 */
+		clearSearch: string
+		/**
+		 * N​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w
+		 */
+		nothingToShow: string
+		/**
+		 * {​d​i​s​t​a​n​c​e​}​ ​m​e​t​e​r​s​ ​a​w​a​y
+		 * @param {string} distance
+		 */
+		metersAway: RequiredParams<'distance'>
+		/**
+		 * {​d​i​s​t​a​n​c​e​}​ ​k​m​ ​a​w​a​y
+		 * @param {string} distance
+		 */
+		kilometersAway: RequiredParams<'distance'>
+		/**
+		 * F​i​l​t​e​r​s
+		 */
+		filters: string
+		/**
+		 * C​a​t​e​g​o​r​i​e​s
+		 */
+		categories: string
+		/**
+		 * S​e​l​e​c​t​ ​a​l​l
+		 */
+		selectAll: string
+		/**
+		 * C​l​e​a​r​ ​a​l​l
+		 */
+		clearAll: string
+		category: {
+			/**
+			 * R​e​s​t​a​u​r​a​n​t​s
+			 */
+			restaurants: string
+			/**
+			 * C​a​f​é​s
+			 */
+			cafes: string
+			/**
+			 * B​a​k​e​r​i​e​s​ ​&​ ​s​w​e​e​t​s
+			 */
+			bakeries: string
+			/**
+			 * B​a​r​s​ ​&​ ​n​i​g​h​t​l​i​f​e
+			 */
+			bars: string
+			/**
+			 * G​r​o​c​e​r​i​e​s
+			 */
+			groceries: string
+			/**
+			 * S​h​o​p​s
+			 */
+			shops: string
+			/**
+			 * A​T​M​s​ ​&​ ​e​x​c​h​a​n​g​e
+			 */
+			money: string
+			/**
+			 * H​o​t​e​l​s​ ​&​ ​l​o​d​g​i​n​g
+			 */
+			lodging: string
+			/**
+			 * C​a​r​s​ ​&​ ​f​u​e​l
+			 */
+			automotive: string
+			/**
+			 * H​e​a​l​t​h
+			 */
+			health: string
+			/**
+			 * B​e​a​u​t​y​ ​&​ ​w​e​l​l​n​e​s​s
+			 */
+			beauty: string
+			/**
+			 * S​e​r​v​i​c​e​s
+			 */
+			services: string
+			/**
+			 * S​p​o​r​t​s​ ​&​ ​o​u​t​d​o​o​r​s
+			 */
+			sports: string
+			/**
+			 * L​e​i​s​u​r​e​ ​&​ ​c​u​l​t​u​r​e
+			 */
+			leisure: string
+			/**
+			 * O​t​h​e​r
+			 */
+			other: string
+		}
 	}
 	HomeScreen: {
 		/**
@@ -6583,9 +6742,17 @@ type RootTranslation = {
 		 */
 		attemptsRemaining: RequiredParams<'attemptsRemaining'>
 		/**
+		 * C​o​u​l​d​n​'​t​ ​r​e​c​o​r​d​ ​t​h​e​ ​f​a​i​l​e​d​ ​a​t​t​e​m​p​t​ ​s​e​c​u​r​e​l​y​.​ ​L​o​g​g​i​n​g​ ​o​u​t​.
+		 */
+		lockoutUnavailable: string
+		/**
 		 * I​n​c​o​r​r​e​c​t​ ​P​I​N​.​ ​1​ ​a​t​t​e​m​p​t​ ​r​e​m​a​i​n​i​n​g​.
 		 */
 		oneAttemptRemaining: string
+		/**
+		 * C​o​u​l​d​n​'​t​ ​c​h​e​c​k​ ​y​o​u​r​ ​P​I​N​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		pinUnreadable: string
 		/**
 		 * S​e​t​ ​y​o​u​r​ ​P​I​N​ ​c​o​d​e
 		 */
@@ -6602,6 +6769,11 @@ type RootTranslation = {
 		 * T​o​o​ ​m​a​n​y​ ​f​a​i​l​e​d​ ​a​t​t​e​m​p​t​s​.​ ​L​o​g​g​i​n​g​ ​o​u​t​.
 		 */
 		tooManyAttempts: string
+		/**
+		 * T​r​y​ ​a​g​a​i​n​ ​i​n​ ​{​s​e​c​o​n​d​s​}​s​.
+		 * @param {number} seconds
+		 */
+		tryAgainIn: RequiredParams<'seconds'>
 		/**
 		 * V​e​r​i​f​y​ ​y​o​u​r​ ​P​I​N​ ​c​o​d​e
 		 */
@@ -7735,6 +7907,10 @@ type RootTranslation = {
 		 */
 		apiDashboard: string
 		/**
+		 * M​o​d​e
+		 */
+		mode: string
+		/**
 		 * P​o​i​n​t​ ​o​f​ ​S​a​l​e
 		 */
 		pos: string
@@ -7746,6 +7922,10 @@ type RootTranslation = {
 		 * C​r​e​a​t​e​ ​a​d​d​r​e​s​s
 		 */
 		createAddress: string
+		/**
+		 * (​d​i​s​a​b​l​e​d​)
+		 */
+		addressDisabled: string
 		/**
 		 * D​o​n​a​t​e​ ​B​u​t​t​o​n
 		 */
@@ -7982,7 +8162,7 @@ type RootTranslation = {
 		 */
 		itsATrialAccount: string
 		/**
-		 * Y​o​u​r​ ​a​c​c​o​u​n​t​ ​i​s​ ​b​e​i​n​g​ ​d​e​l​e​t​e​d​,​ ​p​l​e​a​s​e​ ​w​a​i​t​.​.​.
+		 * Y​o​u​r​ ​a​c​c​o​u​n​t​ ​i​s​ ​b​e​i​n​g​ ​c​l​o​s​e​d​,​ ​p​l​e​a​s​e​ ​w​a​i​t​.​.​.
 		 */
 		accountBeingDeleted: string
 		/**
@@ -8372,6 +8552,68 @@ type RootTranslation = {
 		 * n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​i​n​ ​y​o​u​r​ ​r​e​g​i​o​n
 		 */
 		walletLabel: string
+		/**
+		 * n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​i​n​ ​I​n​c​o​g​n​i​t​o​ ​m​o​d​e
+		 */
+		anonModeWalletLabel: string
+	}
+	AnonModeConvertModal: {
+		/**
+		 * T​r​a​n​s​f​e​r​ ​y​o​u​r​ ​D​o​l​l​a​r​ ​B​a​l​a​n​c​e​ ​f​i​r​s​t
+		 */
+		title: string
+		/**
+		 * I​n​c​o​g​n​i​t​o​ ​M​o​d​e​ ​s​u​p​p​o​r​t​s​ ​t​h​e​ ​B​i​t​c​o​i​n​ ​B​a​l​a​n​c​e​ ​o​n​l​y​.​ ​T​r​a​n​s​f​e​r​ ​y​o​u​r​ ​D​o​l​l​a​r​ ​B​a​l​a​n​c​e​ ​t​o​ ​y​o​u​r​ ​B​i​t​c​o​i​n​ ​B​a​l​a​n​c​e​ ​t​o​ ​s​w​i​t​c​h​.
+		 */
+		body: string
+	}
+	EnhancedModePrompt: {
+		/**
+		 * T​h​i​s​ ​f​e​a​t​u​r​e​ ​r​e​q​u​i​r​e​s​ ​E​n​h​a​n​c​e​d​ ​M​o​d​e
+		 */
+		title: string
+		/**
+		 * Y​o​u​'​r​e​ ​i​n​ ​I​n​c​o​g​n​i​t​o​ ​M​o​d​e​,​ ​B​l​i​n​k​ ​d​o​e​s​n​'​t​ ​k​n​o​w​ ​y​o​u​r​ ​r​e​g​i​o​n​,​ ​s​o​ ​s​o​m​e​ ​f​e​a​t​u​r​e​s​ ​a​r​e​n​'​t​ ​a​v​a​i​l​a​b​l​e​.​ ​S​w​i​t​c​h​ ​t​o​ ​E​n​h​a​n​c​e​d​ ​t​o​ ​r​u​n​ ​a​ ​l​o​c​a​t​i​o​n​ ​c​h​e​c​k​ ​a​n​d​ ​u​n​l​o​c​k​ ​a​l​l​ ​f​e​a​t​u​r​e​s​ ​f​o​r​ ​y​o​u​r​ ​r​e​g​i​o​n​.
+		 */
+		body: string
+		/**
+		 * S​w​i​t​c​h​ ​t​o​ ​E​n​h​a​n​c​e​d
+		 */
+		switchButton: string
+	}
+	ModeSwitchSuccessScreen: {
+		/**
+		 * S​w​i​t​c​h​e​d​ ​t​o​ ​E​n​h​a​n​c​e​d​
+	​N​o​n​-​c​u​s​t​o​d​i​a​l​ ​M​o​d​e
+		 */
+		enhanced: string
+		/**
+		 * S​w​i​t​c​h​e​d​ ​t​o​ ​I​n​c​o​g​n​i​t​o​
+	​N​o​n​-​c​u​s​t​o​d​i​a​l​ ​M​o​d​e
+		 */
+		anon: string
+	}
+	RestrictedRegion: {
+		/**
+		 * R​e​s​t​r​i​c​t​e​d​ ​r​e​g​i​o​n​ ​d​e​t​e​c​t​e​d
+		 */
+		title: string
+		/**
+		 * Y​o​u​r​ ​c​o​n​n​e​c​t​i​o​n​ ​a​p​p​e​a​r​s​ ​t​o​ ​b​e​ ​f​r​o​m​ ​a​ ​r​e​s​t​r​i​c​t​e​d​ ​r​e​g​i​o​n​.​ ​B​l​i​n​k​ ​c​a​n​n​o​t​ ​p​r​o​v​i​d​e​ ​s​e​r​v​i​c​e​s​ ​f​r​o​m​ ​t​h​i​s​ ​l​o​c​a​t​i​o​n​.​ ​Y​o​u​r​ ​b​a​l​a​n​c​e​s​ ​a​r​e​ ​u​n​a​f​f​e​c​t​e​d​.
+		 */
+		body: string
+		/**
+		 * O​n​c​e​ ​y​o​u​ ​l​e​a​v​e​ ​t​h​i​s​ ​r​e​g​i​o​n​,​ ​a​l​l​ ​f​u​n​c​t​i​o​n​a​l​i​t​y​ ​w​i​l​l​ ​r​e​t​u​r​n​ ​t​o​ ​n​o​r​m​a​l​.
+		 */
+		bodyReturn: string
+		/**
+		 * L​e​a​r​n​ ​m​o​r​e
+		 */
+		learnMore: string
+		/**
+		 * C​o​n​t​a​c​t​ ​s​u​p​p​o​r​t
+		 */
+		contactSupport: string
 	}
 	DollarBalanceRestriction: {
 		/**
@@ -8699,10 +8941,6 @@ type RootTranslation = {
 		 */
 		upgradeToLevel: RequiredParams<'level'>
 		/**
-		 * N​o​t​ ​n​o​w
-		 */
-		notNow: string
-		/**
 		 * S​e​t​ ​u​p​ ​L​e​v​e​l​ ​{​l​e​v​e​l​}​ ​a​c​c​o​u​n​t
 		 * @param {number} level
 		 */
@@ -8887,9 +9125,10 @@ type RootTranslation = {
 			 */
 			receiveBitcoinDescription: string
 			/**
-			 * S​e​n​d​ ​u​p​ ​t​o​ ​U​S​D​ ​1​,​0​0​0​ ​p​e​r​ ​d​a​y
+			 * S​e​n​d​ ​u​p​ ​t​o​ ​U​S​D​ ​{​l​i​m​i​t​}​ ​p​e​r​ ​d​a​y
+			 * @param {string} limit
 			 */
-			dailyLimitDescription: string
+			dailyLimitDescription: RequiredParams<'limit'>
 			/**
 			 * R​e​c​e​i​v​e​ ​o​n​-​c​h​a​i​n​ ​p​a​y​m​e​n​t​s
 			 */
@@ -9316,6 +9555,10 @@ type RootTranslation = {
 		 * C​a​r​d
 		 */
 		card: string
+		/**
+		 * N​o​t​ ​n​o​w
+		 */
+		notNow: string
 		/**
 		 * C​l​o​s​e
 		 */
@@ -9874,7 +10117,7 @@ type RootTranslation = {
 		 */
 		emailCopied: RequiredParams<'email'>
 		/**
-		 * D​e​l​e​t​e​ ​a​c​c​o​u​n​t
+		 * C​l​o​s​e​ ​a​c​c​o​u​n​t
 		 */
 		deleteAccount: string
 		/**
@@ -9882,7 +10125,7 @@ type RootTranslation = {
 		 */
 		'delete': string
 		/**
-		 * P​l​e​a​s​e​ ​t​y​p​e​ ​"​{​d​e​l​e​t​e​}​"​ ​t​o​ ​c​o​n​f​i​r​m​ ​a​c​c​o​u​n​t​ ​d​e​l​e​t​i​o​n
+		 * P​l​e​a​s​e​ ​t​y​p​e​ ​"​{​d​e​l​e​t​e​}​"​ ​t​o​ ​c​o​n​f​i​r​m​ ​a​c​c​o​u​n​t​ ​c​l​o​s​u​r​e
 		 * @param {string} delete
 		 */
 		typeDelete: RequiredParams<'delete'>
@@ -9891,21 +10134,21 @@ type RootTranslation = {
 		 */
 		finalConfirmationAccountDeletionTitle: string
 		/**
-		 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​y​o​u​r​ ​a​c​c​o​u​n​t​?​ ​T​h​i​s​ ​a​c​t​i​o​n​ ​i​s​ ​i​r​r​e​v​e​r​s​i​b​l​e​.
+		 * A​f​t​e​r​ ​c​l​o​s​i​n​g​,​ ​y​o​u​ ​w​o​n​'​t​ ​b​e​ ​a​b​l​e​ ​t​o​ ​a​c​c​e​s​s​ ​o​r​ ​u​s​e​ ​y​o​u​r​ ​a​c​c​o​u​n​t​.​ ​W​e​ ​m​a​y​ ​r​e​t​a​i​n​ ​c​e​r​t​a​i​n​ ​r​e​c​o​r​d​s​ ​a​s​ ​r​e​q​u​i​r​e​d​ ​b​y​ ​l​a​w​ ​a​n​d​ ​o​u​r​ ​r​e​t​e​n​t​i​o​n​ ​o​b​l​i​g​a​t​i​o​n​s​.​ ​A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​c​l​o​s​e​ ​y​o​u​r​ ​a​c​c​o​u​n​t​?
 		 */
 		finalConfirmationAccountDeletionMessage: string
 		/**
-		 * D​e​l​e​t​i​n​g​ ​y​o​u​r​ ​a​c​c​o​u​n​t​ ​w​i​l​l​ ​c​a​u​s​e​ ​y​o​u​ ​t​o​ ​l​o​s​e​ ​a​c​c​e​s​s​ ​t​o​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​b​a​l​a​n​c​e​.​ ​A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​p​r​o​c​e​e​d​?
+		 * C​l​o​s​i​n​g​ ​y​o​u​r​ ​a​c​c​o​u​n​t​ ​w​i​l​l​ ​c​a​u​s​e​ ​y​o​u​ ​t​o​ ​l​o​s​e​ ​a​c​c​e​s​s​ ​t​o​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​b​a​l​a​n​c​e​.​ ​A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​p​r​o​c​e​e​d​?
 		 */
 		deleteAccountBalanceWarning: string
 		/**
-		 * Y​o​u​r​ ​a​c​c​o​u​n​t​ ​h​a​s​ ​b​e​e​n​ ​w​r​i​t​t​e​n​ ​f​o​r​ ​d​e​l​e​t​i​o​n​.​
+		 * Y​o​u​r​ ​a​c​c​o​u​n​t​ ​h​a​s​ ​b​e​e​n​ ​c​l​o​s​e​d​.​
 	​
-	​W​h​e​n​ ​t​h​e​ ​p​r​o​b​a​t​i​o​n​ ​p​e​r​i​o​d​ ​r​e​l​a​t​e​d​ ​t​o​ ​r​e​g​u​l​a​t​o​r​y​ ​r​e​q​u​i​r​e​m​e​n​t​ ​i​s​ ​o​v​e​r​,​ ​t​h​e​ ​r​e​m​a​i​n​i​n​g​ ​d​a​t​a​ ​r​e​l​a​t​e​d​ ​t​o​ ​y​o​u​r​ ​a​c​c​o​u​n​t​ ​w​i​l​l​ ​b​e​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​e​l​e​t​e​d​.
+	​W​e​ ​m​a​y​ ​r​e​t​a​i​n​ ​c​e​r​t​a​i​n​ ​r​e​c​o​r​d​s​ ​a​s​ ​r​e​q​u​i​r​e​d​ ​b​y​ ​l​a​w​ ​a​n​d​ ​o​u​r​ ​r​e​t​e​n​t​i​o​n​ ​o​b​l​i​g​a​t​i​o​n​s​.
 		 */
 		deleteAccountConfirmation: string
 		/**
-		 * H​e​y​ ​t​h​e​r​e​!​,​ ​p​l​e​a​s​e​ ​d​e​l​e​t​e​ ​m​y​ ​a​c​c​o​u​n​t​.​ ​M​y​ ​p​h​o​n​e​ ​n​u​m​b​e​r​ ​i​s​ ​{​p​h​o​n​e​N​u​m​b​e​r​}​.
+		 * H​e​y​ ​t​h​e​r​e​!​,​ ​p​l​e​a​s​e​ ​c​l​o​s​e​ ​m​y​ ​a​c​c​o​u​n​t​.​ ​M​y​ ​p​h​o​n​e​ ​n​u​m​b​e​r​ ​i​s​ ​{​p​h​o​n​e​N​u​m​b​e​r​}​.
 		 * @param {string} phoneNumber
 		 */
 		deleteAccountFromPhone: RequiredParams<'phoneNumber'>
@@ -9919,9 +10162,10 @@ type RootTranslation = {
 		 */
 		bye: string
 		/**
-		 * A​t​t​e​n​t​i​o​n​:​ ​A​c​c​o​u​n​t​ ​d​e​l​e​t​i​o​n​ ​i​s​ ​p​e​r​m​a​n​e​n​t​!​
-	​M​a​k​e​ ​s​u​r​e​ ​w​a​l​l​e​t​s​ ​h​a​v​e​ ​n​o​ ​f​u​n​d​s​ ​b​e​f​o​r​e​ ​d​e​l​e​t​i​n​g​.​
-	​D​e​l​e​t​e​d​ ​a​c​c​o​u​n​t​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​i​n​s​t​a​t​e​d​.
+		 * A​t​t​e​n​t​i​o​n​:​ ​C​l​o​s​i​n​g​ ​y​o​u​r​ ​a​c​c​o​u​n​t​ ​i​s​ ​p​e​r​m​a​n​e​n​t​!​
+	​M​a​k​e​ ​s​u​r​e​ ​w​a​l​l​e​t​s​ ​h​a​v​e​ ​n​o​ ​f​u​n​d​s​ ​b​e​f​o​r​e​ ​c​l​o​s​i​n​g​.​
+	​A​ ​c​l​o​s​e​d​ ​a​c​c​o​u​n​t​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​i​n​s​t​a​t​e​d​.​
+	​W​e​ ​m​a​y​ ​r​e​t​a​i​n​ ​c​e​r​t​a​i​n​ ​r​e​c​o​r​d​s​ ​a​s​ ​r​e​q​u​i​r​e​d​ ​b​y​ ​l​a​w​.
 		 */
 		deleteAccountWarning: string
 	}
@@ -12658,6 +12902,11 @@ type RootTranslation = {
 			 */
 			body: RequiredParams<'date' | 'receiveStopsDate'>
 			/**
+			 * R​e​c​e​i​v​i​n​g​ ​h​a​s​ ​s​t​o​p​p​e​d​.​ ​M​o​v​e​ ​t​o​ ​a​ ​n​o​n​-​c​u​s​t​o​d​i​a​l​ ​a​c​c​o​u​n​t​ ​v​i​a​ ​g​u​i​d​e​d​ ​m​i​g​r​a​t​i​o​n​,​ ​o​r​ ​w​i​t​h​d​r​a​w​,​ ​b​e​f​o​r​e​ ​{​d​a​t​e​}​.
+			 * @param {string} date
+			 */
+			bodyReceiveDisabled: RequiredParams<'date'>
+			/**
 			 * M​i​g​r​a​t​e
 			 */
 			migrateCta: string
@@ -12815,6 +13064,38 @@ type RootTranslation = {
 		 */
 		createFailed: string
 	}
+	ChooseExperienceScreen: {
+		/**
+		 * S​e​l​e​c​t​ ​n​o​n​-​c​u​s​t​o​d​i​a​l​ ​m​o​d​e
+		 */
+		title: string
+		/**
+		 * Y​o​u​r​ ​c​h​o​i​c​e​ ​d​e​c​i​d​e​s​ ​w​h​i​c​h​ ​f​e​a​t​u​r​e​s​ ​a​r​e​ ​a​v​a​i​l​a​b​l​e​.​ ​Y​o​u​ ​c​a​n​ ​s​w​i​t​c​h​ ​w​h​e​n​e​v​e​r​ ​y​o​u​ ​w​a​n​t​.
+		 */
+		subtitle: string
+		/**
+		 * E​n​h​a​n​c​e​d​
+	​M​o​d​e
+		 */
+		enhancedLabel: string
+		/**
+		 * W​e​ ​u​s​e​ ​y​o​u​r​ ​r​e​g​i​o​n​ ​t​o​ ​u​n​l​o​c​k​ ​v​a​l​u​a​b​l​e​ ​s​e​r​v​i​c​e​s​ ​a​v​a​i​l​a​b​l​e​ ​w​h​e​r​e​ ​y​o​u​ ​a​r​e​.
+		 */
+		enhancedDescription: string
+		/**
+		 * I​n​c​o​g​n​i​t​o​
+	​M​o​d​e
+		 */
+		anonLabel: string
+		/**
+		 * F​o​r​ ​m​a​x​i​m​u​m​ ​p​r​i​v​a​c​y​.​ ​L​e​s​s​ ​f​e​a​t​u​r​e​s​.
+		 */
+		anonDescription: string
+		/**
+		 * C​o​n​t​i​n​u​e
+		 */
+		continueButton: string
+	}
 	UnsupportedRegionScreen: {
 		/**
 		 * U​n​s​u​p​p​o​r​t​e​d​ ​r​e​g​i​o​n
@@ -12824,6 +13105,22 @@ type RootTranslation = {
 		 * U​n​f​o​r​t​u​n​a​t​e​l​y​ ​w​e​ ​c​a​n​ ​n​o​t​ ​s​e​r​v​e​ ​u​s​e​r​s​ ​f​r​o​m​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​r​e​g​i​o​n​.
 		 */
 		description: string
+		/**
+		 * U​n​f​o​r​t​u​n​a​t​e​l​y​ ​w​e​ ​c​a​n​ ​n​o​t​ ​c​r​e​a​t​e​ ​n​e​w​ ​c​u​s​t​o​d​i​a​l​ ​a​c​c​o​u​n​t​s​ ​i​n​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​r​e​g​i​o​n​.​ ​Y​o​u​ ​c​a​n​ ​u​s​e​ ​a​ ​s​e​l​f​-​c​u​s​t​o​d​i​a​l​ ​a​c​c​o​u​n​t​ ​i​n​s​t​e​a​d​.
+		 */
+		custodialSignupDescription: string
+		/**
+		 * U​n​f​o​r​t​u​n​a​t​e​l​y​ ​w​e​ ​c​a​n​ ​n​o​t​ ​c​r​e​a​t​e​ ​n​e​w​ ​c​u​s​t​o​d​i​a​l​ ​a​c​c​o​u​n​t​s​ ​i​n​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​r​e​g​i​o​n​.
+		 */
+		custodialSignupOnlyDescription: string
+		/**
+		 * R​e​g​i​o​n​ ​n​o​t​ ​d​e​t​e​r​m​i​n​e​d
+		 */
+		unknownRegionTitle: string
+		/**
+		 * W​e​ ​c​o​u​l​d​ ​n​o​t​ ​d​e​t​e​r​m​i​n​e​ ​y​o​u​r​ ​r​e​g​i​o​n​.​ ​P​l​e​a​s​e​ ​c​h​e​c​k​ ​y​o​u​r​ ​c​o​n​n​e​c​t​i​o​n​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		unknownRegionDescription: string
 	}
 	RestoreScreen: {
 		/**
@@ -20803,9 +21100,9 @@ export type TranslationFunctions = {
 			 */
 			recoveryOption: () => LocalizedString
 			/**
-			 * USD 1,000 daily transaction limit
+			 * USD {limit} daily transaction limit
 			 */
-			dailyLimit: () => LocalizedString
+			dailyLimit: (arg: { limit: string }) => LocalizedString
 			/**
 			 * Receive bitcoin onchain
 			 */
@@ -20822,10 +21119,6 @@ export type TranslationFunctions = {
 		 */
 		navToSettingsText: () => LocalizedString
 		/**
-		 * Pay this business
-		 */
-		payBusiness: () => LocalizedString
-		/**
 		 * Open settings
 		 */
 		openSettings: () => LocalizedString
@@ -20837,6 +21130,164 @@ export type TranslationFunctions = {
 		 * Oops. Something went wrong while getting your location
 		 */
 		error: () => LocalizedString
+		/**
+		 * Places from BTC Map, © OpenStreetMap contributors
+		 */
+		attribution: () => LocalizedString
+		/**
+		 * Unnamed place
+		 */
+		unnamedPlace: () => LocalizedString
+		/**
+		 * Loading places from BTC Map
+		 */
+		loadingPlaces: () => LocalizedString
+		/**
+		 * Couldn't load places from BTC Map
+		 */
+		placesError: () => LocalizedString
+		/**
+		 * Couldn't load this place
+		 */
+		detailsError: () => LocalizedString
+		/**
+		 * Nothing on this phone can open that link
+		 */
+		cannotOpenLink: () => LocalizedString
+		/**
+		 * Open now
+		 */
+		openNow: () => LocalizedString
+		/**
+		 * Closed
+		 */
+		closedNow: () => LocalizedString
+		/**
+		 * Navigate
+		 */
+		navigate: () => LocalizedString
+		/**
+		 * Pay this merchant
+		 */
+		payMerchant: () => LocalizedString
+		/**
+		 * Needs a specific app to pay
+		 */
+		requiresApp: () => LocalizedString
+		/**
+		 * Boosted
+		 */
+		boosted: () => LocalizedString
+		/**
+		 * Verified {date}
+		 */
+		verifiedOn: (arg: { date: string }) => LocalizedString
+		/**
+		 * Last verified {date}
+		 */
+		lastVerifiedOn: (arg: { date: string }) => LocalizedString
+		/**
+		 * This location needs to be surveyed
+		 */
+		needsSurvey: () => LocalizedString
+		/**
+		 * Couldn't search this area
+		 */
+		searchError: () => LocalizedString
+		/**
+		 * Clear search
+		 */
+		clearSearch: () => LocalizedString
+		/**
+		 * Nothing to show
+		 */
+		nothingToShow: () => LocalizedString
+		/**
+		 * {distance} meters away
+		 */
+		metersAway: (arg: { distance: string }) => LocalizedString
+		/**
+		 * {distance} km away
+		 */
+		kilometersAway: (arg: { distance: string }) => LocalizedString
+		/**
+		 * Filters
+		 */
+		filters: () => LocalizedString
+		/**
+		 * Categories
+		 */
+		categories: () => LocalizedString
+		/**
+		 * Select all
+		 */
+		selectAll: () => LocalizedString
+		/**
+		 * Clear all
+		 */
+		clearAll: () => LocalizedString
+		category: {
+			/**
+			 * Restaurants
+			 */
+			restaurants: () => LocalizedString
+			/**
+			 * Cafés
+			 */
+			cafes: () => LocalizedString
+			/**
+			 * Bakeries & sweets
+			 */
+			bakeries: () => LocalizedString
+			/**
+			 * Bars & nightlife
+			 */
+			bars: () => LocalizedString
+			/**
+			 * Groceries
+			 */
+			groceries: () => LocalizedString
+			/**
+			 * Shops
+			 */
+			shops: () => LocalizedString
+			/**
+			 * ATMs & exchange
+			 */
+			money: () => LocalizedString
+			/**
+			 * Hotels & lodging
+			 */
+			lodging: () => LocalizedString
+			/**
+			 * Cars & fuel
+			 */
+			automotive: () => LocalizedString
+			/**
+			 * Health
+			 */
+			health: () => LocalizedString
+			/**
+			 * Beauty & wellness
+			 */
+			beauty: () => LocalizedString
+			/**
+			 * Services
+			 */
+			services: () => LocalizedString
+			/**
+			 * Sports & outdoors
+			 */
+			sports: () => LocalizedString
+			/**
+			 * Leisure & culture
+			 */
+			leisure: () => LocalizedString
+			/**
+			 * Other
+			 */
+			other: () => LocalizedString
+		}
 	}
 	HomeScreen: {
 		/**
@@ -20883,9 +21334,17 @@ export type TranslationFunctions = {
 		 */
 		attemptsRemaining: (arg: { attemptsRemaining: number }) => LocalizedString
 		/**
+		 * Couldn't record the failed attempt securely. Logging out.
+		 */
+		lockoutUnavailable: () => LocalizedString
+		/**
 		 * Incorrect PIN. 1 attempt remaining.
 		 */
 		oneAttemptRemaining: () => LocalizedString
+		/**
+		 * Couldn't check your PIN. Please try again.
+		 */
+		pinUnreadable: () => LocalizedString
 		/**
 		 * Set your PIN code
 		 */
@@ -20902,6 +21361,10 @@ export type TranslationFunctions = {
 		 * Too many failed attempts. Logging out.
 		 */
 		tooManyAttempts: () => LocalizedString
+		/**
+		 * Try again in {seconds}s.
+		 */
+		tryAgainIn: (arg: { seconds: number }) => LocalizedString
 		/**
 		 * Verify your PIN code
 		 */
@@ -21985,6 +22448,10 @@ export type TranslationFunctions = {
 		 */
 		apiDashboard: () => LocalizedString
 		/**
+		 * Mode
+		 */
+		mode: () => LocalizedString
+		/**
 		 * Point of Sale
 		 */
 		pos: () => LocalizedString
@@ -21996,6 +22463,10 @@ export type TranslationFunctions = {
 		 * Create address
 		 */
 		createAddress: () => LocalizedString
+		/**
+		 * (disabled)
+		 */
+		addressDisabled: () => LocalizedString
 		/**
 		 * Donate Button
 		 */
@@ -22230,7 +22701,7 @@ export type TranslationFunctions = {
 		 */
 		itsATrialAccount: () => LocalizedString
 		/**
-		 * Your account is being deleted, please wait...
+		 * Your account is being closed, please wait...
 		 */
 		accountBeingDeleted: () => LocalizedString
 		/**
@@ -22612,6 +23083,68 @@ export type TranslationFunctions = {
 		 * not available in your region
 		 */
 		walletLabel: () => LocalizedString
+		/**
+		 * not available in Incognito mode
+		 */
+		anonModeWalletLabel: () => LocalizedString
+	}
+	AnonModeConvertModal: {
+		/**
+		 * Transfer your Dollar Balance first
+		 */
+		title: () => LocalizedString
+		/**
+		 * Incognito Mode supports the Bitcoin Balance only. Transfer your Dollar Balance to your Bitcoin Balance to switch.
+		 */
+		body: () => LocalizedString
+	}
+	EnhancedModePrompt: {
+		/**
+		 * This feature requires Enhanced Mode
+		 */
+		title: () => LocalizedString
+		/**
+		 * You're in Incognito Mode, Blink doesn't know your region, so some features aren't available. Switch to Enhanced to run a location check and unlock all features for your region.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Switch to Enhanced
+		 */
+		switchButton: () => LocalizedString
+	}
+	ModeSwitchSuccessScreen: {
+		/**
+		 * Switched to Enhanced
+	Non-custodial Mode
+		 */
+		enhanced: () => LocalizedString
+		/**
+		 * Switched to Incognito
+	Non-custodial Mode
+		 */
+		anon: () => LocalizedString
+	}
+	RestrictedRegion: {
+		/**
+		 * Restricted region detected
+		 */
+		title: () => LocalizedString
+		/**
+		 * Your connection appears to be from a restricted region. Blink cannot provide services from this location. Your balances are unaffected.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Once you leave this region, all functionality will return to normal.
+		 */
+		bodyReturn: () => LocalizedString
+		/**
+		 * Learn more
+		 */
+		learnMore: () => LocalizedString
+		/**
+		 * Contact support
+		 */
+		contactSupport: () => LocalizedString
 	}
 	DollarBalanceRestriction: {
 		/**
@@ -22923,10 +23456,6 @@ export type TranslationFunctions = {
 		 */
 		upgradeToLevel: (arg: { level: number }) => LocalizedString
 		/**
-		 * Not now
-		 */
-		notNow: () => LocalizedString
-		/**
 		 * Set up Level {level} account
 		 */
 		setUpLevelAccount: (arg: { level: number }) => LocalizedString
@@ -23108,9 +23637,9 @@ export type TranslationFunctions = {
 			 */
 			receiveBitcoinDescription: () => LocalizedString
 			/**
-			 * Send up to USD 1,000 per day
+			 * Send up to USD {limit} per day
 			 */
-			dailyLimitDescription: () => LocalizedString
+			dailyLimitDescription: (arg: { limit: string }) => LocalizedString
 			/**
 			 * Receive on-chain payments
 			 */
@@ -23526,6 +24055,10 @@ export type TranslationFunctions = {
 		 * Card
 		 */
 		card: () => LocalizedString
+		/**
+		 * Not now
+		 */
+		notNow: () => LocalizedString
 		/**
 		 * Close
 		 */
@@ -24076,7 +24609,7 @@ export type TranslationFunctions = {
 		 */
 		emailCopied: (arg: { email: string }) => LocalizedString
 		/**
-		 * Delete account
+		 * Close account
 		 */
 		deleteAccount: () => LocalizedString
 		/**
@@ -24084,7 +24617,7 @@ export type TranslationFunctions = {
 		 */
 		'delete': () => LocalizedString
 		/**
-		 * Please type "{delete}" to confirm account deletion
+		 * Please type "{delete}" to confirm account closure
 		 */
 		typeDelete: (arg: { delete: string }) => LocalizedString
 		/**
@@ -24092,21 +24625,21 @@ export type TranslationFunctions = {
 		 */
 		finalConfirmationAccountDeletionTitle: () => LocalizedString
 		/**
-		 * Are you sure you want to delete your account? This action is irreversible.
+		 * After closing, you won't be able to access or use your account. We may retain certain records as required by law and our retention obligations. Are you sure you want to close your account?
 		 */
 		finalConfirmationAccountDeletionMessage: () => LocalizedString
 		/**
-		 * Deleting your account will cause you to lose access to your current balance. Are you sure you want to proceed?
+		 * Closing your account will cause you to lose access to your current balance. Are you sure you want to proceed?
 		 */
 		deleteAccountBalanceWarning: () => LocalizedString
 		/**
-		 * Your account has been written for deletion.
+		 * Your account has been closed.
 
-	When the probation period related to regulatory requirement is over, the remaining data related to your account will be permanently deleted.
+	We may retain certain records as required by law and our retention obligations.
 		 */
 		deleteAccountConfirmation: () => LocalizedString
 		/**
-		 * Hey there!, please delete my account. My phone number is {phoneNumber}.
+		 * Hey there!, please close my account. My phone number is {phoneNumber}.
 		 */
 		deleteAccountFromPhone: (arg: { phoneNumber: string }) => LocalizedString
 		/**
@@ -24118,9 +24651,10 @@ export type TranslationFunctions = {
 		 */
 		bye: () => LocalizedString
 		/**
-		 * Attention: Account deletion is permanent!
-	Make sure wallets have no funds before deleting.
-	Deleted account cannot be reinstated.
+		 * Attention: Closing your account is permanent!
+	Make sure wallets have no funds before closing.
+	A closed account cannot be reinstated.
+	We may retain certain records as required by law.
 		 */
 		deleteAccountWarning: () => LocalizedString
 	}
@@ -26814,6 +27348,10 @@ export type TranslationFunctions = {
 			 */
 			body: (arg: { date: string, receiveStopsDate: string }) => LocalizedString
 			/**
+			 * Receiving has stopped. Move to a non-custodial account via guided migration, or withdraw, before {date}.
+			 */
+			bodyReceiveDisabled: (arg: { date: string }) => LocalizedString
+			/**
 			 * Migrate
 			 */
 			migrateCta: () => LocalizedString
@@ -26971,6 +27509,38 @@ export type TranslationFunctions = {
 		 */
 		createFailed: () => LocalizedString
 	}
+	ChooseExperienceScreen: {
+		/**
+		 * Select non-custodial mode
+		 */
+		title: () => LocalizedString
+		/**
+		 * Your choice decides which features are available. You can switch whenever you want.
+		 */
+		subtitle: () => LocalizedString
+		/**
+		 * Enhanced
+	Mode
+		 */
+		enhancedLabel: () => LocalizedString
+		/**
+		 * We use your region to unlock valuable services available where you are.
+		 */
+		enhancedDescription: () => LocalizedString
+		/**
+		 * Incognito
+	Mode
+		 */
+		anonLabel: () => LocalizedString
+		/**
+		 * For maximum privacy. Less features.
+		 */
+		anonDescription: () => LocalizedString
+		/**
+		 * Continue
+		 */
+		continueButton: () => LocalizedString
+	}
 	UnsupportedRegionScreen: {
 		/**
 		 * Unsupported region
@@ -26980,6 +27550,22 @@ export type TranslationFunctions = {
 		 * Unfortunately we can not serve users from your current region.
 		 */
 		description: () => LocalizedString
+		/**
+		 * Unfortunately we can not create new custodial accounts in your current region. You can use a self-custodial account instead.
+		 */
+		custodialSignupDescription: () => LocalizedString
+		/**
+		 * Unfortunately we can not create new custodial accounts in your current region.
+		 */
+		custodialSignupOnlyDescription: () => LocalizedString
+		/**
+		 * Region not determined
+		 */
+		unknownRegionTitle: () => LocalizedString
+		/**
+		 * We could not determine your region. Please check your connection and try again.
+		 */
+		unknownRegionDescription: () => LocalizedString
 	}
 	RestoreScreen: {
 		/**

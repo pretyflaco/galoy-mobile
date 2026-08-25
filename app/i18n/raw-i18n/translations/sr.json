@@ -2097,17 +2097,57 @@
       "sendingLimit": "Смањено дневно ограничење слања",
       "noOnchain": "Нема примања биткоина на ланцу",
       "recoveryOption": "Повратак средстава преко SMS-а или е-поште",
-      "dailyLimit": "USD 1,000 дневни лимит за трансакције",
+      "dailyLimit": "USD {limit: string} дневни лимит за трансакције",
       "onchainReceive": "Примајте Bitcoin на блокчејну"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Дозволе за локацију",
     "navToSettingsText": "Ако желите да дозволите Blink приступ локацији, идите у подешавања и омогућите то тамо",
-    "payBusiness": "платите овај бизнис",
     "openSettings": "Отвори подешавања",
     "title": "Мапа",
-    "error": "Упс. Нешто је пошло наопако приликом добијања ваше локације"
+    "error": "Упс. Нешто је пошло наопако приликом добијања ваше локације",
+    "attribution": "Места са BTC Map, © сарадници OpenStreetMap-а",
+    "unnamedPlace": "Место без назива",
+    "loadingPlaces": "Учитавање места са BTC Map",
+    "placesError": "Није могуће учитати места са BTC Map",
+    "detailsError": "Није могуће учитати ово место",
+    "cannotOpenLink": "Ништа на овом телефону не може да отвори ту везу",
+    "openNow": "Сада отворено",
+    "closedNow": "Затворено",
+    "navigate": "Навигација",
+    "payMerchant": "Плати овом трговцу",
+    "requiresApp": "За плаћање је потребна одређена апликација",
+    "boosted": "Истакнуто",
+    "verifiedOn": "Проверено {date: string}",
+    "lastVerifiedOn": "Последња провера {date: string}",
+    "needsSurvey": "Ово место треба проверити",
+    "searchError": "Није могуће претражити ову област",
+    "clearSearch": "Обриши претрагу",
+    "nothingToShow": "Нема шта да се прикаже",
+    "metersAway": "{distance: string} метара одавде",
+    "kilometersAway": "{distance: string} км одавде",
+    "filters": "Филтери",
+    "categories": "Категорије",
+    "selectAll": "Изабери све",
+    "clearAll": "Обриши све",
+    "category": {
+      "restaurants": "Ресторани",
+      "cafes": "Кафићи",
+      "bakeries": "Пекаре и посластице",
+      "bars": "Барови и ноћни живот",
+      "groceries": "Прехрана",
+      "shops": "Продавнице",
+      "money": "Банкомати и мењачнице",
+      "lodging": "Хотели и смештај",
+      "automotive": "Аутомобили и гориво",
+      "health": "Здравље",
+      "beauty": "Лепота и нега",
+      "services": "Услуге",
+      "sports": "Спорт и природа",
+      "leisure": "Слободно време и култура",
+      "other": "Остало"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} на чекању",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "Неисправан ПИН. Преостало је {attemptsRemaining: number} покушаја.",
+    "lockoutUnavailable": "Неуспели покушај није могуће безбедно забележити. Одјављивање.",
     "oneAttemptRemaining": "Неисправан ПИН. Преостао је 1 покушај.",
+    "pinUnreadable": "Није било могуће проверити ваш ПИН. Покушајте поново.",
     "setPin": "Поставите свој ПИН код",
     "setPinFailedMatch": "ПИН-ови се не подударају - Поставите свој ПИН код",
     "storePinFailed": "Неуспешно снимање ПИН кода.",
     "tooManyAttempts": "Превише неуспелих покушаја. Одјављивање.",
+    "tryAgainIn": "Покушајте поново за {seconds: number} с.",
     "verifyPin": "Потврдите свој ПИН код"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Направи адресу",
+    "addressDisabled": "(онемогућено)",
     "donationButton": "Дугме за донирање",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "API интеграција",
     "apiDocumentation": "API документација",
     "apiDashboard": "API приступ и контролна табла",
+    "mode": "Режим",
     "pos": "Продајно место",
     "posCopied": "Линк вашег продајног места је копиран",
     "activated": "Активирано",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Ваш налог има више од $5",
     "itsATrialAccount": "Пробни налози имају смањене лимите за трансакције и немају метод опоравка. Ако изгубите телефон или деинсталирате апликацију, ваша средства ће бити неповратна.",
-    "accountBeingDeleted": "Ваш налог се брише, молимо сачекајте...",
+    "accountBeingDeleted": "Ваш налог се затвара, молимо сачекајте...",
     "dangerZone": "Опасна зона",
     "phoneDeletedSuccessfully": "Телефон је успешно уклоњен",
     "phoneNumber": "Број телефона",
@@ -2517,7 +2562,28 @@
     "removedAccount": "Уклонили сте налог {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "није доступан у вашем региону"
+    "walletLabel": "није доступан у вашем региону",
+    "anonModeWalletLabel": "није доступно у Incognito режиму"
+  },
+  "AnonModeConvertModal": {
+    "title": "Прво пребаците свој доларски салдо",
+    "body": "Incognito режим подржава само Bitcoin салдо. Пребаците свој доларски салдо на Bitcoin салдо да бисте се пребацили."
+  },
+  "EnhancedModePrompt": {
+    "title": "Ова функција захтева Enhanced режим",
+    "body": "У Incognito сте режиму, Blink не зна ваш регион, па неке функције нису доступне. Пребаците се на Enhanced да би се извршила провера локације и откључале све функције за ваш регион.",
+    "switchButton": "Пребаци на Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Пребачено на Enhanced режим\nбез старатељства",
+    "anon": "Пребачено на Incognito режим\nбез старатељства"
+  },
+  "RestrictedRegion": {
+    "title": "Откривен је ограничен регион",
+    "body": "Чини се да ваша веза долази из ограниченог региона. Blink не може да пружа услуге са ове локације. Ваша стања нису погођена.",
+    "bodyReturn": "Чим напустите овај регион, све функције ће поново радити нормално.",
+    "learnMore": "Сазнајте више",
+    "contactSupport": "Контактирајте подршку"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Доларски салдо није доступан у вашем региону"
@@ -2643,7 +2709,6 @@
     "letsGo": "Ајмо!",
     "stayInTrialMode": "Останите у пробном режиму",
     "upgradeToLevel": "Надоградите на Ниво {level: number}",
-    "notNow": "Не сада",
     "setUpLevelAccount": "Подесите налог Нивоа {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "Добродошли на Ниво 1",
       "title": "Нове функције откључане за ваш налог:",
       "receiveBitcoinDescription": "Примајте Bitcoin користећи свој број телефона",
-      "dailyLimitDescription": "Пошаљите до USD 1,000 дневно",
+      "dailyLimitDescription": "Пошаљите до USD {limit: string} дневно",
       "onchainDescription": "Примајте уплате на блокчејну"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Цена Биткоина",
     "btcAccount": "„Биткоин“ Рачун",
     "cancel": "Откажи",
+    "notNow": "Не сада",
     "card": "Картица",
     "close": "Затвори",
     "confirm": "Потврди",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Подршка",
     "defaultSupportMessage": "Хеј, треба ми помоћ у вези са {bankName: string}, користим верзију {version: string} на оперативном систему {os: string}.",
     "emailCopied": "адреса е-поште {email: string} је копирана у клипборд",
-    "deleteAccount": "Обриши налог",
+    "deleteAccount": "Затвори налог",
     "delete": "обриши",
-    "typeDelete": "Please type \"{delete: string}\" to confirm account deletion",
+    "typeDelete": "Укуцајте \"{delete: string}\" да потврдите затварање налога",
     "finalConfirmationAccountDeletionTitle": "Final Confirmation Required",
-    "finalConfirmationAccountDeletionMessage": "Are you sure you want to delete your account? This action is irreversible.",
-    "deleteAccountBalanceWarning": "Deleting your account will cause you to lose access to your current balance. Are you sure you want to proceed?",
-    "deleteAccountConfirmation": "Your account has been written for deletion.\n\nWhen the probation period related to regulatory requirement is over, the remaining data related to your account will be permanently deleted.",
-    "deleteAccountFromPhone": "Hey there!, please delete my account. My phone number is {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Након затварања нећете моћи да приступите свом налогу нити да га користите. Можемо задржати одређене записе у складу са законом и нашим обавезама чувања података. Да ли сте сигурни да желите да затворите свој налог?",
+    "deleteAccountBalanceWarning": "Затварањем налога изгубићете приступ тренутном стању. Да ли сте сигурни да желите да наставите?",
+    "deleteAccountConfirmation": "Ваш налог је затворен.\n\nМожемо задржати одређене записе у складу са законом и нашим обавезама чувања података.",
+    "deleteAccountFromPhone": "Здраво!, молим вас затворите мој налог. Мој број телефона је {phoneNumber: string}.",
     "deleteAccountError": "Something went wrong. Contact {email: string} for further assistance.",
     "bye": "Bye!",
-    "deleteAccountWarning": "Пажња: Брисање налога је трајно!\nУверите се да новчаници немају средстава пре брисања.\nОбрисани налог се не може вратити."
+    "deleteAccountWarning": "Пажња: Затварање налога је трајно!\nПре затварања проверите да новчаници немају средстава.\nЗатворени налог се не може вратити.\nМожемо задржати одређене записе у складу са законом."
   },
   "lnurl": {
     "overLimit": "Не можете послати више од максималног износа",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Важно",
       "body": "Пређите на не-кастодијални налог путем вођене миграције или подигните средства пре {date}. Примање престаје {receiveStopsDate}.",
+      "bodyReceiveDisabled": "Примање је престало. Пређите на не-кастодијални налог путем вођене миграције или подигните средства пре {date}.",
       "migrateCta": "Мигрирај"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Није успело креирање новчаника. Молимо покушајте поново.",
     "selfCustodialDisabled": "Не-кастодијална опција је привремено недоступна."
   },
+  "ChooseExperienceScreen": {
+    "title": "Изаберите режим без старатељства",
+    "subtitle": "Ваш избор одређује које су функције доступне. Можете променити кад год желите.",
+    "enhancedLabel": "Enhanced\nрежим",
+    "enhancedDescription": "Користимо ваш регион да откључамо вредне услуге доступне тамо где се налазите.",
+    "anonLabel": "Incognito\nрежим",
+    "anonDescription": "За максималну приватност. Мање функција.",
+    "continueButton": "Настави"
+  },
   "UnsupportedRegionScreen": {
     "title": "Неподржани регион",
-    "description": "Нажалост не можемо да пружамо услугу корисницима из вашег тренутног региона."
+    "description": "Нажалост не можемо да пружамо услугу корисницима из вашег тренутног региона.",
+    "custodialSignupDescription": "Нажалост не можемо да отворимо нове старатељске налоге у твом тренутном региону. Уместо тога можеш користити налог у сопственом старатељству.",
+    "custodialSignupOnlyDescription": "Нажалост не можемо да отворимо нове старатељске налоге у твом тренутном региону.",
+    "unknownRegionTitle": "Регион није утврђен",
+    "unknownRegionDescription": "Нисмо могли да утврдимо твој регион. Провери везу и покушај поново."
   },
   "RestoreScreen": {
     "title": "Враћање новчаника",

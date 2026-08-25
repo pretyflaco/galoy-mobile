@@ -20,7 +20,7 @@ const PersistentStateWrapper: React.FC<PropsWithChildren> = ({ children }) => (
   <PersistentStateContext.Provider
     value={{
       persistentState: {
-        schemaVersion: 16,
+        schemaVersion: 20,
         galoyInstance: {
           id: "Main",
         },
@@ -28,6 +28,7 @@ const PersistentStateWrapper: React.FC<PropsWithChildren> = ({ children }) => (
       },
       updateState: () => {},
       resetState: () => {},
+      clearToken: async () => {},
     }}
   >
     <>{children}</>

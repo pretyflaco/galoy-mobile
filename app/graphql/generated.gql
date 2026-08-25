@@ -1159,6 +1159,17 @@ query accountLimits {
   }
 }
 
+query accountLimitsByLevel {
+  globals {
+    accountLimitsByLevel {
+      level
+      withdrawal
+      __typename
+    }
+    __typename
+  }
+}
+
 query addressScreen {
   me {
     id
@@ -1205,22 +1216,6 @@ query btcPriceList($range: PriceGraphRange!) {
       base
       offset
       currencyUnit
-      __typename
-    }
-    __typename
-  }
-}
-
-query businessMapMarkers {
-  businessMapMarkers {
-    username
-    mapInfo {
-      title
-      coordinates {
-        longitude
-        latitude
-        __typename
-      }
       __typename
     }
     __typename
@@ -1336,6 +1331,14 @@ query currencyList {
     name
     symbol
     fractionDigits
+  }
+}
+
+query custodialRestrictions {
+  custodialRestrictions {
+    dollarBalance
+    transfer
+    __typename
   }
 }
 
@@ -1886,6 +1889,15 @@ query realtimePriceUnauthed($currency: DisplayCurrency) {
       offset
       __typename
     }
+    __typename
+  }
+}
+
+query regionCheck {
+  regionCheck {
+    countryCode
+    custodialCreationAllowed
+    restricted
     __typename
   }
 }

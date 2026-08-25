@@ -2097,17 +2097,57 @@
       "sendingLimit": "Reduced daily sending limit",
       "noOnchain": "No receiving bitcoin onchain",
       "recoveryOption": "استرداد الأموال عبر SMS أو البريد الإلكتروني",
-      "dailyLimit": "حد المعاملات اليومي USD 1,000",
+      "dailyLimit": "حد المعاملات اليومي USD {limit: string}",
       "onchainReceive": "استلام Bitcoin على السلسلة"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "أذونات الموقع",
     "navToSettingsText": "إذا كنت ترغب في منح Blink أذونات الموقع، يرجى الانتقال إلى الإعدادات وتفعيلها من هناك",
-    "payBusiness": "ادفع لهذا المحل",
     "openSettings": "فتح الإعدادات",
     "title": "خريطة",
-    "error": "عفوًا. حدث خطأ أثناء الحصول على موقعك"
+    "error": "عفوًا. حدث خطأ أثناء الحصول على موقعك",
+    "attribution": "الأماكن من BTC Map، © مساهمو OpenStreetMap",
+    "unnamedPlace": "مكان بدون اسم",
+    "loadingPlaces": "جارٍ تحميل الأماكن من BTC Map",
+    "placesError": "تعذّر تحميل الأماكن من BTC Map",
+    "detailsError": "تعذّر تحميل هذا المكان",
+    "cannotOpenLink": "لا يوجد تطبيق على هذا الهاتف يمكنه فتح هذا الرابط",
+    "openNow": "مفتوح الآن",
+    "closedNow": "مغلق",
+    "navigate": "الاتجاهات",
+    "payMerchant": "ادفع لهذا التاجر",
+    "requiresApp": "يتطلب تطبيقًا معيّنًا للدفع",
+    "boosted": "مُروَّج",
+    "verifiedOn": "تم التحقق في {date: string}",
+    "lastVerifiedOn": "آخر تحقق في {date: string}",
+    "needsSurvey": "هذا المكان بحاجة إلى تحقق",
+    "searchError": "تعذّر البحث في هذه المنطقة",
+    "clearSearch": "مسح البحث",
+    "nothingToShow": "لا يوجد ما يُعرض",
+    "metersAway": "على بعد {distance: string} متر",
+    "kilometersAway": "على بعد {distance: string} كم",
+    "filters": "عوامل التصفية",
+    "categories": "الفئات",
+    "selectAll": "تحديد الكل",
+    "clearAll": "مسح الكل",
+    "category": {
+      "restaurants": "مطاعم",
+      "cafes": "مقاهٍ",
+      "bakeries": "مخابز وحلويات",
+      "bars": "حانات وحياة ليلية",
+      "groceries": "بقالة",
+      "shops": "متاجر",
+      "money": "صرافات آلية وصرافة",
+      "lodging": "فنادق وإقامة",
+      "automotive": "سيارات ووقود",
+      "health": "الصحة",
+      "beauty": "التجميل والعافية",
+      "services": "خدمات",
+      "sports": "رياضة وأنشطة خارجية",
+      "leisure": "ترفيه وثقافة",
+      "other": "أخرى"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} قيد الانتظار",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "رمز شخصي خاطئ. بقي {attemptsRemaining: string} محاولات.",
+    "lockoutUnavailable": "تعذّر تسجيل المحاولة الفاشلة بشكل آمن. يتم تسجيل الخروج.",
     "oneAttemptRemaining": "رمز شخصي خاطئ. بقيت محاولة واحدة.",
+    "pinUnreadable": "تعذّر التحقق من رمزك الشخصي. يرجى المحاولة مرة أخرى.",
     "setPin": "عيّن رمزك الشخصي (PIN)",
     "setPinFailedMatch": "رموز ال PIN غير متوافقة - قم بتعيين رمز PIN الخاص بك",
     "storePinFailed": "غير قادر على تخزين ال PIN الخاص بك.",
     "tooManyAttempts": "الكثير من المحاولات الفاشلة. \nيتم تسجيل الخروج.",
+    "tryAgainIn": "حاول مرة أخرى بعد {seconds: number} ث.",
     "verifyPin": "تحقق من رمز PIN الخاص بك"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "إنشاء عنوان",
+    "addressDisabled": "(معطّل)",
     "donationButton": "زر التبرع",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "تكامل API",
     "apiDocumentation": "وثائق API",
     "apiDashboard": "الوصول إلى API ولوحة التحكم",
+    "mode": "الوضع",
     "pos": "نقطة البيع",
     "posCopied": "تم نسخ رابط نقطة البيع الخاص بك",
     "activated": "تم التفعيل",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "حسابك يحتوي على أكثر من 5$",
     "itsATrialAccount": "الحسابات التجريبية لها حدود معاملات مخفّضة ولا تتوفر بها وسيلة استرداد. إذا فقدت هاتفك أو حذفت التطبيق، ستكون أموالك غير قابلة للاسترداد.",
-    "accountBeingDeleted": "جارٍ حذف حسابك، يرجى الانتظار...",
+    "accountBeingDeleted": "جارٍ إغلاق حسابك، يرجى الانتظار...",
     "dangerZone": "منطقة الخطر",
     "phoneDeletedSuccessfully": "تم حذف رقم الهاتف بنجاح",
     "phoneNumber": "رقم الهاتف",
@@ -2517,7 +2562,28 @@
     "removedAccount": "لقد أزلت الحساب {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "غير متاح في منطقتك"
+    "walletLabel": "غير متاح في منطقتك",
+    "anonModeWalletLabel": "غير متاح في وضع Incognito"
+  },
+  "AnonModeConvertModal": {
+    "title": "حوّل رصيدك بالدولار أولًا",
+    "body": "وضع Incognito يدعم رصيد Bitcoin فقط. حوّل رصيدك بالدولار إلى رصيد Bitcoin للتبديل."
+  },
+  "EnhancedModePrompt": {
+    "title": "هذه الميزة تتطلب وضع Enhanced",
+    "body": "أنت في وضع Incognito، لا يعرف Blink منطقتك، لذا بعض الميزات غير متاحة. بدّل إلى Enhanced لإجراء فحص الموقع وفتح جميع الميزات لمنطقتك.",
+    "switchButton": "التبديل إلى Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "تم التبديل إلى وضع Enhanced\nالمحفوظ ذاتيًا",
+    "anon": "تم التبديل إلى وضع Incognito\nالمحفوظ ذاتيًا"
+  },
+  "RestrictedRegion": {
+    "title": "تم رصد منطقة مقيّدة",
+    "body": "يبدو أن اتصالك قادم من منطقة مقيّدة. لا يستطيع Blink تقديم الخدمات من هذا الموقع. أرصدتك غير متأثرة.",
+    "bodyReturn": "بمجرد مغادرتك هذه المنطقة، ستعود جميع الوظائف إلى طبيعتها.",
+    "learnMore": "اعرف المزيد",
+    "contactSupport": "تواصل مع الدعم"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "رصيد الدولار غير متاح في منطقتك"
@@ -2643,7 +2709,6 @@
     "letsGo": "Let's go!",
     "stayInTrialMode": "Stay in trial mode",
     "upgradeToLevel": "الترقية إلى المستوى {level: number}",
-    "notNow": "ليس الآن",
     "setUpLevelAccount": "إعداد حساب المستوى {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "مرحبًا بك في المستوى 1",
       "title": "ميزات جديدة تم فتحها لحسابك:",
       "receiveBitcoinDescription": "استلام Bitcoin باستخدام رقم هاتفك",
-      "dailyLimitDescription": "أرسل حتى USD 1,000 يومياً",
+      "dailyLimitDescription": "أرسل حتى USD {limit: string} يومياً",
       "onchainDescription": "استلام المدفوعات على السلسلة"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "سعر البيتكوين",
     "btcAccount": "حساب البيتكوين",
     "cancel": "إلغاء",
+    "notNow": "ليس الآن",
     "card": "بطاقة",
     "close": "إغلاق",
     "confirm": "تأكيد",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - مركز الدعم",
     "defaultSupportMessage": "مرحبا! أحتاج إلى بعض المساعدة في {bankName: string}، أنا أستخدم الإصدار {version: string} على {os: string}.",
     "emailCopied": "نُسخ عنوان البريد {email: string}  إلى الحافظة",
-    "deleteAccount": "Delete account",
+    "deleteAccount": "إغلاق الحساب",
     "delete": "delete",
-    "typeDelete": "Please type \"{delete: string}\" to confirm account deletion",
+    "typeDelete": "يرجى كتابة \"{delete: string}\" لتأكيد إغلاق الحساب",
     "finalConfirmationAccountDeletionTitle": "Final Confirmation Required",
-    "finalConfirmationAccountDeletionMessage": "Are you sure you want to delete your account? This action is irreversible.",
-    "deleteAccountBalanceWarning": "Deleting your account will cause you to lose access to your current balance. Are you sure you want to proceed?",
-    "deleteAccountConfirmation": "Your account has been written for deletion.\n\nWhen the probation period related to regulatory requirement is over, the remaining data related to your account will be permanently deleted.",
-    "deleteAccountFromPhone": "Hey there!, please delete my account. My phone number is {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "بعد الإغلاق، لن تتمكن من الوصول إلى حسابك أو استخدامه. قد نحتفظ ببعض السجلات وفقًا لما يقتضيه القانون والتزاماتنا المتعلقة بالاحتفاظ بالسجلات. هل أنت متأكد أنك تريد إغلاق حسابك؟",
+    "deleteAccountBalanceWarning": "سيؤدي إغلاق حسابك إلى فقدان الوصول إلى رصيدك الحالي. هل أنت متأكد أنك تريد المتابعة؟",
+    "deleteAccountConfirmation": "تم إغلاق حسابك.\n\nقد نحتفظ ببعض السجلات وفقًا لما يقتضيه القانون والتزاماتنا بالاحتفاظ بالسجلات.",
+    "deleteAccountFromPhone": "مرحبًا! يرجى إغلاق حسابي. رقم هاتفي هو {phoneNumber: string}.",
     "deleteAccountError": "Something went wrong. Contact {email: string} for further assistance.",
     "bye": "Bye!",
-    "deleteAccountWarning": "تنبيه: حذف الحساب نهائي!\nتأكد من أن المحافظ لا تحتوي على أموال قبل الحذف.\nلا يمكن استعادة الحساب المحذوف."
+    "deleteAccountWarning": "تنبيه: إغلاق الحساب نهائي!\nتأكد من أن المحافظ لا تحتوي على أموال قبل الإغلاق.\nلا يمكن استعادة الحساب المغلق.\nقد نحتفظ ببعض السجلات وفقًا لما يقتضيه القانون."
   },
   "lnurl": {
     "overLimit": "لا يمكنك إرسال مبلغ أكثر من الحد الأعلى",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "مهم",
       "body": "انتقل إلى حساب غير حافظ عبر الترحيل الموجّه، أو اسحب أموالك، قبل {date}. يتوقف الاستلام في {receiveStopsDate}.",
+      "bodyReceiveDisabled": "توقف الاستلام. انتقل إلى حساب غير حافظ عبر الترحيل الموجّه، أو اسحب أموالك، قبل {date}.",
       "migrateCta": "رحّل"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "فشل في إنشاء المحفظة. يرجى المحاولة مرة أخرى.",
     "selfCustodialDisabled": "غير الحفظ غير متاح مؤقتًا."
   },
+  "ChooseExperienceScreen": {
+    "title": "اختر الوضع المحفوظ ذاتيًا",
+    "subtitle": "اختيارك يحدد الميزات المتاحة. يمكنك التبديل متى شئت.",
+    "enhancedLabel": "Enhanced\nالوضع",
+    "enhancedDescription": "نستخدم منطقتك لفتح خدمات قيّمة متاحة في مكانك.",
+    "anonLabel": "Incognito\nالوضع",
+    "anonDescription": "لأقصى درجات الخصوصية. ميزات أقل.",
+    "continueButton": "متابعة"
+  },
   "UnsupportedRegionScreen": {
     "title": "منطقة غير مدعومة",
-    "description": "للأسف لا يمكننا خدمة المستخدمين من منطقتك الحالية."
+    "description": "للأسف لا يمكننا خدمة المستخدمين من منطقتك الحالية.",
+    "custodialSignupDescription": "للأسف لا يمكننا إنشاء حسابات وصاية جديدة في منطقتك الحالية. يمكنك استخدام حساب ذاتي الوصاية بدلاً من ذلك.",
+    "custodialSignupOnlyDescription": "للأسف لا يمكننا إنشاء حسابات وصاية جديدة في منطقتك الحالية.",
+    "unknownRegionTitle": "لم يتم تحديد المنطقة",
+    "unknownRegionDescription": "لم نتمكن من تحديد منطقتك. يرجى التحقق من اتصالك والمحاولة مرة أخرى."
   },
   "RestoreScreen": {
     "title": "استعادة المحفظة",

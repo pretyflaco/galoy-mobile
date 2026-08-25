@@ -2097,17 +2097,57 @@
       "sendingLimit": "Kikomo kidogo cha kutuma kila siku",
       "noOnchain": "Hakuna kupokea bitcoin kwenye onchain",
       "recoveryOption": "Rejesha fedha kupitia SMS au barua pepe",
-      "dailyLimit": "Kikomo cha muamala wa kila siku cha USD 1,000",
+      "dailyLimit": "Kikomo cha muamala wa kila siku cha USD {limit: string}",
       "onchainReceive": "Pokea Bitcoin kwenye mtandao mkuu"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Ruhusa za eneo",
     "navToSettingsText": "Ikiwa ungependa kutoa ruhusa za eneo la Blink, tafadhali nenda kwenye mipangilio yako na uiwashe hapo",
-    "payBusiness": "Lipa biashara hii",
     "openSettings": "Fungua mipangilio",
     "title": "Ramani",
-    "error": "Lo! Hitilafu fulani imetokea wakati wa kupata eneo lako"
+    "error": "Lo! Hitilafu fulani imetokea wakati wa kupata eneo lako",
+    "attribution": "Maeneo kutoka BTC Map, © wachangiaji wa OpenStreetMap",
+    "unnamedPlace": "Eneo lisilo na jina",
+    "loadingPlaces": "Inapakia maeneo kutoka BTC Map",
+    "placesError": "Imeshindwa kupakia maeneo kutoka BTC Map",
+    "detailsError": "Imeshindwa kupakia eneo hili",
+    "cannotOpenLink": "Hakuna kitu kwenye simu hii kinachoweza kufungua kiungo hicho",
+    "openNow": "Imefunguliwa sasa",
+    "closedNow": "Imefungwa",
+    "navigate": "Elekeza",
+    "payMerchant": "Lipa mfanyabiashara huyu",
+    "requiresApp": "Inahitaji programu maalum ili kulipa",
+    "boosted": "Imeangaziwa",
+    "verifiedOn": "Ilithibitishwa {date: string}",
+    "lastVerifiedOn": "Ilithibitishwa mara ya mwisho {date: string}",
+    "needsSurvey": "Eneo hili linahitaji kuthibitishwa",
+    "searchError": "Imeshindwa kutafuta katika eneo hili",
+    "clearSearch": "Futa utafutaji",
+    "nothingToShow": "Hakuna cha kuonyesha",
+    "metersAway": "mita {distance: string} kutoka hapa",
+    "kilometersAway": "km {distance: string} kutoka hapa",
+    "filters": "Vichujio",
+    "categories": "Kategoria",
+    "selectAll": "Chagua zote",
+    "clearAll": "Futa zote",
+    "category": {
+      "restaurants": "Migahawa",
+      "cafes": "Kafe",
+      "bakeries": "Mikate na peremende",
+      "bars": "Baa na burudani za usiku",
+      "groceries": "Vyakula vya dukani",
+      "shops": "Maduka",
+      "money": "ATM na kubadilisha fedha",
+      "lodging": "Hoteli na malazi",
+      "automotive": "Magari na mafuta",
+      "health": "Afya",
+      "beauty": "Urembo na ustawi",
+      "services": "Huduma",
+      "sports": "Michezo na shughuli za nje",
+      "leisure": "Burudani na utamaduni",
+      "other": "Nyingine"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} inasubiri",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "Pini sahihi. {attemptsRemaining: number} yamesalia.",
+    "lockoutUnavailable": "Imeshindwa kurekodi jaribio lililokosa kwa usalama. Kutoka nje ya programu.",
     "oneAttemptRemaining": "Pini si sahihi. Jaribio 1 limesalia.",
+    "pinUnreadable": "Imeshindwa kuangalia pini yako. Tafadhali jaribu tena.",
     "setPin": "Andikisha pini yako",
     "setPinFailedMatch": "Pini hazikulingana - Andikisha Pini yako.",
     "storePinFailed": "Imeshindwa kuhifadhi pini yako.",
     "tooManyAttempts": "Majaribio mengi sana yaliyokosa. Kutoka nje ya programu.",
+    "tryAgainIn": "Jaribu tena baada ya sekunde {seconds: number}.",
     "verifyPin": "Thibitisha nambari yako ya pini"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Unda anwani",
+    "addressDisabled": "(imezimwa)",
     "donationButton": "Kitufe cha kuchangia",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "Ufikiaji wa API",
     "apiDocumentation": "Nyaraka za API",
     "apiDashboard": "Ufikiaji wa API na dashibodi",
+    "mode": "Hali",
     "pos": "Sehemu ya Uuzaji",
     "posCopied": "Kiungo chako cha mauzo kimenakiliwa",
     "activated": "Imewezeshwa",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Akaunti yako ina zaidi ya $5",
     "itsATrialAccount": "Akaunti za majaribio zimepunguza vikomo vya ununuzi na hakuna njia ya kurejesha. Ukipoteza simu yako au ukiondoa programu, pesa zako hazitarejeshwa.",
-    "accountBeingDeleted": "Akaunti yako inafutwa, tafadhali subiri...",
+    "accountBeingDeleted": "Akaunti yako inafungwa, tafadhali subiri...",
     "dangerZone": "Eneo la Hatari",
     "phoneDeletedSuccessfully": "Simu imefutwa",
     "phoneNumber": "Nambari ya Simu",
@@ -2517,7 +2562,28 @@
     "removedAccount": "Umeondoa akaunti {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "haipatikani katika eneo lako"
+    "walletLabel": "haipatikani katika eneo lako",
+    "anonModeWalletLabel": "haipatikani katika hali ya Incognito"
+  },
+  "AnonModeConvertModal": {
+    "title": "Hamisha kwanza salio lako la Dola",
+    "body": "Hali ya Incognito inaauni salio la Bitcoin pekee. Hamisha salio lako la Dola kwenda salio la Bitcoin ili kubadilisha."
+  },
+  "EnhancedModePrompt": {
+    "title": "Kipengele hiki kinahitaji hali ya Enhanced",
+    "body": "Uko katika hali ya Incognito, Blink haijui eneo lako, hivyo baadhi ya vipengele havipatikani. Badilisha kwenda Enhanced ili ukaguzi wa mahali ufanyike na vipengele vyote vya eneo lako vifunguliwe.",
+    "switchButton": "Badilisha kwenda Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Umebadilisha kwenda\nhali ya Enhanced isiyohifadhiwa",
+    "anon": "Umebadilisha kwenda\nhali ya Incognito isiyohifadhiwa"
+  },
+  "RestrictedRegion": {
+    "title": "Eneo lenye vikwazo limegunduliwa",
+    "body": "Muunganisho wako unaonekana kutoka eneo lenye vikwazo. Blink haiwezi kutoa huduma kutoka mahali hapa. Salio zako hazijaathirika.",
+    "bodyReturn": "Ukiondoka katika eneo hili, huduma zote zitarejea kawaida.",
+    "learnMore": "Jifunze zaidi",
+    "contactSupport": "Wasiliana na usaidizi"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Salio la dola haipatikani katika eneo lako"
@@ -2643,7 +2709,6 @@
     "letsGo": "Twende!",
     "stayInTrialMode": "Baki kwenye hali ya majaribio",
     "upgradeToLevel": "Boresha hadi Kiwango {level: number}",
-    "notNow": "Si sasa",
     "setUpLevelAccount": "Sanidi akaunti ya Kiwango {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "Karibu Kiwango cha 1",
       "title": "Vipengele vipya vimefunguliwa kwa akaunti yako:",
       "receiveBitcoinDescription": "Pokea Bitcoin kwa kutumia nambari yako ya simu",
-      "dailyLimitDescription": "Tuma hadi USD 1,000 kwa siku",
+      "dailyLimitDescription": "Tuma hadi USD {limit: string} kwa siku",
       "onchainDescription": "Pokea malipo ya kwenye mtandao mkuu"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Bei ya Bitcoin",
     "btcAccount": "Akaunti ya Bitcoin",
     "cancel": "Futa",
+    "notNow": "Si sasa",
     "card": "Kadi",
     "close": "Funga",
     "confirm": "Thibitisha",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Usaidizi",
     "defaultSupportMessage": "Hujambo! Nahitaji usaidizi wa {bankName: string}, ninatumia toleo la {version: string} kwenye {os: string}.",
     "emailCopied": "Barua pepe {email: string} imenakiliwa kwenye ubao wa kunakili",
-    "deleteAccount": "Futa akaunti",
+    "deleteAccount": "Funga akaunti",
     "delete": "futa",
-    "typeDelete": "Tafadhali andika \"{delete: string}\" kuthibitisha kufuta akaunti",
+    "typeDelete": "Tafadhali andika \"{delete: string}\" kuthibitisha kufungwa kwa akaunti",
     "finalConfirmationAccountDeletionTitle": "Thibitisho la Mwisho Linalohitajika",
-    "finalConfirmationAccountDeletionMessage": "Una uhakika unataka kufuta akaunti yako? Hatua hii haiwezi kubadilishwa.",
-    "deleteAccountBalanceWarning": "Kufuta akaunti yako kutasababisha kupoteza ufikiaji wa salio lako la sasa. Una uhakika unataka kuendelea?",
-    "deleteAccountConfirmation": "Akaunti yako imeandikwa kwa kufutwa.\n\nWakati kipindi cha majaribio kinachohusiana na mahitaji ya kisheria kinapomalizika, data iliyobaki kuhusiana na akaunti yako itafutwa kabisa.",
-    "deleteAccountFromPhone": "Habari!, tafadhali futa akaunti yangu. Namba yangu ya simu ni {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Baada ya kufungwa, hutaweza kufikia au kutumia akaunti yako. Tunaweza kuhifadhi rekodi fulani kama inavyohitajika na sheria na wajibu wetu wa kuhifadhi. Una uhakika unataka kufunga akaunti yako?",
+    "deleteAccountBalanceWarning": "Kufunga akaunti yako kutakufanya upoteze ufikiaji wa salio lako la sasa. Una uhakika unataka kuendelea?",
+    "deleteAccountConfirmation": "Akaunti yako imefungwa.\n\nTunaweza kuhifadhi rekodi fulani kama inavyohitajika na sheria na wajibu wetu wa kuhifadhi.",
+    "deleteAccountFromPhone": "Habari!, tafadhali funga akaunti yangu. Nambari yangu ya simu ni {phoneNumber: string}.",
     "deleteAccountError": "Kuna kitu kimeenda kombo. Wasiliana na {email: string} kwa msaada zaidi.",
     "bye": "Kwaheri!",
-    "deleteAccountWarning": "Tahadhari: Kufuta akaunti ni kwa kudumu!\nHakikisha mikoba haina fedha kabla ya kufuta.\nAkaunti iliyofutwa haiwezi kurejeshwa."
+    "deleteAccountWarning": "Kumbuka: Kufunga akaunti ni kwa kudumu!\nHakikisha pochi hazina fedha kabla ya kufunga.\nAkaunti iliyofungwa haiwezi kurejeshwa.\nTunaweza kuhifadhi rekodi fulani kama inavyohitajika na sheria."
   },
   "lnurl": {
     "overLimit": "Huwezi kutuma zaidi ya kiasi cha juu",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Muhimu",
       "body": "Hamia kwenye akaunti isiyo ya udhamini kupitia uhamishaji unaoongozwa, au toa fedha zako, kabla ya {date}. Kupokea kutasimama {receiveStopsDate}.",
+      "bodyReceiveDisabled": "Kupokea kumesimama. Hamia kwenye akaunti isiyo ya udhamini kupitia uhamishaji unaoongozwa, au toa fedha zako, kabla ya {date}.",
       "migrateCta": "Hamia"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Imeshindwa kuunda mkoba. Tafadhali jaribu tena.",
     "selfCustodialDisabled": "Isiyo na ulinzi haipatikani kwa muda."
   },
+  "ChooseExperienceScreen": {
+    "title": "Chagua hali isiyohifadhiwa",
+    "subtitle": "Chaguo lako huamua ni vipengele vipi vinapatikana. Unaweza kubadilisha wakati wowote.",
+    "enhancedLabel": "Enhanced\nHali",
+    "enhancedDescription": "Tunatumia eneo lako kufungua huduma muhimu zinazopatikana mahali ulipo.",
+    "anonLabel": "Incognito\nHali",
+    "anonDescription": "Kwa faragha ya juu zaidi. Vipengele vichache.",
+    "continueButton": "Endelea"
+  },
   "UnsupportedRegionScreen": {
     "title": "Eneo lisilotumika",
-    "description": "Kwa bahati mbaya hatuwezi kuhudumia watumiaji kutoka eneo lako la sasa."
+    "description": "Kwa bahati mbaya hatuwezi kuhudumia watumiaji kutoka eneo lako la sasa.",
+    "custodialSignupDescription": "Kwa bahati mbaya hatuwezi kufungua akaunti mpya za uhifadhi katika eneo lako la sasa. Unaweza kutumia akaunti ya kujihifadhi badala yake.",
+    "custodialSignupOnlyDescription": "Kwa bahati mbaya hatuwezi kufungua akaunti mpya za uhifadhi katika eneo lako la sasa.",
+    "unknownRegionTitle": "Eneo halijabainika",
+    "unknownRegionDescription": "Hatukuweza kubaini eneo lako. Tafadhali angalia muunganisho wako na ujaribu tena."
   },
   "RestoreScreen": {
     "title": "Rejesha mkoba",

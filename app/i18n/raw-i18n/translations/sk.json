@@ -2097,17 +2097,57 @@
       "sendingLimit": "Znížený denný limit odosielania",
       "noOnchain": "Nie je možné prijímať bitcoin onchain",
       "recoveryOption": "Obnoviť prostriedky cez SMS alebo e-mail",
-      "dailyLimit": "Denný limit transakcií USD 1,000",
+      "dailyLimit": "Denný limit transakcií USD {limit: string}",
       "onchainReceive": "Prijímať Bitcoin on-chain"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Povolenia polohy",
     "navToSettingsText": "Ak chcete Blinku udeliť povolenia na polohu, prejdite do nastavení a povoľte ich tam",
-    "payBusiness": "Zaplaťte tomuto podniku",
     "openSettings": "Otvoriť nastavenia",
     "title": "Mapa",
-    "error": "Ojoj. Pri získavaní vašej polohy sa vyskytla chyba"
+    "error": "Ojoj. Pri získavaní vašej polohy sa vyskytla chyba",
+    "attribution": "Miesta z BTC Map, © prispievatelia OpenStreetMap",
+    "unnamedPlace": "Miesto bez názvu",
+    "loadingPlaces": "Načítavajú sa miesta z BTC Map",
+    "placesError": "Miesta z BTC Map sa nepodarilo načítať",
+    "detailsError": "Toto miesto sa nepodarilo načítať",
+    "cannotOpenLink": "Tento odkaz nemá v telefóne čo otvoriť",
+    "openNow": "Teraz otvorené",
+    "closedNow": "Zatvorené",
+    "navigate": "Navigovať",
+    "payMerchant": "Zaplatiť tomuto obchodníkovi",
+    "requiresApp": "Na platbu je potrebná konkrétna aplikácia",
+    "boosted": "Zvýraznené",
+    "verifiedOn": "Overené {date: string}",
+    "lastVerifiedOn": "Naposledy overené {date: string}",
+    "needsSurvey": "Toto miesto je potrebné overiť",
+    "searchError": "V tejto oblasti sa nepodarilo vyhľadávať",
+    "clearSearch": "Vymazať hľadanie",
+    "nothingToShow": "Niet čo zobraziť",
+    "metersAway": "{distance: string} metrov odtiaľto",
+    "kilometersAway": "{distance: string} km odtiaľto",
+    "filters": "Filtre",
+    "categories": "Kategórie",
+    "selectAll": "Vybrať všetko",
+    "clearAll": "Zrušiť všetko",
+    "category": {
+      "restaurants": "Reštaurácie",
+      "cafes": "Kaviarne",
+      "bakeries": "Pekárne a sladkosti",
+      "bars": "Bary a nočný život",
+      "groceries": "Potraviny",
+      "shops": "Obchody",
+      "money": "Bankomaty a zmenárne",
+      "lodging": "Hotely a ubytovanie",
+      "automotive": "Autá a palivo",
+      "health": "Zdravie",
+      "beauty": "Krása a wellness",
+      "services": "Služby",
+      "sports": "Šport a príroda",
+      "leisure": "Voľný čas a kultúra",
+      "other": "Ostatné"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} čakajúce",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "Nesprávny PIN kód. Zostávajú {attemptsRemaining: number} pokusy.",
+    "lockoutUnavailable": "Neúspešný pokus sa nepodarilo bezpečne zaznamenať. Odhlásenie.",
     "oneAttemptRemaining": "Nesprávny PIN kód. Zostáva 1 pokus.",
+    "pinUnreadable": "PIN kód sa nepodarilo overiť. Skúste to znova.",
     "setPin": "Nastavenie PIN kódu",
     "setPinFailedMatch": "PINy sa nezhodujú - nastavte svoj PIN kód",
     "storePinFailed": "Nepodarilo sa uložiť váš PIN.",
     "tooManyAttempts": "Príliš veľa neúspešných pokusov. Odhlásenie.",
+    "tryAgainIn": "Skúste to znova o {seconds: number} s.",
     "verifyPin": "Overte svoj PIN kód"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Vytvoriť adresu",
+    "addressDisabled": "(zakázané)",
     "donationButton": "Darovacie tlačidlo",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "API prístup",
     "apiDocumentation": "API dokumentácia",
     "apiDashboard": "API prístup a dashboard",
+    "mode": "Režim",
     "pos": "Terminál PoS",
     "posCopied": "Váš Terminál PoS bol skopírovaný",
     "activated": "Aktivované",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Váš účet má viac ako 5 USD",
     "itsATrialAccount": "Skúšobné účty majú znížené limity transakcií a nemajú žiadnu metódu obnovy. Ak stratíte telefón alebo odinštalujete aplikáciu, vaše prostriedky budú nenávratné.",
-    "accountBeingDeleted": "Váš účet sa odstraňuje, čakajte prosím...",
+    "accountBeingDeleted": "Váš účet sa zatvára, čakajte prosím...",
     "dangerZone": "Nebezpečná zóna",
     "phoneDeletedSuccessfully": "Telefón bol úspešne odstránený",
     "phoneNumber": "Telefónne číslo",
@@ -2517,7 +2562,28 @@
     "removedAccount": "Odstránili ste účet {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "nie je vo vašom regióne k dispozícii"
+    "walletLabel": "nie je vo vašom regióne k dispozícii",
+    "anonModeWalletLabel": "nedostupné v režime Incognito"
+  },
+  "AnonModeConvertModal": {
+    "title": "Najprv preveďte svoj dolárový zostatok",
+    "body": "Režim Incognito podporuje iba bitcoinový zostatok. Preveďte svoj dolárový zostatok na bitcoinový, aby ste mohli prepnúť."
+  },
+  "EnhancedModePrompt": {
+    "title": "Táto funkcia vyžaduje režim Enhanced",
+    "body": "Ste v režime Incognito, Blink nepozná váš región, takže niektoré funkcie nie sú dostupné. Prepnite na Enhanced, aby prebehla kontrola polohy a odomkli sa všetky funkcie pre váš región.",
+    "switchButton": "Prepnúť na Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Prepnuté na režim Enhanced\ns vlastnou správou",
+    "anon": "Prepnuté na režim Incognito\ns vlastnou správou"
+  },
+  "RestrictedRegion": {
+    "title": "Zistený obmedzený región",
+    "body": "Zdá sa, že vaše pripojenie pochádza z obmedzeného regiónu. Blink z tohto miesta nemôže poskytovať služby. Vaše zostatky nie sú dotknuté.",
+    "bodyReturn": "Keď tento región opustíte, všetko sa vráti do normálu.",
+    "learnMore": "Zistiť viac",
+    "contactSupport": "Kontaktovať podporu"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Dolárový zostatok nie je vo vašom regióne k dispozícii"
@@ -2643,7 +2709,6 @@
     "letsGo": "Poďme na to!",
     "stayInTrialMode": "Zostať v skúšobnom režime",
     "upgradeToLevel": "Inovovať na Úroveň {level: number}",
-    "notNow": "Teraz nie",
     "setUpLevelAccount": "Nastaviť účet Úrovne {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "Vitajte na Úrovni 1",
       "title": "Nové funkcie odomknuté pre váš účet:",
       "receiveBitcoinDescription": "Prijímajte Bitcoin pomocou svojho telefónneho čísla",
-      "dailyLimitDescription": "Pošlite až USD 1,000 denne",
+      "dailyLimitDescription": "Pošlite až USD {limit: string} denne",
       "onchainDescription": "Prijímajte on-chain platby"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Cena bitcoinu",
     "btcAccount": "Bitcoinový zostatok",
     "cancel": "Zrušiť",
+    "notNow": "Teraz nie",
     "card": "Karta",
     "close": "Zatvoriť",
     "confirm": "Potvrdiť",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Podpora",
     "defaultSupportMessage": "Dobrý deň! Potrebujem pomoc s {bankName: string}, používam verziu {version: string} na {os: string}.",
     "emailCopied": "e-mail {email: string} skopírovaný do schránky",
-    "deleteAccount": "Zmazať účet",
+    "deleteAccount": "Zatvoriť účet",
     "delete": "zmazať",
-    "typeDelete": "Zmazanie účtu potvrdíte zadaním \"{delete: string}\"",
+    "typeDelete": "Zatvorenie účtu potvrdíte zadaním \"{delete: string}\"",
     "finalConfirmationAccountDeletionTitle": "Vyžaduje sa konečné potvrdenie",
-    "finalConfirmationAccountDeletionMessage": "Naozaj chcete zmazať svoj účet? Táto akcia je nezvratná.",
-    "deleteAccountBalanceWarning": "Zmazaním účtu stratíte prístup k aktuálnemu zostatku. Ste si istí, že chcete pokračovať?",
-    "deleteAccountConfirmation": "Váš účet bol pridaný do zoznamu na zmazanie.\n\nPo uplynutí čakacej lehoty súvisiacej s regulačnými požiadavkami budú všetky údaje týkajúce sa vášho účtu trvalo vymazané.",
-    "deleteAccountFromPhone": "Dobrý deň!, prosím, zmažte môj účet. Moje telefónne číslo je {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Po zatvorení nebudete mať prístup k svojmu účtu ani ho nebudete môcť používať. Niektoré záznamy môžeme uchovávať, ak to vyžaduje zákon a naše povinnosti uchovávania údajov. Naozaj chcete svoj účet zatvoriť?",
+    "deleteAccountBalanceWarning": "Zatvorením účtu stratíte prístup k aktuálnemu zostatku. Ste si istí, že chcete pokračovať?",
+    "deleteAccountConfirmation": "Váš účet bol zatvorený.\n\nNiektoré záznamy môžeme uchovávať, ak to vyžaduje zákon a naše povinnosti uchovávania údajov.",
+    "deleteAccountFromPhone": "Dobrý deň!, prosím, zatvorte môj účet. Moje telefónne číslo je {phoneNumber: string}.",
     "deleteAccountError": "Niečo sa pokazilo. Pre ďalšiu pomoc kontaktujte {email: string}",
     "bye": "Dovidenia!",
-    "deleteAccountWarning": "Pozor: Zmazanie účtu je trvalé!\nPred zmazaním sa uistite, že peňaženky nemajú žiadne prostriedky.\nZmazaný účet nie je možné obnoviť."
+    "deleteAccountWarning": "Pozor: Zatvorenie účtu je trvalé!\nPred zatvorením sa uistite, že peňaženky nemajú žiadne prostriedky.\nZatvorený účet nie je možné obnoviť.\nNiektoré záznamy môžeme uchovávať, ak to vyžaduje zákon."
   },
   "lnurl": {
     "overLimit": "Nemôžete poslať viac ako maximálnu sumu",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Dôležité",
       "body": "Prejdite na nesverenecký účet pomocou riadenej migrácie alebo si vyberte prostriedky pred {date}. Prijímanie sa skončí {receiveStopsDate}.",
+      "bodyReceiveDisabled": "Prijímanie sa skončilo. Prejdite na nesverenecký účet pomocou riadenej migrácie alebo si vyberte prostriedky pred {date}.",
       "migrateCta": "Migrovať"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Nepodarilo sa vytvoriť peňaženku. Skúste to znova.",
     "selfCustodialDisabled": "Nesprávcovský režim je dočasne nedostupný."
   },
+  "ChooseExperienceScreen": {
+    "title": "Vyberte režim s vlastnou správou",
+    "subtitle": "Vaša voľba určuje, ktoré funkcie sú dostupné. Kedykoľvek môžete prepnúť.",
+    "enhancedLabel": "Enhanced\nrežim",
+    "enhancedDescription": "Vašu oblasť používame na odomknutie cenných služieb dostupných tam, kde ste.",
+    "anonLabel": "Incognito\nrežim",
+    "anonDescription": "Pre maximálne súkromie. Menej funkcií.",
+    "continueButton": "Pokračovať"
+  },
   "UnsupportedRegionScreen": {
     "title": "Nepodporovaný región",
-    "description": "Bohužiaľ nemôžeme obsluhovať používateľov z vášho aktuálneho regiónu."
+    "description": "Bohužiaľ nemôžeme obsluhovať používateľov z vášho aktuálneho regiónu.",
+    "custodialSignupDescription": "Bohužiaľ nemôžeme vo vašom regióne vytvárať nové zverenecké účty. Namiesto toho môžete použiť účet vo vlastnej správe.",
+    "custodialSignupOnlyDescription": "Bohužiaľ nemôžeme vo vašom regióne vytvárať nové zverenecké účty.",
+    "unknownRegionTitle": "Región nezistený",
+    "unknownRegionDescription": "Nepodarilo sa nám určiť váš región. Skontrolujte pripojenie a skúste to znova."
   },
   "RestoreScreen": {
     "title": "Obnoviť peňaženku",

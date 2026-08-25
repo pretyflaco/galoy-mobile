@@ -2097,17 +2097,57 @@
       "sendingLimit": "Csökkentett napi küldési korlát",
       "noOnchain": "Nincs onchain Bitcoin fogadás",
       "recoveryOption": "Pénz visszaszerzése SMS-sel vagy e-maillel",
-      "dailyLimit": "Napi USD 1,000 tranzakciós limit",
+      "dailyLimit": "Napi USD {limit: string} tranzakciós limit",
       "onchainReceive": "Bitcoin fogadása on-chain"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Helymeghatározási engedélyek",
     "navToSettingsText": "Ha szeretnéd engedélyezni hogy a Blink meghatározza a helyedet, kérjük, engedélyezd a beállításokban.",
-    "payBusiness": "Fizess ennek az üzletnek",
     "openSettings": "Beállítások megnyitása",
     "title": "Térkép",
-    "error": "Valami hiba történt a helyzeted lekérdezése közben"
+    "error": "Valami hiba történt a helyzeted lekérdezése közben",
+    "attribution": "Helyek a BTC Map-ról, © OpenStreetMap közreműködők",
+    "unnamedPlace": "Névtelen hely",
+    "loadingPlaces": "Helyek betöltése a BTC Map-ról",
+    "placesError": "Nem sikerült betölteni a helyeket a BTC Map-ról",
+    "detailsError": "Nem sikerült betölteni ezt a helyet",
+    "cannotOpenLink": "Ezen a telefonon semmi sem tudja megnyitni ezt a linket",
+    "openNow": "Most nyitva",
+    "closedNow": "Zárva",
+    "navigate": "Útvonal",
+    "payMerchant": "Fizetés ennek a kereskedőnek",
+    "requiresApp": "A fizetéshez külön alkalmazás kell",
+    "boosted": "Kiemelt",
+    "verifiedOn": "Ellenőrizve: {date: string}",
+    "lastVerifiedOn": "Utoljára ellenőrizve: {date: string}",
+    "needsSurvey": "Ezt a helyet ellenőrizni kell",
+    "searchError": "Nem sikerült keresni ezen a területen",
+    "clearSearch": "Keresés törlése",
+    "nothingToShow": "Nincs megjeleníthető találat",
+    "metersAway": "{distance: string} méterre",
+    "kilometersAway": "{distance: string} km-re",
+    "filters": "Szűrők",
+    "categories": "Kategóriák",
+    "selectAll": "Összes kijelölése",
+    "clearAll": "Összes törlése",
+    "category": {
+      "restaurants": "Éttermek",
+      "cafes": "Kávézók",
+      "bakeries": "Pékségek és édességek",
+      "bars": "Bárok és éjszakai élet",
+      "groceries": "Élelmiszer",
+      "shops": "Üzletek",
+      "money": "ATM-ek és pénzváltás",
+      "lodging": "Szállodák és szállás",
+      "automotive": "Autó és üzemanyag",
+      "health": "Egészség",
+      "beauty": "Szépség és wellness",
+      "services": "Szolgáltatások",
+      "sports": "Sport és szabadtér",
+      "leisure": "Szabadidő és kultúra",
+      "other": "Egyéb"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} Függőben",
@@ -2122,11 +2162,14 @@
   },
   "PinScreen": {
     "attemptsRemaining": "Helytelen PIN. {attemptsRemaining: number} próbálkozás maradt.",
+    "lockoutUnavailable": "A sikertelen próbálkozást nem sikerült biztonságosan rögzíteni. Kijelentkezés.",
     "oneAttemptRemaining": "Helytelen PIN. 1 próbálkozás maradt.",
+    "pinUnreadable": "Nem sikerült ellenőrizni a PIN-kódot. Kérjük, próbálja újra.",
     "setPin": "Állítsd be a PIN kódodat",
     "setPinFailedMatch": "A PIN kódok nem egyeznek - Állítsd be a PIN kódodat",
     "storePinFailed": "Nem sikerült tárolni a PIN kódodat.",
     "tooManyAttempts": "Túl sok sikertelen próbálkozás. Kijelentkezés.",
+    "tryAgainIn": "Próbálja újra {seconds: number} mp múlva.",
     "verifyPin": "Ellenőrizd a PIN kódodat"
   },
   "PriceHistoryScreen": {
@@ -2377,6 +2420,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Cím létrehozása",
+    "addressDisabled": "(letiltva)",
     "donationButton": "Adományozás gomb",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2430,7 @@
     "apiAcess": "API hozzáférés",
     "apiDocumentation": "API dokumentáció",
     "apiDashboard": "API hozzáférés és kezelőpanel",
+    "mode": "Mód",
     "pos": "Értékesítési pont",
     "posCopied": "Az értékesítési pont hivatkozásod másolva lett",
     "activated": "Aktiválva",
@@ -2455,7 +2500,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "A számládon több mint 5 dollár van",
     "itsATrialAccount": "A próba felhasználói fiókok korlátozott tranzakciós kerettel rendelkeznek, és nincs visszaállításukra lehetőség. Ha elveszíted a telefonodat vagy eltávolítod az alkalmazást, a pénzedhez többé nem férsz hozzá.",
-    "accountBeingDeleted": "A felhasználói fiókod törlése folyamatban van, kérlek várj...",
+    "accountBeingDeleted": "A fiókod lezárása folyamatban van, kérlek várj...",
     "dangerZone": "Veszélyzóna",
     "phoneDeletedSuccessfully": "A telefon sikeresen törölve",
     "phoneNumber": "Telefonszám",
@@ -2517,7 +2562,28 @@
     "removedAccount": "Eltávolítottad a(z) {identifier: string} fiókot."
   },
   "StablesatsRestriction": {
-    "walletLabel": "nem érhető el a régiódban"
+    "walletLabel": "nem érhető el a régiódban",
+    "anonModeWalletLabel": "Incognito módban nem érhető el"
+  },
+  "AnonModeConvertModal": {
+    "title": "Először utald át a dolláregyenleged",
+    "body": "Az Incognito mód csak a Bitcoin-egyenleget támogatja. Utald át a dolláregyenleged a Bitcoin-egyenlegedre a váltáshoz."
+  },
+  "EnhancedModePrompt": {
+    "title": "Ehhez a funkcióhoz Enhanced mód szükséges",
+    "body": "Incognito módban vagy, a Blink nem ismeri a régiódat, ezért néhány funkció nem érhető el. Válts Enhanced módra a helyellenőrzés futtatásához és a régiódban elérhető összes funkció feloldásához.",
+    "switchButton": "Váltás Enhanced módra"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Átváltva önrendelkező\nEnhanced módra",
+    "anon": "Átváltva önrendelkező\nIncognito módra"
+  },
+  "RestrictedRegion": {
+    "title": "Korlátozott régió észlelve",
+    "body": "Úgy tűnik, a kapcsolatod korlátozott régióból érkezik. A Blink erről a helyről nem tud szolgáltatásokat nyújtani. Az egyenlegeidet ez nem érinti.",
+    "bodyReturn": "Amint elhagyod ezt a régiót, minden funkció visszaáll a normál működésre.",
+    "learnMore": "Tudj meg többet",
+    "contactSupport": "Kapcsolatfelvétel az ügyfélszolgálattal"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "A dolláregyenleg nem érhető el a régiódban"
@@ -2643,7 +2709,6 @@
     "letsGo": "Gyerünk!",
     "stayInTrialMode": "Maradj próbaverzióban",
     "upgradeToLevel": "Frissítés {level: number}. szintre",
-    "notNow": "Most nem",
     "setUpLevelAccount": "{level: number}. szintű fiók beállítása"
   },
   "SetAddressModal": {
@@ -2699,7 +2764,7 @@
       "mainTitle": "Üdvözlünk az 1. szinten",
       "title": "Új funkciók a fiókodban:",
       "receiveBitcoinDescription": "Bitcoin fogadása telefonszámoddal",
-      "dailyLimitDescription": "Küldj naponta akár USD 1,000-t",
+      "dailyLimitDescription": "Küldj naponta akár USD {limit: string}-et",
       "onchainDescription": "On-chain fizetések fogadása"
     },
     "emailBenefits": {
@@ -2821,6 +2886,7 @@
     "bitcoinPrice": "Bitcoin Ár",
     "btcAccount": "Bitcoin Egyenleg",
     "cancel": "Mégse",
+    "notNow": "Most nem",
     "card": "Kártya",
     "close": "Bezárás",
     "confirm": "Megerősítés",
@@ -2969,17 +3035,17 @@
     "defaultEmailSubject": "{bankName: string} - Támogatás",
     "defaultSupportMessage": "Szia! Segítségre van szükségem a {bankName: string}kel kapcsolatban, a(z) {version: string} verziót használom a(z) {os: string} operációs rendszeren.",
     "emailCopied": "{email: string} email cím a vágólapra másolva",
-    "deleteAccount": "Felhasználói fiók törlése",
+    "deleteAccount": "Fiók lezárása",
     "delete": "törlés",
-    "typeDelete": "Kérlek írd be a(z) \"{delete: string}\" szót a számla törlésének megerősítéséhez",
+    "typeDelete": "Írd be: \"{delete: string}\" a fiók lezárásának megerősítéséhez",
     "finalConfirmationAccountDeletionTitle": "Végleges megerősítés szükséges",
-    "finalConfirmationAccountDeletionMessage": "Biztosan törölni akarod a felhasználói fiókodat? Ez a művelet visszafordíthatatlan.",
-    "deleteAccountBalanceWarning": "A fiókod törlése a jelenlegi egyenleged elvesztéséhez vezet. Biztosan folytatnád?",
-    "deleteAccountConfirmation": "A fiókod törlésre került.\n\nAmikor a szabályozási követelmények szerinti próbaidőszak lejár, a fiókhoz kapcsolódó fennmaradó adatok véglegesen törlődnek.",
-    "deleteAccountFromPhone": "Szia! Kérem a fiókom törlését. A telefonszámom: {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "A lezárás után nem fogsz tudni hozzáférni a fiókodhoz, és nem tudod használni. Előfordulhat, hogy bizonyos adatokat a törvény és az adatmegőrzési kötelezettségeink által megkövetelt módon megőrzünk. Biztosan lezárod a fiókodat?",
+    "deleteAccountBalanceWarning": "A fiók lezárásával elveszíted a hozzáférést a jelenlegi egyenlegedhez. Biztosan folytatod?",
+    "deleteAccountConfirmation": "A fiókod lezárásra került.\n\nElőfordulhat, hogy bizonyos adatokat a törvény és az adatmegőrzési kötelezettségeink által megkövetelt módon megőrzünk.",
+    "deleteAccountFromPhone": "Szia! Kérem, zárják le a fiókomat. A telefonszámom: {phoneNumber: string}.",
     "deleteAccountError": "Valami hiba történt. További segítségért lépj kapcsolatba az alábbi email címen: {email: string}.",
     "bye": "Viszlát!",
-    "deleteAccountWarning": "Figyelem: A fiók törlése végleges!\nGyőződj meg róla, hogy a tárcákban nincs egyenleg a törlés előtt.\nA törölt fiókot nem lehet visszaállítani."
+    "deleteAccountWarning": "Figyelem: A fiók lezárása végleges!\nA lezárás előtt győződj meg róla, hogy a tárcákban nincs egyenleg.\nA lezárt fiókot nem lehet visszaállítani.\nElőfordulhat, hogy bizonyos adatokat törvényi kötelezettség miatt megőrzünk."
   },
   "lnurl": {
     "overLimit": "Nem küldhetsz többet, mint a maximális összeg",
@@ -3756,6 +3822,7 @@
     "reminderBulletin": {
       "title": "Fontos",
       "body": "Váltson át egy nem letétkezelt fiókra az irányított átköltöztetéssel, vagy vegye fel az egyenlegét {date} előtt. A fogadás megszűnik: {receiveStopsDate}.",
+      "bodyReceiveDisabled": "A fogadás megszűnt. Váltson át egy nem letétkezelt fiókra az irányított átköltöztetéssel, vagy vegye fel az egyenlegét {date} előtt.",
       "migrateCta": "Átköltözés"
     },
     "offboardBulletin": {
@@ -3846,9 +3913,22 @@
     "createFailed": "Nem sikerült létrehozni a pénztárcát. Kérjük, próbáld újra.",
     "selfCustodialDisabled": "Az önrendelkező mód átmenetileg nem érhető el."
   },
+  "ChooseExperienceScreen": {
+    "title": "Válassz önrendelkező módot",
+    "subtitle": "A választásod dönti el, mely funkciók érhetők el. Bármikor válthatsz.",
+    "enhancedLabel": "Enhanced\nmód",
+    "enhancedDescription": "A régiódat arra használjuk, hogy feloldjuk az ott elérhető értékes szolgáltatásokat.",
+    "anonLabel": "Incognito\nmód",
+    "anonDescription": "A maximális adatvédelemért. Kevesebb funkció.",
+    "continueButton": "Folytatás"
+  },
   "UnsupportedRegionScreen": {
     "title": "Nem támogatott régió",
-    "description": "Sajnos nem tudjuk kiszolgálni a jelenlegi régiódból érkező felhasználókat."
+    "description": "Sajnos nem tudjuk kiszolgálni a jelenlegi régiódból érkező felhasználókat.",
+    "custodialSignupDescription": "Sajnos nem tudunk új letéti fiókokat létrehozni a jelenlegi régiódban. Helyette használhatsz saját letétkezelésű fiókot.",
+    "custodialSignupOnlyDescription": "Sajnos nem tudunk új letéti fiókokat létrehozni a jelenlegi régiódban.",
+    "unknownRegionTitle": "A régió nem állapítható meg",
+    "unknownRegionDescription": "Nem tudtuk meghatározni a régiódat. Ellenőrizd a kapcsolatot, és próbáld újra."
   },
   "RestoreScreen": {
     "title": "Tárca visszaállítása",

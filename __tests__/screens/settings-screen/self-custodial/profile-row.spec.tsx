@@ -1,6 +1,6 @@
 import React from "react"
 import { Network as mockSparkNetwork } from "@breeztech/breez-sdk-spark-react-native"
-import { act, fireEvent, render } from "@testing-library/react-native"
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 
 import { AccountStatus, AccountType } from "@app/types/wallet"
 
@@ -250,7 +250,7 @@ describe("ProfileRow", () => {
     expect(getByText("Anon user")).toBeTruthy()
   })
 
-  it("switches to the entry's account id when the row is pressed", () => {
+  it("switches to the entry's account id when the row is pressed", async () => {
     const { getByTestId } = render(
       <ProfileRow entry={{ id: TEST_ENTRY_ID, lightningAddress: null }} />,
     )
@@ -258,8 +258,12 @@ describe("ProfileRow", () => {
     fireEvent.press(getByTestId(`profile-row-${TEST_ENTRY_ID}`))
 
     expect(setActiveAccountId).toHaveBeenCalledWith(TEST_ENTRY_ID)
-    expect(mockToastShow).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "success", message: "Switched accounts" }),
+    /** The toast is deferred past the switch's teardown (a Fabric viewState race when
+     *  mounted in the same frame), so it lands after interactions settle. */
+    await waitFor(() =>
+      expect(mockToastShow).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "success", message: "Switched accounts" }),
+      ),
     )
     expect(mockNavigate).toHaveBeenCalledWith("Primary")
   })

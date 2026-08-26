@@ -8996,6 +8996,93 @@ type RootTranslation = {
 		 */
 		itCannotBeChanged: string
 	}
+	ChooseLnurlDomainScreen: {
+		/**
+		 * C​h​o​o​s​e​ ​y​o​u​r​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​d​o​m​a​i​n
+		 */
+		title: string
+		/**
+		 * Y​o​u​r​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​i​s​ ​h​o​w​ ​o​t​h​e​r​s​ ​p​a​y​ ​y​o​u​.​ ​P​i​c​k​ ​w​h​i​c​h​ ​d​o​m​a​i​n​ ​i​t​ ​e​n​d​s​ ​w​i​t​h​.
+		 */
+		subtitle: string
+		/**
+		 * @​b​l​i​n​k​.​s​v
+		 */
+		blinkSvLabel: string
+		/**
+		 * T​h​e​ ​s​t​a​n​d​a​r​d​ ​B​l​i​n​k​ ​d​o​m​a​i​n​,​ ​r​u​n​ ​b​y​ ​B​l​i​n​k​.​ ​R​e​c​o​g​n​i​z​e​d​,​ ​r​e​l​i​a​b​l​e​,​ ​a​n​d​ ​f​r​e​e​.
+		 */
+		blinkSvDescription: string
+		/**
+		 * @​t​w​e​n​t​y​o​n​e​.​i​s​t
+		 */
+		twentyoneIstLabel: string
+		/**
+		 * T​h​e​ ​t​w​e​n​t​y​o​n​e​.​i​s​t​ ​s​e​r​v​e​r​.​ ​E​n​a​b​l​e​s​ ​d​e​l​e​g​a​t​e​d​ ​g​r​a​n​t​s​,​ ​a​n​d​ ​m​u​l​t​i​p​l​e​ ​a​l​i​a​s​e​s​ ​(​c​o​m​i​n​g​ ​s​o​o​n​)​.
+		 */
+		twentyoneIstDescription: string
+		/**
+		 * N​o​t​ ​a​v​a​i​l​a​b​l​e​ ​y​e​t
+		 */
+		twentyoneIstUnavailable: string
+		/**
+		 * C​o​n​t​i​n​u​e
+		 */
+		continueButton: string
+		/**
+		 * T​h​i​s​ ​c​h​o​i​c​e​ ​i​s​ ​f​i​x​e​d​ ​o​n​c​e​ ​y​o​u​r​ ​a​d​d​r​e​s​s​ ​i​s​ ​c​r​e​a​t​e​d​.
+		 */
+		domainCannotBeChanged: string
+	}
+	SetSelfCustodialAddressScreen: {
+		/**
+		 * C​h​o​o​s​e​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s
+		 */
+		title: string
+		/**
+		 * s​a​t​o​s​h​i
+		 */
+		addressPlaceholder: string
+		/**
+		 * Y​o​u​r​ ​a​d​d​r​e​s​s​ ​w​i​l​l​ ​b​e​ ​@​{​d​o​m​a​i​n​}
+		 * @param {string} domain
+		 */
+		onDomain: RequiredParams<'domain'>
+		/**
+		 * S​e​t​ ​L​i​g​h​t​n​i​n​g​ ​a​d​d​r​e​s​s
+		 */
+		setAddressButton: string
+		/**
+		 * C​h​e​c​k​i​n​g​ ​a​v​a​i​l​a​b​i​l​i​t​y​…
+		 */
+		checkingAvailability: string
+		Errors: {
+			/**
+			 * A​d​d​r​e​s​s​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​3​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g
+			 */
+			tooShort: string
+			/**
+			 * A​d​d​r​e​s​s​ ​m​u​s​t​ ​b​e​ ​a​t​ ​m​o​s​t​ ​5​0​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g
+			 */
+			tooLong: string
+			/**
+			 * A​d​d​r​e​s​s​ ​c​a​n​ ​o​n​l​y​ ​c​o​n​t​a​i​n​ ​l​e​t​t​e​r​s​,​ ​n​u​m​b​e​r​s​,​ ​a​n​d​ ​u​n​d​e​r​s​c​o​r​e​s
+			 */
+			invalidCharacter: string
+			/**
+			 * S​o​r​r​y​,​ ​t​h​i​s​ ​a​d​d​r​e​s​s​ ​i​s​ ​a​l​r​e​a​d​y​ ​t​a​k​e​n
+			 */
+			addressUnavailable: string
+			/**
+			 * A​n​ ​u​n​k​n​o​w​n​ ​e​r​r​o​r​ ​o​c​c​u​r​r​e​d​,​ ​p​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​ ​l​a​t​e​r
+			 */
+			unknownError: string
+			/**
+			 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​w​a​l​l​e​t​ ​b​e​f​o​r​e​ ​c​r​e​a​t​i​n​g​ ​a​ ​L​i​g​h​t​n​i​n​g​ ​a​d​d​r​e​s​s
+			 */
+			backupRequired: string
+		}
+	}
 	WelcomeFirstScreen: {
 		/**
 		 * B​i​t​c​o​i​n​ ​i​s​ ​d​e​s​i​g​n​e​d​ ​t​o​ ​l​e​t​ ​y​o​u​ ​s​t​o​r​e​,​ ​s​e​n​d​ ​a​n​d​ ​r​e​c​e​i​v​e​ ​m​o​n​e​y​,​ ​w​i​t​h​o​u​t​ ​r​e​l​y​i​n​g​ ​o​n​ ​a​ ​b​a​n​k​ ​o​r​ ​c​r​e​d​i​t​ ​c​a​r​d​.
@@ -23507,6 +23594,92 @@ export type TranslationFunctions = {
 		 * Choose well – it cannot be changed later!
 		 */
 		itCannotBeChanged: () => LocalizedString
+	}
+	ChooseLnurlDomainScreen: {
+		/**
+		 * Choose your Lightning Address domain
+		 */
+		title: () => LocalizedString
+		/**
+		 * Your Lightning Address is how others pay you. Pick which domain it ends with.
+		 */
+		subtitle: () => LocalizedString
+		/**
+		 * @blink.sv
+		 */
+		blinkSvLabel: () => LocalizedString
+		/**
+		 * The standard Blink domain, run by Blink. Recognized, reliable, and free.
+		 */
+		blinkSvDescription: () => LocalizedString
+		/**
+		 * @twentyone.ist
+		 */
+		twentyoneIstLabel: () => LocalizedString
+		/**
+		 * The twentyone.ist server. Enables delegated grants, and multiple aliases (coming soon).
+		 */
+		twentyoneIstDescription: () => LocalizedString
+		/**
+		 * Not available yet
+		 */
+		twentyoneIstUnavailable: () => LocalizedString
+		/**
+		 * Continue
+		 */
+		continueButton: () => LocalizedString
+		/**
+		 * This choice is fixed once your address is created.
+		 */
+		domainCannotBeChanged: () => LocalizedString
+	}
+	SetSelfCustodialAddressScreen: {
+		/**
+		 * Choose Lightning Address
+		 */
+		title: () => LocalizedString
+		/**
+		 * satoshi
+		 */
+		addressPlaceholder: () => LocalizedString
+		/**
+		 * Your address will be @{domain}
+		 */
+		onDomain: (arg: { domain: string }) => LocalizedString
+		/**
+		 * Set Lightning address
+		 */
+		setAddressButton: () => LocalizedString
+		/**
+		 * Checking availability…
+		 */
+		checkingAvailability: () => LocalizedString
+		Errors: {
+			/**
+			 * Address must be at least 3 characters long
+			 */
+			tooShort: () => LocalizedString
+			/**
+			 * Address must be at most 50 characters long
+			 */
+			tooLong: () => LocalizedString
+			/**
+			 * Address can only contain letters, numbers, and underscores
+			 */
+			invalidCharacter: () => LocalizedString
+			/**
+			 * Sorry, this address is already taken
+			 */
+			addressUnavailable: () => LocalizedString
+			/**
+			 * An unknown error occurred, please try again later
+			 */
+			unknownError: () => LocalizedString
+			/**
+			 * Back up your wallet before creating a Lightning address
+			 */
+			backupRequired: () => LocalizedString
+		}
 	}
 	WelcomeFirstScreen: {
 		/**

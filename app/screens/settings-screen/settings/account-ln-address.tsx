@@ -4,13 +4,15 @@ import { useTheme } from "@rn-vui/themed"
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { BackupRequiredModal } from "@app/components/backup-required-modal"
 import { SetLightningAddressModal } from "@app/components/set-lightning-address-modal"
-import { SetSelfCustodialLightningAddressModal } from "@app/screens/settings-screen/self-custodial/set-lightning-address-modal"
 import { useSettingsScreenQuery } from "@app/graphql/generated"
 import { useIsAuthed } from "@app/graphql/is-authed-context"
 import { useAppConfig, useClipboard } from "@app/hooks"
 import { useAccountRegistry } from "@app/hooks/use-account-registry"
 import { useI18nContext } from "@app/i18n/i18n-react"
+import { RootStackParamList } from "@app/navigation/stack-param-lists"
 import { useLightningAddressGated } from "@app/self-custodial/hooks/use-lightning-address-gate"
+import { useNavigation } from "@react-navigation/native"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { BackupStatus, useBackupState } from "@app/self-custodial/providers/backup-state"
 import { AccountType } from "@app/types/wallet"
 import { getLightningAddress } from "@app/utils/pay-links"
@@ -35,6 +37,9 @@ type LightningAddressRowProps = {
   /** Marks the address as unusable: the row says so and drops the copy affordance,
    *  while `address` stays the bare address so nothing can copy the label. */
   isDisabled?: boolean
+  /** When set, creating an address navigates (self-custodial's two-screen flow) instead of
+   *  opening the modal. Custodial leaves this undefined and keeps the modal. */
+  onCreateAddress?: () => void
   renderModal: (modal: { isVisible: boolean; toggleModal: () => void }) => React.ReactNode
 }
 
@@ -42,6 +47,7 @@ const LightningAddressRow: React.FC<LightningAddressRowProps> = ({
   address,
   loading,
   isDisabled = false,
+  onCreateAddress,
   renderModal,
 }) => {
   const {
@@ -70,7 +76,11 @@ const LightningAddressRow: React.FC<LightningAddressRowProps> = ({
   const handleAction = () => {
     if (isDisabled) return
     if (!address) {
-      toggleModal()
+      if (onCreateAddress) {
+        onCreateAddress()
+      } else {
+        toggleModal()
+      }
       return
     }
     copyAddress(address)
@@ -121,21 +131,27 @@ const SelfCustodialLightningAddressRow: React.FC = () => {
   const { backupState } = useBackupState()
   const isLightningAddressGated = useLightningAddressGated()
   const isBackupRequired = backupState.status !== BackupStatus.Completed
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
+  /** Registration is a two-screen flow (domain choice, then username) rather than the old
+   *  modal, because the domain is a fixed per-account decision. Only entered when no
+   *  address exists yet — a registered address's domain is locked. While backup is
+   *  incomplete, `onCreateAddress` is withheld so the row falls into the modal path, which
+   *  renders the backup-required prompt instead of navigating. */
   return (
     <LightningAddressRow
       address={address}
       /** Incognito cannot receive, so the row says so next to the address it still shows. */
       isDisabled={isLightningAddressGated}
+      onCreateAddress={
+        isBackupRequired
+          ? undefined
+          : () => navigation.navigate("selfCustodialChooseLnurlDomain")
+      }
       renderModal={({ isVisible, toggleModal }) =>
         isBackupRequired ? (
           <BackupRequiredModal isVisible={isVisible} onClose={toggleModal} />
-        ) : (
-          <SetSelfCustodialLightningAddressModal
-            isVisible={isVisible}
-            toggleModal={toggleModal}
-          />
-        )
+        ) : null
       }
     />
   )

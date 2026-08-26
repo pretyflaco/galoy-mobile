@@ -145,6 +145,8 @@ import {
   BackupPhraseConfirmScreen,
   BackupSuccessScreen,
   ChooseExperienceScreen,
+  ChooseLnurlDomainScreen,
+  SetSelfCustodialAddressScreen,
   WalletCreationScreen,
 } from "@app/screens/self-custodial/onboarding"
 import { ModeSwitchSuccessScreen } from "@app/screens/self-custodial/mode-switch-success-screen"
@@ -920,6 +922,16 @@ export const RootStack = () => {
         name="selfCustodialChooseExperience"
         component={ChooseExperienceScreen}
         options={chooseExperienceOptions}
+      />
+      <RootNavigator.Screen
+        name="selfCustodialChooseLnurlDomain"
+        component={ChooseLnurlDomainScreen}
+        options={{ title: LL.ChooseLnurlDomainScreen.title() }}
+      />
+      <RootNavigator.Screen
+        name="selfCustodialSetAddress"
+        component={SetSelfCustodialAddressScreen}
+        options={{ title: LL.SetSelfCustodialAddressScreen.title() }}
       />
       <RootNavigator.Screen
         name="selfCustodialModeSwitchSuccess"

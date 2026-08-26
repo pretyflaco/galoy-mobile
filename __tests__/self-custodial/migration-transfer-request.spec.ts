@@ -41,6 +41,11 @@ jest.mock("@app/utils/storage/secureStorage", () => ({
   default: { getMnemonicForAccount: jest.fn() },
 }))
 
+const mockGetLnurlDomain = jest.fn()
+jest.mock("@app/self-custodial/storage/account-index", () => ({
+  getSelfCustodialLnurlDomain: (...args: unknown[]) => mockGetLnurlDomain(...args),
+}))
+
 const SPARK_PUBKEY = "03".padEnd(66, "a")
 const mockGetMnemonic = KeyStoreWrapper.getMnemonicForAccount as jest.Mock
 
@@ -71,6 +76,8 @@ describe("buildMigrationTransferRequest", () => {
     jest.clearAllMocks()
     mockGetMnemonic.mockResolvedValue("abandon abandon ability")
     mockInitSdk.mockResolvedValue(sdkWith())
+    // Default: no stored domain choice → SDK connects on the default host.
+    mockGetLnurlDomain.mockResolvedValue(null)
     mockGetWalletInfo.mockResolvedValue({ identityPubkey: SPARK_PUBKEY })
     mockDisconnectSdk.mockResolvedValue(undefined)
     mockReceivePayment.mockResolvedValue({ paymentRequest: "lnbcrt1invoice" })
@@ -143,6 +150,8 @@ describe("buildMigrationTransferRequest", () => {
       storageDir: "/tmp/sc-account-1",
       network: Network.Regtest,
       leewaySatPerVbyte: 1,
+      // No stored choice in this fixture → null, read by the SDK config as the default.
+      lnurlDomain: null,
     })
   })
 

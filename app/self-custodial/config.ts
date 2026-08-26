@@ -33,19 +33,51 @@ export const networkLabelFor = (network: Network): SparkNetworkLabel =>
 
 export const isRegtestNetwork = (network: Network): boolean => network === Network.Regtest
 
-const MAINNET_LNURL_DOMAIN = "blink.sv"
+/**
+ * Mainnet Lightning Address (LNURL) domains a self-custodial account can be registered
+ * on. The choice is fixed per account once its address exists (the SDK's `lnurlDomain` is
+ * set at connect time, so an account binds to one server). `BlinkSv` is the production
+ * default; `TwentyoneIst` is the blink-lnurl-server fork that implements delegated grants
+ * (D1/D2) and is gated behind the delegatedGrantsEnabled feature flag.
+ *
+ * ponytail: multiple `@twentyone.ist` aliases for a fee is a deferred epic — it needs
+ * lnurl-server multi-username support, a fee-payment flow, and alias-management UI.
+ */
+export const LnurlDomain = {
+  BlinkSv: "blink.sv",
+  TwentyoneIst: "twentyone.ist",
+} as const
+
+export type LnurlDomain = (typeof LnurlDomain)[keyof typeof LnurlDomain]
+
+export const isMainnetLnurlDomain = (value: unknown): value is LnurlDomain =>
+  value === LnurlDomain.BlinkSv || value === LnurlDomain.TwentyoneIst
+
+/** Production default — the standard Blink domain. */
+export const DEFAULT_MAINNET_LNURL_DOMAIN: LnurlDomain = LnurlDomain.BlinkSv
+
 const REGTEST_LNURL_DOMAIN = "staging.blink.sv"
 
-export const lnurlDomainFor = (network: Network): string =>
-  network === Network.Mainnet ? MAINNET_LNURL_DOMAIN : REGTEST_LNURL_DOMAIN
+/**
+ * The LNURL domain for a self-custodial account. `choice` is the account's stored domain
+ * (fixed at registration); null/undefined — or a regtest network — falls back to the
+ * default, so accounts created before domain selection shipped keep their blink.sv
+ * address.
+ */
+export const lnurlDomainFor = (network: Network, choice?: LnurlDomain | null): string =>
+  network === Network.Mainnet
+    ? choice ?? DEFAULT_MAINNET_LNURL_DOMAIN
+    : REGTEST_LNURL_DOMAIN
 
 /**
  * Base URL of the LNURL server for a self-custodial account: the same host its address is
  * spelled with, which is what serves the authenticated `/lnurlpay/{pubkey}` routes. Not
  * the custodial `lnAddressHostname` — `pay.*` fronts the payment app and 404s them.
  */
-export const lnurlServerUrlFor = (network: Network): string =>
-  `https://${lnurlDomainFor(network)}`
+export const lnurlServerUrlFor = (
+  network: Network,
+  choice?: LnurlDomain | null,
+): string => `https://${lnurlDomainFor(network, choice)}`
 
 /**
  * Returns the wallet's stored network label when it conflicts with the current

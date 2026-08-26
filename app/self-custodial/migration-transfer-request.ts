@@ -11,6 +11,7 @@ import KeyStoreWrapper from "@app/utils/storage/secureStorage"
 import { disconnectSdk, getWalletInfo, initSdk } from "./bridge"
 import { storageDirFor } from "./config"
 import { classifySdkError, SelfCustodialErrorCode } from "./sdk-error"
+import { getSelfCustodialLnurlDomain } from "./storage/account-index"
 
 export const MigrationSdkStatus = {
   Ok: "ok",
@@ -102,10 +103,17 @@ const withMigrationSdk = async <T>(
   if (!mnemonic) return { status: MigrationSdkStatus.NoMnemonic }
 
   const storageDir = storageDirFor(accountId, network)
+  const lnurlDomain = await getSelfCustodialLnurlDomain(accountId)
   return runExclusivePerStorageDir(storageDir, async () => {
     let sdk: BreezSdkInterface | undefined
     try {
-      sdk = await initSdk({ mnemonic, storageDir, network, leewaySatPerVbyte })
+      sdk = await initSdk({
+        mnemonic,
+        storageDir,
+        network,
+        leewaySatPerVbyte,
+        lnurlDomain,
+      })
       const value = await use(sdk)
       return { status: MigrationSdkStatus.Ok, value }
     } catch (err) {

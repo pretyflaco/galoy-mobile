@@ -17,6 +17,7 @@ import { AccountMode, AccountTypeMode, CreationBlockReason } from "@app/types/ac
 import { DisplayCurrency, MoneyAmount, WalletOrDisplayCurrency } from "@app/types/amounts"
 import { WalletDescriptor } from "@app/types/wallets"
 import { MigrationSupportOrigin, MigrationSupportReason } from "@app/types/migration"
+import { LnurlDomain } from "@app/self-custodial/config"
 
 import { AuthenticationScreenPurpose, PinScreenPurpose } from "../utils/enum"
 
@@ -320,6 +321,14 @@ export type RootStackParamList = {
             }
       }
   selfCustodialModeSwitchSuccess: { mode: AccountMode }
+  /**
+   * LN Address domain choice (blink.sv vs twentyone.ist), then username entry. Shown only
+   * from the settings LN-address row when the active self-custodial account has no address
+   * yet — the domain is fixed per account once registered. The choice screen carries no
+   * params; it hands the picked domain to the username screen.
+   */
+  selfCustodialChooseLnurlDomain: undefined
+  selfCustodialSetAddress: { domain: LnurlDomain }
   accountMigrationEntry: undefined
   accountMigrationStart: undefined
   accountMigrationExplainer: undefined

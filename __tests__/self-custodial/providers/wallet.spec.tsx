@@ -383,6 +383,8 @@ describe("SelfCustodialWalletProvider", () => {
       storageDir: "/tmp/test-self-custodial-uuid",
       network: mockSparkNetwork.Regtest,
       leewaySatPerVbyte: 1,
+      // No stored choice in this fixture → null, read by the SDK config as the default.
+      lnurlDomain: null,
     })
   })
 

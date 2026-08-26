@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { recordAppError } from "@app/utils/error-reporting"
 
+import { isMainnetLnurlDomain, type LnurlDomain } from "@app/self-custodial/config"
 import { normalizeMnemonic } from "@app/utils/mnemonic"
 import KeyStoreWrapper from "@app/utils/storage/secureStorage"
 
@@ -10,6 +11,12 @@ const LEGACY_ID_LIST_KEY = "selfCustodialAccountIds"
 export type SelfCustodialAccountEntry = {
   id: string
   lightningAddress: string | null
+  /**
+   * The LNURL domain this account's Lightning Address is registered on. Fixed at
+   * registration. Null for accounts that have not chosen (or predate selection) — they
+   * read as the production default (blink.sv).
+   */
+  lnurlDomain?: LnurlDomain | null
 }
 
 export const StorageReadStatus = {
@@ -39,6 +46,13 @@ const isEntry = (value: unknown): value is SelfCustodialAccountEntry => {
   if (
     candidate.lightningAddress !== null &&
     typeof candidate.lightningAddress !== "string"
+  ) {
+    return false
+  }
+  if (
+    candidate.lnurlDomain !== undefined &&
+    candidate.lnurlDomain !== null &&
+    !isMainnetLnurlDomain(candidate.lnurlDomain)
   ) {
     return false
   }
@@ -120,6 +134,40 @@ export const setSelfCustodialLightningAddress = async (
 
   const next = [...result.entries]
   next[idx] = { ...next[idx], lightningAddress }
+  await writeIndex(next)
+}
+
+/**
+ * Reads a single account's stored LNURL domain, for callers that connect the SDK on its
+ * behalf (migration transfer, account probing) outside the active-account provider. Null
+ * when the account is unknown or has no choice — callers read that as the default.
+ */
+export const getSelfCustodialLnurlDomain = async (
+  id: string,
+): Promise<LnurlDomain | null> => {
+  const result = await readIndex()
+  if (result.status === StorageReadStatus.ReadFailed) return null
+  return result.entries.find((e) => e.id === id)?.lnurlDomain ?? null
+}
+
+/**
+ * Records the LNURL domain an account's Lightning Address is (or will be) registered on.
+ * Written by the domain-choice step before registration; the SDK then connects against
+ * that server (its `lnurlDomain` is fixed at connect time).
+ */
+export const setSelfCustodialLnurlDomain = async (
+  id: string,
+  lnurlDomain: LnurlDomain,
+): Promise<void> => {
+  const result = await readIndex()
+  if (result.status === StorageReadStatus.ReadFailed) return
+
+  const idx = result.entries.findIndex((e) => e.id === id)
+  if (idx === -1) return
+  if (result.entries[idx].lnurlDomain === lnurlDomain) return
+
+  const next = [...result.entries]
+  next[idx] = { ...next[idx], lnurlDomain }
   await writeIndex(next)
 }
 

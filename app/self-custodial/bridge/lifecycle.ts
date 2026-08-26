@@ -25,6 +25,7 @@ import {
   requireSparkTokenIdentifier,
   SparkToken,
   storageDirFor,
+  type LnurlDomain,
 } from "../config"
 import { recoverLnurlServerMode } from "../lnurl-server-mode"
 import { createSdkLogListener } from "../logging"
@@ -43,10 +44,14 @@ const initializeLogging = (() => {
   }
 })()
 
-const createSdkConfig = (network: Network, leewaySatPerVbyte: number) => {
+const createSdkConfig = (
+  network: Network,
+  leewaySatPerVbyte: number,
+  lnurlDomain?: LnurlDomain | null,
+) => {
   const config = defaultConfig(network)
   config.apiKey = requireBreezApiKey()
-  config.lnurlDomain = lnurlDomainFor(network)
+  config.lnurlDomain = lnurlDomainFor(network, lnurlDomain)
 
   /**
    * The SDK default cap is 1 sat/vByte, which blocks almost every deposit claim.
@@ -75,6 +80,8 @@ type InitSdkParams = {
   network: Network
   /** Leeway (sat/vByte) over the network-recommended fee for auto-claiming deposits. */
   leewaySatPerVbyte: number
+  /** The account's chosen LNURL domain (fixed at registration). Null → production default. */
+  lnurlDomain?: LnurlDomain | null
 }
 
 export const initSdk = async ({
@@ -82,10 +89,11 @@ export const initSdk = async ({
   storageDir,
   network,
   leewaySatPerVbyte,
+  lnurlDomain,
 }: InitSdkParams): Promise<BreezSdkInterface> => {
   initializeLogging()
   const seed = new Seed.Mnemonic({ mnemonic, passphrase: undefined })
-  const config = createSdkConfig(network, leewaySatPerVbyte)
+  const config = createSdkConfig(network, leewaySatPerVbyte, lnurlDomain)
   return connect({ config, seed, storageDir })
 }
 
@@ -134,6 +142,8 @@ type RestoreWalletParams = {
   network: Network
   /** Leeway (sat/vByte) over the network-recommended fee for auto-claiming deposits. */
   leewaySatPerVbyte: number
+  /** The account's stored LNURL domain, when this restore already knows it. Null → default. */
+  lnurlDomain?: LnurlDomain | null
 }
 
 type RestoredWallet = {
@@ -151,6 +161,7 @@ export const selfCustodialRestoreWallet = async ({
   mnemonic,
   network,
   leewaySatPerVbyte,
+  lnurlDomain,
 }: RestoreWalletParams): Promise<RestoredWallet> => {
   const normalized = normalizeMnemonic(mnemonic)
   if (!validateMnemonic(normalized)) {
@@ -171,11 +182,12 @@ export const selfCustodialRestoreWallet = async ({
       storageDir: storageDirFor(accountId, network),
       network,
       leewaySatPerVbyte,
+      lnurlDomain,
     })
     /** An unreachable server must not fail the restore: the wallet itself is whole. */
     const recovered = await recoverLnurlServerMode({
       sdk,
-      serverUrl: lnurlServerUrlFor(network),
+      serverUrl: lnurlServerUrlFor(network, lnurlDomain),
     })
       .then((serverMode) => ({ serverMode, isServerModeKnown: true }))
       .catch((err) => {

@@ -1,8 +1,9 @@
 /**
  * Stale-domain handling for the persisted lightning-address fallback: an address
- * registered under a different lnurl domain than the SDK's configured one must not
+ * registered under a different lnurl domain than the account's chosen one must not
  * resurrect as a dead, unchangeable value — the account reads as "no address set"
- * until re-registration.
+ * until re-registration. The comparison is against the account's OWN stored domain
+ * (blink.sv default, or twentyone.ist when chosen), not a build-wide constant.
  */
 import { renderHook } from "@testing-library/react-native"
 
@@ -27,36 +28,49 @@ const registry = useAccountRegistry as jest.Mock
 const wallet = useSelfCustodialWallet as jest.Mock
 const network = useSparkNetwork as jest.Mock
 
-// Mainnet in this test file → lnurlDomainFor returns the fork POC domain.
-const FORK_DOMAIN = "lnurl.twentyone.ist"
+const entry = (
+  lightningAddress: string | null,
+  lnurlDomain: "blink.sv" | "twentyone.ist" | null = null,
+) => ({ id: "acct-1", lightningAddress, lnurlDomain })
 
 beforeEach(() => {
   registry.mockReturnValue({
     activeAccount: { id: "acct-1", type: "self-custodial" },
-    selfCustodialEntries: [{ id: "acct-1", lightningAddress: `bulus@${FORK_DOMAIN}` }],
+    selfCustodialEntries: [entry("bulus@blink.sv", "blink.sv")],
   })
   wallet.mockReturnValue({ lightningAddress: null })
   network.mockReturnValue(Network.Mainnet)
 })
 
 describe("useSelfCustodialLightningAddress", () => {
-  it("falls back to the persisted address when its domain matches the SDK's domain", () => {
+  it("falls back to the persisted address when it matches the account's chosen domain", () => {
     const { result } = renderHook(() => useSelfCustodialLightningAddress())
-    expect(result.current).toBe(`bulus@${FORK_DOMAIN}`)
+    expect(result.current).toBe("bulus@blink.sv")
   })
 
-  it("treats a persisted address on a stale domain as unset", () => {
+  it("treats a persisted address on a different domain than chosen as unset", () => {
+    // Account chose twentyone.ist but holds a stale blink.sv address.
     registry.mockReturnValue({
       activeAccount: { id: "acct-1", type: "self-custodial" },
-      selfCustodialEntries: [{ id: "acct-1", lightningAddress: "bulus@blink.sv" }],
+      selfCustodialEntries: [entry("bulus@blink.sv", "twentyone.ist")],
     })
     const { result } = renderHook(() => useSelfCustodialLightningAddress())
     expect(result.current).toBeNull()
   })
 
-  it("prefers the live SDK value over any persisted one", () => {
-    wallet.mockReturnValue({ lightningAddress: `live@${FORK_DOMAIN}` })
+  it("reads an account with no stored choice as the blink.sv default", () => {
+    // lnurlDomain null (predates selection) → defaults to blink.sv, matching a blink.sv address.
+    registry.mockReturnValue({
+      activeAccount: { id: "acct-1", type: "self-custodial" },
+      selfCustodialEntries: [entry("bulus@blink.sv", null)],
+    })
     const { result } = renderHook(() => useSelfCustodialLightningAddress())
-    expect(result.current).toBe(`live@${FORK_DOMAIN}`)
+    expect(result.current).toBe("bulus@blink.sv")
+  })
+
+  it("prefers the live SDK value over any persisted one", () => {
+    wallet.mockReturnValue({ lightningAddress: "live@twentyone.ist" })
+    const { result } = renderHook(() => useSelfCustodialLightningAddress())
+    expect(result.current).toBe("live@twentyone.ist")
   })
 })

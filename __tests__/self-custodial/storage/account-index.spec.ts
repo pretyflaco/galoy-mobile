@@ -29,6 +29,8 @@ import {
   listSelfCustodialAccounts,
   StorageReadStatus,
   removeSelfCustodialAccountId,
+  getSelfCustodialLnurlDomain,
+  setSelfCustodialLnurlDomain,
   setSelfCustodialLightningAddress,
   type SelfCustodialAccountEntry,
 } from "@app/self-custodial/storage/account-index"
@@ -287,6 +289,72 @@ describe("self-custodial account-index", () => {
 
       expect(mockSetItem).not.toHaveBeenCalled()
       expect(mockRecordError).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe("setSelfCustodialLnurlDomain", () => {
+    it("writes the chosen domain for a known account", async () => {
+      setIndex([{ id: "a1", lightningAddress: null }])
+
+      await setSelfCustodialLnurlDomain("a1", "twentyone.ist")
+
+      expect(mockSetItem).toHaveBeenCalledWith(
+        ACCOUNT_INDEX_KEY,
+        JSON.stringify([
+          { id: "a1", lightningAddress: null, lnurlDomain: "twentyone.ist" },
+        ]),
+      )
+    })
+
+    it("is a no-op when the account is unknown", async () => {
+      setIndex([{ id: "a1", lightningAddress: null }])
+
+      await setSelfCustodialLnurlDomain("missing", "twentyone.ist")
+
+      expect(mockSetItem).not.toHaveBeenCalled()
+    })
+
+    it("is a no-op when the domain is unchanged", async () => {
+      setIndex([{ id: "a1", lightningAddress: null, lnurlDomain: "twentyone.ist" }])
+
+      await setSelfCustodialLnurlDomain("a1", "twentyone.ist")
+
+      expect(mockSetItem).not.toHaveBeenCalled()
+    })
+
+    it("does NOT write (preserving the registry) when the underlying read fails", async () => {
+      mockGetItem.mockRejectedValueOnce(new Error("AsyncStorage unavailable"))
+
+      await setSelfCustodialLnurlDomain("a1", "twentyone.ist")
+
+      expect(mockSetItem).not.toHaveBeenCalled()
+      expect(mockRecordError).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe("getSelfCustodialLnurlDomain", () => {
+    it("returns the stored domain for a known account", async () => {
+      setIndex([{ id: "a1", lightningAddress: null, lnurlDomain: "twentyone.ist" }])
+
+      await expect(getSelfCustodialLnurlDomain("a1")).resolves.toBe("twentyone.ist")
+    })
+
+    it("returns null for an account that has not chosen", async () => {
+      setIndex([{ id: "a1", lightningAddress: null }])
+
+      await expect(getSelfCustodialLnurlDomain("a1")).resolves.toBeNull()
+    })
+
+    it("returns null for an unknown account", async () => {
+      setIndex([{ id: "a1", lightningAddress: null }])
+
+      await expect(getSelfCustodialLnurlDomain("missing")).resolves.toBeNull()
+    })
+
+    it("returns null when the underlying read fails", async () => {
+      mockGetItem.mockRejectedValueOnce(new Error("AsyncStorage unavailable"))
+
+      await expect(getSelfCustodialLnurlDomain("a1")).resolves.toBeNull()
     })
   })
 

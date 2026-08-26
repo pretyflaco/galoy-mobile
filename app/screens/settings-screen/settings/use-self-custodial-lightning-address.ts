@@ -19,13 +19,15 @@ export const useSelfCustodialLightningAddress = (): string | null => {
   const { lightningAddress: liveLightningAddress } = useSelfCustodialWallet()
   const network = useSparkNetwork()
 
-  const persistedLightningAddress =
-    selfCustodialEntries.find((entry) => entry.id === activeAccount?.id)
-      ?.lightningAddress ?? null
+  const activeEntry = selfCustodialEntries.find((entry) => entry.id === activeAccount?.id)
+  const persistedLightningAddress = activeEntry?.lightningAddress ?? null
 
+  /** Compare against the account's OWN chosen domain, not the build-wide default: an
+   *  address on twentyone.ist stays valid for the account that chose it even though the
+   *  default is blink.sv. */
   const persistedMatchesDomain =
     persistedLightningAddress?.split("@")[1]?.trim().toLowerCase() ===
-    lnurlDomainFor(network)
+    lnurlDomainFor(network, activeEntry?.lnurlDomain)
 
   return (
     liveLightningAddress ?? (persistedMatchesDomain ? persistedLightningAddress : null)

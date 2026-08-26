@@ -18,7 +18,7 @@ import {
   initSdk,
   removeSdkEventListener,
 } from "../bridge"
-import { storageDirFor } from "../config"
+import { storageDirFor, type LnurlDomain } from "../config"
 import { logSdkEvent, SdkLogLevel } from "../logging"
 import {
   extractPaymentId,
@@ -48,6 +48,9 @@ type SdkLifecycleState = {
   status: ActiveWalletStatus
   sdk: BreezSdkInterface | null
   connectedAccountId: string | null
+  /** The LNURL domain the live `sdk` was connected against. Lets a registration flow
+   *  confirm the SDK is on the user's chosen server before it registers an address. */
+  connectedLnurlDomain: LnurlDomain | null
   sdkStableBalanceActive?: boolean
   lastReceivedPaymentId: string | null
   hasMoreTransactions: boolean
@@ -76,6 +79,7 @@ const teardownSdk = async (
 export const useSdkLifecycle = (
   activeSelfCustodialAccountId: string | null,
   retryCount: number,
+  lnurlDomain?: LnurlDomain | null,
 ): SdkLifecycleState => {
   const network = useSparkNetwork()
   const { selfCustodialDepositClaimLeewayVbyte } = useRemoteConfig()
@@ -83,6 +87,9 @@ export const useSdkLifecycle = (
   const [allTransactions, setAllTransactions] = useState<NormalizedTransaction[]>([])
   const [status, setStatus] = useState<ActiveWalletStatus>(ActiveWalletStatus.Unavailable)
   const [sdkStableBalanceActive, setSdkStableBalanceActive] = useState<boolean>()
+  const [connectedLnurlDomain, setConnectedLnurlDomain] = useState<LnurlDomain | null>(
+    null,
+  )
   const [lastReceivedPaymentId, setLastReceivedPaymentId] = useState<string | null>(null)
   const [hasMoreTransactions, setHasMoreTransactions] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -225,6 +232,7 @@ export const useSdkLifecycle = (
         storageDir: storageDirFor(accountId, network),
         network,
         leewaySatPerVbyte: depositClaimLeewayRef.current,
+        lnurlDomain,
       })
       if (abortRef.current || !mounted) {
         await teardownSdk(connectedSdk, null)
@@ -234,6 +242,7 @@ export const useSdkLifecycle = (
       sdkRef.current = connectedSdk
       setSdk(connectedSdk)
       setConnectedAccountId(accountId)
+      setConnectedLnurlDomain(lnurlDomain ?? null)
 
       const listenerId = await addSdkEventListener(connectedSdk, async (event) => {
         if (!mounted) return
@@ -298,13 +307,25 @@ export const useSdkLifecycle = (
       listenerIdRef.current = null
       setSdk(null)
       setConnectedAccountId(null)
+      setConnectedLnurlDomain(null)
 
       if (!sdk) return
       teardownSdk(sdk, listenerId).catch((err) => {
         reportError("SDK cleanup", err)
       })
     }
-  }, [retryCount, refreshWallets, activeSelfCustodialAccountId, resetBackoff, network])
+    // lnurlDomain is a connect-time config: changing it (the user picked a different
+    // Lightning Address server before registering) must tear the SDK down and reconnect
+    // against that server, so it belongs in the effect inputs like `network`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    retryCount,
+    refreshWallets,
+    activeSelfCustodialAccountId,
+    resetBackoff,
+    network,
+    lnurlDomain,
+  ])
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
@@ -361,6 +382,7 @@ export const useSdkLifecycle = (
     status,
     sdk,
     connectedAccountId,
+    connectedLnurlDomain,
     sdkStableBalanceActive,
     lastReceivedPaymentId,
     hasMoreTransactions,

@@ -3,6 +3,7 @@ import { Network } from "@breeztech/breez-sdk-spark-react-native"
 import {
   hasSparkAddressShape,
   isRegtestNetwork,
+  LnurlDomain,
   lnurlDomainFor,
   lnurlServerUrlFor,
   mismatchedNetworkLabel,
@@ -121,12 +122,33 @@ describe("isRegtestNetwork", () => {
 })
 
 describe("lnurlDomainFor", () => {
-  it("uses the production Blink LNURL host on mainnet", () => {
+  it("uses the production Blink LNURL host on mainnet by default", () => {
     expect(lnurlDomainFor(Network.Mainnet)).toBe("blink.sv")
   })
 
   it("uses the staging Blink LNURL host on regtest", () => {
     expect(lnurlDomainFor(Network.Regtest)).toBe("staging.blink.sv")
+  })
+
+  it("honours a mainnet account that chose twentyone.ist", () => {
+    expect(lnurlDomainFor(Network.Mainnet, LnurlDomain.TwentyoneIst)).toBe(
+      "twentyone.ist",
+    )
+  })
+
+  it("honours an explicit blink.sv choice on mainnet", () => {
+    expect(lnurlDomainFor(Network.Mainnet, LnurlDomain.BlinkSv)).toBe("blink.sv")
+  })
+
+  it("ignores a null/undefined choice and keeps the mainnet default", () => {
+    expect(lnurlDomainFor(Network.Mainnet, null)).toBe("blink.sv")
+    expect(lnurlDomainFor(Network.Mainnet, undefined)).toBe("blink.sv")
+  })
+
+  it("never honours a choice on regtest — the staging server is the only regtest host", () => {
+    expect(lnurlDomainFor(Network.Regtest, LnurlDomain.TwentyoneIst)).toBe(
+      "staging.blink.sv",
+    )
   })
 })
 
@@ -163,6 +185,15 @@ describe("lnurlServerUrlFor", () => {
     for (const network of [Network.Mainnet, Network.Regtest]) {
       expect(lnurlServerUrlFor(network)).toBe(`https://${lnurlDomainFor(network)}`)
     }
+  })
+
+  it("targets the chosen domain's server on mainnet", () => {
+    expect(lnurlServerUrlFor(Network.Mainnet, LnurlDomain.TwentyoneIst)).toBe(
+      "https://twentyone.ist",
+    )
+    expect(lnurlServerUrlFor(Network.Mainnet, LnurlDomain.BlinkSv)).toBe(
+      "https://blink.sv",
+    )
   })
 })
 

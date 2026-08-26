@@ -8,11 +8,20 @@ jest.mock("@app/screens/settings-screen/row", () => ({
   SettingsRow: mockSettingsRow,
 }))
 
-const mockScModal = jest.fn((_props: Record<string, unknown>) => null)
+// Self-custodial registration is now a navigation flow (domain choice → username), so the
+// row navigates instead of opening a modal. Capture the navigate call.
+const mockNavigate = jest.fn()
+jest.mock("@react-navigation/native", () => ({
+  ...jest.requireActual("@react-navigation/native"),
+  useNavigation: () => ({ navigate: mockNavigate }),
+}))
+
+// The row reads the address through this hook, not the wallet provider directly.
+let mockScAddress: string | null = null
 jest.mock(
-  "@app/screens/settings-screen/self-custodial/set-lightning-address-modal",
+  "@app/screens/settings-screen/settings/use-self-custodial-lightning-address",
   () => ({
-    SetSelfCustodialLightningAddressModal: mockScModal,
+    useSelfCustodialLightningAddress: () => mockScAddress,
   }),
 )
 
@@ -93,6 +102,7 @@ describe("AccountLNAddress (self-custodial)", () => {
     jest.clearAllMocks()
     mockBackupStatus = "completed"
     mockIsAnonMode = false
+    mockScAddress = null
     mockSettingsScreenQuery.mockReturnValue({ data: undefined, loading: false })
     mockUseAccountRegistry.mockReturnValue({
       activeAccount: { id: "sc-1", type: AccountType.SelfCustodial },
@@ -100,24 +110,23 @@ describe("AccountLNAddress (self-custodial)", () => {
     })
   })
 
-  it("prompts to create an address and opens the modal when none is registered", () => {
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+  it("prompts to create an address and navigates to the domain choice when none is registered", () => {
+    mockScAddress = null
 
     render(<AccountLNAddress />)
 
     expect(lastRowProps().title).toBe("Create address")
     expect(lastRowProps().rightIcon).toBeUndefined()
-    expect(mockScModal.mock.calls.at(-1)?.[0]?.isVisible).toBe(false)
 
     act(() => (lastRowProps().action as () => void)())
 
-    expect(mockScModal.mock.calls.at(-1)?.[0]?.isVisible).toBe(true)
+    expect(mockNavigate).toHaveBeenCalledWith("selfCustodialChooseLnurlDomain")
     expect(mockCopyToClipboard).not.toHaveBeenCalled()
   })
 
   /** Incognito cannot receive, so the row says so beside the address it still shows. */
   it("marks the address disabled in Incognito", () => {
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: SC_ADDRESS })
+    mockScAddress = SC_ADDRESS
     mockIsAnonMode = true
 
     render(<AccountLNAddress />)
@@ -128,7 +137,7 @@ describe("AccountLNAddress (self-custodial)", () => {
   /** The suffix is a label, not part of the address: copying it would hand the user a
    *  string no wallet can pay, so the disabled row offers no copy at all. */
   it("never copies the disabled label in Incognito", () => {
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: SC_ADDRESS })
+    mockScAddress = SC_ADDRESS
     mockIsAnonMode = true
 
     render(<AccountLNAddress />)
@@ -142,7 +151,7 @@ describe("AccountLNAddress (self-custodial)", () => {
 
   /** Nothing to disable, so the suffix must not turn the create prompt into a lie. */
   it("leaves the create prompt untouched in Incognito when no address exists", () => {
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+    mockScAddress = null
     mockIsAnonMode = true
 
     render(<AccountLNAddress />)
@@ -152,20 +161,20 @@ describe("AccountLNAddress (self-custodial)", () => {
 
   /** Registering an address is the very thing Incognito withholds: publishing one would
    *  hand the LNURL server the identity the mode exists to keep back. */
-  it("refuses to open the registration modal in Incognito", () => {
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+  it("refuses to start registration in Incognito", () => {
+    mockScAddress = null
     mockIsAnonMode = true
 
     render(<AccountLNAddress />)
 
     act(() => (lastRowProps().action as () => void)())
 
-    expect(mockScModal.mock.calls.at(-1)?.[0]?.isVisible).toBe(false)
+    expect(mockNavigate).not.toHaveBeenCalled()
     expect(mockBackupRequiredModal).not.toHaveBeenCalled()
   })
 
   it("shows the registered address and copies it on press", () => {
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: SC_ADDRESS })
+    mockScAddress = SC_ADDRESS
 
     render(<AccountLNAddress />)
 
@@ -177,12 +186,12 @@ describe("AccountLNAddress (self-custodial)", () => {
     expect(mockCopyToClipboard).toHaveBeenCalledWith(
       expect.objectContaining({ content: SC_ADDRESS }),
     )
-    expect(mockScModal.mock.calls.at(-1)?.[0]?.isVisible).toBe(false)
+    expect(mockNavigate).not.toHaveBeenCalled()
   })
 
-  it("opens the backup-required modal instead of the create modal when backup is not completed", () => {
+  it("opens the backup-required modal instead of navigating when backup is not completed", () => {
     mockBackupStatus = "none"
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+    mockScAddress = null
 
     render(<AccountLNAddress />)
 
@@ -192,25 +201,25 @@ describe("AccountLNAddress (self-custodial)", () => {
     act(() => (lastRowProps().action as () => void)())
 
     expect(mockBackupRequiredModal.mock.calls.at(-1)?.[0]?.isVisible).toBe(true)
-    expect(mockScModal).not.toHaveBeenCalled()
+    expect(mockNavigate).not.toHaveBeenCalled()
     expect(mockCopyToClipboard).not.toHaveBeenCalled()
   })
 
   it("also gates address creation while the backup is still pending", () => {
     mockBackupStatus = "pending"
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+    mockScAddress = null
 
     render(<AccountLNAddress />)
 
     act(() => (lastRowProps().action as () => void)())
 
     expect(mockBackupRequiredModal.mock.calls.at(-1)?.[0]?.isVisible).toBe(true)
-    expect(mockScModal).not.toHaveBeenCalled()
+    expect(mockNavigate).not.toHaveBeenCalled()
   })
 
   it("closes the backup-required modal through its onClose prop", () => {
     mockBackupStatus = "none"
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+    mockScAddress = null
 
     render(<AccountLNAddress />)
 
@@ -224,7 +233,7 @@ describe("AccountLNAddress (self-custodial)", () => {
 
   it("still copies an existing address on press when backup is not completed", () => {
     mockBackupStatus = "none"
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: SC_ADDRESS })
+    mockScAddress = SC_ADDRESS
 
     render(<AccountLNAddress />)
 
@@ -237,11 +246,7 @@ describe("AccountLNAddress (self-custodial)", () => {
   })
 
   it("shows the persisted address (not the set prompt) while the live address is still resolving", () => {
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
-    mockUseAccountRegistry.mockReturnValue({
-      activeAccount: { id: "sc-1", type: AccountType.SelfCustodial },
-      selfCustodialEntries: [{ id: "sc-1", lightningAddress: SC_ADDRESS }],
-    })
+    mockScAddress = SC_ADDRESS
 
     render(<AccountLNAddress />)
 
@@ -255,6 +260,7 @@ describe("AccountLNAddress (custodial)", () => {
     jest.clearAllMocks()
     // an incomplete backup must never gate the custodial flow
     mockBackupStatus = "none"
+    mockScAddress = null
     mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
     mockUseAccountRegistry.mockReturnValue({
       activeAccount: { id: "cust-1", type: AccountType.Custodial },

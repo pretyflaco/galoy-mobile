@@ -1,5 +1,6 @@
 import { useEffect } from "react"
 
+import { useAccountRegistry } from "@app/hooks/use-account-registry"
 import { useSelfCustodialAccountMode } from "@app/self-custodial/hooks/use-self-custodial-account-mode"
 import { usePersistentStateContext } from "@app/store/persistent-state"
 import { resolveActiveSelfCustodialId } from "@app/store/persistent-state/active-self-custodial-account"
@@ -33,9 +34,17 @@ export const useAccountModeSync = (): void => {
   const { accountMode } = useSelfCustodialAccountMode()
   const { persistentState, updateState } = usePersistentStateContext()
   const { sdk, connectedAccountId } = useSelfCustodialWallet()
-  const lnurlServerUrl = lnurlServerUrlFor(useSparkNetwork())
+  const { selfCustodialEntries } = useAccountRegistry()
 
   const activeAccountId = resolveActiveSelfCustodialId(persistentState)
+  /** Mode requests are served by the account's OWN lnurl server — the one its address
+   *  lives on — not the build default: pushing an anon/enhanced switch to blink.sv for an
+   *  account registered on twentyone.ist would silence the wrong server. */
+  const activeLnurlDomain =
+    selfCustodialEntries.find((entry) => entry.id === activeAccountId)?.lnurlDomain ??
+    null
+  const lnurlServerUrl = lnurlServerUrlFor(useSparkNetwork(), activeLnurlDomain)
+
   const serverMode = activeAccountId
     ? getSelfCustodialServerAccountMode(persistentState, activeAccountId)
     : null

@@ -11,6 +11,7 @@ import { useFeatureFlags } from "@app/config/feature-flags-context"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 import { DEFAULT_MAINNET_LNURL_DOMAIN, LnurlDomain } from "@app/self-custodial/config"
+import { useSelfCustodialAccountMode } from "@app/self-custodial/hooks/use-self-custodial-account-mode"
 import { testProps } from "@app/utils/testProps"
 
 import { OnboardingScreenLayout } from "./layouts"
@@ -22,10 +23,14 @@ const DOMAIN_ICON_SIZE = 22
  * is fixed per account once the address exists, so this screen only ever runs before the
  * first registration (the settings row routes elsewhere once an address is present).
  *
- * The twentyone.ist option is always visible so the user knows it exists, but stays
- * greyed out until the delegatedGrantsEnabled feature flag turns its server on. Selecting
- * a domain hands it to the username screen, which writes it to the account and reconnects
- * the SDK against it before registering.
+ * Two gates shape the cards:
+ * - twentyone.ist needs delegatedGrantsEnabled — except in Incognito, where it is the
+ *   ONLY option: the fork server runs `--allow-anon-addresses`, so it is the one domain
+ *   an anon account can hold (upstream dormancy withholds blink.sv addresses there).
+ * - blink.sv is greyed out in Incognito for the same reason.
+ *
+ * Selecting a domain hands it to the username screen, which writes it to the account and
+ * reconnects the SDK against it before registering.
  */
 export const ChooseLnurlDomainScreen: React.FC = () => {
   const styles = useStyles()
@@ -36,8 +41,11 @@ export const ChooseLnurlDomainScreen: React.FC = () => {
   const LLScreen = LL.ChooseLnurlDomainScreen
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { delegatedGrantsEnabled } = useFeatureFlags()
+  const { isAnonMode } = useSelfCustodialAccountMode()
 
-  const [selected, setSelected] = useState<LnurlDomain>(DEFAULT_MAINNET_LNURL_DOMAIN)
+  const [selected, setSelected] = useState<LnurlDomain>(
+    isAnonMode ? LnurlDomain.TwentyoneIst : DEFAULT_MAINNET_LNURL_DOMAIN,
+  )
 
   const options: OptionCard<LnurlDomain>[] = [
     {
@@ -46,6 +54,8 @@ export const ChooseLnurlDomainScreen: React.FC = () => {
       iconSize: DOMAIN_ICON_SIZE,
       title: LLScreen.blinkSvLabel(),
       description: LLScreen.blinkSvDescription(),
+      disabled: isAnonMode,
+      disabledBadge: isAnonMode ? LLScreen.blinkSvIncognitoUnavailable() : undefined,
       testID: "lnurl-domain-blink-sv",
     },
     {
@@ -54,10 +64,11 @@ export const ChooseLnurlDomainScreen: React.FC = () => {
       iconSize: DOMAIN_ICON_SIZE,
       title: LLScreen.twentyoneIstLabel(),
       description: LLScreen.twentyoneIstDescription(),
-      disabled: !delegatedGrantsEnabled,
-      disabledBadge: delegatedGrantsEnabled
-        ? undefined
-        : LLScreen.twentyoneIstUnavailable(),
+      disabled: !isAnonMode && !delegatedGrantsEnabled,
+      disabledBadge:
+        !isAnonMode && !delegatedGrantsEnabled
+          ? LLScreen.twentyoneIstUnavailable()
+          : undefined,
       testID: "lnurl-domain-twentyone-ist",
     },
   ]

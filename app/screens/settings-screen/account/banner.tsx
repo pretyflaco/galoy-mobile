@@ -24,7 +24,6 @@ import { useNostrProfilePicture } from "@app/nostr/use-nostr-profile-picture"
 import { useNostrIdentity } from "@app/screens/nostr/identity-hub/use-nostr-identity"
 import { useSelfCustodialLightningAddress } from "@app/screens/settings-screen/settings/use-self-custodial-lightning-address"
 import { useLightningAddressGated } from "@app/self-custodial/hooks/use-lightning-address-gate"
-import { useSelfCustodialAccountMode } from "@app/self-custodial/hooks/use-self-custodial-account-mode"
 import { AccountType } from "@app/types/wallet"
 import { useNavigation, useIsFocused } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -99,7 +98,6 @@ const SelfCustodialAccountBanner: React.FC = () => {
   const lightningAddress = useSelfCustodialLightningAddress()
   const { copyToClipboard } = useClipboard()
   const isLightningAddressGated = useLightningAddressGated()
-  const { isAnonMode } = useSelfCustodialAccountMode()
   const { promptEnhancedMode } = useEnhancedModePrompt()
   const { isRestrictedRegion, presentRestrictedRegionModal } = useRestrictedRegion()
 
@@ -114,9 +112,10 @@ const SelfCustodialAccountBanner: React.FC = () => {
 
   /** The address is Blink-served, so copying is gated like every other served surface:
    *  the tap explains the block instead of handing out an address that cannot receive.
-   *  Routed by mode, not by the gate: what is offered as a way out is mode-specific. */
+   *  Routed by the gate, not by the mode: a twentyone.ist address keeps working in
+   *  Incognito, so only a genuinely withheld address offers the way out. */
   const handlePress = () => {
-    if (isAnonMode) {
+    if (isLightningAddressGated) {
       promptEnhancedMode()
       return
     }

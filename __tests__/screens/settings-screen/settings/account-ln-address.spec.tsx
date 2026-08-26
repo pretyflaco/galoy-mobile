@@ -46,6 +46,13 @@ jest.mock("@app/self-custodial/hooks/use-self-custodial-account-mode", () => ({
   useSelfCustodialAccountMode: () => ({ isAnonMode: mockIsAnonMode }),
 }))
 
+// The gate is domain-aware now; it has its own spec. Mock it at the seam so these tests
+// pin the row's routing, not the gate's internals.
+let mockIsLightningAddressGated = false
+jest.mock("@app/self-custodial/hooks/use-lightning-address-gate", () => ({
+  useLightningAddressGated: () => mockIsLightningAddressGated,
+}))
+
 jest.mock("@app/components/atomic/galoy-icon", () => ({
   GaloyIcon: () => null,
 }))
@@ -102,6 +109,7 @@ describe("AccountLNAddress (self-custodial)", () => {
     jest.clearAllMocks()
     mockBackupStatus = "completed"
     mockIsAnonMode = false
+    mockIsLightningAddressGated = false
     mockScAddress = null
     mockSettingsScreenQuery.mockReturnValue({ data: undefined, loading: false })
     mockUseAccountRegistry.mockReturnValue({
@@ -124,10 +132,12 @@ describe("AccountLNAddress (self-custodial)", () => {
     expect(mockCopyToClipboard).not.toHaveBeenCalled()
   })
 
-  /** Incognito cannot receive, so the row says so beside the address it still shows. */
+  /** Incognito cannot receive on blink.sv (dormant upstream), so the row says so beside
+   *  the address it still shows. */
   it("marks the address disabled in Incognito", () => {
     mockScAddress = SC_ADDRESS
     mockIsAnonMode = true
+    mockIsLightningAddressGated = true
 
     render(<AccountLNAddress />)
 
@@ -139,6 +149,7 @@ describe("AccountLNAddress (self-custodial)", () => {
   it("never copies the disabled label in Incognito", () => {
     mockScAddress = SC_ADDRESS
     mockIsAnonMode = true
+    mockIsLightningAddressGated = true
 
     render(<AccountLNAddress />)
 
@@ -159,9 +170,10 @@ describe("AccountLNAddress (self-custodial)", () => {
     expect(lastRowProps().title).toBe("Create address")
   })
 
-  /** Registering an address is the very thing Incognito withholds: publishing one would
-   *  hand the LNURL server the identity the mode exists to keep back. */
-  it("refuses to start registration in Incognito", () => {
+  /** Incognito registration is allowed now — the anon-friendly twentyone.ist server
+   *  accepts it (fork `--allow-anon-addresses`) — so the row navigates into the
+   *  domain-choice flow, where blink.sv is greyed out. */
+  it("navigates to the domain choice in Incognito when no address exists", () => {
     mockScAddress = null
     mockIsAnonMode = true
 
@@ -169,8 +181,7 @@ describe("AccountLNAddress (self-custodial)", () => {
 
     act(() => (lastRowProps().action as () => void)())
 
-    expect(mockNavigate).not.toHaveBeenCalled()
-    expect(mockBackupRequiredModal).not.toHaveBeenCalled()
+    expect(mockNavigate).toHaveBeenCalledWith("selfCustodialChooseLnurlDomain")
   })
 
   it("shows the registered address and copies it on press", () => {

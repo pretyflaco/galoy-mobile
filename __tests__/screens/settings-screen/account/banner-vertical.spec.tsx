@@ -34,6 +34,13 @@ jest.mock("@app/self-custodial/hooks/use-self-custodial-account-mode", () => ({
   useSelfCustodialAccountMode: () => ({ isAnonMode: mockIsAnonMode }),
 }))
 
+// The gate is domain-aware now; it has its own spec. Mock it at the seam so these tests
+// pin the banner's labeling, not the gate's internals.
+let mockIsLightningAddressGated = false
+jest.mock("@app/self-custodial/hooks/use-lightning-address-gate", () => ({
+  useLightningAddressGated: () => mockIsLightningAddressGated,
+}))
+
 const mockUseSettingsScreenQuery = jest.fn()
 jest.mock("@app/graphql/generated", () => ({
   useSettingsScreenQuery: (...args: unknown[]) => mockUseSettingsScreenQuery(...args),
@@ -65,6 +72,7 @@ describe("AccountBannerVertical (self-custodial)", () => {
     mockActiveAccountType = "self-custodial"
     mockLightningAddress = "satoshi@blink.sv"
     mockIsAnonMode = false
+    mockIsLightningAddressGated = false
     mockCurrentLevel = "One"
     mockUseSettingsScreenQuery.mockReturnValue({ data: undefined, loading: false })
   })
@@ -79,6 +87,7 @@ describe("AccountBannerVertical (self-custodial)", () => {
    *  screen presenting it as usable is the contradiction the label exists to prevent. */
   it("marks the address disabled in Incognito", () => {
     mockIsAnonMode = true
+    mockIsLightningAddressGated = true
 
     const { getByText, queryByText } = renderBanner()
 

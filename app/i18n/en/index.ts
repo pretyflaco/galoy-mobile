@@ -2849,6 +2849,7 @@ const en: BaseTranslation = {
     twentyoneIstDescription:
       "The twentyone.ist server. Enables delegated grants, and multiple aliases (coming soon).",
     twentyoneIstUnavailable: "Not available yet",
+    blinkSvIncognitoUnavailable: "Not available in Incognito",
     continueButton: "Continue",
     domainCannotBeChanged: "This choice is fixed once your address is created.",
   },

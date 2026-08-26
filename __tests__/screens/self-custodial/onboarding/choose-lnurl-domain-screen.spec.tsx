@@ -17,6 +17,11 @@ jest.mock("@app/config/feature-flags-context", () => ({
   useFeatureFlags: () => ({ delegatedGrantsEnabled: mockDelegatedGrantsEnabled }),
 }))
 
+let mockIsAnonMode = false
+jest.mock("@app/self-custodial/hooks/use-self-custodial-account-mode", () => ({
+  useSelfCustodialAccountMode: () => ({ isAnonMode: mockIsAnonMode }),
+}))
+
 jest.mock("@app/components/atomic/galoy-primary-button", () => ({
   GaloyPrimaryButton: ({
     title,
@@ -58,6 +63,7 @@ describe("ChooseLnurlDomainScreen", () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockDelegatedGrantsEnabled = true
+    mockIsAnonMode = false
   })
 
   const lastOptions = () =>
@@ -105,7 +111,40 @@ describe("ChooseLnurlDomainScreen", () => {
     expect(twentyone?.disabled).toBe(true)
     // blink.sv stays selectable.
     const blink = lastOptions().options.find((o) => o.key === LnurlDomain.BlinkSv)
-    expect(blink?.disabled).toBeUndefined()
+    expect(blink?.disabled).toBe(false)
+  })
+
+  describe("in Incognito", () => {
+    beforeEach(() => {
+      mockIsAnonMode = true
+    })
+
+    it("greys out blink.sv — the dormant-upstream domain", () => {
+      render(
+        <ContextForScreen>
+          <ChooseLnurlDomainScreen />
+        </ContextForScreen>,
+      )
+
+      const blink = lastOptions().options.find((o) => o.key === LnurlDomain.BlinkSv)
+      expect(blink?.disabled).toBe(true)
+    })
+
+    it("keeps twentyone.ist selectable even with delegated grants off, and preselects it", () => {
+      mockDelegatedGrantsEnabled = false
+
+      render(
+        <ContextForScreen>
+          <ChooseLnurlDomainScreen />
+        </ContextForScreen>,
+      )
+
+      const twentyone = lastOptions().options.find(
+        (o) => o.key === LnurlDomain.TwentyoneIst,
+      )
+      expect(twentyone?.disabled).toBe(false)
+      expect(lastOptions().selectedKey).toBe(LnurlDomain.TwentyoneIst)
+    })
   })
 
   it("navigates to username entry with the chosen domain on continue", () => {

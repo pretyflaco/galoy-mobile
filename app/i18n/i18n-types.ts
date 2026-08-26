@@ -9026,6 +9026,10 @@ type RootTranslation = {
 		 */
 		twentyoneIstUnavailable: string
 		/**
+		 * N​o​t​ ​a​v​a​i​l​a​b​l​e​ ​i​n​ ​I​n​c​o​g​n​i​t​o
+		 */
+		blinkSvIncognitoUnavailable: string
+		/**
 		 * C​o​n​t​i​n​u​e
 		 */
 		continueButton: string
@@ -23624,6 +23628,10 @@ export type TranslationFunctions = {
 		 * Not available yet
 		 */
 		twentyoneIstUnavailable: () => LocalizedString
+		/**
+		 * Not available in Incognito
+		 */
+		blinkSvIncognitoUnavailable: () => LocalizedString
 		/**
 		 * Continue
 		 */

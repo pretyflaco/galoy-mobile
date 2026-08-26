@@ -1,4 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react-native"
+import { Network } from "@breeztech/breez-sdk-spark-react-native"
 
 import { useAccountModeSync } from "@app/self-custodial/hooks/use-account-mode-sync"
 import { getSelfCustodialAccountMode } from "@app/store/persistent-state/self-custodial-account-mode"
@@ -46,8 +47,16 @@ jest.mock("@app/self-custodial/providers/wallet", () => ({
 
 /** The host of the self-custodial address, which is the LNURL server. */
 const SERVER_URL = "https://staging.blink.sv"
+let mockSparkNetwork: Network = Network.Regtest
 jest.mock("@app/self-custodial/hooks/use-spark-network", () => ({
-  useSparkNetwork: () => "regtest",
+  useSparkNetwork: () => mockSparkNetwork,
+}))
+
+// The mode push now targets the active account's OWN server (read off its registry
+// entry). No entry in these tests → null → the default host, matching SERVER_URL.
+let mockSelfCustodialEntries: { id: string; lnurlDomain?: string | null }[] = []
+jest.mock("@app/hooks/use-account-registry", () => ({
+  useAccountRegistry: () => ({ selfCustodialEntries: mockSelfCustodialEntries }),
 }))
 
 const mockReportError = jest.fn()
@@ -68,6 +77,8 @@ describe("useAccountModeSync", () => {
     mockAccountMode = AccountMode.Enhanced
     mockSdk = sdk
     mockConnectedAccountId = "sc-1"
+    mockSelfCustodialEntries = []
+    mockSparkNetwork = Network.Regtest
     mockPersistentState = {
       schemaVersion: 20,
       galoyInstance: { id: "Main" },
@@ -85,6 +96,25 @@ describe("useAccountModeSync", () => {
       expect(mockSetLnurlServerMode).toHaveBeenCalledWith({
         sdk,
         serverUrl: SERVER_URL,
+        mode: AccountMode.Enhanced,
+      })
+    })
+  })
+
+  /** The push must reach the account's OWN lnurl server — the one its address lives
+   *  on — not the build default: an anon/enhanced switch aimed at blink.sv for an
+   *  account registered on twentyone.ist would silence the wrong server. */
+  it("pushes to the account's chosen-domain server, not the default host", async () => {
+    // The domain choice only exists on mainnet (regtest has a single staging host).
+    mockSparkNetwork = Network.Mainnet
+    mockSelfCustodialEntries = [{ id: "sc-1", lnurlDomain: "twentyone.ist" }]
+
+    renderHook(() => useAccountModeSync())
+
+    await waitFor(() => {
+      expect(mockSetLnurlServerMode).toHaveBeenCalledWith({
+        sdk,
+        serverUrl: "https://twentyone.ist",
         mode: AccountMode.Enhanced,
       })
     })

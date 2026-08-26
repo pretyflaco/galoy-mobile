@@ -67,6 +67,13 @@ jest.mock("@app/self-custodial/hooks/use-self-custodial-account-mode", () => ({
   useSelfCustodialAccountMode: () => ({ isAnonMode: mockIsAnonMode }),
 }))
 
+// The gate is domain-aware now; it has its own spec. Mock it at the seam so the banner
+// tests pin the banner's routing, not the gate's internals.
+let mockIsLightningAddressGated = false
+jest.mock("@app/self-custodial/hooks/use-lightning-address-gate", () => ({
+  useLightningAddressGated: () => mockIsLightningAddressGated,
+}))
+
 const mockPromptEnhancedMode = jest.fn()
 jest.mock("@app/components/enhanced-mode-prompt", () => ({
   useEnhancedModePrompt: () => ({ promptEnhancedMode: mockPromptEnhancedMode }),
@@ -119,6 +126,7 @@ describe("SelfCustodialAccountBanner", () => {
     mockActiveAccountType = "self-custodial"
     mockLightningAddress = "satoshi@blink.sv"
     mockIsAnonMode = false
+    mockIsLightningAddressGated = false
     mockIsRestrictedRegion = false
     mockUseSettingsScreenQuery.mockReturnValue({ data: undefined, loading: false })
   })
@@ -139,6 +147,7 @@ describe("SelfCustodialAccountBanner", () => {
    *  only dims it, since that same address pays again once the user leaves. */
   it("prompts Enhanced Mode instead of copying in Incognito", () => {
     mockIsAnonMode = true
+    mockIsLightningAddressGated = true
 
     const { getByText, queryByTestId } = renderBanner()
 
@@ -151,12 +160,30 @@ describe("SelfCustodialAccountBanner", () => {
 
   it("marks the address disabled in Incognito", () => {
     mockIsAnonMode = true
+    mockIsLightningAddressGated = true
 
     const { getByText } = renderBanner()
 
     expect(
       getByText(`satoshi@blink.sv ${LL.SettingsScreen.addressDisabled()}`),
     ).toBeTruthy()
+  })
+
+  /** A twentyone.ist address is anon-friendly (the fork server mints for Anon), so
+   *  Incognito alone withholds nothing: the banner copies normally. */
+  it("copies a twentyone.ist address in Incognito", () => {
+    mockIsAnonMode = true
+    mockIsLightningAddressGated = false
+
+    const { getByText } = renderBanner()
+
+    fireEvent.press(getByText("satoshi@blink.sv"))
+
+    expect(mockCopyToClipboard).toHaveBeenCalledWith({
+      content: "satoshi@blink.sv",
+      message: LL.GaloyAddressScreen.copiedLightningAddressToClipboard(),
+    })
+    expect(mockPromptEnhancedMode).not.toHaveBeenCalled()
   })
 
   it("opens the restricted-region modal instead of copying while restricted", () => {

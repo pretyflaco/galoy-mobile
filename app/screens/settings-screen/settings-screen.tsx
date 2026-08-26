@@ -204,6 +204,10 @@ export const SettingsScreen: React.FC = () => {
           items={items.waysToGetPaid}
           disabled={isWaysToGetPaidDisabled}
           onDisabledPress={onWaysToGetPaidDisabledPress}
+          /** The Lightning Address row governs itself (domain-aware gate): in Incognito it
+           *  still offers a twentyone.ist address, which the fork server serves for anon
+           *  accounts. The rest of the section stays gated. */
+          exemptFromDisabled={[AccountLNAddress]}
         />
         {isAtLeastLevelOne && !isSelfCustodialMode && (
           <SettingsGroup

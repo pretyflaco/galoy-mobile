@@ -49,12 +49,13 @@ describe("SettingsGroup", () => {
   it("routes every tap to onDisabledPress when disabled", () => {
     const onDisabledPress = jest.fn()
 
-    const { getByLabelText } = renderGroup({ disabled: true, onDisabledPress })
+    const { getAllByLabelText } = renderGroup({ disabled: true, onDisabledPress })
 
-    /** The gated rows leave the accessibility tree; the gate stands in by name. */
-    fireEvent.press(getByLabelText("Group"))
+    /** Each gated row leaves the accessibility tree; the per-row gate stands in by name. */
+    const gates = getAllByLabelText("Group")
+    gates.forEach((gate) => fireEvent.press(gate))
 
-    expect(onDisabledPress).toHaveBeenCalledTimes(1)
+    expect(onDisabledPress).toHaveBeenCalledTimes(gates.length)
   })
 
   it("hides its rows from screen readers while the group is disabled", () => {
@@ -62,5 +63,22 @@ describe("SettingsGroup", () => {
 
     expect(queryByText("Row A")).toBeNull()
     expect(queryByText("Row A", { includeHiddenElements: true })).toBeTruthy()
+  })
+
+  it("keeps an exempt row live and visible while the rest of the group is disabled", () => {
+    const onDisabledPress = jest.fn()
+
+    const { getByText, queryByText } = renderGroup({
+      disabled: true,
+      onDisabledPress,
+      exemptFromDisabled: [RowA],
+    })
+
+    /** Exempt row stays in the accessibility tree and reacts as itself, not the gate. */
+    fireEvent.press(getByText("Row A"))
+    expect(onDisabledPress).not.toHaveBeenCalled()
+
+    /** Non-exempt row is still withheld and routes to the gate. */
+    expect(queryByText("Row B")).toBeNull()
   })
 })

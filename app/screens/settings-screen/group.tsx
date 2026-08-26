@@ -14,6 +14,11 @@ type SettingsGroupProps = {
   titleStyle?: StyleProp<TextStyle>
   disabled?: boolean
   onDisabledPress?: () => void
+  /** Rows that ignore the section gate: the group can be disabled while these stay live and
+   *  govern themselves (e.g. the Lightning Address row, usable in Incognito on a
+   *  --allow-anon-addresses domain). The gate is applied per row rather than once around the
+   *  whole list so a single row can opt out. */
+  exemptFromDisabled?: React.FC[]
 }
 
 export const SettingsGroup: React.FC<SettingsGroupProps> = ({
@@ -24,6 +29,7 @@ export const SettingsGroup: React.FC<SettingsGroupProps> = ({
   titleStyle,
   disabled = false,
   onDisabledPress,
+  exemptFromDisabled = [],
 }) => {
   const styles = useStyles()
   const {
@@ -42,23 +48,24 @@ export const SettingsGroup: React.FC<SettingsGroupProps> = ({
         </Text>
       )}
       <View style={[styles.groupCard, containerStyle]}>
-        <DisabledFeature
-          disabled={disabled}
-          onDisabledPress={onDisabledPress}
-          accessibilityLabel={name}
-        >
-          {filteredItems.map((Element, index) => {
-            const hasDividerBelow = index < filteredItems.length - 1
-            return (
-              <View key={index}>
+        {filteredItems.map((Element, index) => {
+          const hasDividerBelow = index < filteredItems.length - 1
+          const itemDisabled = disabled && !exemptFromDisabled.includes(Element)
+          return (
+            <View key={index}>
+              <DisabledFeature
+                disabled={itemDisabled}
+                onDisabledPress={itemDisabled ? onDisabledPress : undefined}
+                accessibilityLabel={name}
+              >
                 <Element />
-                {hasDividerBelow && (
-                  <Divider color={colors.grey4} style={[styles.divider, dividerStyle]} />
-                )}
-              </View>
-            )
-          })}
-        </DisabledFeature>
+              </DisabledFeature>
+              {hasDividerBelow && (
+                <Divider color={colors.grey4} style={[styles.divider, dividerStyle]} />
+              )}
+            </View>
+          )
+        })}
       </View>
     </View>
   )

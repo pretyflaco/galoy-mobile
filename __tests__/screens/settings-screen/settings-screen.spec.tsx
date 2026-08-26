@@ -540,8 +540,8 @@ describe("Settings Screen", () => {
       </ContextForScreen>,
     )
 
-    const gate = await screen.findByLabelText("Ways to get paid")
-    fireEvent.press(gate)
+    const gates = await screen.findAllByLabelText("Ways to get paid")
+    fireEvent.press(gates[0])
 
     expect(mockPresentRestrictedRegionModal).toHaveBeenCalledTimes(1)
     expect(mockPromptEnhancedMode).not.toHaveBeenCalled()
@@ -793,11 +793,11 @@ describe("Settings Screen Anon gating", () => {
     )
     await flushEffects()
 
-    /** The gated rows leave the accessibility tree; the gate stands in by name. */
-    expect(screen.getByLabelText("Ways to get paid")).toBeTruthy()
+    /** The gated rows leave the accessibility tree; a per-row gate stands in by name. */
+    expect(screen.getAllByLabelText("Ways to get paid").length).toBeGreaterThan(0)
   })
 
-  it("routes a tap on the gated group to the Enhanced prompt", async () => {
+  it("routes a tap on a gated row to the Enhanced prompt", async () => {
     mockIsAnonMode = true
 
     render(
@@ -807,8 +807,26 @@ describe("Settings Screen Anon gating", () => {
     )
     await flushEffects()
 
-    fireEvent.press(screen.getByLabelText("Ways to get paid"))
+    fireEvent.press(screen.getAllByLabelText("Ways to get paid")[0])
 
     expect(mockPromptEnhancedMode).toHaveBeenCalledTimes(1)
+  })
+
+  /** The Lightning Address row is exempt from the section gate: it stays reachable in
+   *  Incognito so an anon account can still create/use a twentyone.ist address. Unlike the
+   *  rest of the section it stays IN the accessibility tree (not hidden behind the gate). */
+  it("keeps the Lightning Address row reachable in Anon mode", async () => {
+    mockIsAnonMode = true
+
+    render(
+      <ContextForScreen>
+        <SettingsScreen />
+      </ContextForScreen>,
+    )
+    await flushEffects()
+
+    /** The globally-mocked settings query gives the row a username, so it renders the
+     *  address live rather than being hidden by the section gate. */
+    expect(screen.getByText("test1@blink.sv")).toBeTruthy()
   })
 })

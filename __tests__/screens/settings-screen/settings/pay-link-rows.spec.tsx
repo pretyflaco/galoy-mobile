@@ -115,6 +115,21 @@ jest.mock(
   }),
 )
 
+// usePayLinks reads addresses via the composed hook, which pulls the account-mode chain
+// this suite does not mount. Derive the same shape from the resolved address above.
+jest.mock("@app/self-custodial/hooks/use-account-lightning-addresses", () => ({
+  useAccountLightningAddresses: () => {
+    const domain = mockScResolvedAddress?.split("@")[1]?.toLowerCase()
+    return {
+      primary: mockScResolvedAddress,
+      alt: null,
+      blinkSvAddress: domain === "blink.sv" ? mockScResolvedAddress : null,
+      twentyoneIstAddress: domain === "twentyone.ist" ? mockScResolvedAddress : null,
+      effective: mockScResolvedAddress,
+    }
+  },
+}))
+
 describe("ways to get paid rows", () => {
   beforeEach(() => {
     jest.clearAllMocks()

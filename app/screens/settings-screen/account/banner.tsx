@@ -22,7 +22,7 @@ import { testProps } from "@app/utils/testProps"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 import { useNostrProfilePicture } from "@app/nostr/use-nostr-profile-picture"
 import { useNostrIdentity } from "@app/screens/nostr/identity-hub/use-nostr-identity"
-import { useSelfCustodialLightningAddress } from "@app/screens/settings-screen/settings/use-self-custodial-lightning-address"
+import { useAccountLightningAddresses } from "@app/self-custodial/hooks/use-account-lightning-addresses"
 import { useLightningAddressGated } from "@app/self-custodial/hooks/use-lightning-address-gate"
 import { AccountType } from "@app/types/wallet"
 import { useNavigation, useIsFocused } from "@react-navigation/native"
@@ -93,9 +93,11 @@ const SelfCustodialAccountBanner: React.FC = () => {
     theme: { colors },
   } = useTheme()
   const { LL } = useI18nContext()
-  // Live SDK value with the domain-matched persisted fallback — the SDK can lose its
-  // local address record across a restart while the registration stays valid.
-  const lightningAddress = useSelfCustodialLightningAddress()
+  /** All the account's addresses (primary + alt): the banner shows the mode-usable one
+   *  (Incognito answers on twentyone.ist, Enhanced prefers blink.sv), falling back to a
+   *  withheld address so Incognito still shows — and labels — a blink.sv-only account. */
+  const { primary, alt, effective } = useAccountLightningAddresses()
+  const lightningAddress = effective ?? primary ?? alt
   const { copyToClipboard } = useClipboard()
   const isLightningAddressGated = useLightningAddressGated()
   const { promptEnhancedMode } = useEnhancedModePrompt()

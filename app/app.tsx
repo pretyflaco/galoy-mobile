@@ -48,6 +48,7 @@ import { detectDefaultLocale } from "./utils/locale-detector"
 import "./utils/logs"
 import { ActionModals, ActionsProvider } from "./components/actions"
 import { EnhancedModePromptProvider } from "./components/enhanced-mode-prompt"
+import { RequiresBlinkAddressPromptProvider } from "./components/requires-blink-address-prompt"
 import { RestrictedRegionProvider } from "./components/restricted-region"
 
 // Lazy load only the default locale instead of all 27 locales
@@ -84,19 +85,21 @@ export const App = () => (
                                 <ErrorBoundary FallbackComponent={ErrorScreen}>
                                   <RootSiblingParent>
                                     <EnhancedModePromptProvider>
-                                      <RestrictedRegionProvider>
-                                        <NotificationsProvider>
-                                          <AppStateWrapper />
-                                          <PushNotificationComponent />
-                                          <AutoConvertListenerMount />
-                                          <AccountModeSyncMount />
-                                          <DisplayCurrencyFromRegionMount />
-                                          <RootStack />
-                                          <NetworkErrorComponent />
-                                          <ActionModals />
-                                          <ApprovalSurfaceHost />
-                                        </NotificationsProvider>
-                                      </RestrictedRegionProvider>
+                                      <RequiresBlinkAddressPromptProvider>
+                                        <RestrictedRegionProvider>
+                                          <NotificationsProvider>
+                                            <AppStateWrapper />
+                                            <PushNotificationComponent />
+                                            <AutoConvertListenerMount />
+                                            <AccountModeSyncMount />
+                                            <DisplayCurrencyFromRegionMount />
+                                            <RootStack />
+                                            <NetworkErrorComponent />
+                                            <ActionModals />
+                                            <ApprovalSurfaceHost />
+                                          </NotificationsProvider>
+                                        </RestrictedRegionProvider>
+                                      </RequiresBlinkAddressPromptProvider>
                                     </EnhancedModePromptProvider>
                                     <GaloyToast />
                                   </RootSiblingParent>

@@ -150,6 +150,7 @@ import {
   WalletCreationScreen,
 } from "@app/screens/self-custodial/onboarding"
 import { ModeSwitchSuccessScreen } from "@app/screens/self-custodial/mode-switch-success-screen"
+import { AddressSuccessScreen } from "@app/screens/self-custodial/address-success-screen"
 import {
   RestoreMethodScreen,
   RestorePhraseScreen,
@@ -264,6 +265,7 @@ const ConversionDetailsGated = withOfflineGate(ConversionDetailsScreen)
 const ConversionConfirmationGated = withOfflineGate(ConversionConfirmationScreen)
 const UnclaimedDepositsGated = withOfflineGate(UnclaimedDepositsScreen)
 
+// eslint-disable-next-line max-lines-per-function -- the root navigator declares every route in one tree; splitting solely for the line cap fragments the navigation structure
 export const RootStack = () => {
   const styles = useStyles()
   const {
@@ -936,6 +938,11 @@ export const RootStack = () => {
       <RootNavigator.Screen
         name="selfCustodialModeSwitchSuccess"
         component={ModeSwitchSuccessScreen}
+        options={{ headerShown: false }}
+      />
+      <RootNavigator.Screen
+        name="selfCustodialAddressSuccess"
+        component={AddressSuccessScreen}
         options={{ headerShown: false }}
       />
       <RootNavigator.Screen

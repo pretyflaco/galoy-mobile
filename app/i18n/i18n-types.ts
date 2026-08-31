@@ -8610,6 +8610,26 @@ type RootTranslation = {
 		 */
 		anon: string
 	}
+	AddressSuccessScreen: {
+		/**
+		 * L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​s​e​t
+		 */
+		title: string
+	}
+	RequiresBlinkAddressPrompt: {
+		/**
+		 * T​h​i​s​ ​f​e​a​t​u​r​e​ ​r​e​q​u​i​r​e​s​ ​a​ ​b​l​i​n​k​.​s​v​ ​L​N​ ​A​d​d​r​e​s​s
+		 */
+		title: string
+		/**
+		 * T​h​e​s​e​ ​s​e​r​v​i​c​e​s​ ​a​r​e​ ​n​o​t​ ​y​e​t​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​a​l​t​e​r​n​a​t​i​v​e​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​d​o​m​a​i​n​s​ ​—​ ​c​o​m​i​n​g​ ​s​o​o​n​!
+		 */
+		body: string
+		/**
+		 * C​l​a​i​m​ ​@​b​l​i​n​k​.​s​v​ ​a​d​d​r​e​s​s
+		 */
+		claimButton: string
+	}
 	RestrictedRegion: {
 		/**
 		 * R​e​s​t​r​i​c​t​e​d​ ​r​e​g​i​o​n​ ​d​e​t​e​c​t​e​d
@@ -23252,6 +23272,26 @@ export type TranslationFunctions = {
 	Non-custodial Mode
 		 */
 		anon: () => LocalizedString
+	}
+	AddressSuccessScreen: {
+		/**
+		 * Lightning Address set
+		 */
+		title: () => LocalizedString
+	}
+	RequiresBlinkAddressPrompt: {
+		/**
+		 * This feature requires a blink.sv LN Address
+		 */
+		title: () => LocalizedString
+		/**
+		 * These services are not yet available for alternative Lightning Address domains — coming soon!
+		 */
+		body: () => LocalizedString
+		/**
+		 * Claim @blink.sv address
+		 */
+		claimButton: () => LocalizedString
 	}
 	RestrictedRegion: {
 		/**

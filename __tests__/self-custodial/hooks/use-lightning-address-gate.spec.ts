@@ -53,9 +53,12 @@ const stateWithMode = (mode: AccountMode): PersistentState => ({
 const registryWithAddress = (
   lightningAddress: string | null,
   lnurlDomain: "blink.sv" | "twentyone.ist" | null = null,
+  altLightningAddress: string | null = null,
 ) => ({
   activeAccount: { id: "self-custodial-1", type: "self-custodial" },
-  selfCustodialEntries: [{ id: "self-custodial-1", lightningAddress, lnurlDomain }],
+  selfCustodialEntries: [
+    { id: "self-custodial-1", lightningAddress, lnurlDomain, altLightningAddress },
+  ],
 })
 
 beforeEach(() => {
@@ -101,6 +104,31 @@ describe("useLightningAddressGated", () => {
 
   it("offers creation (not gated) in Incognito when no address exists", () => {
     mockPersistentState = stateWithMode(AccountMode.Anon)
+
+    const { result } = renderHook(() => useLightningAddressGated())
+
+    expect(result.current).toBe(false)
+  })
+
+  /** The alt slot holds an address the SDK never learned of (REST-registered on the
+   *  other domain): a twentyone.ist alt lifts the gate even when the primary sits on
+   *  blink.sv. */
+  it("keeps the account payable in Incognito via a twentyone.ist ALT address", () => {
+    mockPersistentState = stateWithMode(AccountMode.Anon)
+    mockRegistry.mockReturnValue(
+      registryWithAddress("satoshi@blink.sv", "blink.sv", "satoshi@twentyone.ist"),
+    )
+
+    const { result } = renderHook(() => useLightningAddressGated())
+
+    expect(result.current).toBe(false)
+  })
+
+  it("keeps the account payable in Incognito when the ALT slot is the only address", () => {
+    mockPersistentState = stateWithMode(AccountMode.Anon)
+    mockRegistry.mockReturnValue(
+      registryWithAddress(null, null, "satoshi@twentyone.ist"),
+    )
 
     const { result } = renderHook(() => useLightningAddressGated())
 

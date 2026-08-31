@@ -10,7 +10,9 @@ import { useAppConfig, useClipboard } from "@app/hooks"
 import { useAccountRegistry } from "@app/hooks/use-account-registry"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
+import { useAccountLightningAddresses } from "@app/self-custodial/hooks/use-account-lightning-addresses"
 import { useLightningAddressGated } from "@app/self-custodial/hooks/use-lightning-address-gate"
+import { useSelfCustodialAccountMode } from "@app/self-custodial/hooks/use-self-custodial-account-mode"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { BackupStatus, useBackupState } from "@app/self-custodial/providers/backup-state"
@@ -18,7 +20,6 @@ import { AccountType } from "@app/types/wallet"
 import { getLightningAddress } from "@app/utils/pay-links"
 
 import { SettingsRow } from "../row"
-import { useSelfCustodialLightningAddress } from "./use-self-custodial-lightning-address"
 
 const SUBTITLE_SHORTER_LENGTH = 22
 
@@ -37,6 +38,12 @@ type LightningAddressRowProps = {
   /** Marks the address as unusable: the row says so and drops the copy affordance,
    *  while `address` stays the bare address so nothing can copy the label. */
   isDisabled?: boolean
+  /** What a tap on the DISABLED row does. Unset = inert (custodial default); the
+   *  self-custodial row uses it to route a withheld blink.sv address into registering
+   *  the mode-usable one. */
+  onDisabledAction?: () => void
+  /** Second line — the account's other-domain address when it holds both. */
+  subtitle?: string
   /** When set, creating an address navigates (self-custodial's two-screen flow) instead of
    *  opening the modal. Custodial leaves this undefined and keeps the modal. */
   onCreateAddress?: () => void
@@ -47,6 +54,8 @@ const LightningAddressRow: React.FC<LightningAddressRowProps> = ({
   address,
   loading,
   isDisabled = false,
+  onDisabledAction,
+  subtitle,
   onCreateAddress,
   renderModal,
 }) => {
@@ -70,11 +79,15 @@ const LightningAddressRow: React.FC<LightningAddressRowProps> = ({
     ? `${address}${disabledSuffix}`
     : LL.SettingsScreen.createAddress()
 
-  /** A disabled address is inert both ways: the label is not an address, so copying it
-   *  would hand the user a string no wallet can pay, and registering a new one is the
-   *  very thing being withheld. Otherwise the row creates an address or copies it. */
+  /** A disabled address never copies: the label is not an address, so copying it would
+   *  hand the user a string no wallet can pay. When the disable has a remedy the row
+   *  routes there (onDisabledAction); otherwise it is inert. Otherwise the row creates
+   *  an address or copies it. */
   const handleAction = () => {
-    if (isDisabled) return
+    if (isDisabled) {
+      onDisabledAction?.()
+      return
+    }
     if (!address) {
       if (onCreateAddress) {
         onCreateAddress()
@@ -91,7 +104,12 @@ const LightningAddressRow: React.FC<LightningAddressRowProps> = ({
       <SettingsRow
         loading={loading}
         title={displayedTitle}
-        subtitleShorter={displayedTitle.length > SUBTITLE_SHORTER_LENGTH}
+        subtitle={subtitle}
+        subtitleShorter={
+          subtitle
+            ? subtitle.length > SUBTITLE_SHORTER_LENGTH
+            : displayedTitle.length > SUBTITLE_SHORTER_LENGTH
+        }
         leftGaloyIcon="lightning-address"
         rightIcon={
           isAddressCopyable ? (
@@ -127,22 +145,45 @@ const CustodialLightningAddressRow: React.FC = () => {
 }
 
 const SelfCustodialLightningAddressRow: React.FC = () => {
-  const address = useSelfCustodialLightningAddress()
+  const { LL } = useI18nContext()
+  const { primary, alt, effective } = useAccountLightningAddresses()
+  const { isAnonMode } = useSelfCustodialAccountMode()
   const { backupState } = useBackupState()
   const isLightningAddressGated = useLightningAddressGated()
   const isBackupRequired = backupState.status !== BackupStatus.Completed
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
+  /** What the main line shows: the mode-usable address when one exists; otherwise the
+   *  withheld one (Incognito with only a blink.sv address) so the user sees what they
+   *  have; otherwise the create prompt. */
+  const address = effective ?? primary ?? alt
+  const isDisabled = isLightningAddressGated && Boolean(address)
+
+  /** The other-domain address rides as the subtitle when the account holds both. In
+   *  Incognito that second line is the dormant blink.sv one, so it says so. */
+  const other = address === primary ? alt : primary
+  const showBoth = Boolean(primary && alt && other)
+  const subtitle = showBoth
+    ? `${other}${isAnonMode ? ` ${LL.SettingsScreen.addressDisabled()}` : ""}`
+    : undefined
+
+  /** Incognito with only a blink.sv address: the tap is the way OUT — register the
+   *  mode-usable twentyone.ist address (secondary flow; the SDK stays on blink.sv). */
+  const handleDisabledTap = () => navigation.navigate("selfCustodialChooseLnurlDomain")
+
   /** Registration is a two-screen flow (domain choice, then username) rather than the old
    *  modal, because the domain is a fixed per-account decision. Only entered when no
-   *  address exists yet — a registered address's domain is locked. While backup is
-   *  incomplete, `onCreateAddress` is withheld so the row falls into the modal path, which
-   *  renders the backup-required prompt instead of navigating. */
+   *  address exists yet. While backup is incomplete, `onCreateAddress` is withheld so the
+   *  row falls into the modal path, which renders the backup-required prompt instead of
+   *  navigating. */
   return (
     <LightningAddressRow
       address={address}
-      /** Incognito cannot receive, so the row says so next to the address it still shows. */
-      isDisabled={isLightningAddressGated}
+      /** Incognito cannot receive on a blink.sv-only account: the row says so next to
+       *  the address it still shows, and the tap offers the twentyone.ist remedy. */
+      isDisabled={isDisabled}
+      onDisabledAction={isDisabled ? handleDisabledTap : undefined}
+      subtitle={subtitle}
       onCreateAddress={
         isBackupRequired
           ? undefined

@@ -160,6 +160,65 @@ describe("AccountLNAddress (self-custodial)", () => {
     expect(mockCopyToClipboard).not.toHaveBeenCalled()
   })
 
+  /** The disabled tap is the way out: Incognito with only a blink.sv address offers
+   *  registering the mode-usable twentyone.ist one (secondary flow — the SDK stays on
+   *  blink.sv), entered via the domain-choice screen. */
+  it("routes a tap on the Incognito-disabled address to the domain-choice flow", () => {
+    mockScAddress = SC_ADDRESS
+    mockIsAnonMode = true
+    mockIsLightningAddressGated = true
+
+    render(<AccountLNAddress />)
+
+    act(() => (lastRowProps().action as () => void)())
+
+    expect(mockNavigate).toHaveBeenCalledWith("selfCustodialChooseLnurlDomain")
+    expect(mockCopyToClipboard).not.toHaveBeenCalled()
+  })
+
+  /** Two-domain account: the mode-usable address is the copyable main line; the other
+   *  rides as the subtitle. */
+  it("shows both addresses when the account holds one on each domain", () => {
+    mockScAddress = "alice@blink.sv"
+    mockUseAccountRegistry.mockReturnValue({
+      activeAccount: { id: "sc-1", type: AccountType.SelfCustodial },
+      selfCustodialEntries: [
+        {
+          id: "sc-1",
+          lightningAddress: "alice@blink.sv",
+          altLightningAddress: "alice@twentyone.ist",
+        },
+      ],
+    })
+
+    render(<AccountLNAddress />)
+
+    expect(lastRowProps().title).toBe("alice@blink.sv")
+    expect(lastRowProps().subtitle).toBe("alice@twentyone.ist")
+  })
+
+  /** In Incognito the usable address is the twentyone.ist alt; the dormant blink.sv
+   *  primary rides as the labelled subtitle. */
+  it("shows the twentyone.ist alt as the main line in Incognito, with blink.sv labelled below", () => {
+    mockScAddress = "alice@blink.sv"
+    mockIsAnonMode = true
+    mockUseAccountRegistry.mockReturnValue({
+      activeAccount: { id: "sc-1", type: AccountType.SelfCustodial },
+      selfCustodialEntries: [
+        {
+          id: "sc-1",
+          lightningAddress: "alice@blink.sv",
+          altLightningAddress: "alice@twentyone.ist",
+        },
+      ],
+    })
+
+    render(<AccountLNAddress />)
+
+    expect(lastRowProps().title).toBe("alice@twentyone.ist")
+    expect(lastRowProps().subtitle).toBe("alice@blink.sv (disabled)")
+  })
+
   /** Nothing to disable, so the suffix must not turn the create prompt into a lie. */
   it("leaves the create prompt untouched in Incognito when no address exists", () => {
     mockScAddress = null

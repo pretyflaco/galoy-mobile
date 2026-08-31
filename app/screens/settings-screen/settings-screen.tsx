@@ -10,12 +10,14 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { headerRightNoGlass } from "@app/components/header-no-glass"
 import { useEnhancedModePrompt } from "@app/components/enhanced-mode-prompt"
+import { useRequiresBlinkAddressPrompt } from "@app/components/requires-blink-address-prompt"
 import {
   RestrictedRegionBanner,
   useRestrictedRegion,
 } from "@app/components/restricted-region"
 import { BackupStatus, useBackupState } from "@app/self-custodial/providers/backup-state"
 import { useAccountRegistry } from "@app/hooks/use-account-registry"
+import { useAccountLightningAddresses } from "@app/self-custodial/hooks/use-account-lightning-addresses"
 import { useSelfCustodialAccountMode } from "@app/self-custodial/hooks/use-self-custodial-account-mode"
 import { Screen } from "@app/components/screen"
 import { SettingsCard } from "./settings-card"
@@ -115,13 +117,21 @@ export const SettingsScreen: React.FC = () => {
     isSelfCustodialMode && backupState.status !== BackupStatus.Completed
   const { isAnonMode } = useSelfCustodialAccountMode()
   const { promptEnhancedMode } = useEnhancedModePrompt()
+  const { promptRequiresBlinkAddress } = useRequiresBlinkAddressPrompt()
   const { isRestrictedRegion, presentRestrictedRegionModal } = useRestrictedRegion()
+  const { blinkSvAddress } = useAccountLightningAddresses()
 
-  const isWaysToGetPaidDisabled = isAnonMode || isRestrictedRegion
-  /** Anon comes first: with no lookup running, the region can never read as restricted. */
+  /** Ways-to-get-paid is served by Blink, so it needs a blink.sv address: Incognito
+   *  (no region, no upstream service) and a restricted region gate it outright, and an
+   *  enhanced account whose only address sits on another domain gets the claim flow.
+   *  Precedence matches the remedy: mode switch > region > claiming a blink.sv address. */
+  const isWaysToGetPaidDisabled =
+    isAnonMode || isRestrictedRegion || (isSelfCustodialMode && !blinkSvAddress)
   const onWaysToGetPaidDisabledPress = isAnonMode
     ? promptEnhancedMode
-    : presentRestrictedRegionModal
+    : isRestrictedRegion
+      ? presentRestrictedRegionModal
+      : promptRequiresBlinkAddress
 
   const items = {
     account: [

@@ -329,6 +329,8 @@ export type RootStackParamList = {
    */
   selfCustodialChooseLnurlDomain: undefined
   selfCustodialSetAddress: { domain: LnurlDomain }
+  /** Confirmation after an address registers (either domain); auto-dismisses to Settings. */
+  selfCustodialAddressSuccess: { address: string }
   accountMigrationEntry: undefined
   accountMigrationStart: undefined
   accountMigrationExplainer: undefined

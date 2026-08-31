@@ -17,6 +17,15 @@ export type SelfCustodialAccountEntry = {
    * read as the production default (blink.sv).
    */
   lnurlDomain?: LnurlDomain | null
+  /**
+   * An address the account ALSO holds on the other mainnet domain, registered directly
+   * against that domain's server (signed REST, no SDK reconnect) so the SDK never learns
+   * of it — which is exactly why it must live here: the provider's getLightningAddress
+   * sync only ever knows the connected domain's address and must not clobber this one.
+   * An account can thus be payable on both domains at once (e.g. blink.sv for the Ways-
+   * to-get-paid services, twentyone.ist for Incognito).
+   */
+  altLightningAddress?: string | null
 }
 
 export const StorageReadStatus = {
@@ -53,6 +62,13 @@ const isEntry = (value: unknown): value is SelfCustodialAccountEntry => {
     candidate.lnurlDomain !== undefined &&
     candidate.lnurlDomain !== null &&
     !isMainnetLnurlDomain(candidate.lnurlDomain)
+  ) {
+    return false
+  }
+  if (
+    candidate.altLightningAddress !== undefined &&
+    candidate.altLightningAddress !== null &&
+    typeof candidate.altLightningAddress !== "string"
   ) {
     return false
   }
@@ -134,6 +150,27 @@ export const setSelfCustodialLightningAddress = async (
 
   const next = [...result.entries]
   next[idx] = { ...next[idx], lightningAddress }
+  await writeIndex(next)
+}
+
+/**
+ * Records the account's address on the OTHER mainnet domain (registered via signed REST,
+ * not the SDK). Written by the secondary-registration flow; never touched by the wallet
+ * provider's SDK sync, which only knows the connected domain's address.
+ */
+export const setSelfCustodialAltLightningAddress = async (
+  id: string,
+  altLightningAddress: string | null,
+): Promise<void> => {
+  const result = await readIndex()
+  if (result.status === StorageReadStatus.ReadFailed) return
+
+  const idx = result.entries.findIndex((e) => e.id === id)
+  if (idx === -1) return
+  if (result.entries[idx].altLightningAddress === altLightningAddress) return
+
+  const next = [...result.entries]
+  next[idx] = { ...next[idx], altLightningAddress }
   await writeIndex(next)
 }
 

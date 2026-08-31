@@ -18,11 +18,21 @@ import { RootStackParamList } from "@app/navigation/stack-param-lists"
 import {
   checkLightningAddressAvailable,
   registerLightningAddress,
+  signMessageWithIdentityKey,
 } from "@app/self-custodial/bridge"
-import { LnurlDomain } from "@app/self-custodial/config"
+import { lnurlServerUrlFor, LnurlDomain } from "@app/self-custodial/config"
+import {
+  checkAddressAvailableOnDomain,
+  LnurlRegisterError,
+  registerAddressOnDomain,
+} from "@app/self-custodial/lnurl-register"
 import { BackupStatus, useBackupState } from "@app/self-custodial/providers/backup-state"
 import { useSelfCustodialWallet } from "@app/self-custodial/providers/wallet"
-import { setSelfCustodialLnurlDomain } from "@app/self-custodial/storage/account-index"
+import { useSparkNetwork } from "@app/self-custodial/hooks/use-spark-network"
+import {
+  setSelfCustodialAltLightningAddress,
+  setSelfCustodialLnurlDomain,
+} from "@app/self-custodial/storage/account-index"
 import { ActiveWalletStatus } from "@app/types/wallet"
 import { reportError } from "@app/utils/error-logging"
 import { testProps } from "@app/utils/testProps"
@@ -30,11 +40,17 @@ import { testProps } from "@app/utils/testProps"
 import { OnboardingScreenLayout } from "./layouts"
 
 /**
- * Username entry for a self-custodial Lightning Address. The domain was picked on the
- * previous screen; this screen writes it to the account (which reconnects the SDK against
- * that server), waits for the SDK to be live on the chosen domain, then registers the
- * username. The "cannot be changed later" rule applies to both the username and — once
- * registered — the domain.
+ * Username entry for a self-custodial Lightning Address, in two modes:
+ *
+ * PRIMARY (first registration): the domain was picked on the previous screen; this screen
+ * writes it to the account (which reconnects the SDK against that server), waits for the
+ * SDK to be live on the chosen domain, then registers via the SDK. The "cannot be changed
+ * later" rule applies to both the username and — once registered — the domain.
+ *
+ * SECONDARY (the account already holds an address on the OTHER domain): the SDK must not
+ * reconnect — it stays bound to the primary server. Registration goes directly against
+ * this domain's server as a signed REST call (lnurl-register.ts), the address lands in
+ * the account's alt slot, and the primary address is untouched.
  */
 export const SetSelfCustodialAddressScreen: React.FC = () => {
   const styles = useStyles()
@@ -47,7 +63,8 @@ export const SetSelfCustodialAddressScreen: React.FC = () => {
   const route = useRoute<RouteProp<RootStackParamList, "selfCustodialSetAddress">>()
   const { domain } = route.params
 
-  const { activeAccount, reloadSelfCustodialAccounts } = useAccountRegistry()
+  const { activeAccount, selfCustodialEntries, reloadSelfCustodialAccounts } =
+    useAccountRegistry()
   const {
     sdk,
     status,
@@ -56,6 +73,7 @@ export const SetSelfCustodialAddressScreen: React.FC = () => {
     updateCurrentSelfCustodialAccount,
   } = useSelfCustodialWallet()
   const { backupState } = useBackupState()
+  const network = useSparkNetwork()
   const guard = useInFlightGuard()
 
   const [lnAddress, setLnAddress] = useState("")
@@ -63,28 +81,85 @@ export const SetSelfCustodialAddressScreen: React.FC = () => {
   const [registering, setRegistering] = useState(false)
 
   const accountId = activeAccount?.id
+  const activeEntry = selfCustodialEntries.find((entry) => entry.id === accountId)
 
-  /** Persist the chosen domain up front: the wallet provider reads the entry and
-   *  reconnects the SDK against that server, so by the time the user submits the SDK is
-   *  already bound to the right LNURL host. */
+  /** Secondary when the account already holds an address on a DIFFERENT domain than the
+   *  one being registered: the SDK stays on the primary server and this registration is
+   *  a signed REST call against the chosen domain instead. */
+  const existingAddress = activeEntry?.lightningAddress ?? null
+  const existingDomain = existingAddress?.split("@")[1]?.trim().toLowerCase()
+  const isSecondary = Boolean(existingAddress) && existingDomain !== domain
+
+  /** PRIMARY ONLY: persist the chosen domain up front — the wallet provider reads the
+   *  entry and reconnects the SDK against that server, so by the time the user submits
+   *  the SDK is already bound to the right LNURL host. Secondary registration must NOT
+   *  touch the stored domain: the SDK remains bound to the primary server. */
   useEffect(() => {
-    if (!accountId) return
+    if (!accountId || isSecondary) return
     setSelfCustodialLnurlDomain(accountId, domain)
       .then(() => reloadSelfCustodialAccounts())
       .catch((err) => reportError("Persist LNURL domain choice", err))
-  }, [accountId, domain, reloadSelfCustodialAccounts])
+  }, [accountId, domain, isSecondary, reloadSelfCustodialAccounts])
 
-  /** Registration must not run against the wrong server: the SDK is connected when its
-   *  account and domain both match what this screen is about to register. */
-  const isSdkOnChosenDomain =
-    status === ActiveWalletStatus.Ready &&
-    sdk !== null &&
-    connectedAccountId === accountId &&
-    connectedLnurlDomain === domain
+  /** PRIMARY registration must not run against the wrong server: the SDK is connected
+   *  when its account and domain both match. SECONDARY only needs the SDK live on the
+   *  right account — the identity key signs regardless of the connected lnurl domain. */
+  const isSdkReady = isSecondary
+    ? status === ActiveWalletStatus.Ready &&
+      sdk !== null &&
+      connectedAccountId === accountId
+    : status === ActiveWalletStatus.Ready &&
+      sdk !== null &&
+      connectedAccountId === accountId &&
+      connectedLnurlDomain === domain
 
   const onChangeLnAddress = (value: string) => {
     setLnAddress(value)
     setError(undefined)
+  }
+
+  const goToSuccess = (address: string) =>
+    navigation.replace("selfCustodialAddressSuccess", { address })
+
+  const handleRegisterPrimary = async (): Promise<boolean> => {
+    if (!sdk) return false
+    const available = await checkLightningAddressAvailable(sdk, lnAddress)
+    if (!available) {
+      setError(SetUsernameError.ADDRESS_UNAVAILABLE)
+      return false
+    }
+    await registerLightningAddress(sdk, lnAddress)
+    await updateCurrentSelfCustodialAccount()
+    goToSuccess(`${lnAddress.toLowerCase()}@${domain}`)
+    return true
+  }
+
+  const handleRegisterSecondary = async (): Promise<boolean> => {
+    if (!sdk || !accountId) return false
+    const base = lnurlServerUrlFor(network, domain)
+    const signMessage = (message: string) => signMessageWithIdentityKey(sdk, message)
+    try {
+      const available = await checkAddressAvailableOnDomain(base, lnAddress)
+      if (!available) {
+        setError(SetUsernameError.ADDRESS_UNAVAILABLE)
+        return false
+      }
+      const address = await registerAddressOnDomain({
+        base,
+        username: lnAddress,
+        signMessage,
+      })
+      await setSelfCustodialAltLightningAddress(accountId, address)
+      await reloadSelfCustodialAccounts()
+      goToSuccess(address)
+      return true
+    } catch (err) {
+      if (err instanceof LnurlRegisterError && err.kind === "taken") {
+        setError(SetUsernameError.ADDRESS_UNAVAILABLE)
+        return false
+      }
+      throw err
+    }
   }
 
   const handleRegister = async () => {
@@ -98,21 +173,18 @@ export const SetSelfCustodialAddressScreen: React.FC = () => {
         setError(validation.error)
         return
       }
-      if (!sdk || !isSdkOnChosenDomain) {
+      if (!sdk || !isSdkReady) {
         setError(SetUsernameError.UNKNOWN_ERROR)
         return
       }
 
       setRegistering(true)
       try {
-        const available = await checkLightningAddressAvailable(sdk, lnAddress)
-        if (!available) {
-          setError(SetUsernameError.ADDRESS_UNAVAILABLE)
-          return
+        if (isSecondary) {
+          await handleRegisterSecondary()
+        } else {
+          await handleRegisterPrimary()
         }
-        await registerLightningAddress(sdk, lnAddress)
-        await updateCurrentSelfCustodialAccount()
-        navigation.goBack()
       } catch (err) {
         reportError("Register Lightning address", err)
         setError(SetUsernameError.UNKNOWN_ERROR)
@@ -151,8 +223,8 @@ export const SetSelfCustodialAddressScreen: React.FC = () => {
         <GaloyPrimaryButton
           title={LLScreen.setAddressButton()}
           onPress={handleRegister}
-          disabled={!lnAddress || !isSdkOnChosenDomain}
-          loading={registering || (!isSdkOnChosenDomain && Boolean(sdk))}
+          disabled={!lnAddress || !isSdkReady}
+          loading={registering || (!isSdkReady && Boolean(sdk))}
           {...testProps("set-self-custodial-address-submit")}
         />
       }

@@ -2723,6 +2723,14 @@ const en: BaseTranslation = {
     enhanced: "Switched to Enhanced\nNon-custodial Mode",
     anon: "Switched to Incognito\nNon-custodial Mode",
   },
+  AddressSuccessScreen: {
+    title: "Lightning Address set",
+  },
+  RequiresBlinkAddressPrompt: {
+    title: "This feature requires a blink.sv LN Address",
+    body: "These services are not yet available for alternative Lightning Address domains — coming soon!",
+    claimButton: "Claim @blink.sv address",
+  },
   RestrictedRegion: {
     title: "Restricted region detected",
     body: "Your connection appears to be from a restricted region. Blink cannot provide services from this location. Your balances are unaffected.",

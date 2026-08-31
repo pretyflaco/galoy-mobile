@@ -10,6 +10,8 @@ let mockActiveAccountType = "self-custodial"
 jest.mock("@app/hooks/use-account-registry", () => ({
   useAccountRegistry: () => ({
     activeAccount: { type: mockActiveAccountType },
+    /** The composed-addresses hook reads the alt slot from here; no alt in these tests. */
+    selfCustodialEntries: [],
   }),
 }))
 

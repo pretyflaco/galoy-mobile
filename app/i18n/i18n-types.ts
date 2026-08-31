@@ -7149,9 +7149,22 @@ type RootTranslation = {
 		 */
 		expiredContent: RequiredParams<'found'>
 		/**
+		 * W​e​ ​f​o​u​n​d​:​
+	​
+	​{​f​o​u​n​d​}​
+	​
+	​W​e​ ​c​o​u​l​d​ ​n​o​t​ ​p​r​o​c​e​s​s​ ​t​h​i​s​ ​c​o​d​e​.​ ​I​t​ ​m​a​y​ ​h​a​v​e​ ​e​x​p​i​r​e​d​,​ ​o​r​ ​t​h​e​ ​s​e​r​v​i​c​e​ ​m​a​y​ ​b​e​ ​t​e​m​p​o​r​a​r​i​l​y​ ​u​n​a​v​a​i​l​a​b​l​e​.​ ​A​s​k​ ​f​o​r​ ​a​ ​n​e​w​ ​c​o​d​e​ ​o​r​ ​t​r​y​ ​a​g​a​i​n​ ​l​a​t​e​r​.
+		 * @param {string} found
+		 */
+		unresolvedContent: RequiredParams<'found'>
+		/**
 		 * I​n​v​a​l​i​d​ ​Q​R​ ​C​o​d​e
 		 */
 		invalidTitle: string
+		/**
+		 * C​o​d​e​ ​N​o​t​ ​A​v​a​i​l​a​b​l​e
+		 */
+		unresolvedTitle: string
 		/**
 		 * O​p​e​n​ ​L​i​n​k
 		 */
@@ -7444,6 +7457,10 @@ type RootTranslation = {
 		 * W​e​ ​c​a​n​'​t​ ​r​e​a​c​h​ ​t​h​i​s​ ​L​i​g​h​t​n​i​n​g​ ​a​d​d​r​e​s​s​.​ ​I​f​ ​y​o​u​ ​a​r​e​ ​s​u​r​e​ ​i​t​ ​e​x​i​s​t​s​,​ ​y​o​u​ ​c​a​n​ ​t​r​y​ ​a​g​a​i​n​ ​l​a​t​e​r​.
 		 */
 		lnAddressError: string
+		/**
+		 * W​e​ ​c​o​u​l​d​ ​n​o​t​ ​p​r​o​c​e​s​s​ ​t​h​i​s​ ​c​o​d​e​.​ ​I​t​ ​m​a​y​ ​h​a​v​e​ ​e​x​p​i​r​e​d​,​ ​o​r​ ​t​h​e​ ​s​e​r​v​i​c​e​ ​m​a​y​ ​b​e​ ​t​e​m​p​o​r​a​r​i​l​y​ ​u​n​a​v​a​i​l​a​b​l​e​.
+		 */
+		lnurlServiceError: string
 		/**
 		 * E​i​t​h​e​r​ ​m​a​k​e​ ​s​u​r​e​ ​t​h​e​ ​s​p​e​l​l​i​n​g​ ​i​s​ ​r​i​g​h​t​ ​o​r​ ​a​s​k​ ​t​h​e​ ​r​e​c​i​p​i​e​n​t​ ​f​o​r​ ​a​n​ ​i​n​v​o​i​c​e​ ​o​r​ ​B​T​C​ ​a​d​d​r​e​s​s​ ​i​n​s​t​e​a​d​.
 		 */
@@ -8771,19 +8788,24 @@ type RootTranslation = {
 		 */
 		lightning: string
 		/**
+		 * L​i​g​h​t​n​i​n​g​ ​b​e​l​o​w​ ​{​t​h​r​e​s​h​o​l​d​}​ ​S​A​T
+		 * @param {string} threshold
+		 */
+		lightningBelowThreshold: RequiredParams<'threshold'>
+		/**
 		 * I​n​t​r​a​l​e​d​g​e​r
 		 */
 		intraledger: string
 		/**
-		 * O​n​c​h​a​i​n​ ​p​r​i​o​r​i​t​y​ ​(​a​s​a​p​)
+		 * O​n​c​h​a​i​n​ ​P​r​i​o​r​i​t​y​ ​(​~​1​0​m​)
 		 */
 		onchainPriority: string
 		/**
-		 * O​n​c​h​a​i​n​ ​s​t​a​n​d​a​r​d​ ​(​~​4​h​)
+		 * O​n​c​h​a​i​n​ ​S​t​a​n​d​a​r​d​ ​(​~​4​h​)
 		 */
 		onchainStandard: string
 		/**
-		 * O​n​c​h​a​i​n​ ​e​c​o​n​o​m​y
+		 * O​n​c​h​a​i​n​ ​E​c​o​n​o​m​y​ ​(​~​2​4​h​)
 		 */
 		onchainEconomy: string
 		/**
@@ -21809,9 +21831,21 @@ export type TranslationFunctions = {
 		 */
 		expiredContent: (arg: { found: string }) => LocalizedString
 		/**
+		 * We found:
+
+	{found}
+
+	We could not process this code. It may have expired, or the service may be temporarily unavailable. Ask for a new code or try again later.
+		 */
+		unresolvedContent: (arg: { found: string }) => LocalizedString
+		/**
 		 * Invalid QR Code
 		 */
 		invalidTitle: () => LocalizedString
+		/**
+		 * Code Not Available
+		 */
+		unresolvedTitle: () => LocalizedString
 		/**
 		 * Open Link
 		 */
@@ -22088,6 +22122,10 @@ export type TranslationFunctions = {
 		 * We can't reach this Lightning address. If you are sure it exists, you can try again later.
 		 */
 		lnAddressError: () => LocalizedString
+		/**
+		 * We could not process this code. It may have expired, or the service may be temporarily unavailable.
+		 */
+		lnurlServiceError: () => LocalizedString
 		/**
 		 * Either make sure the spelling is right or ask the recipient for an invoice or BTC address instead.
 		 */
@@ -23387,19 +23425,23 @@ export type TranslationFunctions = {
 		 */
 		lightning: () => LocalizedString
 		/**
+		 * Lightning below {threshold} SAT
+		 */
+		lightningBelowThreshold: (arg: { threshold: string }) => LocalizedString
+		/**
 		 * Intraledger
 		 */
 		intraledger: () => LocalizedString
 		/**
-		 * Onchain priority (asap)
+		 * Onchain Priority (~10m)
 		 */
 		onchainPriority: () => LocalizedString
 		/**
-		 * Onchain standard (~4h)
+		 * Onchain Standard (~4h)
 		 */
 		onchainStandard: () => LocalizedString
 		/**
-		 * Onchain economy
+		 * Onchain Economy (~24h)
 		 */
 		onchainEconomy: () => LocalizedString
 		/**

@@ -15,7 +15,7 @@ jest.mock("@app/self-custodial/lnurl-server-mode", () => ({
 }))
 
 let mockPersistentState: PersistentState = {
-  schemaVersion: 20,
+  schemaVersion: 21,
   galoyInstance: { id: "Main" },
   galoyAuthToken: "",
   activeAccountId: "sc-1",
@@ -80,7 +80,7 @@ describe("useAccountModeSync", () => {
     mockSelfCustodialEntries = []
     mockSparkNetwork = Network.Regtest
     mockPersistentState = {
-      schemaVersion: 20,
+      schemaVersion: 21,
       galoyInstance: { id: "Main" },
       galoyAuthToken: "",
       activeAccountId: "sc-1",

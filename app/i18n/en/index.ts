@@ -2279,7 +2279,10 @@ const en: BaseTranslation = {
     invalidContent:
       "We found:\n\n{found: string}\n\nThis is not a valid Bitcoin address or Lightning invoice",
     expiredContent: "We found:\n\n{found: string}\n\nThis invoice has expired",
+    unresolvedContent:
+      "We found:\n\n{found: string}\n\nWe could not process this code. It may have expired, or the service may be temporarily unavailable. Ask for a new code or try again later.",
     invalidTitle: "Invalid QR Code",
+    unresolvedTitle: "Code Not Available",
     openLinkTitle: "Open Link",
     confirmOpenLink: "Are you sure you want to open this link?",
     noQrCode: "We could not find a QR code in the image",
@@ -2371,6 +2374,8 @@ const en: BaseTranslation = {
       "If you want to send money to another account that you own, you can use an invoice, LN or BTC address instead.",
     lnAddressError:
       "We can't reach this Lightning address. If you are sure it exists, you can try again later.",
+    lnurlServiceError:
+      "We could not process this code. It may have expired, or the service may be temporarily unavailable.",
     lnAddressAdvice:
       "Either make sure the spelling is right or ask the recipient for an invoice or BTC address instead.",
     unknownLightning: "We can't parse this Lightning address. Please try again.",
@@ -2773,10 +2778,11 @@ const en: BaseTranslation = {
     receive: "Receive",
     transfer: "Transfer",
     lightning: "Lightning",
+    lightningBelowThreshold: "Lightning below {threshold: string} SAT",
     intraledger: "Intraledger",
-    onchainPriority: "Onchain priority (asap)",
-    onchainStandard: "Onchain standard (~4h)",
-    onchainEconomy: "Onchain economy",
+    onchainPriority: "Onchain Priority (~10m)",
+    onchainStandard: "Onchain Standard (~4h)",
+    onchainEconomy: "Onchain Economy (~24h)",
     lightningTransactions: "Lightning transactions",
     onchainBelowThreshold: "Onchain below {threshold: string} SAT",
     onchainAboveThreshold: "Onchain above {threshold: string} SAT",

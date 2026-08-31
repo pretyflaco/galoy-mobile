@@ -1100,7 +1100,7 @@ export const ContactNavigator = () => {
       <StackContacts.Screen
         name="contactDetail"
         component={ContactsDetailScreen}
-        options={{ headerShown: false }}
+        options={{ title: "" }}
       />
       <StackContacts.Screen
         name="allContacts"

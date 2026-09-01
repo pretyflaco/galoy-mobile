@@ -4479,6 +4479,7 @@ const en: BaseTranslation = {
   NostrAwaitingFollowupScreen: {
     body: "Waiting for sign-in challenge from app…",
     hint: "You may be asked to approve one more time.",
+    cancel: "Cancel",
     srLabel:
       "Connected to {client:string}. Waiting for the sign-in challenge. You may be asked to approve one more time.",
   },

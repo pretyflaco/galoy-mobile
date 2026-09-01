@@ -71,6 +71,7 @@ const AwaitingFollowupOverlay: React.FC<{
   coordinator: NonNullable<ReturnType<typeof useNostrRuntime>>["coordinator"]
 }> = ({ store, coordinator }) => {
   const styles = useStyles()
+  const runtime = useNostrRuntime()
   const awaiting = useSyncExternalStore(
     (cb) => store.subscribe(cb),
     () => store.current(),
@@ -81,14 +82,29 @@ const AwaitingFollowupOverlay: React.FC<{
     () => coordinator.activeEntry() !== null,
   )
   const shouldShow = Boolean(awaiting) && !hasActiveApproval
+
+  // Escape hatch: the same-device mobile flow can strand the user on this spinner (the
+  // client app is backgrounded and never sends its sign-in challenge). Cancel — or the
+  // Android back button via onRequestClose — clears the wait so the user is never trapped.
+  const onCancel = useCallback(() => {
+    const pubkey = awaiting?.clientPubkey
+    if (pubkey) runtime?.runtime.cancelAwaitingFollowup(pubkey)
+  }, [awaiting, runtime])
+
   return (
-    <Modal visible={shouldShow} animationType="fade" transparent={false}>
+    <Modal
+      visible={shouldShow}
+      animationType="fade"
+      transparent={false}
+      onRequestClose={onCancel}
+    >
       <Screen>
         <View style={styles.container}>
           {awaiting ? (
             <NostrAwaitingFollowupScreen
               clientName={awaiting.name}
               clientImage={awaiting.image}
+              onCancel={onCancel}
             />
           ) : null}
         </View>

@@ -158,6 +158,18 @@ export interface SignerRuntime {
   duplicatePrompt: DuplicatePromptStore
   /** The sign-in "waiting for login request" store (rendered by the ApprovalSurfaceHost). */
   awaitingFollowup: AwaitingFollowupStore
+  /**
+   * User-initiated cancel of the sign-in waiting overlay (same-device mobile flow: the client
+   * may be suspended in the background and never send its challenge, so the user must always
+   * be able to leave the spinner). Clears the wait exactly like a timeout would.
+   */
+  cancelAwaitingFollowup(clientPubkey: string): void
+  /**
+   * Foreground transition (AppState → active): re-warm the relay sockets and re-register the
+   * #p REQ so an ephemeral NIP-46 challenge published while the app was backgrounded still has
+   * a live subscriber. No-op when there are no connected relays.
+   */
+  handleForeground(): void
   /** Re-read account-scoped state + resubscribe relays after an account switch. */
   reloadAccountScope(): Promise<void>
   /**
@@ -278,6 +290,7 @@ const createFollowupWaitController = (
   stop: (clientPubkey: string) => void
   start: (state: { clientPubkey: string; name?: string; image?: string }) => void
   bump: (clientPubkey: string) => void
+  reevaluate: () => void
 } => {
   const FOLLOWUP_IDLE_TIMEOUT_MS = 90_000
   const FOLLOWUP_ABSOLUTE_CAP_MS = 180_000
@@ -318,7 +331,22 @@ const createFollowupWaitController = (
     if (store.current()?.clientPubkey !== clientPubkey) return
     arm(clientPubkey)
   }
-  return { stop, start, bump }
+  // Foreground recovery: a JS timer is throttled while the app is backgrounded, so the idle
+  // timeout may not have fired by the time the user returns. Re-check the ACTIVE wait's absolute
+  // deadline — stop immediately if it already passed, otherwise re-arm the (possibly suspended)
+  // timer for the remaining window. A stalled spinner must not outlive its cap.
+  const reevaluate = (): void => {
+    const active = store.current()
+    if (!active) return
+    const clientPubkey = active.clientPubkey
+    const cap = deadlines.get(clientPubkey)
+    if (cap !== undefined && Date.now() >= cap) {
+      stop(clientPubkey)
+      return
+    }
+    arm(clientPubkey)
+  }
+  return { stop, start, bump, reevaluate }
 }
 
 export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
@@ -358,6 +386,7 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     stop: stopAwaiting,
     start: startAwaiting,
     bump: bumpAwaiting,
+    reevaluate: reevaluateAwaiting,
   } = createFollowupWaitController(awaitingFollowup)
 
   // Metadata-only activity recording (leak-audit safe): log the accept/reject decision for a
@@ -984,6 +1013,21 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     },
     duplicatePrompt,
     awaitingFollowup,
+    cancelAwaitingFollowup: (clientPubkey) => {
+      stopAwaiting(clientPubkey)
+    },
+    handleForeground: () => {
+      // AppState → active. A relay socket can be throttled/dropped while the app is
+      // backgrounded; NIP-46 RPCs are ephemeral, so re-warm + re-register the #p subscriber
+      // before the client's sign-in challenge would otherwise be lost. Also re-evaluate the
+      // awaiting overlay's deadline — its JS timer may not have fired while suspended.
+      reevaluateAwaiting()
+      if (relaySnapshot.length === 0) return
+      fireAndForget(async () => {
+        await ensureRelays(relaySnapshot)
+        resubscribe()
+      }, log)
+    },
     reloadAccountScope: async () => {
       // Account switched: scoped storage keys now resolve to the new account's namespace —
       // re-sync the in-memory snapshots and re-subscribe to the new account's relays.

@@ -16,6 +16,7 @@
  * (NFR-9).
  */
 import React, { createContext, useContext, useEffect, useMemo, useRef } from "react"
+import { AppState } from "react-native"
 
 import { useApolloClient } from "@apollo/client"
 
@@ -133,6 +134,18 @@ export const NostrRuntimeProvider: React.FC<React.PropsWithChildren> = ({ childr
     setNostrConnectHandler(enabled ? (uri) => runtime.handleConnectUri(uri) : null)
     return () => setNostrConnectHandler(null)
   }, [enabled, runtime])
+
+  // Foreground recovery (same-device NIP-46): relay sockets can be throttled/dropped while the
+  // app is backgrounded, and a NIP-46 sign-in challenge is ephemeral — if our #p subscriber is
+  // gone when the client publishes it, the request is lost and the awaiting overlay spins
+  // forever. Re-warm + re-subscribe on every foreground transition so the challenge always has a
+  // live listener. Runtime-side the call no-ops when there are no connected relays.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next === "active") runtime.handleForeground()
+    })
+    return () => sub.remove()
+  }, [runtime])
 
   const value = useMemo<NostrRuntimeContextValue>(
     () => ({

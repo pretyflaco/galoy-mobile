@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from "react-native"
 
 import { Avatar, Text, makeStyles, useTheme } from "@rn-vui/themed"
 
+import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { testProps } from "@app/utils/testProps"
 
@@ -11,6 +12,12 @@ type Props = {
   clientName?: string
   /** Optional avatar image URL from the connection metadata (NIP-46 `image`). */
   clientImage?: string
+  /**
+   * Leave the waiting surface. Same-device mobile flows can strand here (the client app is
+   * suspended in the background and never sends its sign-in challenge), so the user must
+   * always be able to walk away — this is the one affordance the pure spinner otherwise lacks.
+   */
+  onCancel: () => void
 }
 
 /**
@@ -25,6 +32,7 @@ type Props = {
 export const NostrAwaitingFollowupScreen: React.FC<Props> = ({
   clientName,
   clientImage,
+  onCancel,
 }) => {
   const { LL } = useI18nContext()
   const styles = useStyles()
@@ -67,6 +75,11 @@ export const NostrAwaitingFollowupScreen: React.FC<Props> = ({
       <Text type="p3" style={styles.hint} testID="nostr-awaiting-hint">
         {T.hint()}
       </Text>
+      <GaloySecondaryButton
+        title={T.cancel()}
+        onPress={onCancel}
+        {...testProps("nostr-awaiting-cancel")}
+      />
     </View>
   )
 }

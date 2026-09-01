@@ -38,13 +38,15 @@ const makeMemoryStorage = () => {
 // A fake relay pool that captures published events and lets tests inject inbound traffic.
 const makeFakePool = () => {
   const published: unknown[] = []
+  const subscribed: { relays: string[] }[] = []
   let onEvent: ((event: unknown) => void) | null = null
   const pool = {
     subscribe: (
-      _relays: string[],
+      relays: string[],
       _filter: Record<string, unknown>,
       params: Record<string, unknown>,
     ) => {
+      subscribed.push({ relays })
       onEvent = params.onevent as (event: unknown) => void
       return { close: () => undefined }
     },
@@ -56,7 +58,7 @@ const makeFakePool = () => {
     close: () => undefined,
     destroy: () => undefined,
   }
-  return { pool, published, inject: (e: unknown) => onEvent?.(e) }
+  return { pool, published, subscribed, inject: (e: unknown) => onEvent?.(e) }
 }
 
 // A fixed local identity (the "user") the runtime signs as.
@@ -510,5 +512,81 @@ describe("signer runtime assembly (A1)", () => {
     await flushAsync()
     // A NEW (request) surface was presented for the mismatched-host 27235 sign.
     expect(present.mock.calls.length).toBeGreaterThan(connectionCalls)
+  })
+
+  it("cancelAwaitingFollowup clears the waiting overlay (the escape hatch for a stranded flow)", async () => {
+    const holder: { runtime?: ReturnType<typeof createSignerRuntime> } = {}
+    const present = jest.fn(async () => {
+      holder.runtime?.coordinator.resolveActive({ approved: true })
+    })
+    const runtime = createSignerRuntime(makeDeps({ present }))
+    holder.runtime = runtime
+
+    await runtime.handleConnectUri(
+      `nostrconnect://${clientPubkey}?relay=wss%3A%2F%2Fnos.lol&secret=s&name=Blink%20POS`,
+    )
+    await flushAsync()
+    // Post-connect we are waiting on the login follow-up.
+    expect(runtime.awaitingFollowup.current()?.clientPubkey).toBe(clientPubkey)
+
+    // The user cancels (same-device mobile flow may never deliver the challenge).
+    runtime.cancelAwaitingFollowup(clientPubkey)
+    expect(runtime.awaitingFollowup.current()).toBeNull()
+  })
+
+  it("handleForeground re-subscribes the relay REQ so a lapsed socket can't drop the ephemeral challenge", async () => {
+    const holder: { runtime?: ReturnType<typeof createSignerRuntime> } = {}
+    const present = jest.fn(async () => {
+      holder.runtime?.coordinator.resolveActive({ approved: true })
+    })
+    const fake = makeFakePool()
+    const runtime = createSignerRuntime(
+      makeDeps({ present, createPool: () => fake.pool, readTransportSkHex: readNsecHex }),
+    )
+    holder.runtime = runtime
+
+    await runtime.handleConnectUri(
+      `nostrconnect://${clientPubkey}?relay=wss%3A%2F%2Fnos.lol&secret=s&name=Blink%20POS`,
+    )
+    await flushAsync()
+    const beforeForeground = fake.subscribed.length
+    expect(beforeForeground).toBeGreaterThan(0)
+
+    // App returns to the foreground: a fresh REQ must be registered against the same relays.
+    runtime.handleForeground()
+    await flushAsync()
+
+    expect(fake.subscribed.length).toBeGreaterThan(beforeForeground)
+    expect(fake.subscribed.at(-1)?.relays).toContain("wss://nos.lol")
+  })
+
+  it("handleForeground does NOT clear a waiting overlay that is still within its idle window", async () => {
+    jest.useFakeTimers()
+    try {
+      const holder: { runtime?: ReturnType<typeof createSignerRuntime> } = {}
+      const present = jest.fn(async (entry: { kind: string }) => {
+        if (entry.kind === "connection")
+          holder.runtime?.coordinator.resolveActive({ approved: true })
+      })
+      const runtime = createSignerRuntime(
+        makeDeps({ present, readTransportSkHex: readNsecHex }),
+      )
+      holder.runtime = runtime
+
+      await runtime.handleConnectUri(
+        `nostrconnect://${clientPubkey}?relay=wss%3A%2F%2Fnos.lol&secret=s&name=vezir`,
+      )
+      await Promise.resolve()
+      await Promise.resolve()
+      expect(runtime.awaitingFollowup.current()).not.toBeNull()
+
+      // Foreground return mid-handshake must re-evaluate the deadline WITHOUT dropping a
+      // still-active wait — an over-eager clear would kill a slow-but-progressing sign-in.
+      jest.advanceTimersByTime(30_000) // inside the 90s idle window
+      runtime.handleForeground()
+      expect(runtime.awaitingFollowup.current()?.clientPubkey).toBe(clientPubkey)
+    } finally {
+      jest.useRealTimers()
+    }
   })
 })

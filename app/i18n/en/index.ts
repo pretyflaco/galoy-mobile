@@ -46,6 +46,8 @@ const en: BaseTranslation = {
   },
   AuthenticationScreen: {
     authenticationDescription: "Authenticate to continue",
+    authenticationRequired:
+      "Authentication is required. You can set up a PIN or biometrics in Security settings.",
     setUp: "Set up Biometric Authentication",
     setUpAuthenticationDescription: "Use biometric to authenticate",
     skip: "Skip",
@@ -2134,6 +2136,25 @@ const en: BaseTranslation = {
     categories: "Categories",
     selectAll: "Select all",
     clearAll: "Clear all",
+    addPlace: "Add to map",
+    addPlaceTitle: "Add a place",
+    placePinHint: "Move the map to put the pin on the place",
+    placeName: "Name",
+    placeNameHint: "What the place is called",
+    placeCategory: "Category",
+    placeLocation: "Location",
+    changeLocation: "Change",
+    placeReviewNote:
+      "New places go to BTC Map. Its community reviews and maintains everything on the map.",
+    placeSubmitted:
+      "Place sent to BTC Map — thanks for adding it. New places can take a while to appear on the map.",
+    placeSubmissionFailed:
+      "The place could not be sent. Check your connection and try again.",
+    // One sentence on purpose: the refusal's real reason (a rate limit, a level
+    // too low, a duplicate) is logged to Crashlytics — see use-place-submission.ts —
+    // and the form offers the likeliest one rather than a list.
+    placeRefused:
+      "BTC Map could not accept this place — it may already be on the map. Nothing was changed.",
     category: {
       restaurants: "Restaurants",
       cafes: "Cafés",
@@ -2166,6 +2187,7 @@ const en: BaseTranslation = {
   },
   PinScreen: {
     attemptsRemaining: "Incorrect PIN. {attemptsRemaining: number} attempts remaining.",
+    enterPin: "Enter your PIN code",
     lockoutUnavailable: "Couldn't record the failed attempt securely. Logging out.",
     oneAttemptRemaining: "Incorrect PIN. 1 attempt remaining.",
     pinUnreadable: "Couldn't check your PIN. Please try again.",
@@ -2798,7 +2820,6 @@ const en: BaseTranslation = {
       "Onchain between {lower: string} and {upper: string} SAT",
     transferFee: "Transfer fee",
     noFee: "no fee",
-    lightningSendFee: "{fee: string} + ~{routingFee: string} routing fee",
     fromApprox: "from ~{fee: string}",
     satAmount: "{amount: string} SAT",
     error: "Unable to fetch fees at this time",
@@ -3681,8 +3702,6 @@ const en: BaseTranslation = {
         enterNewPin: "Enter new PIN",
         enterNewPinSubtitle: "Please enter your new 4-digit PIN.",
         biometricDescription: "Verify your identity to change PIN",
-        biometricRequired:
-          "Biometric authentication is required to change your PIN.",
         pinChangedTitle: "PIN changed",
         pinChangedSubtitle: "Your PIN has been changed successfully.",
         pinChangedToast: "PIN has been changed successfully",

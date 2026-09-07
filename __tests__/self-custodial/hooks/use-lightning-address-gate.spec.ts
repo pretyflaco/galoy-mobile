@@ -71,9 +71,7 @@ beforeEach(() => {
 describe("useLightningAddressGated", () => {
   it("withholds a blink.sv address in Incognito (dormant upstream)", () => {
     mockPersistentState = stateWithMode(AccountMode.Anon)
-    mockRegistry.mockReturnValue(
-      registryWithAddress("satoshi@blink.sv", "blink.sv"),
-    )
+    mockRegistry.mockReturnValue(registryWithAddress("satoshi@blink.sv", "blink.sv"))
 
     const { result } = renderHook(() => useLightningAddressGated())
 
@@ -126,9 +124,7 @@ describe("useLightningAddressGated", () => {
 
   it("keeps the account payable in Incognito when the ALT slot is the only address", () => {
     mockPersistentState = stateWithMode(AccountMode.Anon)
-    mockRegistry.mockReturnValue(
-      registryWithAddress(null, null, "satoshi@twentyone.ist"),
-    )
+    mockRegistry.mockReturnValue(registryWithAddress(null, null, "satoshi@twentyone.ist"))
 
     const { result } = renderHook(() => useLightningAddressGated())
 

@@ -26,7 +26,10 @@ const errJson = (status: number, body: string) =>
     text: () => Promise.resolve(body),
   } as Response)
 
-const signMessage = jest.fn(async (_message: string) => ({ pubkey: PUBKEY, signature: "deadbeef" }))
+const signMessage = jest.fn(async (_message: string) => ({
+  pubkey: PUBKEY,
+  signature: "deadbeef",
+}))
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -68,6 +71,7 @@ describe("checkAddressAvailableOnDomain", () => {
 
 describe("registerAddressOnDomain", () => {
   it("signs the canonical message BEFORE posting, then POSTs the signed payload", async () => {
+    // eslint-disable-next-line camelcase -- server response payload is snake_case
     mockFetch.mockReturnValue(okJson({ lightning_address: "satoshi@blink.sv" }))
 
     const address = await registerAddressOnDomain({

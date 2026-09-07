@@ -175,6 +175,11 @@
     "jest/no-async-promise-executor": "off"
 
   },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
   "overrides": [
     {
       "files": [
@@ -184,14 +189,7 @@
       "rules": {
         "no-restricted-imports": "off"
       }
-    }
-  ],
-  "settings": {
-    "react": {
-      "version": "detect"
-    }
-  },
-  "overrides": [
+    },
     {
       "files": ["app/nostr/core/**/*.ts", "app/nostr/core/**/*.tsx"],
       "rules": {

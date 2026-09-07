@@ -902,7 +902,8 @@ describe("Settings Screen Ways-to-get-paid domain gating", () => {
   it("leaves the section open once the account holds a blink.sv address (either slot)", async () => {
     mockBlinkSvAddress = "satoshi@blink.sv"
 
-    render(      <ContextForScreen>
+    render(
+      <ContextForScreen>
         <SettingsScreen />
       </ContextForScreen>,
     )

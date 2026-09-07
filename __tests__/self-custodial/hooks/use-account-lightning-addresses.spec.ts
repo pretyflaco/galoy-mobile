@@ -84,9 +84,7 @@ describe("useAccountLightningAddresses", () => {
   })
 
   it("Enhanced falls back to the twentyone.ist address when no blink.sv one exists", () => {
-    mockRegistry.mockReturnValue(
-      registryWith("satoshi@twentyone.ist", "twentyone.ist"),
-    )
+    mockRegistry.mockReturnValue(registryWith("satoshi@twentyone.ist", "twentyone.ist"))
 
     const { result } = renderHook(() => useAccountLightningAddresses())
 

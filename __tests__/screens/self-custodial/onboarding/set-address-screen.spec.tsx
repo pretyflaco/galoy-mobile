@@ -68,7 +68,10 @@ jest.mock("@app/hooks/use-in-flight-guard", () => ({
 
 const mockCheckSdk = jest.fn()
 const mockRegisterSdk = jest.fn()
-const mockSign = jest.fn(async (_sdk: unknown, _message: string) => ({ pubkey: "02ab", signature: "deadbeef" }))
+const mockSign = jest.fn(async (_sdk: unknown, _message: string) => ({
+  pubkey: "02ab",
+  signature: "deadbeef",
+}))
 jest.mock("@app/self-custodial/bridge", () => ({
   ...jest.requireActual("@app/self-custodial/bridge"),
   checkLightningAddressAvailable: (...args: unknown[]) => mockCheckSdk(...args),
@@ -127,9 +130,7 @@ describe("SetSelfCustodialAddressScreen (primary mode)", () => {
 
     fillAndSubmit(utils, "alice")
 
-    await waitFor(() =>
-      expect(mockRegisterSdk).toHaveBeenCalledWith(mockSdk, "alice"),
-    )
+    await waitFor(() => expect(mockRegisterSdk).toHaveBeenCalledWith(mockSdk, "alice"))
     expect(mockRegisterRest).not.toHaveBeenCalled()
     expect(mockSetAlt).not.toHaveBeenCalled()
   })

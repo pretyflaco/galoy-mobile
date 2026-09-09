@@ -1,83 +1,105 @@
-import React, { useCallback, useState } from "react"
+import React, { useEffect } from "react"
+import { View } from "react-native"
 
-import { BackupRequiredModal } from "@app/components/backup-required-modal"
-import { BackupStatus, useBackupState } from "@app/self-custodial/providers/backup-state"
+import { Text, makeStyles } from "@rn-vui/themed"
 
-import { useCreateIdentity, type IdentityKeySource } from "./use-create-identity"
-import { NostrCreateIdentityIntroScreen } from "./intro-screen"
-import { NostrCreateIdentityConfirmScreen } from "./confirm-screen"
-import { NostrCreateIdentityResultScreen } from "./result-screen"
+import { GaloyErrorBox } from "@app/components/atomic/galoy-error-box"
+import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
+import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
+import { useI18nContext } from "@app/i18n/i18n-react"
+import { testProps } from "@app/utils/testProps"
+
+import { NostrChooseKeySourceScreen } from "./choose-source-screen"
+import { NostrGeneratingScreen } from "./generating-screen"
+import { useCreateIdentity, type CreatePhase } from "./use-create-identity"
 
 export type CreateIdentityNavigatorProps = {
-  /** Route to the Story 1.6 import flow (wired here; impl is 1.6). */
-  onImport: () => void
-  /** Route to the Story 1.7 backup flow (stub-safe target; impl is 1.7). */
-  onBackup: () => void
-  /** Exit the ceremony (Cancel / Not now completion). */
+  /** Exit the flow — success (identity created → Hub) and Cancel both land here. */
   onExit: () => void
+  /** Step changes (the route wrapper switches the header title: Create new / Generating…). */
+  onPhaseChange?: (phase: CreatePhase) => void
 }
 
 /**
- * The three-step creation ceremony (Story 1.5): intro → confirm → result. A single
- * in-memory step machine (no key generated until confirm). Both the empty-state Nostr
- * Identity screen and a consumer deep link land here on `intro` — never auto-generating.
+ * The creation flow (redesign r3, spec §6.1–6.4):
  *
- * On self-custodial accounts the PRIMARY creation path derives the nsec from the wallet
- * seed (NIP-06); a fresh random key stays available as the explicit alternative. The
- * seed path is gated on the wallet seed being BACKED UP (mirrors the Lightning Address
- * gate): without a completed backup, tapping it shows the BackupRequiredModal.
+ *   [choose key source]  — ONLY when a backed-up wallet phrase exists
+ *   → Generating         — transient; the ONLY screen between decision and Hub
+ *   → Hub                — no confirm step, no result/ownership screen
+ *
+ * Accounts without a usable wallet phrase (custodial, or seed not yet backed up) skip the
+ * choice entirely and generate a fresh random key immediately on entry. A fail-closed
+ * error offers Try Again / Cancel; no partial identity can persist.
  */
 export const CreateIdentityNavigator: React.FC<CreateIdentityNavigatorProps> = ({
-  onImport,
-  onBackup,
   onExit,
+  onPhaseChange,
 }) => {
-  const { state, busy, start, confirm, retry, canDeriveFromSeed } = useCreateIdentity()
-  const { backupState } = useBackupState()
-  const [backupModalVisible, setBackupModalVisible] = useState(false)
-  // Remember the chosen source so the result screen can show the re-derivation note.
-  const [derivedFromSeed, setDerivedFromSeed] = useState(false)
+  const { LL } = useI18nContext()
+  const styles = useStyles()
+  const T = LL.NostrCreateIdentityScreen
+  const { phase, error, create, retry, canChooseSource, source } = useCreateIdentity()
 
-  const onCreate = useCallback(
-    (source: IdentityKeySource) => {
-      if (source === "seed" && backupState.status !== BackupStatus.Completed) {
-        setBackupModalVisible(true)
-        return
-      }
-      setDerivedFromSeed(source === "seed")
-      start(source)
-    },
-    [backupState.status, start],
-  )
+  useEffect(() => {
+    onPhaseChange?.(phase)
+  }, [phase, onPhaseChange])
 
-  return (
-    <>
-      {state.step === "result" && state.identity ? (
-        <NostrCreateIdentityResultScreen
-          identity={state.identity}
-          derivedFromSeed={derivedFromSeed}
-          onBackup={onBackup}
-          onNotNow={onExit}
-        />
-      ) : state.step === "confirm" || state.step === "error" ? (
-        <NostrCreateIdentityConfirmScreen
-          state={state}
-          busy={busy}
-          onConfirm={confirm}
-          onCancel={onExit}
-          onRetry={retry}
-        />
-      ) : (
-        <NostrCreateIdentityIntroScreen
-          canDeriveFromSeed={canDeriveFromSeed}
-          onCreate={onCreate}
-          onImport={onImport}
-        />
-      )}
-      <BackupRequiredModal
-        isVisible={backupModalVisible}
-        onClose={() => setBackupModalVisible(false)}
-      />
-    </>
-  )
+  // No wallet phrase to derive from → no choice to present (spec §7.3): start a random
+  // key immediately. Guarded by phase so a retry after error doesn't double-fire.
+  useEffect(() => {
+    if (!canChooseSource && phase === "choose") create("random")
+  }, [canChooseSource, phase, create])
+
+  // Generation committed → straight back to the Hub (which reloads on focus).
+  useEffect(() => {
+    if (phase === "done") onExit()
+  }, [phase, onExit])
+
+  if (phase === "error") {
+    return (
+      <View style={styles.errorContainer} {...testProps("nostr-generating-error")}>
+        <View style={styles.errorBody}>
+          <Text type="h2" bold style={styles.errorTitle}>
+            {T.errorTitle()}
+          </Text>
+          <GaloyErrorBox errorMessage={error?.message ?? T.errorBody()} />
+        </View>
+        <View style={styles.errorActions}>
+          <GaloyPrimaryButton
+            title={T.errorTryAgain()}
+            onPress={retry}
+            {...testProps("nostr-generating-retry")}
+          />
+          <GaloySecondaryButton
+            title={T.errorCancel()}
+            onPress={onExit}
+            {...testProps("nostr-generating-cancel")}
+          />
+        </View>
+      </View>
+    )
+  }
+
+  if (phase === "generating" || phase === "done") {
+    return <NostrGeneratingScreen source={source} />
+  }
+
+  return <NostrChooseKeySourceScreen onChoose={create} />
 }
+
+const useStyles = makeStyles(() => ({
+  errorContainer: {
+    flex: 1,
+    justifyContent: "space-between",
+    padding: 20,
+  },
+  errorBody: {
+    rowGap: 14,
+  },
+  errorTitle: {
+    textAlign: "center",
+  },
+  errorActions: {
+    rowGap: 10,
+  },
+}))

@@ -8,7 +8,7 @@
  * with the flag off.
  */
 import React, { useCallback, useEffect, useState } from "react"
-import { Linking } from "react-native"
+import { Linking, TouchableOpacity } from "react-native"
 
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native"
 import {
@@ -16,10 +16,14 @@ import {
   NativeStackNavigationProp,
 } from "@react-navigation/native-stack"
 
+import { GaloyIcon } from "@app/components/atomic/galoy-icon"
+import { headerRightNoGlass } from "@app/components/header-no-glass"
 import { useAppConfig } from "@app/hooks"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import type { TranslationFunctions } from "@app/i18n/i18n-types"
+import { useNostrBackupState } from "@app/nostr/use-nostr-backup-state"
 import { loadString, saveString } from "@app/utils/storage/storage"
+import { testProps } from "@app/utils/testProps"
 import { toastShow } from "@app/utils/toast"
 
 import { useNostrProfilePicture } from "@app/nostr/use-nostr-profile-picture"
@@ -82,7 +86,7 @@ export const NostrRootScreens = (
     <RootNavigator.Screen
       name="nostrCreateIdentity"
       component={NostrCreateIdentity}
-      options={{ title: LL.NostrCreateIdentityScreen.introTitle() }}
+      options={{ title: LL.NostrCreateIdentityScreen.screenCreateTitle() }}
     />
     <RootNavigator.Screen
       name="nostrImportIdentity"
@@ -134,12 +138,59 @@ export const NostrRootScreens = (
 export const NostrIdentityHub: React.FC = () => {
   const navigation = useNavigation<Nav>()
   const { LL } = useI18nContext()
+  const runtime = useNostrRuntime()
   const { loading, npub, pubkeyHex, accountReady, reload } = useNostrIdentity()
   const [pictureUrl, setPictureUrl] = useNostrProfilePicture(pubkeyHex)
   const { uploading, pickUploadPublish } = useProfilePictureUpload()
+  const backup = useNostrBackupState()
+  const [clients, setClients] = useState<ConnectedClient[]>([])
 
-  // Refresh on focus so a completed create/import/replace reflects immediately.
-  useEffect(() => navigation.addListener("focus", reload), [navigation, reload])
+  const reloadClients = useCallback(async () => {
+    const records = (await runtime?.runtime.listConnections()) ?? []
+    setClients(
+      records.map((r) => ({
+        clientPubkey: r.clientPubkey,
+        name: r.metadata.name ?? r.clientPubkey.slice(0, 12),
+        relays: r.relays,
+        image: r.metadata.image,
+        createdAt: r.createdAt,
+      })),
+    )
+  }, [runtime])
+
+  // Refresh on focus so a completed create/import/replace/backup reflects immediately.
+  useEffect(
+    () =>
+      navigation.addListener("focus", () => {
+        reload()
+        backup.reload()
+        reloadClients().catch(() => undefined)
+      }),
+    [navigation, reload, backup, reloadClients],
+  )
+  useEffect(() => {
+    reloadClients().catch(() => undefined)
+  }, [reloadClients])
+
+  // Gear → Nostr Identity Settings (spec §7.5); only meaningful with an identity.
+  useEffect(() => {
+    navigation.setOptions(
+      headerRightNoGlass(() =>
+        npub ? (
+          <TouchableOpacity
+            onPress={() => navigation.navigate("nostrSettings")}
+            accessibilityRole="button"
+            {...testProps("nostr-identity-settings-gear")}
+            accessibilityLabel={LL.NostrIdentityScreen.summarySettingsA11y()}
+          >
+            <GaloyIcon name="settings" size={20} weight="bold" />
+          </TouchableOpacity>
+        ) : (
+          <></>
+        ),
+      ),
+    )
+  }, [navigation, npub, LL])
 
   const onAddPhoto = useCallback(() => {
     pickUploadPublish()
@@ -162,8 +213,23 @@ export const NostrIdentityHub: React.FC = () => {
       .catch(() => undefined)
   }, [pickUploadPublish, setPictureUrl, LL])
 
+  const handleDisconnect = useCallback(
+    (clientPubkey: string) => {
+      runtime?.runtime
+        .disconnect(clientPubkey)
+        .then(() => reloadClients())
+        .catch(() => undefined)
+    },
+    [runtime, reloadClients],
+  )
+
+  const handleClientPress = useCallback(
+    (clientPubkey: string) => navigation.navigate("nostrActivity", { clientPubkey }),
+    [navigation],
+  )
+
   return (
-    <Screen>
+    <Screen preset="fixed">
       <NostrIdentityHubScreen
         // Gate identity creation while the account scope is unresolvable (custodial
         // accountId not yet known): the hub shows its loading state, so create/import can
@@ -174,8 +240,12 @@ export const NostrIdentityHub: React.FC = () => {
         pictureUrl={pictureUrl}
         onCreate={() => navigation.navigate("nostrCreateIdentity")}
         onImport={() => navigation.navigate("nostrImportIdentity")}
-        onConnectedClients={() => navigation.navigate("nostrConnectedClients")}
-        onSettings={() => navigation.navigate("nostrSettings")}
+        clients={clients}
+        onClientPress={handleClientPress}
+        onDisconnect={handleDisconnect}
+        onScan={() => navigation.navigate("scanningQRCode")}
+        showBackupBanner={Boolean(npub) && !backup.loading && !backup.backedUp}
+        onBackup={() => navigation.navigate("nostrBackup")}
         onAddPhoto={onAddPhoto}
         photoBusy={uploading}
       />
@@ -183,15 +253,22 @@ export const NostrIdentityHub: React.FC = () => {
   )
 }
 
-/** The three-step creation ceremony, wired to exit back to the hub. */
+/** The creation flow (choose source when eligible → Generating → Hub). */
 export const NostrCreateIdentity: React.FC = () => {
   const navigation = useNavigation<Nav>()
+  const { LL } = useI18nContext()
   return (
-    <Screen>
+    <Screen preset="fixed">
       <CreateIdentityNavigator
-        onImport={() => navigation.navigate("nostrImportIdentity")}
-        onBackup={() => navigation.navigate("nostrBackup")}
         onExit={() => navigation.goBack()}
+        onPhaseChange={(phase) =>
+          navigation.setOptions({
+            title:
+              phase === "generating" || phase === "done"
+                ? LL.NostrCreateIdentityScreen.generatingTitle()
+                : LL.NostrCreateIdentityScreen.screenCreateTitle(),
+          })
+        }
       />
     </Screen>
   )

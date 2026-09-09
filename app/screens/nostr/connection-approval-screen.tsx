@@ -18,11 +18,12 @@ type Props = {
 }
 
 /**
- * Connection-approval surface (Story 3.3 / Flow 2). Names the client and states the grant in
- * HUMAN MEANING ONLY — "This app wants to sign you in and sign events on your behalf." NO raw
- * scope (`sign_event:22242`) ever reaches the user or any accessible label. Approve/Reject are
- * explicit controls (not gesture-only); the accessible label follows the Accessibility Floor
- * pattern. All copy is i18n-sourced.
+ * Connection request surface (Story 3.3 + redesign r3, spec §7.12, Figma 23301:105784):
+ * a centered hero — the app avatar in a ring, its name, and the grant in HUMAN MEANING
+ * ONLY ("This app wants to sign you in and sign events on your behalf."). NO raw scope
+ * (`sign_event:22242`) ever reaches the user or any accessible label. Approve/Reject are
+ * explicit controls pinned to the bottom; the accessible label follows the Accessibility
+ * Floor pattern. All copy is i18n-sourced.
  *
  * NOTE: the ApprovalCoordinator (Story 3.4) is the module that PRESENTS this surface and owns
  * focus land/trap/restore + queue-position announcement. This screen is the rendered content.
@@ -45,77 +46,78 @@ export const NostrConnectionApprovalScreen: React.FC<Props> = ({
       accessible
       accessibilityLabel={T.srLabel({ client })}
     >
-      <Text type="h2" style={styles.title}>
+      <Text type="h2" bold style={styles.title}>
         {T.title()}
       </Text>
 
-      {/* App identity row: avatar (client `image`, or an initial-in-circle fallback) + name +
-          a de-emphasized "wants your approval" line — mirrors the approval mock's header. */}
-      <View style={styles.appRow}>
-        <Avatar
-          rounded
-          size={44}
-          {...(clientImage
-            ? { source: { uri: clientImage } }
-            : { title: (client || "?").charAt(0).toUpperCase() })}
-          containerStyle={styles.avatar}
-        />
-        <View style={styles.appMeta}>
-          <Text type="p1" style={styles.clientName}>
-            {client}
-          </Text>
-          <Text type="p3" style={styles.wantsApproval}>
-            {T.wantsApproval()}
-          </Text>
+      <View style={styles.hero}>
+        {/* App identity: avatar (client `image`, or an initial-in-circle fallback) in a
+            ring — mirrors the Figma connection-request hero. */}
+        <View style={styles.avatarRing}>
+          <Avatar
+            rounded
+            size={44}
+            {...(clientImage
+              ? { source: { uri: clientImage } }
+              : { title: (client || "?").charAt(0).toUpperCase() })}
+            containerStyle={styles.avatar}
+          />
         </View>
+        <Text type="h2" bold style={styles.clientName}>
+          {client}
+        </Text>
+        <Text type="p2" style={styles.body}>
+          {T.body()}
+        </Text>
       </View>
 
-      <Text type="p2" style={styles.body}>
-        {T.body()}
-      </Text>
-
-      <GaloyPrimaryButton
-        title={T.approve()}
-        onPress={onApprove}
-        {...testProps("nostr-connection-approve")}
-      />
-      <GaloySecondaryButton
-        title={T.reject()}
-        onPress={onReject}
-        {...testProps("nostr-connection-reject")}
-      />
+      <View style={styles.actions}>
+        <GaloyPrimaryButton
+          title={T.approve()}
+          onPress={onApprove}
+          {...testProps("nostr-connection-approve")}
+        />
+        <GaloySecondaryButton
+          title={T.reject()}
+          onPress={onReject}
+          {...testProps("nostr-connection-reject")}
+        />
+      </View>
     </View>
   )
 }
 
 const useStyles = makeStyles(({ colors }) => ({
   container: {
+    flex: 1,
+    justifyContent: "space-between",
     padding: 20,
-    rowGap: 14,
   },
   title: {
-    color: colors.black,
+    color: colors.grey0,
   },
-  appRow: {
-    flexDirection: "row",
+  hero: {
     alignItems: "center",
-    columnGap: 10,
+    rowGap: 14,
+    paddingHorizontal: 20,
+  },
+  avatarRing: {
+    borderRadius: 26,
+    borderWidth: 1.4,
+    borderColor: colors.grey3,
   },
   avatar: {
     backgroundColor: colors.grey4,
   },
-  appMeta: {
-    flexShrink: 1,
-    rowGap: 3,
-  },
   clientName: {
-    fontWeight: "600",
-    color: colors.black,
-  },
-  wantsApproval: {
-    color: colors.grey2,
+    color: colors.grey0,
+    textAlign: "center",
   },
   body: {
     color: colors.grey1,
+    textAlign: "center",
+  },
+  actions: {
+    rowGap: 10,
   },
 }))

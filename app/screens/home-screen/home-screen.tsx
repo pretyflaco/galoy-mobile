@@ -42,6 +42,7 @@ import { PendingAmountBadge } from "@app/components/pending-amount-badge"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 import { useFeatureFlags, useRemoteConfig } from "@app/config/feature-flags-context"
 import { BackupNudgeBanner } from "@app/components/backup-nudge-banner"
+import { NostrBackupAlert } from "@app/components/nostr-backup-alert"
 import { SelfCustodialInfoBulletin } from "@app/components/self-custodial-info-bulletin"
 import { BackupNudgeModal } from "@app/components/backup-nudge-modal"
 import { NetworkStatusBanner } from "@app/components/network-status-banner"
@@ -943,6 +944,7 @@ export const HomeScreen: React.FC = () => {
         {isSelfCustodial && <UnclaimedDepositBanner deposits={deposits} />}
         <NetworkStatusBanner />
         {shouldShowBanner && <BackupNudgeBanner onDismiss={dismissBanner} />}
+        <NostrBackupAlert />
         {offboardBulletin.isVisible && <OffboardOnlyBulletin />}
         {reminderBulletin.isVisible && (
           <MigrationReminderBulletin

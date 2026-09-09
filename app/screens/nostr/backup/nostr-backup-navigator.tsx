@@ -56,7 +56,6 @@ export const NostrBackupNavigator: React.FC<Props> = ({ onExit }) => {
         if (result !== "failed") onExit()
       }}
       onManual={() => setStep("manual")}
-      onNotNow={onExit}
     />
   )
 }

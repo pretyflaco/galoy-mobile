@@ -1,9 +1,8 @@
 /**
- * Replace-identity choice (2D) — import an existing key OR create a brand-new one, both of which
- * discard the current key. Import routes straight out (its own flow re-consents). "Create a new
- * identity" is destructive with NO downstream gate (core `confirmCreate` overwrites
- * unconditionally), so this screen shows a {consent-danger} confirmation FIRST — Cancel returns to
- * the choice, and only the explicit confirm enters the create ceremony. Asserted by testID.
+ * Replace your identity (redesign r3, spec §7.10) — the destructive warning IS the screen
+ * content (shown on open, no hidden consent step): "Create new" follows the same routing as
+ * first-run creation, "Import existing" routes to the import flow. Back aborts; the current
+ * identity is unchanged until a replacement commits. Asserted by testID.
  */
 import React from "react"
 import { render, fireEvent } from "@testing-library/react-native"
@@ -22,16 +21,26 @@ const renderScreen = (
     </ContextForScreen>,
   )
 
-describe("Replace-identity choice (2D)", () => {
-  it("offers import and create-new options", async () => {
+describe("Replace your identity (r3)", () => {
+  it("shows the destructive warning up front with Create new + Import existing options", async () => {
     const { getByTestId } = renderScreen()
     await flushEffects()
     expect(getByTestId("nostr-replace-choice")).toBeTruthy()
-    expect(getByTestId("nostr-replace-import")).toBeTruthy()
     expect(getByTestId("nostr-replace-create")).toBeTruthy()
+    expect(getByTestId("nostr-replace-import")).toBeTruthy()
   })
 
-  it("routes import immediately without any consent gate", async () => {
+  it("Create new enters the create flow directly (first-run routing, no extra gate)", async () => {
+    const onCreateNew = jest.fn()
+    const onImport = jest.fn()
+    const { getByTestId } = renderScreen({ onCreateNew, onImport })
+    await flushEffects()
+    fireEvent.press(getByTestId("nostr-replace-create"))
+    expect(onCreateNew).toHaveBeenCalledTimes(1)
+    expect(onImport).not.toHaveBeenCalled()
+  })
+
+  it("Import existing routes to the import flow", async () => {
     const onImport = jest.fn()
     const onCreateNew = jest.fn()
     const { getByTestId } = renderScreen({ onImport, onCreateNew })
@@ -39,35 +48,5 @@ describe("Replace-identity choice (2D)", () => {
     fireEvent.press(getByTestId("nostr-replace-import"))
     expect(onImport).toHaveBeenCalledTimes(1)
     expect(onCreateNew).not.toHaveBeenCalled()
-  })
-
-  it("does NOT create on the first create tap — it shows the destructive consent card", async () => {
-    const onCreateNew = jest.fn()
-    const { getByTestId, queryByTestId } = renderScreen({ onCreateNew })
-    await flushEffects()
-    fireEvent.press(getByTestId("nostr-replace-create"))
-    expect(getByTestId("nostr-replace-create-confirm")).toBeTruthy()
-    expect(onCreateNew).not.toHaveBeenCalled()
-    // The choice buttons are gone while confirming.
-    expect(queryByTestId("nostr-replace-choice")).toBeNull()
-  })
-
-  it("cancel from the consent card returns to the choice without creating", async () => {
-    const onCreateNew = jest.fn()
-    const { getByTestId } = renderScreen({ onCreateNew })
-    await flushEffects()
-    fireEvent.press(getByTestId("nostr-replace-create"))
-    fireEvent.press(getByTestId("nostr-replace-create-cancel"))
-    expect(getByTestId("nostr-replace-choice")).toBeTruthy()
-    expect(onCreateNew).not.toHaveBeenCalled()
-  })
-
-  it("only enters the create ceremony after the explicit destructive confirm", async () => {
-    const onCreateNew = jest.fn()
-    const { getByTestId } = renderScreen({ onCreateNew })
-    await flushEffects()
-    fireEvent.press(getByTestId("nostr-replace-create"))
-    fireEvent.press(getByTestId("nostr-replace-create-confirm-yes"))
-    expect(onCreateNew).toHaveBeenCalledTimes(1)
   })
 })

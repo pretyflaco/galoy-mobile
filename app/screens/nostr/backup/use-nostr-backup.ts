@@ -18,7 +18,7 @@ import * as nip19 from "nostr-tools/nip19"
 
 import { useAppConfig } from "@app/hooks"
 import { useI18nContext } from "@app/i18n/i18n-react"
-import { nostrNsecService } from "@app/nostr/core/account-scope"
+import { nostrBackupDoneKey, nostrNsecService } from "@app/nostr/core/account-scope"
 import {
   buildBackupEntryName,
   buildCloudBackupFilename,
@@ -41,9 +41,8 @@ import { toastShow } from "@app/utils/toast"
 
 export type NostrBackupActionResult = "done" | "cancelled" | "failed"
 
-/** Per-account "backed up" marker (drives the identity-settings row status). */
-export const nostrBackupDoneKey = (accountKey: string): string =>
-  `nostr.backupDone.${accountKey}`
+// Re-exported for existing consumers; the canonical home is core/account-scope.
+export { nostrBackupDoneKey }
 
 export const useNostrBackup = () => {
   const { LL } = useI18nContext()

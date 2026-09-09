@@ -1,7 +1,8 @@
 /**
- * Nostr backup flow (2026-08-21 rework) — method chooser (Drive / Password Manager / Manual)
- * with Spark-flow parity, cloud screen with encrypt-by-default (AD-7), the two-step plaintext
- * acknowledgment, and i18n sourcing checks.
+ * Nostr backup flow (2026-08-21 rework + redesign r3) — method chooser (Drive / Password
+ * Manager / Manual backup) with Spark-flow parity, cloud screen with encrypt-by-default
+ * (AD-7), the two-step plaintext acknowledgment, the manual-backup reveal with the
+ * acknowledgement-gated Done (spec §7.9), and i18n sourcing checks.
  */
 import React from "react"
 import { Platform } from "react-native"
@@ -11,9 +12,12 @@ import { join } from "path"
 
 import { NostrBackupMethodScreen } from "@app/screens/nostr/backup/backup-method-screen"
 import { NostrCloudBackupScreen } from "@app/screens/nostr/backup/cloud-backup-screen"
+import { NostrManualBackupScreen } from "@app/screens/nostr/backup/manual-backup-screen"
 
 import { ContextForScreen } from "../screens/helper"
 import { flushEffects } from "../helpers/flush-effects"
+
+const NSEC = "nsec1" + "q".repeat(58)
 
 const renderMethod = (
   props: Partial<React.ComponentProps<typeof NostrBackupMethodScreen>> = {},
@@ -25,7 +29,6 @@ const renderMethod = (
         onCloud={jest.fn()}
         onPasswordManager={jest.fn()}
         onManual={jest.fn()}
-        onNotNow={jest.fn()}
         {...props}
       />
     </ContextForScreen>,
@@ -45,6 +48,19 @@ const renderCloud = (
     </ContextForScreen>,
   )
 
+const renderManual = (
+  props: Partial<React.ComponentProps<typeof NostrManualBackupScreen>> = {},
+) =>
+  render(
+    <ContextForScreen>
+      <NostrManualBackupScreen
+        loadNsec={jest.fn().mockResolvedValue(NSEC)}
+        onDone={jest.fn()}
+        {...props}
+      />
+    </ContextForScreen>,
+  )
+
 describe("backup method screen", () => {
   it("offers cloud, password manager, and manual; every callback fires", async () => {
     // Password Manager is Android-only for the POC; jest defaults Platform.OS to ios.
@@ -52,12 +68,10 @@ describe("backup method screen", () => {
     const onCloud = jest.fn()
     const onPasswordManager = jest.fn()
     const onManual = jest.fn()
-    const onNotNow = jest.fn()
-    const { getByTestId } = renderMethod({
+    const { getByTestId, queryByTestId } = renderMethod({
       onCloud,
       onPasswordManager,
       onManual,
-      onNotNow,
     })
     await flushEffects()
     fireEvent.press(getByTestId("nostr-backup-cloud"))
@@ -66,9 +80,41 @@ describe("backup method screen", () => {
     expect(onPasswordManager).toHaveBeenCalledTimes(1)
     fireEvent.press(getByTestId("nostr-backup-manual"))
     expect(onManual).toHaveBeenCalledTimes(1)
-    fireEvent.press(getByTestId("nostr-backup-not-now"))
-    expect(onNotNow).toHaveBeenCalledTimes(1)
+    // No "Not now" in the r3 design — back is the (never blocked) exit.
+    expect(queryByTestId("nostr-backup-not-now")).toBeNull()
     jest.replaceProperty(Platform, "OS", "ios")
+  })
+})
+
+describe("manual backup screen (spec §7.9)", () => {
+  it("shows the QR up front with the secret masked; Reveal toggles both ways", async () => {
+    const { getByTestId, queryByText } = renderManual()
+    await waitFor(() => expect(getByTestId("nostr-backup-qr")).toBeTruthy())
+    // masked by default — the nsec is NOT visible text
+    expect(queryByText(NSEC)).toBeNull()
+    fireEvent.press(getByTestId("nostr-backup-reveal"))
+    await waitFor(() => expect(queryByText(NSEC)).toBeTruthy())
+    // two-way: re-mask
+    fireEvent.press(getByTestId("nostr-backup-reveal"))
+    await waitFor(() => expect(queryByText(NSEC)).toBeNull())
+  })
+
+  it("Done is gated on the acknowledgement; tapping it unchecked does NOT mark backed up", async () => {
+    const onDone = jest.fn()
+    const { getByTestId } = renderManual({ onDone })
+    await waitFor(() => expect(getByTestId("nostr-backup-qr")).toBeTruthy())
+    fireEvent.press(getByTestId("nostr-backup-manual-done"))
+    expect(onDone).not.toHaveBeenCalled()
+    fireEvent.press(getByTestId("nostr-backup-acknowledge"))
+    fireEvent.press(getByTestId("nostr-backup-manual-done"))
+    expect(onDone).toHaveBeenCalledTimes(1)
+  })
+
+  it("Copy secret is available immediately (not gated on the checkbox)", async () => {
+    const { getByTestId } = renderManual()
+    await waitFor(() => expect(getByTestId("nostr-backup-qr")).toBeTruthy())
+    expect(getByTestId("nostr-backup-copy-nsec")).toBeTruthy()
+    expect(getByTestId("nostr-backup-copy-icon")).toBeTruthy()
   })
 })
 

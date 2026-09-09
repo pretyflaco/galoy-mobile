@@ -26,7 +26,7 @@ export const NostrIdentitySetting: React.FC = () => {
     <SettingsRow
       title={LL.NostrIdentityScreen.settingsRow()}
       subtitle={LL.NostrIdentityScreen.settingsRowSubtitle()}
-      leftGaloyIcon="key-outline"
+      leftGaloyIcon="nostr"
       action={() => navigation.navigate("nostrIdentity")}
     />
   )

@@ -13830,6 +13830,42 @@ type RootTranslation = {
 	}
 	NostrCreateIdentityScreen: {
 		/**
+		 * C​r​e​a​t​e​ ​n​e​w
+		 */
+		screenCreateTitle: string
+		/**
+		 * N​e​x​t​ ​s​t​e​p​ ​c​r​e​a​t​e​s​ ​y​o​u​r​ ​N​o​s​t​r​ ​k​e​y​s
+		 */
+		chooseTitle: string
+		/**
+		 * W​e​ ​r​e​c​o​m​m​e​n​d​ ​y​o​u​ ​u​s​e​ ​y​o​u​r​ ​w​a​l​l​e​t​ ​b​a​c​k​u​p​ ​p​h​r​a​s​e​ ​t​o​ ​g​e​n​e​r​a​t​e​ ​i​t​,​ ​b​u​t​ ​y​o​u​ ​c​a​n​ ​a​l​s​o​ ​g​e​n​e​r​a​t​e​ ​a​ ​b​r​a​n​d​ ​n​e​w​ ​o​n​e​.
+		 */
+		chooseBody: string
+		/**
+		 * L​e​a​r​n​ ​m​o​r​e​ ​h​e​r​e
+		 */
+		chooseLearnMore: string
+		/**
+		 * G​e​n​e​r​a​t​e​ ​f​r​o​m​ ​w​a​l​l​e​t
+		 */
+		chooseFromWallet: string
+		/**
+		 * G​e​n​e​r​a​t​e​ ​n​e​w
+		 */
+		chooseNew: string
+		/**
+		 * G​e​n​e​r​a​t​i​n​g​…
+		 */
+		generatingTitle: string
+		/**
+		 * Y​o​u​r​ ​b​a​c​k​u​p​ ​p​h​r​a​s​e​ ​i​s​ ​u​s​e​d​ ​t​o​ ​c​r​e​a​t​e​ ​y​o​u​r​ ​N​o​s​t​r​ ​k​e​y​s
+		 */
+		generatingFromSeed: string
+		/**
+		 * C​r​e​a​t​i​n​g​ ​a​ ​b​r​a​n​d​-​n​e​w​ ​N​o​s​t​r​ ​k​e​y​.
+		 */
+		generatingRandom: string
+		/**
 		 * C​r​e​a​t​e​ ​y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y
 		 */
 		introTitle: string
@@ -13960,17 +13996,29 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
-		 * P​a​s​t​e​ ​y​o​u​r​ ​n​s​e​c​ ​o​r​ ​s​c​a​n​ ​i​t​s​ ​Q​R​ ​c​o​d​e​ ​t​o​ ​u​s​e​ ​y​o​u​r​ ​e​x​i​s​t​i​n​g​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​h​e​r​e​.
+		 * P​a​s​t​e​ ​y​o​u​r​ ​s​e​c​r​e​t​ ​k​e​y​ ​o​r​ ​s​c​a​n​ ​i​t​s​ ​Q​R​ ​c​o​d​e​ ​t​o​ ​u​s​e​ ​y​o​u​r​ ​e​x​i​s​t​i​n​g​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​h​e​r​e​.
 		 */
 		body: string
 		/**
-		 * Y​o​u​r​ ​n​s​e​c
+		 * Y​o​u​r​ ​N​o​s​t​r​ ​s​e​c​r​e​t​ ​k​e​y
 		 */
 		pasteLabel: string
 		/**
 		 * n​s​e​c​1​…
 		 */
 		pastePlaceholder: string
+		/**
+		 * P​a​s​t​e​ ​y​o​u​r​ ​k​e​y
+		 */
+		pasteCta: string
+		/**
+		 * P​a​s​t​e
+		 */
+		pasteAction: string
+		/**
+		 * I​n​v​a​l​i​d​ ​k​e​y​.​ ​P​r​o​b​a​b​l​y​ ​s​o​m​e​t​h​i​n​g​ ​e​l​s​e​.
+		 */
+		invalidInline: string
 		/**
 		 * S​c​a​n​ ​a​ ​Q​R​ ​c​o​d​e
 		 */
@@ -14030,15 +14078,15 @@ type RootTranslation = {
 		 */
 		methodKeychain: string
 		/**
-		 * W​r​i​t​e​ ​i​t​ ​d​o​w​n
+		 * M​a​n​u​a​l​ ​b​a​c​k​u​p
 		 */
 		methodManual: string
 		/**
-		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 * C​h​o​o​s​e​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​m​e​t​h​o​d
 		 */
 		methodTitle: string
 		/**
-		 * C​h​o​o​s​e​ ​w​h​e​r​e​ ​t​o​ ​k​e​e​p​ ​a​ ​b​a​c​k​u​p​ ​o​f​ ​y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​k​e​y​.​ ​O​n​l​y​ ​y​o​u​ ​c​a​n​ ​a​c​c​e​s​s​ ​i​t​.
+		 * W​e​ ​r​e​c​o​m​m​e​n​d​ ​G​o​o​g​l​e​ ​D​r​i​v​e​ ​o​r​ ​A​p​p​l​e​ ​i​C​l​o​u​d​ ​f​o​r​ ​n​e​w​ ​u​s​e​r​s​.
 		 */
 		methodSubtitle: string
 		/**
@@ -14058,21 +14106,29 @@ type RootTranslation = {
 		 */
 		manualBody: string
 		/**
-		 * T​a​p​ ​t​o​ ​r​e​v​e​a​l
+		 * R​e​v​e​a​l​ ​k​e​y
 		 */
 		manualReveal: string
+		/**
+		 * H​i​d​e​ ​k​e​y
+		 */
+		manualHide: string
 		/**
 		 * L​o​a​d​i​n​g​…
 		 */
 		manualLoading: string
 		/**
-		 * C​o​p​y​ ​n​s​e​c
+		 * C​o​p​y​ ​s​e​c​r​e​t
 		 */
 		manualCopy: string
 		/**
-		 * n​s​e​c​ ​c​o​p​i​e​d
+		 * S​e​c​r​e​t​ ​k​e​y​ ​c​o​p​i​e​d
 		 */
 		manualCopied: string
+		/**
+		 * I​ ​u​n​d​e​r​s​t​a​n​d​ ​n​o​b​o​d​y​ ​c​a​n​ ​r​e​c​o​v​e​r​ ​m​y​ ​n​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​i​f​ ​I​ ​l​o​s​e​ ​t​h​i​s​ ​s​e​c​r​e​t​ ​k​e​y
+		 */
+		manualAcknowledge: string
 		/**
 		 * D​o​n​e
 		 */
@@ -14487,21 +14543,33 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
-		 * N​o​ ​i​d​e​n​t​i​t​y​ ​y​e​t
+		 * C​r​e​a​t​e​ ​o​r​ ​i​m​p​o​r​t​ ​y​o​u​r​ ​N​o​s​t​r​ ​k​e​y
 		 */
 		emptyTitle: string
 		/**
-		 * C​r​e​a​t​e​ ​a​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​t​o​ ​s​i​g​n​ ​i​n​ ​t​o​ ​a​p​p​s​ ​w​i​t​h​ ​y​o​u​r​ ​k​e​y​ ​—​ ​n​o​ ​p​a​s​s​w​o​r​d​,​ ​o​n​l​y​ ​y​o​u​ ​i​n​ ​c​o​n​t​r​o​l​.
+		 * C​r​e​a​t​e​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​t​o​ ​s​i​g​n​ ​i​n​t​o​ ​a​p​p​s​ ​w​i​t​h​ ​y​o​u​r​ ​k​e​y​s​.​ ​N​o​ ​p​a​s​s​w​o​r​d​,​ ​o​n​l​y​ ​y​o​u​ ​i​n​ ​c​o​n​t​r​o​l​.
 		 */
 		emptyBody: string
 		/**
-		 * C​r​e​a​t​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 * C​r​e​a​t​e​ ​n​e​w
 		 */
 		emptyCreate: string
 		/**
-		 * I​m​p​o​r​t​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​k​e​y
+		 * I​m​p​o​r​t​ ​e​x​i​s​t​i​n​g
 		 */
 		emptyImport: string
+		/**
+		 * B​a​c​k​u​p​ ​y​o​u​r​ ​k​e​y​s
+		 */
+		backupBannerTitle: string
+		/**
+		 * W​e​ ​h​i​g​h​l​y​ ​r​e​c​o​m​m​e​n​d​ ​y​o​u​ ​b​a​c​k​u​p​ ​y​o​u​r​ ​k​e​y​s​ ​i​n​ ​o​r​d​e​r​ ​n​o​t​ ​t​o​ ​l​o​s​e​ ​t​h​i​s​ ​i​d​e​n​t​i​t​y​.
+		 */
+		backupBannerBody: string
+		/**
+		 * B​a​c​k​ ​u​p
+		 */
+		backupBannerCta: string
 		/**
 		 * Y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
 		 */
@@ -14522,6 +14590,18 @@ type RootTranslation = {
 		 * S​e​t​t​i​n​g​s
 		 */
 		summarySettings: string
+		/**
+		 * O​p​e​n​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​s​e​t​t​i​n​g​s
+		 */
+		summarySettingsA11y: string
+		/**
+		 * S​c​a​n
+		 */
+		summaryScan: string
+		/**
+		 * S​c​a​n​ ​a​n​ ​a​p​p​'​s​ ​S​i​g​n​ ​i​n​ ​w​i​t​h​ ​N​o​s​t​r​ ​Q​R​ ​c​o​d​e
+		 */
+		summaryScanA11y: string
 		/**
 		 * C​o​p​y​ ​y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
 		 */
@@ -14569,11 +14649,11 @@ type RootTranslation = {
 	}
 	NostrSettingsScreen: {
 		/**
-		 * S​e​t​t​i​n​g​s
+		 * N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​s​e​t​t​i​n​g​s
 		 */
 		title: string
 		/**
-		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 * B​a​c​k​u​p​ ​y​o​u​r​ ​k​e​y
 		 */
 		backup: string
 		/**
@@ -14720,15 +14800,15 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
-		 * I​m​p​o​r​t​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​k​e​y​,​ ​o​r​ ​c​r​e​a​t​e​ ​a​ ​b​r​a​n​d​-​n​e​w​ ​i​d​e​n​t​i​t​y​.​ ​E​i​t​h​e​r​ ​o​n​e​ ​r​e​p​l​a​c​e​s​ ​a​n​d​ ​d​i​s​c​a​r​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​k​e​y​.
+		 * T​h​i​s​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​i​s​c​a​r​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​k​e​y​.​ ​C​o​n​n​e​c​t​e​d​ ​a​p​p​s​ ​w​i​l​l​ ​s​t​o​p​ ​w​o​r​k​i​n​g​ ​u​n​t​i​l​ ​y​o​u​ ​r​e​c​o​n​n​e​c​t​.​ ​B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y​ ​f​i​r​s​t​ ​i​f​ ​y​o​u​ ​m​i​g​h​t​ ​n​e​e​d​ ​i​t​.
 		 */
 		body: string
 		/**
-		 * I​m​p​o​r​t​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​k​e​y
+		 * I​m​p​o​r​t​ ​e​x​i​s​t​i​n​g
 		 */
 		importOption: string
 		/**
-		 * C​r​e​a​t​e​ ​a​ ​n​e​w​ ​i​d​e​n​t​i​t​y
+		 * C​r​e​a​t​e​ ​n​e​w
 		 */
 		createOption: string
 		/**
@@ -28438,6 +28518,42 @@ export type TranslationFunctions = {
 	}
 	NostrCreateIdentityScreen: {
 		/**
+		 * Create new
+		 */
+		screenCreateTitle: () => LocalizedString
+		/**
+		 * Next step creates your Nostr keys
+		 */
+		chooseTitle: () => LocalizedString
+		/**
+		 * We recommend you use your wallet backup phrase to generate it, but you can also generate a brand new one.
+		 */
+		chooseBody: () => LocalizedString
+		/**
+		 * Learn more here
+		 */
+		chooseLearnMore: () => LocalizedString
+		/**
+		 * Generate from wallet
+		 */
+		chooseFromWallet: () => LocalizedString
+		/**
+		 * Generate new
+		 */
+		chooseNew: () => LocalizedString
+		/**
+		 * Generating…
+		 */
+		generatingTitle: () => LocalizedString
+		/**
+		 * Your backup phrase is used to create your Nostr keys
+		 */
+		generatingFromSeed: () => LocalizedString
+		/**
+		 * Creating a brand-new Nostr key.
+		 */
+		generatingRandom: () => LocalizedString
+		/**
 		 * Create your Nostr identity
 		 */
 		introTitle: () => LocalizedString
@@ -28568,17 +28684,29 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
-		 * Paste your nsec or scan its QR code to use your existing Nostr identity here.
+		 * Paste your secret key or scan its QR code to use your existing Nostr identity here.
 		 */
 		body: () => LocalizedString
 		/**
-		 * Your nsec
+		 * Your Nostr secret key
 		 */
 		pasteLabel: () => LocalizedString
 		/**
 		 * nsec1…
 		 */
 		pastePlaceholder: () => LocalizedString
+		/**
+		 * Paste your key
+		 */
+		pasteCta: () => LocalizedString
+		/**
+		 * Paste
+		 */
+		pasteAction: () => LocalizedString
+		/**
+		 * Invalid key. Probably something else.
+		 */
+		invalidInline: () => LocalizedString
 		/**
 		 * Scan a QR code
 		 */
@@ -28638,15 +28766,15 @@ export type TranslationFunctions = {
 		 */
 		methodKeychain: () => LocalizedString
 		/**
-		 * Write it down
+		 * Manual backup
 		 */
 		methodManual: () => LocalizedString
 		/**
-		 * Back up your key
+		 * Choose your backup method
 		 */
 		methodTitle: () => LocalizedString
 		/**
-		 * Choose where to keep a backup of your Nostr identity key. Only you can access it.
+		 * We recommend Google Drive or Apple iCloud for new users.
 		 */
 		methodSubtitle: () => LocalizedString
 		/**
@@ -28666,21 +28794,29 @@ export type TranslationFunctions = {
 		 */
 		manualBody: () => LocalizedString
 		/**
-		 * Tap to reveal
+		 * Reveal key
 		 */
 		manualReveal: () => LocalizedString
+		/**
+		 * Hide key
+		 */
+		manualHide: () => LocalizedString
 		/**
 		 * Loading…
 		 */
 		manualLoading: () => LocalizedString
 		/**
-		 * Copy nsec
+		 * Copy secret
 		 */
 		manualCopy: () => LocalizedString
 		/**
-		 * nsec copied
+		 * Secret key copied
 		 */
 		manualCopied: () => LocalizedString
+		/**
+		 * I understand nobody can recover my nostr identity if I lose this secret key
+		 */
+		manualAcknowledge: () => LocalizedString
 		/**
 		 * Done
 		 */
@@ -29060,21 +29196,33 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
-		 * No identity yet
+		 * Create or import your Nostr key
 		 */
 		emptyTitle: () => LocalizedString
 		/**
-		 * Create a Nostr identity to sign in to apps with your key — no password, only you in control.
+		 * Create Nostr identity to sign into apps with your keys. No password, only you in control.
 		 */
 		emptyBody: () => LocalizedString
 		/**
-		 * Create your identity
+		 * Create new
 		 */
 		emptyCreate: () => LocalizedString
 		/**
-		 * Import an existing key
+		 * Import existing
 		 */
 		emptyImport: () => LocalizedString
+		/**
+		 * Backup your keys
+		 */
+		backupBannerTitle: () => LocalizedString
+		/**
+		 * We highly recommend you backup your keys in order not to lose this identity.
+		 */
+		backupBannerBody: () => LocalizedString
+		/**
+		 * Back up
+		 */
+		backupBannerCta: () => LocalizedString
 		/**
 		 * Your public address
 		 */
@@ -29095,6 +29243,18 @@ export type TranslationFunctions = {
 		 * Settings
 		 */
 		summarySettings: () => LocalizedString
+		/**
+		 * Open Nostr identity settings
+		 */
+		summarySettingsA11y: () => LocalizedString
+		/**
+		 * Scan
+		 */
+		summaryScan: () => LocalizedString
+		/**
+		 * Scan an app's Sign in with Nostr QR code
+		 */
+		summaryScanA11y: () => LocalizedString
 		/**
 		 * Copy your public address
 		 */
@@ -29142,11 +29302,11 @@ export type TranslationFunctions = {
 	}
 	NostrSettingsScreen: {
 		/**
-		 * Settings
+		 * Nostr identity settings
 		 */
 		title: () => LocalizedString
 		/**
-		 * Back up your key
+		 * Backup your key
 		 */
 		backup: () => LocalizedString
 		/**
@@ -29286,15 +29446,15 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
-		 * Import an existing key, or create a brand-new identity. Either one replaces and discards your current key.
+		 * This permanently discards your current key. Connected apps will stop working until you reconnect. Back up your key first if you might need it.
 		 */
 		body: () => LocalizedString
 		/**
-		 * Import an existing key
+		 * Import existing
 		 */
 		importOption: () => LocalizedString
 		/**
-		 * Create a new identity
+		 * Create new
 		 */
 		createOption: () => LocalizedString
 		/**

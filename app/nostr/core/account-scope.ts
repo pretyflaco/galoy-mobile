@@ -24,6 +24,15 @@
 export const nostrNsecService = (accountKey: string): string => `nostr.nsec.${accountKey}`
 
 /**
+ * Per-account "identity backed up" marker (drives the Hub banner, the Blink Home alert,
+ * and the identity-settings row status). Values: "cloud" | "keychain" | "manual" |
+ * "wallet-seed" (NIP-06-derived keys, auto-marked at creation — the wallet phrase covers
+ * them, spec §8).
+ */
+export const nostrBackupDoneKey = (accountKey: string): string =>
+  `nostr.backupDone.${accountKey}`
+
+/**
  * Scope an AsyncStorage key to an account. Returns null when the account is unresolvable —
  * callers must treat that as inert (null reads, dropped writes), never as a shared namespace.
  */

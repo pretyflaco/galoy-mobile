@@ -1,7 +1,7 @@
 import React from "react"
 import { FlatList, View } from "react-native"
 
-import { Avatar, Text, makeStyles } from "@rn-vui/themed"
+import { Avatar, Text, makeStyles, useTheme } from "@rn-vui/themed"
 
 import { useI18nContext } from "@app/i18n/i18n-react"
 import type { ActivityEntry, ActivityStats } from "@app/nostr/core/activity-log"
@@ -66,6 +66,9 @@ const formatWhen = (ms: number): string => {
 export const NostrActivityScreen: React.FC<Props> = ({ entries, stats }) => {
   const { LL } = useI18nContext()
   const styles = useStyles()
+  const {
+    theme: { colors },
+  } = useTheme()
   const T = LL.NostrActivityScreen
 
   const actionLabel = (e: ActivityEntry): string => {
@@ -174,7 +177,13 @@ export const NostrActivityScreen: React.FC<Props> = ({ entries, stats }) => {
                   item.accepted ? "nostr-activity-accepted" : "nostr-activity-rejected"
                 }
               >
-                <Text type="p4" style={styles.badgeText}>
+                <Text
+                  type="p4"
+                  style={[
+                    styles.badgeText,
+                    { color: item.accepted ? colors._green : colors.grey2 },
+                  ]}
+                >
                   {decision}
                 </Text>
               </View>
@@ -217,9 +226,9 @@ const useStyles = makeStyles(({ colors }) => ({
   statsCard: {
     flexDirection: "row",
     justifyContent: "space-around",
-    backgroundColor: colors.grey5,
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: colors.grey7,
+    borderRadius: 8,
+    padding: 14,
     marginBottom: 20,
   },
   statCol: {
@@ -264,18 +273,19 @@ const useStyles = makeStyles(({ colors }) => ({
     color: colors.grey2,
   },
   badge: {
-    borderRadius: 999,
-    paddingVertical: 5,
+    borderRadius: 12,
+    paddingVertical: 4,
     paddingHorizontal: 10,
   },
   badgeOk: {
-    backgroundColor: colors._green,
+    backgroundColor: colors.grey7,
   },
   badgeNo: {
-    backgroundColor: colors.grey4,
+    backgroundColor: colors.grey7,
   },
   badgeText: {
-    color: colors.white,
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: 10,
+    lineHeight: 13,
   },
 }))

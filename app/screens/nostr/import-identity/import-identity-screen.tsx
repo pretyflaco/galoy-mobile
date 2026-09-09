@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from "react"
 import { AccessibilityInfo, findNodeHandle, ScrollView, View } from "react-native"
 
+import Clipboard from "@react-native-clipboard/clipboard"
 import { Input, Text, makeStyles } from "@rn-vui/themed"
 
+import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
-import { GaloyErrorBox } from "@app/components/atomic/galoy-error-box"
+import { GaloyTertiaryButton } from "@app/components/atomic/galoy-tertiary-button"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { testProps } from "@app/utils/testProps"
 
@@ -21,10 +23,12 @@ type Props = {
 }
 
 /**
- * nsec import / replace (Story 1.6). Paste input + scan affordance (reuses the existing
- * scanner via `onScan` → route "scanningQRCode"; NO new scanner). Invalid input shows a
- * clear error and changes NO state. A valid nsec surfaces a consent-danger replace
- * confirm whose destructive control is off the default focus. The nsec is never rendered.
+ * Import an existing key (spec §7.11, Figma 23296:104811/-error/-success). Paste or scan
+ * an nsec; validation runs LIVE — the CTA stays "Paste your key" (disabled) until a valid
+ * nsec makes it "Continue". A non-secret or malformed value shows the inline error
+ * "Invalid key. Probably something else." and changes NO state. Importing over an EXISTING
+ * identity still surfaces the consent-danger replace confirm; a first import commits
+ * directly. The nsec is never rendered.
  */
 export const NostrImportIdentityScreen: React.FC<Props> = ({
   onScan,
@@ -35,13 +39,19 @@ export const NostrImportIdentityScreen: React.FC<Props> = ({
   const { LL } = useI18nContext()
   const styles = useStyles()
   const T = LL.NostrImportIdentityScreen
-  const { phase, busy, submit, confirmReplace, cancel } = useImportIdentity()
+  const { phase, busy, validate, submit, confirmReplace, cancel } = useImportIdentity()
   const [pasted, setPasted] = useState("")
   const errorRef = useRef<View>(null)
+  // Guard against re-submitting the same scanned value when `submit`'s identity changes
+  // (context objects can be unstable under some providers/mocks) — submit is idempotent
+  // per value, so one-shot per scanned string is correct.
+  const lastScannedRef = useRef<string | null>(null)
 
   // Feed a scanned value (from the reused scanner) straight into validation.
   useEffect(() => {
-    if (scannedValue) submit(scannedValue)
+    if (!scannedValue || scannedValue === lastScannedRef.current) return
+    lastScannedRef.current = scannedValue
+    submit(scannedValue)
   }, [scannedValue, submit])
 
   useEffect(() => {
@@ -90,38 +100,67 @@ export const NostrImportIdentityScreen: React.FC<Props> = ({
     )
   }
 
+  const { valid, invalid } = validate(pasted)
+  const showError = invalid || phase === "invalid"
+
+  const onPaste = async () => {
+    const value = await Clipboard.getString()
+    if (value) setPasted(value)
+  }
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text type="h1" style={styles.title}>
-        {T.title()}
-      </Text>
-      <Text type="p1" style={styles.body}>
-        {T.body()}
-      </Text>
-
-      <Input
-        label={T.pasteLabel()}
-        placeholder={T.pastePlaceholder()}
-        autoCapitalize="none"
-        autoCorrect={false}
-        secureTextEntry
-        value={pasted}
-        onChangeText={setPasted}
-        {...testProps("nostr-import-paste")}
-      />
-
-      {phase === "invalid" ? (
-        <View ref={errorRef} accessible accessibilityLiveRegion="assertive">
-          <Text type="h2" style={styles.title}>
-            {T.invalidTitle()}
+    <View style={styles.screen} {...testProps("nostr-import-screen")}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.hero}>
+          <View style={styles.iconCircle}>
+            <GaloyIcon name="plus" size={32} color={styles.icon.color} />
+          </View>
+          <Text type="h2" bold style={styles.title}>
+            {T.title()}
           </Text>
-          <GaloyErrorBox errorMessage={T.invalidBody()} />
+          <Text type="p2" style={styles.body}>
+            {T.body()}
+          </Text>
         </View>
-      ) : null}
 
-      <View style={styles.actions}>
+        <Input
+          label={T.pasteLabel()}
+          placeholder={T.pastePlaceholder()}
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry
+          value={pasted}
+          onChangeText={setPasted}
+          renderErrorMessage={false}
+          rightIcon={
+            <GaloyTertiaryButton
+              clear
+              title={T.pasteAction()}
+              onPress={onPaste}
+              {...testProps("nostr-import-paste-button")}
+            />
+          }
+          {...testProps("nostr-import-paste")}
+        />
+
+        {showError ? (
+          <View ref={errorRef} accessible accessibilityLiveRegion="assertive">
+            <Text
+              type="p3"
+              style={styles.inlineError}
+              {...testProps("nostr-import-error")}
+            >
+              {T.invalidInline()}
+            </Text>
+          </View>
+        ) : null}
+      </ScrollView>
+
+      <View style={styles.bottomActions}>
         <GaloyPrimaryButton
-          title={T.continueCta()}
+          title={valid ? T.continueCta() : T.pasteCta()}
+          loading={busy}
+          disabled={!valid || busy}
           onPress={() => submit(pasted)}
           {...testProps("nostr-import-continue")}
         />
@@ -136,15 +175,41 @@ export const NostrImportIdentityScreen: React.FC<Props> = ({
           {...testProps("nostr-import-exit")}
         />
       </View>
-    </ScrollView>
+    </View>
   )
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  container: { padding: 24, rowGap: 16 },
-  title: { color: colors.grey0 },
-  body: { color: colors.grey1 },
+  screen: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  container: { padding: 20, rowGap: 14 },
+  hero: {
+    alignItems: "center",
+    rowGap: 14,
+    paddingVertical: 20,
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.grey5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  icon: {
+    color: colors.grey0,
+  },
+  title: { color: colors.grey0, textAlign: "center" },
+  body: { color: colors.grey1, textAlign: "center" },
+  inlineError: { color: colors.error },
   actions: { marginTop: 24, rowGap: 12 },
+  bottomActions: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    rowGap: 10,
+  },
   dangerCard: {
     padding: 16,
     borderRadius: 16,

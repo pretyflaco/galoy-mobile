@@ -75,7 +75,7 @@ const useStyles = makeStyles(({ colors }) => ({
   groupCard: {
     marginTop: 5,
     backgroundColor: colors.grey5,
-    borderRadius: 12,
+    borderRadius: 8,
     overflow: "hidden",
   },
   divider: {

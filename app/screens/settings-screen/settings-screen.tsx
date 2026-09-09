@@ -165,10 +165,15 @@ export const SettingsScreen: React.FC = () => {
       OnDeviceSecuritySetting,
       ViewBackupPhraseSetting,
       BackupWalletSetting,
+    ],
+    // Advanced hosts the Nostr identity (and delegated grants) rows per the redesign
+    // (Figma 23233:51908); the rows self-gate on their feature flags.
+    advanced: [
       NostrIdentitySetting,
       DelegatedGrantsSetting,
+      ExportCsvSetting,
+      ApiAccessSetting,
     ],
-    advanced: [ExportCsvSetting, ApiAccessSetting],
     community: [NeedHelpSetting, JoinCommunitySetting],
   }
 

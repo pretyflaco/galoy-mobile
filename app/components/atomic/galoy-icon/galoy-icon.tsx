@@ -115,6 +115,7 @@ import Chain from "@app/assets/icons/chain.svg"
 import Spinner from "@app/assets/icons-redesign/spinner.svg"
 import MagicWand from "@app/assets/icons-redesign/magic-wand.svg"
 import Sunglasses from "@app/assets/icons-redesign/sunglasses.svg"
+import Nostr from "@app/assets/icons/nostr.svg"
 
 import { makeStyles, useTheme } from "@rn-vui/themed"
 
@@ -252,6 +253,7 @@ const customSvgMap = {
   "spinner": Spinner,
   "magic-wand": MagicWand,
   "sunglasses": Sunglasses,
+  "nostr": Nostr,
 } as const
 
 export const icons = { ...phosphorIconMap, ...customSvgMap } as const

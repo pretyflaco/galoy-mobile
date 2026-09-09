@@ -41,8 +41,8 @@ export const sortConnectedClientsByNewest = (
     })
     .map(({ client }) => client)
 
-/** "HH:MM - DD Mon" (Amber-style connected-at). */
-const formatConnectedAt = (createdAt?: number): string => {
+/** "HH:MM - DD Mon" (Amber-style connected-at). Exported for the Hub's inline list. */
+export const formatConnectedAt = (createdAt?: number): string => {
   if (!createdAt) return ""
   const d = new Date(createdAt * 1000)
   const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })

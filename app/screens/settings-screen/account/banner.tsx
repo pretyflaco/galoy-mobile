@@ -8,7 +8,10 @@ import React from "react"
 import { Image, TouchableOpacity, View } from "react-native"
 import { TouchableWithoutFeedback } from "react-native-gesture-handler"
 
-import { GaloyIcon } from "@app/components/atomic/galoy-icon"
+import {
+  GaloyIcon,
+  circleDiameterThatContainsSquare,
+} from "@app/components/atomic/galoy-icon"
 import { useEnhancedModePrompt } from "@app/components/enhanced-mode-prompt"
 import { useRestrictedRegion } from "@app/components/restricted-region"
 import { useFeatureFlags } from "@app/config/feature-flags-context"
@@ -181,14 +184,27 @@ const NostrAwareAccountIcon: React.FC<{ size: number }> = ({ size }) => {
     nostrSignerEnabled ? pubkeyHex : null,
     isFocused,
   )
+  const styles = useIconStyles()
   if (!pictureUrl) return <AccountIcon size={size} />
+  // Match the fallback's rendered diameter exactly: a backgrounded GaloyIcon sizes its
+  // circle via circleDiameterThatContainsSquare — the photo must not shift the row.
+  const diameter = circleDiameterThatContainsSquare(size)
   return (
     <Image
       source={{ uri: pictureUrl }}
-      style={{ width: size + 6, height: size + 6, borderRadius: (size + 6) / 2 }}
+      style={[
+        styles.avatarImage,
+        { width: diameter, height: diameter, borderRadius: diameter / 2 },
+      ]}
     />
   )
 }
+
+const useIconStyles = makeStyles(({ colors }) => ({
+  avatarImage: {
+    backgroundColor: colors.grey4,
+  },
+}))
 
 const useStyles = makeStyles((theme) => ({
   outer: {

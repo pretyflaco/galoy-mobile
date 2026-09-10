@@ -103,9 +103,16 @@ describe("manual backup screen (spec §7.9)", () => {
     const onDone = jest.fn()
     const { getByTestId } = renderManual({ onDone })
     await waitFor(() => expect(getByTestId("nostr-backup-qr")).toBeTruthy())
+    // showDisabled: real disabled treatment (incl. SR state) while the press stays live
+    expect(
+      getByTestId("nostr-backup-manual-done").props.accessibilityState?.disabled,
+    ).toBe(true)
     fireEvent.press(getByTestId("nostr-backup-manual-done"))
     expect(onDone).not.toHaveBeenCalled()
     fireEvent.press(getByTestId("nostr-backup-acknowledge"))
+    expect(
+      getByTestId("nostr-backup-manual-done").props.accessibilityState?.disabled,
+    ).toBe(false)
     fireEvent.press(getByTestId("nostr-backup-manual-done"))
     expect(onDone).toHaveBeenCalledTimes(1)
   })

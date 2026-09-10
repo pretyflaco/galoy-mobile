@@ -166,7 +166,7 @@ const useStyles = makeStyles(({ colors }) => ({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#DC2626",
+    borderColor: colors.error,
     backgroundColor: colors.grey5,
     rowGap: 12,
   },

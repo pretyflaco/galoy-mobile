@@ -179,10 +179,8 @@ export const NostrActivityScreen: React.FC<Props> = ({ entries, stats }) => {
               >
                 <Text
                   type="p4"
-                  style={[
-                    styles.badgeText,
-                    { color: item.accepted ? colors._green : colors.grey2 },
-                  ]}
+                  bold
+                  style={{ color: item.accepted ? colors._green : colors.error }}
                 >
                   {decision}
                 </Text>
@@ -281,11 +279,6 @@ const useStyles = makeStyles(({ colors }) => ({
     backgroundColor: colors.grey7,
   },
   badgeNo: {
-    backgroundColor: colors.grey7,
-  },
-  badgeText: {
-    fontWeight: "700",
-    fontSize: 10,
-    lineHeight: 13,
+    backgroundColor: colors.error9,
   },
 }))

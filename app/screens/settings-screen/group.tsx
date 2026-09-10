@@ -59,10 +59,12 @@ export const SettingsGroup: React.FC<SettingsGroupProps> = ({
                 accessibilityLabel={name}
               >
                 <Element />
+                {/* The divider dims WITH the row — a full-opacity divider between dimmed
+                    rows reads as a rendering glitch (design review #4). */}
+                {hasDividerBelow && (
+                  <Divider color={colors.grey4} style={[styles.divider, dividerStyle]} />
+                )}
               </DisabledFeature>
-              {hasDividerBelow && (
-                <Divider color={colors.grey4} style={[styles.divider, dividerStyle]} />
-              )}
             </View>
           )
         })}
@@ -75,7 +77,7 @@ const useStyles = makeStyles(({ colors }) => ({
   groupCard: {
     marginTop: 5,
     backgroundColor: colors.grey5,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: "hidden",
   },
   divider: {

@@ -136,22 +136,24 @@ export const NostrConnectedClientsSection: React.FC<Props> = ({
       <ListItem.Content>
         <ListItem.Title style={styles.rowName}>{client.name}</ListItem.Title>
         {client.relays && client.relays.length > 0 && (
-          <ListItem.Subtitle
+          <Text
+            type="p4"
             style={styles.rowMeta}
             testID={`nostr-client-relays-${client.clientPubkey}`}
           >
             {client.relays
               .map((r) => r.replace(/^wss:\/\//, "").replace(/\/$/, ""))
               .join(", ")}
-          </ListItem.Subtitle>
+          </Text>
         )}
-        <ListItem.Subtitle
+        <Text
+          type="p4"
           style={styles.rowMeta}
           testID={`nostr-client-fingerprint-${client.clientPubkey}`}
         >
           {pubkeyPair(client.clientPubkey)}
           {client.createdAt ? `   ${formatConnectedAt(client.createdAt)}` : ""}
-        </ListItem.Subtitle>
+        </Text>
       </ListItem.Content>
       <GaloySecondaryButton
         title={T.disconnect()}
@@ -206,7 +208,6 @@ const useStyles = makeStyles(({ colors }) => ({
   },
   rowMeta: {
     color: colors.grey2,
-    fontSize: 12,
   },
   warningCard: {
     padding: 20,

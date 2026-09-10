@@ -6,6 +6,7 @@ import { Text, makeStyles } from "@rn-vui/themed"
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
+import { CheckboxRow } from "@app/components/checkbox-row"
 import { QrCodeComponent } from "@app/components/totp-export/totp-qr"
 import { useClipboard } from "@app/hooks/use-clipboard"
 import { useI18nContext } from "@app/i18n/i18n-react"
@@ -128,43 +129,34 @@ export const NostrManualBackupScreen: React.FC<Props> = ({ loadNsec, onDone }) =
         </TouchableOpacity>
 
         {/* Acknowledgement gates Done — never the exit (back is always available). */}
-        <TouchableOpacity
-          style={[
-            styles.ackCard,
-            ackHighlight && !acknowledged && styles.ackCardHighlight,
-          ]}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: acknowledged }}
-          onPress={() => {
-            setAcknowledged((v) => !v)
-            setAckHighlight(false)
-          }}
-          {...testProps("nostr-backup-acknowledge")}
-        >
-          <View style={[styles.checkbox, acknowledged && styles.checkboxChecked]}>
-            {acknowledged ? (
-              <GaloyIcon name="check" size={13} weight="bold" color="#000000" />
-            ) : null}
-          </View>
-          <Text type="p3" style={styles.ackText}>
-            {T.manualAcknowledge()}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.ackCard}>
+          <CheckboxRow
+            label={T.manualAcknowledge()}
+            isChecked={acknowledged}
+            highlight={ackHighlight}
+            onPress={() => {
+              setAcknowledged((v) => !v)
+              setAckHighlight(false)
+            }}
+            testID="nostr-backup-acknowledge"
+          />
+        </View>
       </ScrollView>
 
       <View style={styles.actions}>
-        <GaloyPrimaryButton
+        <GaloySecondaryButton
           title={T.manualCopy()}
           onPress={onCopy}
           disabled={!secretBech32}
           {...testProps("nostr-backup-copy-nsec")}
         />
-        {/* Not `disabled` — a disabled button can't report the tap that should highlight
-            the checkbox; the press is handled manually and the style signals the state. */}
-        <GaloySecondaryButton
+        {/* `showDisabled` (not `disabled`) — the tap must stay LIVE so it can highlight
+            the unchecked acknowledgement; the style + SR state are the real disabled
+            treatment (design review #5). */}
+        <GaloyPrimaryButton
           title={T.manualDone()}
           onPress={onDonePress}
-          containerStyle={!acknowledged && styles.doneDisabled}
+          showDisabled={!acknowledged}
           {...testProps("nostr-backup-manual-done")}
         />
       </View>
@@ -236,42 +228,14 @@ const useStyles = makeStyles(({ colors }) => ({
     color: colors.primary,
   },
   ackCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 14,
     backgroundColor: colors.grey5,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.transparent,
     paddingVertical: 12,
     paddingHorizontal: 14,
-  },
-  ackCardHighlight: {
-    borderColor: colors.primary,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.grey3,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkboxChecked: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  ackText: {
-    flex: 1,
-    color: colors.grey0,
   },
   actions: {
     paddingHorizontal: 20,
     paddingBottom: 20,
     rowGap: 10,
-  },
-  doneDisabled: {
-    opacity: 0.35,
   },
 }))

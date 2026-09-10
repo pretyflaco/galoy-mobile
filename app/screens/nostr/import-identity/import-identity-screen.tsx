@@ -214,7 +214,7 @@ const useStyles = makeStyles(({ colors }) => ({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#DC2626", // {consent-danger} on border/accent ONLY
+    borderColor: colors.error, // {consent-danger} on border/accent ONLY
     backgroundColor: colors.grey5, // wash; text stays grey0 for ≥4.5:1
     rowGap: 12,
   },

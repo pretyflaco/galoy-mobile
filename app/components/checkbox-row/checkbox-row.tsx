@@ -10,6 +10,9 @@ type CheckboxRowProps = {
   isChecked: boolean
   onPress: () => void
   centered?: boolean
+  /** Draws attention to an UNCHECKED box (e.g. a blocked action tapped before checking
+   *  it). Ignored once checked — the attention state is always about the missing check. */
+  highlight?: boolean
   testID?: string
 }
 
@@ -18,6 +21,7 @@ export const CheckboxRow: React.FC<CheckboxRowProps> = ({
   isChecked,
   onPress,
   centered,
+  highlight,
   testID,
 }) => {
   const styles = useStyles()
@@ -33,7 +37,13 @@ export const CheckboxRow: React.FC<CheckboxRowProps> = ({
       accessibilityState={{ checked: isChecked }}
       testID={testID}
     >
-      <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
+      <View
+        style={[
+          styles.checkbox,
+          isChecked && styles.checkboxChecked,
+          highlight && !isChecked && styles.checkboxHighlight,
+        ]}
+      >
         {isChecked && <GaloyIcon name="check" size={14} color={colors.white} />}
       </View>
       <Text style={[styles.label, centered && styles.labelCentered]}>{label}</Text>
@@ -58,6 +68,9 @@ const useStyles = makeStyles(({ colors }) => ({
   },
   checkboxChecked: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkboxHighlight: {
     borderColor: colors.primary,
   },
   label: {

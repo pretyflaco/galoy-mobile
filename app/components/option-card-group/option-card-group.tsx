@@ -94,12 +94,11 @@ const useStyles = makeStyles(({ colors }) => ({
     backgroundColor: colors.grey6,
   },
   cardDisabled: {
-    opacity: 0.45,
+    opacity: 0.35,
   },
   disabledBadge: {
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: "600",
+    fontSize: 12,
+    lineHeight: 18,
     color: colors.grey2,
     textAlign: "center",
   },

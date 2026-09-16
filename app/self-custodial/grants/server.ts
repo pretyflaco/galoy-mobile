@@ -5,8 +5,11 @@
  */
 
 const DOMAIN_TO_BASE: Record<string, string> = {
-  // Devbox / POC server (feature-request E2E target).
-  "lnurl.twentyone.ist": "https://lnurl.twentyone.ist",
+  // Devbox / POC server (feature-request E2E target) — apex since the 2026-08-25
+  // cutover. The retired subdomain maps to the apex so pre-cutover demo accounts
+  // (registered as user@lnurl.twentyone.ist) keep working against the live server.
+  "twentyone.ist": "https://twentyone.ist",
+  "lnurl.twentyone.ist": "https://twentyone.ist",
 }
 
 export const grantServerForAddress = (address: string): string => {

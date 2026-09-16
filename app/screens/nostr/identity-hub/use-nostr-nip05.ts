@@ -57,6 +57,11 @@ const log = (stage: string, detail: string): void => {
   console.warn(`[nostr-nip05] ${stage}: ${detail}`)
 }
 
+/** Message + stack — a bare String(err) drops the stack and turns debugging into
+ *  archaeology (cost one full build cycle on 2026-09-17). */
+const describeError = (err: unknown): string =>
+  err instanceof Error ? `${err.message}\n${err.stack ?? ""}` : String(err)
+
 /** The lnurl-server host for a custodial account: the ln-address domain, sans `pay.`. */
 export const custodialNip05Domain = (lnAddressHostname: string): string =>
   lnAddressHostname.replace(/^pay\./, "")
@@ -102,7 +107,7 @@ const registerSparkHandle = async (params: {
         reason: `${handle} at ${base}: no NIP-05 route there yet`,
       }
     }
-    return { kind: "failed", reason: `${handle} at ${base}: ${String(err)}` }
+    return { kind: "failed", reason: `${handle} at ${base}: ${describeError(err)}` }
   }
 }
 
@@ -177,7 +182,12 @@ export const useNostrNip05 = (pubkeyHex: string | null): Nip05Status => {
         )
 
         for (const handle of targets) {
-          const result = await registerSparkHandle(nostr, handle, pubkeyHex, signed)
+          const result = await registerSparkHandle({
+            nostr,
+            handle,
+            nostrPubkey: pubkeyHex,
+            signed,
+          })
           if (result.kind === "verified") {
             log(`registered ${result.handle}`, "spark path")
             if (!verified) {
@@ -225,8 +235,8 @@ export const useNostrNip05 = (pubkeyHex: string | null): Nip05Status => {
           if (isSkippable(err)) {
             log("skip", `${handle} at ${base}: no NIP-05 route or username there yet`)
           } else {
-            failures.push(`${handle} at ${base}: ${String(err)}`)
-            log("failed", `${handle} at ${base}: ${String(err)}`)
+            failures.push(`${handle} at ${base}: ${describeError(err)}`)
+            log("failed", `${handle} at ${base}: ${describeError(err)}`)
           }
         }
       }
@@ -243,8 +253,8 @@ export const useNostrNip05 = (pubkeyHex: string | null): Nip05Status => {
         })
       }
     } catch (err) {
-      log("failed", String(err))
-      setStatus({ state: "failed", reason: String(err) })
+      log("failed", describeError(err))
+      setStatus({ state: "failed", reason: describeError(err) })
     }
   }, [
     addresses.blinkSvAddress,

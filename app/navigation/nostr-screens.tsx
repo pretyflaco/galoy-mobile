@@ -60,6 +60,7 @@ import { normalizeLightningAddress } from "@app/nostr/core/lightning-address"
 import { NIP98_KIND } from "@app/nostr/core/policy-check"
 import { NostrIdentityHubScreen } from "@app/screens/nostr/identity-hub/nostr-identity-hub-screen"
 import { useNostrIdentity } from "@app/screens/nostr/identity-hub/use-nostr-identity"
+import { useNostrNip05 } from "@app/screens/nostr/identity-hub/use-nostr-nip05"
 import { usePayLinks } from "@app/screens/settings-screen/settings/use-pay-links"
 import { useNostrRuntime } from "@app/nostr/nostr-runtime-provider"
 import { Screen } from "@app/components/screen"
@@ -143,6 +144,8 @@ export const NostrIdentityHub: React.FC = () => {
   const [pictureUrl, setPictureUrl] = useNostrProfilePicture(pubkeyHex)
   const { uploading, pickUploadPublish } = useProfilePictureUpload()
   const backup = useNostrBackupState()
+  // NIP-05: auto-bind the identity key to the account handle (flag-gated, idempotent).
+  const nip05 = useNostrNip05(npub ? pubkeyHex : null)
   const [clients, setClients] = useState<ConnectedClient[]>([])
 
   const reloadClients = useCallback(async () => {
@@ -238,6 +241,7 @@ export const NostrIdentityHub: React.FC = () => {
         npub={npub}
         pubkeyHex={pubkeyHex}
         pictureUrl={pictureUrl}
+        nip05Handle={nip05.state === "verified" ? nip05.handle : null}
         onCreate={() => navigation.navigate("nostrCreateIdentity")}
         onImport={() => navigation.navigate("nostrImportIdentity")}
         clients={clients}

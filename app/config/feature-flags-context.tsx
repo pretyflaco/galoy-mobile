@@ -43,6 +43,7 @@ const BackupNudgeModalCooldownMsKey = "backupNudgeModalCooldownMs"
 const NonCustodialEnabledKey = "nonCustodialEnabled"
 const DelegatedGrantsEnabledKey = "delegatedGrantsEnabled"
 const StableBalanceEnabledKey = "stableBalanceEnabled"
+const NostrNip05EnabledKey = "nostrNip05Enabled"
 const DollarRestrictionCacheEnabledKey = "dollarRestrictionCacheEnabled"
 const BtcMapPlacesEnabledKey = "btcMapPlacesEnabled"
 const AutoConvertMaxAttemptsKey = "autoConvertMaxAttempts"
@@ -81,6 +82,7 @@ type FeatureFlags = {
   nonCustodialEnabled: boolean
   stableBalanceEnabled: boolean
   nostrSignerEnabled: boolean
+  nostrNip05Enabled: boolean
   delegatedGrantsEnabled: boolean
   remoteConfigReady: boolean
 }
@@ -114,6 +116,7 @@ type RemoteConfig = {
   [NonCustodialEnabledKey]: boolean
   [DelegatedGrantsEnabledKey]: boolean
   [StableBalanceEnabledKey]: boolean
+  [NostrNip05EnabledKey]: boolean
   [SignerEnabledKey]: boolean
   [DollarRestrictionCacheEnabledKey]: boolean
   [BtcMapPlacesEnabledKey]: boolean
@@ -228,6 +231,8 @@ export const defaultRemoteConfig: RemoteConfig = {
   nonCustodialEnabled: false,
   delegatedGrantsEnabled: false,
   stableBalanceEnabled: false,
+  /** NIP-05 verified handles (POC): off until the lnurl-server routes are deployed. */
+  nostrNip05Enabled: false,
   // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
   nostrSignerEnabled: true,
   dollarRestrictionCacheEnabled: true,
@@ -261,6 +266,7 @@ const defaultFeatureFlags: FeatureFlags = {
   nonCustodialEnabled: false,
   delegatedGrantsEnabled: false,
   stableBalanceEnabled: false,
+  nostrNip05Enabled: false,
   // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
   nostrSignerEnabled: true,
   remoteConfigReady: false,
@@ -432,6 +438,10 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           .getValue(SignerEnabledKey)
           .asBoolean()
 
+        const nostrNip05Enabled = remoteConfigInstance()
+          .getValue(NostrNip05EnabledKey)
+          .asBoolean()
+
         const dollarRestrictionCacheEnabled = remoteConfigInstance()
           .getValue(DollarRestrictionCacheEnabledKey)
           .asBoolean()
@@ -539,6 +549,7 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           delegatedGrantsEnabled,
           stableBalanceEnabled,
           nostrSignerEnabled,
+          nostrNip05Enabled,
           dollarRestrictionCacheEnabled,
           btcMapPlacesEnabled,
           autoConvertMaxAttempts,
@@ -575,6 +586,7 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
     stableBalanceEnabled:
       remoteConfig.nonCustodialEnabled && remoteConfig.stableBalanceEnabled,
     nostrSignerEnabled: remoteConfig.nostrSignerEnabled,
+    nostrNip05Enabled: remoteConfig.nostrSignerEnabled && remoteConfig.nostrNip05Enabled,
     delegatedGrantsEnabled: remoteConfig.delegatedGrantsEnabled,
     remoteConfigReady,
   }

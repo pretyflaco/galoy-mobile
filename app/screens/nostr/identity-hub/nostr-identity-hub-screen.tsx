@@ -32,6 +32,8 @@ type Props = {
   pubkeyHex: string | null
   /** The fetched kind-0 profile picture URL, or null (→ identicon placeholder). */
   pictureUrl: string | null
+  /** NIP-05 verified handle (username@domain) once registered + published, else null. */
+  nip05Handle: string | null
   loading: boolean
   onCreate: () => void
   onImport: () => void
@@ -69,6 +71,7 @@ export const NostrIdentityHubScreen: React.FC<Props> = ({
   npub,
   pubkeyHex,
   pictureUrl,
+  nip05Handle,
   loading,
   onCreate,
   onImport,
@@ -131,6 +134,11 @@ export const NostrIdentityHubScreen: React.FC<Props> = ({
 
   const onCopyNpub = () =>
     copyToClipboard({ content: npub, message: T.summaryNpubCopied() })
+
+  const onCopyNip05 = () =>
+    nip05Handle
+      ? copyToClipboard({ content: nip05Handle, message: T.summaryNip05Copied() })
+      : undefined
 
   // Revoke confirm (recoverable → inherited {warning} styling, never consent-danger).
   if (pendingDisconnect) {
@@ -260,6 +268,44 @@ export const NostrIdentityHubScreen: React.FC<Props> = ({
             <GaloyIcon name="qr-code" size={16} color={styles.rowIcon.color} />
           </TouchableOpacity>
         </View>
+
+        {/* NIP-05 verified handle: username@domain — the identity's human-readable,
+            client-verified form (auto-registered; hidden until the server confirms). */}
+        {nip05Handle ? (
+          <>
+            <Text type="p3" style={styles.sectionLabel}>
+              {T.summaryNip05Label()}
+            </Text>
+            <View style={styles.addressRow}>
+              <View style={styles.addressCard}>
+                <Text
+                  type="p4"
+                  numberOfLines={1}
+                  style={styles.addressText}
+                  {...testProps("nostr-identity-nip05")}
+                >
+                  {nip05Handle}
+                </Text>
+                <TouchableOpacity
+                  onPress={onCopyNip05}
+                  accessibilityRole="button"
+                  {...testProps("nostr-identity-copy-nip05")}
+                  accessibilityLabel={T.summaryCopyNip05()}
+                >
+                  <GaloyIcon name="copy-paste" size={16} color={styles.rowIcon.color} />
+                </TouchableOpacity>
+              </View>
+              <View
+                style={styles.qrSquare}
+                {...testProps("nostr-identity-nip05-badge")}
+                accessible
+                accessibilityLabel={T.summaryNip05BadgeA11y()}
+              >
+                <GaloyIcon name="check" size={16} color={styles.rowIcon.color} />
+              </View>
+            </View>
+          </>
+        ) : null}
 
         {/* Connected apps: inline list (tap → activity, trash → revoke) or the grey7
             inactive empty surface. */}

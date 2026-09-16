@@ -40,13 +40,26 @@ export const buildUploadAuthTemplate = (uploadUrl: string, payloadSha256Hex: str
 })
 
 /**
- * Build the kind-0 profile-metadata template. `existingContent` is the raw content of the
- * identity's CURRENT kind-0 (if any) — merged so a picture update never clobbers other
- * fields (name, about, …) a foreign client may have set. Malformed/absent → fresh object.
+ * Fields the identity hub may set on its own kind-0 without user-typed input. Merged
+ * into the existing content — never clobbering fields a foreign client may have set.
  */
-export const buildProfileMetadataTemplate = (
-  pictureUrl: string,
+export interface ProfileMetadataUpdates {
+  /** Avatar URL (NIP-96 upload result). */
+  picture?: string
+  /** NIP-05 verified internet identifier, e.g. `alice@blink.sv`. */
+  nip05?: string
+  /** Lightning address (LUD-16) — the same handle, zap-receivable. */
+  lud16?: string
+}
+
+/**
+ * Build a kind-0 profile-metadata template by merging `updates` into the identity's
+ * CURRENT kind-0 content. `existingContent` is the raw content of the current event
+ * (if any); malformed/absent → fresh object. Only the listed fields are touched.
+ */
+export const mergeProfileMetadata = (
   existingContent: string | null,
+  updates: ProfileMetadataUpdates,
 ) => {
   let meta: Record<string, unknown> = {}
   if (existingContent) {
@@ -57,7 +70,10 @@ export const buildProfileMetadataTemplate = (
       // malformed existing profile — start fresh
     }
   }
-  meta.picture = pictureUrl
+  for (const field of ["picture", "nip05", "lud16"] as const) {
+    const value = updates[field]
+    if (value !== undefined) meta[field] = value
+  }
   return {
     kind: 0,
     // eslint-disable-next-line camelcase
@@ -66,6 +82,16 @@ export const buildProfileMetadataTemplate = (
     content: JSON.stringify(meta),
   }
 }
+
+/**
+ * Build the kind-0 profile-metadata template. `existingContent` is the raw content of the
+ * identity's CURRENT kind-0 (if any) — merged so a picture update never clobbers other
+ * fields (name, about, …) a foreign client may have set. Malformed/absent → fresh object.
+ */
+export const buildProfileMetadataTemplate = (
+  pictureUrl: string,
+  existingContent: string | null,
+) => mergeProfileMetadata(existingContent, { picture: pictureUrl })
 
 /** NIP-96 async-upload marker: when present, the file processes server-side and the result
  *  lands at this URL (poll it). */

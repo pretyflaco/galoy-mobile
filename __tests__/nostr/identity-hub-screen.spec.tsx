@@ -35,6 +35,7 @@ const renderHub = (
         npub={null}
         pubkeyHex={null}
         pictureUrl={null}
+        nip05Handle={null}
         loading={false}
         onCreate={jest.fn()}
         onImport={jest.fn()}
@@ -70,6 +71,24 @@ describe("Nostr Identity Hub (r3)", () => {
     fireEvent.press(getByTestId("nostr-identity-import"))
     expect(onCreate).toHaveBeenCalledTimes(1)
     expect(onImport).toHaveBeenCalledTimes(1)
+  })
+
+  it("shows the NIP-05 verified-handle row only once a handle is registered", async () => {
+    const { queryByTestId } = renderHub({ npub: NPUB, pubkeyHex: PUBKEY })
+    await flushEffects()
+    expect(queryByTestId("nostr-identity-nip05")).toBeNull()
+
+    const withHandle = renderHub({
+      npub: NPUB,
+      pubkeyHex: PUBKEY,
+      nip05Handle: "alice@blink.sv",
+    })
+    await flushEffects()
+    expect(withHandle.getByTestId("nostr-identity-nip05").props.children).toBe(
+      "alice@blink.sv",
+    )
+    expect(withHandle.getByTestId("nostr-identity-copy-nip05")).toBeTruthy()
+    expect(withHandle.getByTestId("nostr-identity-nip05-badge")).toBeTruthy()
   })
 
   it("summary shows hero + public address + inline connected apps + Scan primary", async () => {

@@ -14611,6 +14611,22 @@ type RootTranslation = {
 		 */
 		summaryNpubCopied: string
 		/**
+		 * V​e​r​i​f​i​e​d​ ​N​o​s​t​r​ ​a​d​d​r​e​s​s
+		 */
+		summaryNip05Label: string
+		/**
+		 * C​o​p​y​ ​y​o​u​r​ ​v​e​r​i​f​i​e​d​ ​N​o​s​t​r​ ​a​d​d​r​e​s​s
+		 */
+		summaryCopyNip05: string
+		/**
+		 * V​e​r​i​f​i​e​d​ ​N​o​s​t​r​ ​a​d​d​r​e​s​s​ ​c​o​p​i​e​d
+		 */
+		summaryNip05Copied: string
+		/**
+		 * V​e​r​i​f​i​e​d​ ​h​a​n​d​l​e
+		 */
+		summaryNip05BadgeA11y: string
+		/**
 		 * S​h​o​w​ ​Q​R​ ​c​o​d​e
 		 */
 		summaryShowQr: string
@@ -29263,6 +29279,22 @@ export type TranslationFunctions = {
 		 * Public address copied
 		 */
 		summaryNpubCopied: () => LocalizedString
+		/**
+		 * Verified Nostr address
+		 */
+		summaryNip05Label: () => LocalizedString
+		/**
+		 * Copy your verified Nostr address
+		 */
+		summaryCopyNip05: () => LocalizedString
+		/**
+		 * Verified Nostr address copied
+		 */
+		summaryNip05Copied: () => LocalizedString
+		/**
+		 * Verified handle
+		 */
+		summaryNip05BadgeA11y: () => LocalizedString
 		/**
 		 * Show QR code
 		 */

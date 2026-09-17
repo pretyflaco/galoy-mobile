@@ -55,6 +55,17 @@ paths). Stage the arm64 APK + a `.sha256` sidecar under `~/Documents/BLINK/btcpa
 Any OTHER red suite after a sync is real and must be fixed (usually a merge-era mock
 gap — mock the new upstream hook/provider in that spec).
 
+**Known dev-build-only Fabric error on custodial account switches** (2026-09-17):
+`RetryableMountingLayerException: Unable to find viewState for tag N. Surface
+stopped: false` (`SurfaceMountingManager.updateLayout` via `MountItemDispatcher`)
+fires occasionally when switching to a custodial account — the heaviest remount in
+the app (Breez SDK teardown + Apollo client rebuild). Upstream RN Fabric race
+(react/react-native#49077; root cause tracked in facebook/react-native#47960;
+0.85.3 is the newest 0.85.x, no patch bump available). Dev overlay only — release
+builds log-and-skip retryable mount exceptions. NOT nostr/NIP-05-related (logcat
+confirms it fires during account teardown while all hub-scoped code is unmounted).
+Expect it to disappear with the next RN minor bump; do not chase it in app code.
+
 **Sync posture:** merge, never rebase. Dated backup branch + `chore/sync-upstream` +
 descriptive merge commit (see `0a1629c21`, `ea673cbd1`). Recurring conflict hotspot is
 `app/app.tsx` (provider tree): keep upstream's outer structure, splice the fork's

@@ -207,18 +207,28 @@ const ApprovalOverlay: React.FC<{
   const showReviewAll = sameClientRequests >= REVIEW_ALL_THRESHOLD
 
   const clientDisplay = useClientDisplay(active?.clientPubkey)
+  // NIP-55 pseudo keys carry the Android caller package after the "nip55:" prefix — show it
+  // in full (it IS the app identity); real pubkeys keep the truncated-key fallback.
+  const nip55Label = active?.clientPubkey?.startsWith("nip55:")
+    ? active.clientPubkey.slice("nip55:".length)
+    : undefined
   const clientLabel =
     clientDisplay.name ??
+    nip55Label ??
     (active?.clientPubkey ? `${active.clientPubkey.slice(0, 12)}…` : "")
 
   // CONNECTION approve: resolve, then land on the client's Activity screen (Amber parity) from the
   // stable hub base so the back button returns to the Nostr Identity hub. The waiting overlay +
   // subsequent sign_event approval Modal float over Activity; when sign-in is delivered the user
   // rests on Activity showing the whole session (Connect / Read public key / Signed event).
+  // NIP-55 exception: pseudo-key clients carry no activity records (that screen would be an
+  // empty dead-end), and the flow returns the user to the CALLING APP right after the answer.
   const onConnectionApprove = useCallback(() => {
     const clientPubkey = active?.clientPubkey
     approve()
-    if (clientPubkey) navigation.navigate("nostrActivity", { clientPubkey })
+    if (clientPubkey && !clientPubkey.startsWith("nip55:")) {
+      navigation.navigate("nostrActivity", { clientPubkey })
+    }
   }, [active, approve, navigation])
 
   const onReviewApprove = useCallback(

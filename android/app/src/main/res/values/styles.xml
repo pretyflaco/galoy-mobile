@@ -13,4 +13,12 @@
         <item name="postBootSplashTheme">@style/AppTheme</item>
     </style>
 
+    <!-- NIP-55 signer holder activity: fully transparent pass-through — the visible UI is the
+         main app task it forwards to (see Nip55SignerActivity). -->
+    <style name="Theme.Nip55.Transparent" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
 </resources>

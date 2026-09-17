@@ -28,6 +28,8 @@ import { setNostrConnectHandler } from "./connect-link-handler"
 import { nostrNsecService } from "./core/account-scope"
 import { NOSTR_TRANSPORT_SERVICE, readSecret } from "./core/keystore"
 import { setNpubPushScopeResolver } from "./core/npub-push-runtime"
+import { Nip55Native } from "./nip55/native"
+import { useNip55Intake } from "./nip55/use-nip55-intake"
 import { createSignerRuntime, type SignerRuntime } from "./runtime"
 import { provisionTransportKey } from "./transport/transport-key"
 import { initSignerGate } from "./signer-gate"
@@ -116,6 +118,9 @@ export const NostrRuntimeProvider: React.FC<React.PropsWithChildren> = ({ childr
         const username = data?.me?.username
         return username ? `${username}@${lnAddressHostname}` : undefined
       },
+      // NIP-55 (Android nostrsigner:// intents): the answer channel back to the calling
+      // app (vezir login/sign). Inert no-op when the native module is absent (iOS/tests).
+      nip55Complete: (result) => Nip55Native.complete(JSON.stringify(result)),
     })
   }
   const runtime = runtimeRef.current
@@ -132,8 +137,16 @@ export const NostrRuntimeProvider: React.FC<React.PropsWithChildren> = ({ childr
   useEffect(() => {
     initSignerGate(enabled, runtime.gateDeps)
     setNostrConnectHandler(enabled ? (uri) => runtime.handleConnectUri(uri) : null)
+    // Mirror the flag onto the manifest-declared NIP-55 activity: the Android signer
+    // chooser lists Blink ONLY while the signer is actually live (AD-13). The component
+    // ships disabled, so flag-off builds (incl. production defaults) never advertise it.
+    Nip55Native.setEnabled(enabled)
     return () => setNostrConnectHandler(null)
   }, [enabled, runtime])
+
+  // NIP-55 intake: consume a pending nostrsigner:// request on mount + every foreground
+  // transition (the native holder activity always brings the app forward first).
+  useNip55Intake(runtime, enabled, accountReady)
 
   // Foreground recovery (same-device NIP-46): relay sockets can be throttled/dropped while the
   // app is backgrounded, and a NIP-46 sign-in challenge is ephemeral — if our #p subscriber is

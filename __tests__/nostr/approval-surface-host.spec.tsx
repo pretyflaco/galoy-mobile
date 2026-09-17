@@ -116,6 +116,20 @@ describe("ApprovalSurfaceHost (render-from-state overlay)", () => {
     expect(navigate).toHaveBeenCalledWith("nostrActivity", { clientPubkey: "c3" })
   })
 
+  it("NIP-55 connection approve resolves WITHOUT the Activity navigation (pseudo-keys carry no records; the flow returns to the calling app)", async () => {
+    const { getByTestId } = renderHost()
+    const decision = testCoordinator.enqueue({
+      id: "n1",
+      kind: "connection",
+      clientPubkey: "nip55:com.vezir.android",
+      metadata: { name: "com.vezir.android" },
+    })
+    await waitFor(() => expect(getByTestId("nostr-connection-approve")).toBeTruthy())
+    fireEvent.press(getByTestId("nostr-connection-approve"))
+    await expect(decision).resolves.toEqual({ approved: true, epoch: 0 })
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
   it("REJECT resolves the connection and dismisses the surface (no navigation)", async () => {
     const { getByTestId, queryByTestId } = renderHost()
     const decision = testCoordinator.enqueue({

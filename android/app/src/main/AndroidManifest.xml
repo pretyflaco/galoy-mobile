@@ -138,6 +138,27 @@
             <data android:scheme="https" android:host="pay.bbw.sv" />
         </intent-filter>
       </activity>
+      <!-- NIP-55 (Android Nostr signer intents, nostrsigner:// scheme): makes Blink appear in
+           the system signer chooser (vezir "Sign in with Nostr", Amber protocol parity).
+           taskAffinity="" + singleTask ⇒ hosted in the CALLER's task so setResult+finish
+           returns to it; the activity itself is a transparent holder that forwards to
+           MainActivity. Ships disabled; the RN provider mirrors nostrSignerEnabled onto it via
+           PackageManager.setComponentEnabledSetting (AD-13 runtime gating — flag-off builds
+           never appear in a client's signer chooser). -->
+      <activity
+        android:name=".nip55.Nip55SignerActivity"
+        android:exported="true"
+        android:enabled="false"
+        android:launchMode="singleTask"
+        android:taskAffinity=""
+        android:theme="@style/Theme.Nip55.Transparent">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="nostrsigner" />
+        </intent-filter>
+      </activity>
       <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" />
 
     <!-- You will only need to add this meta-data tag, but make sure it's a child of application -->

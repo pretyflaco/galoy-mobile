@@ -51,7 +51,7 @@ import { loadJson, saveJson } from "@app/utils/storage"
 
 import { scopedStorageKey } from "./core/account-scope"
 import { createLocalNsecSigner } from "./core/local-nsec-signer"
-import type { EventTemplate, SignedEvent } from "./core/signer"
+import type { EventTemplate, NostrSigner, SignedEvent } from "./core/signer"
 import { NIP98_KIND } from "./core/policy-check"
 import { normalizeHost } from "./core/url-origin"
 import { fetchProfilePicture } from "./core/profile-fetch"
@@ -61,6 +61,7 @@ import { createRequestLedger } from "./core/request-ledger"
 import {
   createActivityLog,
   type ActivityEntry,
+  type ActivityLog,
   type ActivityStats,
 } from "./core/activity-log"
 import {
@@ -92,6 +93,9 @@ import {
 import { createInboundPipeline, type InboundPipeline } from "./transport/pipeline"
 import { getRelayPool, type RelayPool } from "./transport/relay-pool"
 import { createSignEventFlow } from "./transport/sign-event"
+import { createNip55Handler } from "./nip55/handler"
+import { pseudoClientKey } from "./nip55/parse"
+import type { Nip55PendingRequest, Nip55Result } from "./nip55/types"
 
 /** The native + test-injectable ports the runtime is built from (AD-1). */
 export interface SignerRuntimeDeps {
@@ -123,6 +127,11 @@ export interface SignerRuntimeDeps {
   log?: (fields: Record<string, string | number>) => void
   /** The RN approval surface presenter; resolves via coordinator.resolveActive when UI binds. */
   present?: (entry: ApprovalEntry) => Promise<void>
+  /**
+   * Deliver a NIP-55 (Android nostrsigner:// intent) answer back to the calling app. The RN
+   * provider wires the native module here; tests inject a recorder.
+   */
+  nip55Complete?: (result: Nip55Result) => void
 
   // -- test seams (never wired in production) --
   /** Test-only: replace the decode stage so inbound wiring can be exercised without crypto. */
@@ -134,6 +143,13 @@ export interface SignerRuntime {
   handleInbound(event: Event): Promise<void>
   /** The nostrconnect:// handshake entry (forwarded raw from the deep-link/QR layer). */
   handleConnectUri(rawUri: string): Promise<void>
+  /**
+   * The NIP-55 entry (Android same-device signer intents): the raw request extracted by the
+   * native holder activity, forwarded by the provider intake. Approval-gated exactly like
+   * the NIP-46 paths — the get_public_key login consent and sign_event both raise their own
+   * surface through the ONE coordinator.
+   */
+  handleNip55(raw: Nip55PendingRequest): Promise<void>
   /** The SINGLE approval coordinator the UI presents from (AD-9). */
   coordinator: ApprovalCoordinator
   /** The flag-boundary control surface (Story 1.4). */
@@ -347,6 +363,76 @@ const createFollowupWaitController = (
     arm(clientPubkey)
   }
   return { stop, start, bump, reevaluate }
+}
+
+/**
+ * Build the NIP-55 (Android nostrsigner:// intent) handler from runtime-owned ports.
+ * Module-level factory — the runtime factory is already at the lint line budget, and the
+ * handler is STATELESS (it only closes over ports), so constructing it per request is free.
+ * The SAME coordinator gates every request; sign_event runs through the SAME canonical
+ * normalize→approve→sign flow (createSignEventFlow) as the NIP-46 pipeline — EVERY sign
+ * raises its own approval (policy B: no NIP-55 grants). A login approval records the
+ * caller as a synthetic connection (Connected-apps listing, recordWebSignIn pattern, NO
+ * grant). Flag/account gating stays at the adapter layer (provider intake), per AD-13.
+ */
+const nip55HandlerFor = (
+  deps: SignerRuntimeDeps,
+  ports: {
+    signer: Pick<NostrSigner, "getPublicKey" | "signEvent">
+    coordinator: ApprovalCoordinator
+    log: (fields: Record<string, string | number>) => void
+    store: Pick<ConnectionStore, "upsert">
+    sync: () => Promise<void>
+    activityLog: Pick<ActivityLog, "record">
+  },
+) =>
+  createNip55Handler({
+    signer: ports.signer,
+    coordinator: ports.coordinator,
+    now: () => Math.floor(Date.now() / 1000),
+    accountScopeKey: deps.accountScopeKey,
+    readLightningAddress: deps.readLightningAddress,
+    complete: (result) => deps.nip55Complete?.(result),
+    log: ports.log,
+    recordConnection: async (callerPackage) => {
+      const pkg = callerPackage ?? "unknown"
+      await ports.store.upsert({
+        clientPubkey: pseudoClientKey(pkg),
+        relays: [],
+        // Policy B: listed + disconnectable, but NO grant — every sign still prompts.
+        grantedScopes: [],
+        metadata: { name: pkg, url: `android://${pkg}` },
+        createdAt: Math.floor(Date.now() / 1000),
+      })
+      await ports.sync()
+    },
+    recordActivity: (clientPubkey, entry) => {
+      // recordWebSignIn precedent: write STRAIGHT to the log — recordActivity's bumpAwaiting
+      // arms the NIP-46 QR-flow waiting overlay, which a same-device NIP-55 flow (its
+      // follow-up arrives as a fresh activity launch, not over relays) must never show.
+      ports.activityLog
+        .record(clientPubkey, { ...entry, time: Date.now() })
+        .catch(() => undefined)
+    },
+  })
+
+/**
+ * Connect de-duplication guard: the same clientPubkey re-handshaking within the TTL is a
+ * relay-redelivery duplicate, dropped by handleConnectUri. Hoisted to module level (pure
+ * closure, zero behavior change) to keep createSignerRuntime inside the lint line budget.
+ */
+const createDuplicateConnectGuard = (ttlMs: number): ((key: string) => boolean) => {
+  const seen = new Map<string, number>()
+  return (key: string): boolean => {
+    const now = Date.now()
+    // Sweep expired entries so the map cannot grow unbounded.
+    for (const [k, ts] of seen) {
+      if (now - ts > ttlMs) seen.delete(k)
+    }
+    if (seen.has(key)) return true
+    seen.set(key, now)
+    return false
+  }
 }
 
 export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
@@ -957,18 +1043,18 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   // arrives). Each extra invocation enqueues its own connection approval → the duplicate approve
   // modal + a second stored connection. We therefore remember each clientPubkey for a short TTL
   // and drop any repeat within the window (covers concurrent AND staggered duplicates).
-  const recentConnects = new Map<string, number>()
-  const CONNECT_DEDUP_TTL_MS = 60_000
-  const isDuplicateConnect = (key: string): boolean => {
-    const now = Date.now()
-    // Sweep expired entries so the map cannot grow unbounded.
-    for (const [k, ts] of recentConnects) {
-      if (now - ts > CONNECT_DEDUP_TTL_MS) recentConnects.delete(k)
-    }
-    if (recentConnects.has(key)) return true
-    recentConnects.set(key, now)
-    return false
+  // NIP-55 entry (see nip55HandlerFor for policy notes): stateless, built per request.
+  const nip55Ports = {
+    signer,
+    coordinator,
+    log,
+    store,
+    sync: syncSnapshots,
+    activityLog,
   }
+  const handleNip55 = (raw: Nip55PendingRequest): Promise<void> =>
+    nip55HandlerFor(deps, nip55Ports).handle(raw)
+  const isDuplicateConnect = createDuplicateConnectGuard(60_000)
 
   return {
     handleInbound: async (event) => {
@@ -990,6 +1076,7 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
       // sign_event that complete sign-in.
       resubscribe()
     },
+    handleNip55,
     coordinator,
     gateDeps,
     listConnections: () => store.list(),

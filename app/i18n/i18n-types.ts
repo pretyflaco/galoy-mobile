@@ -6661,6 +6661,10 @@ type RootTranslation = {
 		 */
 		placeCategory: string
 		/**
+		 * C​h​o​o​s​e​ ​a​ ​c​a​t​e​g​o​r​y
+		 */
+		placeCategoryHint: string
+		/**
 		 * L​o​c​a​t​i​o​n
 		 */
 		placeLocation: string
@@ -21533,6 +21537,10 @@ export type TranslationFunctions = {
 		 * Category
 		 */
 		placeCategory: () => LocalizedString
+		/**
+		 * Choose a category
+		 */
+		placeCategoryHint: () => LocalizedString
 		/**
 		 * Location
 		 */

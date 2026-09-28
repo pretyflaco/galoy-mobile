@@ -4568,6 +4568,8 @@ const en: BaseTranslation = {
     approve: "Approve",
     reject: "Reject",
     unknownClient: "An app",
+    invalidLink:
+      "This connection link is invalid or incomplete. Ask the app for a fresh one.",
     srLabel:
       "{client:string} wants to sign you in and sign events on your behalf. Approve or reject.",
   },

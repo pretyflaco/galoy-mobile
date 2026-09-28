@@ -14557,6 +14557,10 @@ type RootTranslation = {
 		 */
 		unknownClient: string
 		/**
+		 * T​h​i​s​ ​c​o​n​n​e​c​t​i​o​n​ ​l​i​n​k​ ​i​s​ ​i​n​v​a​l​i​d​ ​o​r​ ​i​n​c​o​m​p​l​e​t​e​.​ ​A​s​k​ ​t​h​e​ ​a​p​p​ ​f​o​r​ ​a​ ​f​r​e​s​h​ ​o​n​e​.
+		 */
+		invalidLink: string
+		/**
 		 * {​c​l​i​e​n​t​}​ ​w​a​n​t​s​ ​t​o​ ​s​i​g​n​ ​y​o​u​ ​i​n​ ​a​n​d​ ​s​i​g​n​ ​e​v​e​n​t​s​ ​o​n​ ​y​o​u​r​ ​b​e​h​a​l​f​.​ ​A​p​p​r​o​v​e​ ​o​r​ ​r​e​j​e​c​t​.
 		 * @param {string} client
 		 */
@@ -29300,6 +29304,10 @@ export type TranslationFunctions = {
 		 * An app
 		 */
 		unknownClient: () => LocalizedString
+		/**
+		 * This connection link is invalid or incomplete. Ask the app for a fresh one.
+		 */
+		invalidLink: () => LocalizedString
 		/**
 		 * {client} wants to sign you in and sign events on your behalf. Approve or reject.
 		 */

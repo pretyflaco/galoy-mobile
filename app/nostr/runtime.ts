@@ -139,11 +139,18 @@ export interface SignerRuntimeDeps {
   decodeForTest?: (event: Event) => DecodedRequest
 }
 
+/** Outcome of a nostrconnect:// handshake attempt (lets entry points give feedback). */
+export type ConnectUriOutcome = "handled" | "duplicate" | "invalid"
+
 export interface SignerRuntime {
   /** The single inbound entry: every kind-24133 event flows through here (pipeline). */
   handleInbound(event: Event): Promise<void>
-  /** The nostrconnect:// handshake entry (forwarded raw from the deep-link/QR layer). */
-  handleConnectUri(rawUri: string): Promise<void>
+  /**
+   * The nostrconnect:// handshake entry (forwarded raw from the deep-link/QR layer). Reports
+   * the outcome so the entry layer can tell the human when a link is malformed — it used to
+   * vanish silently (issue #2 side finding).
+   */
+  handleConnectUri(rawUri: string): Promise<ConnectUriOutcome>
   /**
    * The NIP-55 entry (Android same-device signer intents): the raw request extracted by the
    * native holder activity, forwarded by the provider intake. Approval-gated exactly like
@@ -1129,16 +1136,16 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     },
     handleConnectUri: async (rawUri) => {
       const parsed = parseNostrConnectUri(rawUri)
-      const key = parsed?.clientPubkey
-      if (key && isDuplicateConnect(key)) {
+      if (!parsed) return "invalid" // malformed link → the entry layer tells the human
+      if (isDuplicateConnect(parsed.clientPubkey)) {
         log({ dropped: "duplicate-connect" })
-        return
+        return "duplicate"
       }
       await connectFlow.handleConnect(rawUri)
       await syncSnapshots()
-      // Listen on the newly-connected client's relays for the follow-up get_public_key /
-      // sign_event that complete sign-in.
+      // Listen on the new client's relays for the follow-up get_public_key / sign_event.
       resubscribe()
+      return "handled"
     },
     handleNip55,
     coordinator,

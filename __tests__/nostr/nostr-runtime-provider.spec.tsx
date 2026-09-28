@@ -49,6 +49,18 @@ jest.mock("@app/hooks", () => ({
   }),
 }))
 
+// Issue #2: the malformed-link toast. Capture calls; give the provider a truthy LL.
+const mockToastShow = jest.fn()
+jest.mock("@app/utils/toast", () => ({
+  toastShow: (...args: unknown[]) => mockToastShow(...args),
+}))
+jest.mock("@app/i18n/i18n-react", () => ({
+  ...jest.requireActual("@app/i18n/i18n-react"),
+  useI18nContext: () => ({ LL: {} }),
+}))
+
+import { handleNostrConnectLink } from "@app/nostr/connect-link-handler"
+
 import {
   NostrRuntimeProvider,
   useNostrRuntime,
@@ -112,5 +124,17 @@ describe("NostrRuntimeProvider (A2)", () => {
     expect(
       (deps as { connectionStore: { clear?: unknown } }).connectionStore.clear,
     ).toBeUndefined()
+  })
+
+  it("toasts when a MALFORMED nostrconnect link is forwarded, instead of dropping it silently (issue #2)", async () => {
+    mockToastShow.mockClear()
+    useFeatureFlags.mockReturnValue({ nostrSignerEnabled: true })
+    renderProvider()
+    // Params hanging off the pubkey with "&" and no "?" — the shape that failed in the wild.
+    const consumed = await handleNostrConnectLink(
+      `nostrconnect://${"a".repeat(64)}&relay=wss%3A%2F%2Fnos.lol&name=br2`,
+    )
+    expect(consumed).toBe(true) // still consumed — never falls through to payment parsing
+    expect(mockToastShow).toHaveBeenCalledTimes(1)
   })
 })

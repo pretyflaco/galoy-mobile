@@ -359,6 +359,19 @@ describe("signer runtime assembly (A1)", () => {
     expect(entry.followListDelta).toBeUndefined()
   })
 
+  it("handleConnectUri reports a malformed link as 'invalid' and raises NO surface (issue #2)", async () => {
+    const present = jest.fn(async () => undefined)
+    const runtime = createSignerRuntime(makeDeps({ present }))
+    // The exact malformed shape seen in the wild: params hanging off the pubkey with "&" and
+    // no leading "?" — the parser reads the whole tail as the pubkey and rejects it.
+    const outcome = await runtime.handleConnectUri(
+      `nostrconnect://${clientPubkey}&relay=wss%3A%2F%2Fnos.lol&name=br2`,
+    )
+    await flushAsync()
+    expect(outcome).toBe("invalid")
+    expect(present).not.toHaveBeenCalled()
+  })
+
   it("listConnections + disconnect manage the store (fix #3)", async () => {
     const runtime = createSignerRuntime(makeDeps())
     await runtime.grantForTest(clientPubkey, ["sign_event:22242"])

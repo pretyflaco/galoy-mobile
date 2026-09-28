@@ -23,6 +23,8 @@ import { useApolloClient } from "@apollo/client"
 import { useFeatureFlags } from "@app/config/feature-flags-context"
 import { GetUsernamesDocument } from "@app/graphql/generated"
 import { useAppConfig } from "@app/hooks"
+import { useI18nContext } from "@app/i18n/i18n-react"
+import { toastShow } from "@app/utils/toast"
 
 import { setNostrConnectHandler } from "./connect-link-handler"
 import { nostrNsecService } from "./core/account-scope"
@@ -76,6 +78,11 @@ const readTransportSkHex = async (): Promise<string> => {
 export const NostrRuntimeProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const featureFlags = useFeatureFlags()
   const enabled = featureFlags.nostrSignerEnabled
+  // Read through a ref so the connect handler registration (below) is not re-run on every
+  // locale change; undefined outside an i18n provider (tests) → the toast is skipped.
+  const { LL } = useI18nContext()
+  const llRef = useRef(LL)
+  llRef.current = LL
   const apolloClient = useApolloClient()
   const { accountKey, ready: accountScopeReady } = useNostrAccountKey()
   const accountReady = accountScopeReady && accountKey !== null
@@ -136,7 +143,22 @@ export const NostrRuntimeProvider: React.FC<React.PropsWithChildren> = ({ childr
   // nostrconnect:// URL is not consumed (signer invisible + inert, NFR-9).
   useEffect(() => {
     initSignerGate(enabled, runtime.gateDeps)
-    setNostrConnectHandler(enabled ? (uri) => runtime.handleConnectUri(uri) : null)
+    setNostrConnectHandler(
+      enabled
+        ? async (uri) => {
+            // Issue #2 side finding: a malformed pairing link (e.g. params with no leading
+            // "?") used to be dropped with ZERO feedback. Tell the human instead.
+            const outcome = await runtime.handleConnectUri(uri)
+            const LL = llRef.current
+            if (outcome === "invalid" && LL) {
+              toastShow({
+                message: (t) => t.NostrConnectionApprovalScreen.invalidLink(),
+                LL,
+              })
+            }
+          }
+        : null,
+    )
     // Mirror the flag onto the manifest-declared NIP-55 activity: the Android signer
     // chooser lists Blink ONLY while the signer is actually live (AD-13). The component
     // ships disabled, so flag-off builds (incl. production defaults) never advertise it.

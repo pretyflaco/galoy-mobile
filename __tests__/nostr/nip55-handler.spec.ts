@@ -15,6 +15,10 @@ import type {
   ApprovalEntry,
 } from "../../app/nostr/approval/coordinator"
 import { createLocalNsecSigner } from "../../app/nostr/core/local-nsec-signer"
+import {
+  createFollowListDeltaReader,
+  type FollowListDeltaReader,
+} from "../../app/nostr/approval/follow-list-delta"
 import { createNip55Handler } from "../../app/nostr/nip55/handler"
 import type { Nip55PendingRequest, Nip55Result } from "../../app/nostr/nip55/types"
 
@@ -53,7 +57,10 @@ const makeCoordinator = (
 const makeHandler = (
   coordinator: ApprovalCoordinator,
   results: Nip55Result[],
-  opts?: { accountScopeKey?: () => string | null },
+  opts?: {
+    accountScopeKey?: () => string | null
+    followDeltaFor?: FollowListDeltaReader
+  },
 ) => {
   const signer = createLocalNsecSigner({ readNsecHex: async () => userSkHex })
   const handler = createNip55Handler({
@@ -61,6 +68,7 @@ const makeHandler = (
     coordinator,
     now: () => NOW,
     accountScopeKey: opts?.accountScopeKey,
+    followDeltaFor: opts?.followDeltaFor,
     complete: (result) => results.push(result),
   })
   return { handler, signer }
@@ -73,7 +81,10 @@ const LOGIN: Nip55PendingRequest = {
   callerPackage: "com.vezir.android",
 }
 
-const signRequest = (overrides?: Partial<Nip55PendingRequest>): Nip55PendingRequest => {
+const signRequest = (
+  overrides?: Partial<Nip55PendingRequest>,
+  eventOverrides?: { kind: number; tags: string[][] },
+): Nip55PendingRequest => {
   const event = {
     id: "cafe".repeat(16), // untrusted — recomputed by the flow
     pubkey: userPubHex,
@@ -85,6 +96,7 @@ const signRequest = (overrides?: Partial<Nip55PendingRequest>): Nip55PendingRequ
       ["method", "POST"],
     ],
     content: "",
+    ...eventOverrides,
   }
   return {
     type: "sign_event",
@@ -325,6 +337,112 @@ describe("sign_event", () => {
     resolveDecision({ approved: true }) // ...and THEN the human approves
     await pending
 
+    expect(results).toEqual([{ kind: "sign_reject", id: "req-sign" }])
+  })
+})
+
+describe("sign_event — FR-25 kind:3 follow-list delta (AD-21 parity with NIP-46)", () => {
+  const FOLLOW_EVENT = {
+    kind: 3,
+    tags: [
+      ["p", "a".repeat(64)],
+      ["p", "b".repeat(64)],
+    ],
+  }
+  const publishedFollows = (n: number) =>
+    Array.from({ length: n }, (_, i) => ["p", `${i}`.padStart(64, "0")])
+
+  it("a kind:3 raise carries the published → proposed counts, read via the REAL reader", async () => {
+    const { coordinator, entries } = makeCoordinator()
+    const results: Nip55Result[] = []
+    const get = jest.fn(async () => ({ tags: publishedFollows(685) }))
+    const { handler } = makeHandler(coordinator, results, {
+      // NIP-55 has no connection relays → the reader falls back to the profile relay set.
+      followDeltaFor: createFollowListDeltaReader({ pool: { get }, relays: () => [] }),
+    })
+
+    await handler.handle(signRequest(undefined, FOLLOW_EVENT))
+
+    expect(entries).toHaveLength(1)
+    expect(entries[0]).toMatchObject({
+      kind: "request",
+      eventKind: 3,
+      followListDelta: { before: 685, after: 2 },
+    })
+    expect(entries[0]).not.toHaveProperty("followListDeltaUnavailable")
+    // The read targets the user's own kind:3 on the profile relays (AD-21 / AD-20).
+    expect(get).toHaveBeenCalledWith(
+      expect.arrayContaining(["wss://purplepag.es"]),
+      { kinds: [3], authors: [userPubHex] },
+      expect.objectContaining({ maxWait: expect.any(Number) }),
+    )
+    // Display-only: a drastic shrink still signs when the human approves (no auto-reject).
+    expect(results[0]?.kind).toBe("sign_ok")
+  })
+
+  it("a kind:3 whose read is unavailable flags the entry for the fail-open hint", async () => {
+    const { coordinator, entries } = makeCoordinator()
+    const results: Nip55Result[] = []
+    const get = jest.fn(async () => null) // no published list
+    const { handler } = makeHandler(coordinator, results, {
+      followDeltaFor: createFollowListDeltaReader({ pool: { get }, relays: () => [] }),
+    })
+
+    await handler.handle(signRequest(undefined, FOLLOW_EVENT))
+
+    expect(entries[0]).toMatchObject({ eventKind: 3, followListDeltaUnavailable: true })
+    expect(entries[0]).not.toHaveProperty("followListDelta")
+    expect(results[0]?.kind).toBe("sign_ok")
+  })
+
+  it("a non-kind:3 raise carries NO delta fields and never reads relays", async () => {
+    const { coordinator, entries } = makeCoordinator()
+    const results: Nip55Result[] = []
+    const get = jest.fn(async () => ({ tags: publishedFollows(685) }))
+    const { handler } = makeHandler(coordinator, results, {
+      followDeltaFor: createFollowListDeltaReader({ pool: { get }, relays: () => [] }),
+    })
+
+    await handler.handle(signRequest()) // kind 27235
+
+    expect(get).not.toHaveBeenCalled()
+    expect(entries[0]).not.toHaveProperty("followListDelta")
+    expect(entries[0]).not.toHaveProperty("followListDeltaUnavailable")
+  })
+
+  it("a throwing enrichment port fails open: the surface still raises, the sign completes", async () => {
+    const { coordinator, entries } = makeCoordinator()
+    const results: Nip55Result[] = []
+    const { handler } = makeHandler(coordinator, results, {
+      followDeltaFor: async () => {
+        throw new Error("relay pool exploded")
+      },
+    })
+
+    await handler.handle(signRequest(undefined, FOLLOW_EVENT))
+
+    expect(entries).toHaveLength(1)
+    expect(entries[0]).not.toHaveProperty("followListDelta")
+    expect(results[0]?.kind).toBe("sign_ok")
+  })
+
+  it("keeps the H3 binding: scope captured BEFORE the delta read; a switch during it voids the approval", async () => {
+    let scope = "account-A"
+    const { coordinator, entries } = makeCoordinator() // the human approves
+    const results: Nip55Result[] = []
+    const { handler } = makeHandler(coordinator, results, {
+      accountScopeKey: () => scope,
+      // The account switches WHILE the bounded read is in flight (after scope capture).
+      followDeltaFor: async () => {
+        scope = "account-B"
+        return { followListDelta: { before: 685, after: 2 } }
+      },
+    })
+
+    await handler.handle(signRequest(undefined, FOLLOW_EVENT))
+
+    // The delta still reached the surface (display), but the approval was voided (H3).
+    expect(entries[0]).toMatchObject({ followListDelta: { before: 685, after: 2 } })
     expect(results).toEqual([{ kind: "sign_reject", id: "req-sign" }])
   })
 })

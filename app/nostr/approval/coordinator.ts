@@ -75,8 +75,15 @@ export interface RequestApprovalEntry {
    * `{before: 685, after: 1}` (issue #2 hazard mitigation). Display-only — the surface
    * renders it in the headline and warns when the list would shrink drastically. Best-effort
    * at raise time; undefined when the current list could not be fetched (fail-open).
+   * Computed by approval/follow-list-delta.ts at every raise site (AD-21).
    */
   followListDelta?: { before: number; after: number }
+  /**
+   * Set (true) ONLY for a kind:3 sign_event whose published-list read timed out, failed, or
+   * found no list — the surface shows a quiet "couldn't check" hint (FR-25 fail-open, D4b).
+   * Never set for other kinds, and never alongside `followListDelta`. Display-only.
+   */
+  followListDeltaUnavailable?: true
 }
 
 /** The FIFO carries both kinds through one queue. */

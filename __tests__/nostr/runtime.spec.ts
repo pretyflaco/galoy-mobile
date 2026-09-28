@@ -355,8 +355,41 @@ describe("signer runtime assembly (A1)", () => {
     expect(present).toHaveBeenCalledTimes(1)
     const entry = present.mock.calls[0][0] as {
       followListDelta?: { before: number; after: number }
+      followListDeltaUnavailable?: true
     }
     expect(entry.followListDelta).toBeUndefined()
+    // FR-25 fail-open (D4b): a kind:3 whose read failed is flagged for the quiet hint.
+    expect(entry.followListDeltaUnavailable).toBe(true)
+  })
+
+  it("a non-kind:3 sign carries NO delta fields and never reads the published list", async () => {
+    const decodeForTest = () => ({
+      scheme: "nip44" as const,
+      clientPubkey,
+      request: {
+        id: "sign-k1",
+        method: "sign_event",
+        params: [JSON.stringify({ kind: 1, content: "hi", tags: [] })],
+      },
+    })
+    const get = jest.fn(async () => ({ tags: [["p", "a".repeat(64)]] }))
+    const present = jest.fn(async (_entry: unknown) => undefined)
+    const runtime = createSignerRuntime(
+      makeDeps({
+        present,
+        decodeForTest,
+        createPool: () => ({ ...makeFakePool().pool, get }),
+      }),
+    )
+    await runtime.grantForTest(clientPubkey, [])
+
+    runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
+    await flushAsync()
+
+    expect(present).toHaveBeenCalledTimes(1)
+    expect(get).not.toHaveBeenCalled()
+    expect(present.mock.calls[0][0]).not.toHaveProperty("followListDelta")
+    expect(present.mock.calls[0][0]).not.toHaveProperty("followListDeltaUnavailable")
   })
 
   it("handleConnectUri reports a malformed link as 'invalid' and raises NO surface (issue #2)", async () => {

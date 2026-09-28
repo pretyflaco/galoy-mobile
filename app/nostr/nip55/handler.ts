@@ -17,6 +17,7 @@
 import * as nip19 from "nostr-tools/nip19"
 
 import type { ApprovalCoordinator } from "../approval/coordinator"
+import type { FollowListDeltaReader } from "../approval/follow-list-delta"
 import {
   buildSignEventPreview,
   formatSignEventPanel,
@@ -45,6 +46,13 @@ export interface Nip55HandlerPorts {
   accountScopeKey?: () => string | null
   /** The signed-in account's lightning address (login-kind `lnaddress` tag; see sign-event). */
   readLightningAddress?: () => Promise<string | undefined>
+  /**
+   * FR-25 enrichment (AD-21): the kind:3 follow-list delta for the event about to raise, read
+   * against the identity it is raised under. Bounded + fail-open by contract; DISPLAY-ONLY —
+   * the result goes onto the approval entry and nowhere else (never the decision, grants, or
+   * the H3 binding). Non-kind-3 events resolve to `{}`. Absent ⇒ no enrichment.
+   */
+  followDeltaFor?: FollowListDeltaReader
   /** Deliver the answer to the calling app (native module in production). */
   complete: (result: Nip55Result) => void
   /**
@@ -161,10 +169,14 @@ export const createNip55Handler = (ports: Nip55HandlerPorts): Nip55Handler => {
         userNpub,
         now: ports.now,
         lightningAddress,
-        requestApproval: (event) => {
+        requestApproval: async (event) => {
           // H3 binding (mirrors runSignEvent): capture scope at raise, void the approval
           // if the identity or account scope changed by the time the human decided.
           const scopeAtRaise = ports.accountScopeKey?.() ?? null
+          // FR-25 / AD-21 (mirrors runSignEvent): the kind:3 delta, display-only. A throwing
+          // port fails open to "no enrichment" — it can never block or fail the request.
+          const followListEnrichment =
+            (await ports.followDeltaFor?.(event, userNpub).catch(() => undefined)) ?? {}
           return coordinator
             .enqueue({
               id: entryId,
@@ -178,6 +190,7 @@ export const createNip55Handler = (ports: Nip55HandlerPorts): Nip55Handler => {
               humanAction: "sign an event",
               contentPreview: formatSignEventPanel(buildSignEventPreview(event)),
               contentPreviewFull: formatSignEventPanelFull(event),
+              ...followListEnrichment,
             })
             .then(async (decision) => {
               if (!decision.approved) return { approved: false }

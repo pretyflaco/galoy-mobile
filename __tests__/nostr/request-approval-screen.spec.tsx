@@ -292,6 +292,98 @@ describe("request-approval screen — issue #1 (large events / plain-language ac
     expect(within(banner).getByTestId("icon-warning")).toBeTruthy()
   })
 
+  it("default focus: the shrink warning while it shows, Approve otherwise, never Reject (D4)", async () => {
+    const onApprove = jest.fn()
+    const shrink = renderScreenEn({
+      method: "sign_event",
+      eventKind: 3,
+      followListDelta: { before: 685, after: 1 },
+      onApprove,
+    })
+    await flushEffects()
+    expect(shrink.getAllByTestId("nostr-request-default-focus")).toHaveLength(1)
+    const focus = shrink.getByTestId("nostr-request-default-focus")
+    expect(
+      hasAncestor(
+        shrink.getByTestId("nostr-request-follow-warning"),
+        "nostr-request-default-focus",
+      ),
+    ).toBe(true)
+    expect(
+      hasAncestor(
+        shrink.getByTestId("nostr-request-approve"),
+        "nostr-request-default-focus",
+      ),
+    ).toBe(false)
+    expect(
+      hasAncestor(
+        shrink.getByTestId("nostr-request-reject"),
+        "nostr-request-default-focus",
+      ),
+    ).toBe(false)
+    // One accessible element that SAYS the consequence when focused.
+    expect(focus.props.accessible).toBe(true)
+    expect(focus.props.accessibilityLabel).toBe(
+      "This replaces your 685 follows with 1. Only continue if you mean to unfollow most accounts.",
+    )
+    // Never blocks: Approve still works while the warning shows (SM-C2).
+    fireEvent.press(shrink.getByTestId("nostr-request-approve"))
+    expect(onApprove).toHaveBeenCalledTimes(1)
+    shrink.unmount()
+
+    const healthy = renderScreenEn({
+      method: "sign_event",
+      eventKind: 3,
+      followListDelta: { before: 685, after: 686 },
+    })
+    await flushEffects()
+    expect(healthy.getAllByTestId("nostr-request-default-focus")).toHaveLength(1)
+    expect(
+      hasAncestor(
+        healthy.getByTestId("nostr-request-approve"),
+        "nostr-request-default-focus",
+      ),
+    ).toBe(true)
+    expect(
+      hasAncestor(
+        healthy.getByTestId("nostr-request-reject"),
+        "nostr-request-default-focus",
+      ),
+    ).toBe(false)
+  })
+
+  it("puts the shrink warning into the SR label and the announce; healthy updates carry none", async () => {
+    const warning =
+      "This replaces your 685 follows with 1. Only continue if you mean to unfollow most accounts."
+    const shrink = renderScreenEn({
+      method: "sign_event",
+      eventKind: 3,
+      followListDelta: { before: 685, after: 1 },
+    })
+    await flushEffects()
+    // 09 label pattern: "<Client> wants to <action> (<before> → <after> follows). <warning>. Approve or reject."
+    expect(shrink.getByTestId("nostr-request-approval").props.accessibilityLabel).toBe(
+      `PrimalWeb wants to update your follow list (685 → 1 follows). ${warning} Approve or reject.`,
+    )
+    expect(shrink.getByTestId("nostr-request-counter").props.accessibilityLabel).toBe(
+      `Request 1 of 2 from PrimalWeb, wants to update your follow list (685 → 1 follows). ${warning}`,
+    )
+    shrink.unmount()
+
+    const healthy = renderScreenEn({
+      method: "sign_event",
+      eventKind: 3,
+      followListDelta: { before: 685, after: 686 },
+    })
+    await flushEffects()
+    expect(healthy.getByTestId("nostr-request-approval").props.accessibilityLabel).toBe(
+      "PrimalWeb wants to update your follow list (685 → 686 follows). Approve or reject.",
+    )
+    expect(
+      String(healthy.getByTestId("nostr-request-counter").props.accessibilityLabel),
+    ).not.toContain("This replaces")
+  })
+
   it("pins the shrink banner directly above the footer, outside the scroll", async () => {
     const { getByTestId } = renderScreenEn({
       method: "sign_event",

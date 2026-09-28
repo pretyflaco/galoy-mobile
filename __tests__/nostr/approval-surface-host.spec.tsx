@@ -8,12 +8,26 @@
  * and the ONE deliberate navigation (connection approve → Connected clients).
  */
 import React from "react"
-import { AppState } from "react-native"
-import { render, waitFor, fireEvent } from "@testing-library/react-native"
+import { AccessibilityInfo, AppState } from "react-native"
+import { render, waitFor, fireEvent, within } from "@testing-library/react-native"
+
+import en from "@app/i18n/en"
+import { loadedLocales } from "@app/i18n/i18n-util"
 
 // Force the presentation gate open (android-parity): jest reports ios + unknown appstate, which
 // would suppress presentation.
 ;(AppState as unknown as { currentState: string }).currentState = "active"
+
+// react-native's `findNodeHandle` getter re-requires RendererProxy on every access; the jest
+// preset's version returns undefined. A jest.fn here keeps that default for every test and
+// lets the focus tests map a ref'd view to a native tag (see "focus lands" below).
+jest.mock("react-native/Libraries/ReactNative/RendererProxy", () => ({
+  ...jest.requireActual("react-native/Libraries/ReactNative/RendererProxy"),
+  findNodeHandle: jest.fn(),
+}))
+const rendererProxy = jest.requireMock(
+  "react-native/Libraries/ReactNative/RendererProxy",
+) as { findNodeHandle: jest.Mock }
 
 const navigate = jest.fn()
 jest.mock("@react-navigation/native", () => ({
@@ -190,6 +204,87 @@ describe("ApprovalSurfaceHost (render-from-state overlay)", () => {
     }
     await waitFor(() => expect(queryByTestId("nostr-request-approval")).toBeTruthy())
     expect(queryByTestId("nostr-review-all")).toBeNull()
+  })
+})
+
+describe("ApprovalSurfaceHost — focus lands + announcement (FR-25 D4)", () => {
+  // The preset's findNodeHandle is a mock returning undefined, so the hook's focus call is
+  // skipped in tests — which is how an unbound focusRef stayed invisible. Map the ref'd view
+  // instance to a native tag by its testID so we can see WHICH view gets focused.
+  const DEFAULT_FOCUS_TAG = 4242
+  const nodeHandleFor = (instance: unknown): number | null => {
+    const testID = (instance as { props?: { testID?: string } } | null)?.props?.testID
+    if (!testID) return null
+    return testID === "nostr-request-default-focus" ? DEFAULT_FOCUS_TAG : 1
+  }
+  const announcementFor = (client: string): string =>
+    announceSpy.mock.calls.map((c) => String(c[0])).find((t) => t.includes(client)) ?? ""
+  const renderHostWithNodes = () =>
+    render(
+      <ContextForScreen>
+        <ApprovalSurfaceHost />
+      </ContextForScreen>,
+    )
+
+  beforeAll(() => {
+    loadedLocales.en = en as never
+  })
+  let focusSpy: jest.SpyInstance
+  let announceSpy: jest.SpyInstance
+  beforeEach(() => {
+    focusSpy = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus").mockImplementation()
+    announceSpy = jest
+      .spyOn(AccessibilityInfo, "announceForAccessibility")
+      .mockImplementation()
+    rendererProxy.findNodeHandle.mockImplementation(nodeHandleFor)
+  })
+  afterEach(() => {
+    focusSpy.mockRestore()
+    announceSpy.mockRestore()
+    rendererProxy.findNodeHandle.mockReset()
+  })
+
+  it("focuses the shrink WARNING (not Approve) and announces counts + warning", async () => {
+    const { getByTestId } = renderHostWithNodes()
+    testCoordinator.enqueue({
+      id: "k3-shrink",
+      kind: "request",
+      clientPubkey: "c-shrink",
+      method: "sign_event",
+      eventKind: 3,
+      humanAction: "sign an event",
+      followListDelta: { before: 685, after: 1 },
+    })
+    await waitFor(() => expect(focusSpy).toHaveBeenCalledWith(DEFAULT_FOCUS_TAG))
+    // The focused view is the one wrapping the warning banner — not the footer's Approve.
+    const focused = getByTestId("nostr-request-default-focus")
+    expect(within(focused).queryByTestId("nostr-request-follow-warning")).toBeTruthy()
+    expect(within(focused).queryByTestId("nostr-request-approve")).toBeNull()
+
+    const announced = announcementFor("c-shrink")
+    expect(announced).toContain("update your follow list (685 → 1 follows)")
+    expect(announced).toContain("This replaces your 685 follows with 1.")
+  })
+
+  it("focuses Approve (never Reject) when no warning shows; the announcement carries no warning", async () => {
+    const { getByTestId } = renderHostWithNodes()
+    testCoordinator.enqueue({
+      id: "k3-healthy",
+      kind: "request",
+      clientPubkey: "c-healthy",
+      method: "sign_event",
+      eventKind: 3,
+      humanAction: "sign an event",
+      followListDelta: { before: 685, after: 686 },
+    })
+    await waitFor(() => expect(focusSpy).toHaveBeenCalledWith(DEFAULT_FOCUS_TAG))
+    const focused = getByTestId("nostr-request-default-focus")
+    expect(within(focused).queryByTestId("nostr-request-approve")).toBeTruthy()
+    expect(within(focused).queryByTestId("nostr-request-reject")).toBeNull()
+
+    const announced = announcementFor("c-healthy")
+    expect(announced).toContain("update your follow list (685 → 686 follows)")
+    expect(announced).not.toContain("This replaces")
   })
 })
 

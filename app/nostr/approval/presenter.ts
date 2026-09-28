@@ -28,6 +28,11 @@ export interface AnnouncementParams {
   client: string
   /** Human-meaning action (e.g. "decrypt a message") — NEVER raw scope/kind. */
   action: string
+  /**
+   * A consequence warning that must be HEARD, not only seen (FR-25 list-shrink: "Screen
+   * readers hear the same"). Appended after the request; already a full sentence.
+   */
+  warning?: string
 }
 
 /**
@@ -35,8 +40,9 @@ export interface AnnouncementParams {
  * "Request 2 of 32 from Damus, wants to decrypt a message." Human terms only.
  */
 export const buildAnnouncement = (params: AnnouncementParams): string => {
-  const { index, total, client, action } = params
-  return `Request ${index} of ${total} from ${client}, wants to ${action}`
+  const { index, total, client, action, warning } = params
+  const request = `Request ${index} of ${total} from ${client}, wants to ${action}`
+  return warning ? `${request}. ${warning}` : request
 }
 
 export interface PresentGateInput {

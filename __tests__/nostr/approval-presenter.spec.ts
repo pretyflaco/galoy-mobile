@@ -28,6 +28,23 @@ describe("announcement (AC #4, a11y)", () => {
     expect(text).not.toContain("nip44_decrypt")
     expect(text).not.toContain("22242")
   })
+
+  it("appends a consequence warning after the request when one must be heard (FR-25)", () => {
+    const base = {
+      index: 1,
+      total: 1,
+      client: "PrimalWeb",
+      action: "update your follow list",
+    }
+    expect(buildAnnouncement(base)).toBe(
+      "Request 1 of 1 from PrimalWeb, wants to update your follow list",
+    )
+    expect(
+      buildAnnouncement({ ...base, warning: "This replaces your 685 follows with 1." }),
+    ).toBe(
+      "Request 1 of 1 from PrimalWeb, wants to update your follow list. This replaces your 685 follows with 1.",
+    )
+  })
 })
 
 describe("iOS foreground gate (AC #5, AD-14)", () => {

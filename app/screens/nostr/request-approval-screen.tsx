@@ -8,7 +8,11 @@ import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
 import { useI18nContext } from "@app/i18n/i18n-react"
 
-import { capitalizeAction, isDrasticFollowShrink, nostrActionLabel } from "./action-label"
+import {
+  capitalizeAction,
+  followShrinkWarningText,
+  nostrActionLabel,
+} from "./action-label"
 
 type Props = {
   clientName: string
@@ -37,13 +41,20 @@ type Props = {
   total: number
   onApprove: () => void
   onReject: () => void
+  /**
+   * The coordinator hook's focus ref (useApprovalCoordinator → setAccessibilityFocus on
+   * appear). Attached to the DEFAULT-FOCUS view: the list-shrink warning while it shows
+   * (FR-25 / D4 — Approve is then NOT the default), otherwise Approve. Never Reject.
+   */
+  defaultFocusRef?: React.Ref<View>
 }
 
 /**
  * Request-approval surface (Story 3.4 / SM-C3). Renders what will be signed/decrypted with a
  * "Request X of N from <client>" counter (the sighted mirror of the assertive announcement).
  * Approve/reject are explicit (not gesture-only); the affirmative (approve) is the default
- * focus, never the destructive reject. The surface is an assertive live region so its
+ * focus, never the destructive reject — EXCEPT while the FR-25 list-shrink warning shows: then
+ * the warning is the default focus, so assistive tech reads the consequence before any control. The surface is an assertive live region so its
  * appearance is announced. All copy is i18n-sourced; nsec/key material never reaches a label
  * or log.
  *
@@ -73,6 +84,7 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
   total,
   onApprove,
   onReject,
+  defaultFocusRef,
 }) => {
   const { LL } = useI18nContext()
   const styles = useStyles()
@@ -86,6 +98,8 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
     fallback: humanAction,
     followDelta: followListDelta,
   })
+  // FR-25: the drastic-shrink sentence, carried by the banner, the SR label, and the announce.
+  const shrinkWarning = followShrinkWarningText(T, followListDelta)
   const hasFull =
     contentPreviewFull !== undefined && contentPreviewFull !== contentPreview
   const panelText = expanded && contentPreviewFull ? contentPreviewFull : contentPreview
@@ -96,19 +110,28 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
       testID="nostr-request-approval"
       accessible
       accessibilityLiveRegion="assertive"
-      accessibilityLabel={T.srLabel({ client: clientName, action })}
+      accessibilityLabel={
+        shrinkWarning
+          ? T.srLabelWithWarning({ client: clientName, action, warning: shrinkWarning })
+          : T.srLabel({ client: clientName, action })
+      }
     >
       <ScrollView contentContainerStyle={styles.container} testID="nostr-request-scroll">
         <Text
           type="p3"
           style={styles.counter}
           testID="nostr-request-counter"
-          accessibilityLabel={T.announce({
-            index,
-            total,
-            client: clientName,
-            action,
-          })}
+          accessibilityLabel={
+            shrinkWarning
+              ? T.announceWithWarning({
+                  index,
+                  total,
+                  client: clientName,
+                  action,
+                  warning: shrinkWarning,
+                })
+              : T.announce({ index, total, client: clientName, action })
+          }
         >
           {T.counter({ index, total, client: clientName })}
         </Text>
@@ -182,29 +205,41 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
           say so before the decision. Pinned directly above the footer (outside the scroll) so
           it can never scroll away, and read after the expander, before the controls (Story
           3.4 AT order). {consent-danger} on border + icon only, {consent-danger-bg} wash,
-          consequence copy in grey0 — never red text (DESIGN list-shrink row). */}
-      {followListDelta && isDrasticFollowShrink(followListDelta) ? (
-        <View style={styles.warningBanner} testID="nostr-request-follow-warning">
-          <GaloyIcon name="warning" size={20} color={styles.warningIcon.color} />
-          <Text
-            type="p2"
-            style={styles.warningText}
-            testID="nostr-request-follow-warning-text"
-          >
-            {T.followShrinkWarning({
-              before: followListDelta.before,
-              after: followListDelta.after,
-            })}
-          </Text>
+          consequence copy in grey0 — never red text (DESIGN list-shrink row).
+          While it shows it is the DEFAULT FOCUS (D4): one accessible element carrying the
+          warning, focused on appear, so AT reads the consequence before reaching Approve. It
+          never blocks — Approve stays enabled (SM-C2). */}
+      {shrinkWarning ? (
+        <View
+          ref={defaultFocusRef}
+          testID="nostr-request-default-focus"
+          accessible
+          accessibilityLabel={shrinkWarning}
+          collapsable={false}
+        >
+          <View style={styles.warningBanner} testID="nostr-request-follow-warning">
+            <GaloyIcon name="warning" size={20} color={styles.warningIcon.color} />
+            <Text
+              type="p2"
+              style={styles.warningText}
+              testID="nostr-request-follow-warning-text"
+            >
+              {shrinkWarning}
+            </Text>
+          </View>
         </View>
       ) : null}
 
       {/* Sticky footer (issue #1): the decision is always reachable — the panel scrolls, the
-          buttons never move. Affirmative (approve) is the default focus target; reject is
-          never default. The coordinator hook calls AccessibilityInfo.setAccessibilityFocus on
-          the marked view. */}
+          buttons never move. Affirmative (approve) is the default focus target unless the
+          shrink warning holds it; reject is never default. The coordinator hook calls
+          AccessibilityInfo.setAccessibilityFocus on the view carrying defaultFocusRef. */}
       <View style={styles.footer} testID="nostr-request-footer">
-        <View testID="nostr-request-default-focus">
+        <View
+          ref={shrinkWarning ? undefined : defaultFocusRef}
+          testID={shrinkWarning ? undefined : "nostr-request-default-focus"}
+          collapsable={false}
+        >
           <GaloyPrimaryButton
             title={T.approve()}
             onPress={onApprove}

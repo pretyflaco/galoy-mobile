@@ -14514,6 +14514,13 @@ type RootTranslation = {
 		 */
 		srLabel: RequiredParams<'action' | 'client'>
 		/**
+		 * {​c​l​i​e​n​t​}​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}​.​ ​{​w​a​r​n​i​n​g​}​ ​A​p​p​r​o​v​e​ ​o​r​ ​r​e​j​e​c​t​.
+		 * @param {string} action
+		 * @param {string} client
+		 * @param {string} warning
+		 */
+		srLabelWithWarning: RequiredParams<'action' | 'client' | 'warning'>
+		/**
 		 * R​e​q​u​e​s​t​ ​{​i​n​d​e​x​}​ ​o​f​ ​{​t​o​t​a​l​}​ ​f​r​o​m​ ​{​c​l​i​e​n​t​}​,​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}
 		 * @param {string} action
 		 * @param {string} client
@@ -14521,6 +14528,15 @@ type RootTranslation = {
 		 * @param {number} total
 		 */
 		announce: RequiredParams<'action' | 'client' | 'index' | 'total'>
+		/**
+		 * R​e​q​u​e​s​t​ ​{​i​n​d​e​x​}​ ​o​f​ ​{​t​o​t​a​l​}​ ​f​r​o​m​ ​{​c​l​i​e​n​t​}​,​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}​.​ ​{​w​a​r​n​i​n​g​}
+		 * @param {string} action
+		 * @param {string} client
+		 * @param {number} index
+		 * @param {number} total
+		 * @param {string} warning
+		 */
+		announceWithWarning: RequiredParams<'action' | 'client' | 'index' | 'total' | 'warning'>
 		/**
 		 * O​n​ ​i​P​h​o​n​e​,​ ​k​e​e​p​ ​B​l​i​n​k​ ​o​p​e​n​ ​t​o​ ​a​p​p​r​o​v​e​ ​r​e​q​u​e​s​t​s​ ​q​u​i​c​k​l​y​.
 		 */
@@ -29270,9 +29286,17 @@ export type TranslationFunctions = {
 		 */
 		srLabel: (arg: { action: string, client: string }) => LocalizedString
 		/**
+		 * {client} wants to {action}. {warning} Approve or reject.
+		 */
+		srLabelWithWarning: (arg: { action: string, client: string, warning: string }) => LocalizedString
+		/**
 		 * Request {index} of {total} from {client}, wants to {action}
 		 */
 		announce: (arg: { action: string, client: string, index: number, total: number }) => LocalizedString
+		/**
+		 * Request {index} of {total} from {client}, wants to {action}. {warning}
+		 */
+		announceWithWarning: (arg: { action: string, client: string, index: number, total: number, warning: string }) => LocalizedString
 		/**
 		 * On iPhone, keep Blink open to approve requests quickly.
 		 */

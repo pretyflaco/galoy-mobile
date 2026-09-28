@@ -4556,8 +4556,12 @@ const en: BaseTranslation = {
     reject: "Reject",
     counter: "Request {index:number} of {total:number} from {client:string}",
     srLabel: "{client:string} wants to {action:string}. Approve or reject.",
+    srLabelWithWarning:
+      "{client:string} wants to {action:string}. {warning:string} Approve or reject.",
     announce:
       "Request {index:number} of {total:number} from {client:string}, wants to {action:string}",
+    announceWithWarning:
+      "Request {index:number} of {total:number} from {client:string}, wants to {action:string}. {warning:string}",
     keepOpenHint: "On iPhone, keep Blink open to approve requests quickly.",
     waitingCatchUp: "You have a request waiting.",
     waitingCatchUpA11y: "You have a request waiting. Open it to approve or reject.",

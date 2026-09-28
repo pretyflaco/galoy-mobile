@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { AccessibilityInfo, AppState, Platform, findNodeHandle } from "react-native"
+import {
+  AccessibilityInfo,
+  AppState,
+  Platform,
+  findNodeHandle,
+  type View,
+} from "react-native"
 
 import { useI18nContext } from "@app/i18n/i18n-react"
-import { nostrActionLabel } from "@app/screens/nostr/action-label"
+import {
+  followShrinkWarningText,
+  nostrActionLabel,
+} from "@app/screens/nostr/action-label"
 import type { ApprovalCoordinator, ApprovalEntry } from "@app/nostr/approval/coordinator"
 import {
   buildAnnouncement,
@@ -19,8 +28,9 @@ const platform = (): SignerPlatform => (Platform.OS === "ios" ? "ios" : "android
  * ApprovalCoordinator and exposes the active entry + queue depth to the surface. On each new
  * surface it:
  *  - ANNOUNCES requester + request + position assertively (AccessibilityInfo);
- *  - lands focus on the requester/request heading (setAccessibilityFocus on the ref), trapped
- *    for the surface's duration and restored to the next queued surface on drain;
+ *  - lands focus on the surface's default-focus view (setAccessibilityFocus on `focusRef`, which
+ *    the host hands to the surface as `defaultFocusRef`): the FR-25 list-shrink warning while it
+ *    shows, else Approve — never Reject; restored to the next queued surface on drain;
  *  - (iOS) HOLDS presentation while backgrounded/inactive and drains + announces the
  *    keep-app-open catch-up on the next foreground (AppState). Android presents unconditionally.
  *
@@ -37,7 +47,7 @@ export const useApprovalCoordinator = (coordinator: ApprovalCoordinator) => {
   // True when an iOS foreground transition finds a waiting queue — the screen renders the
   // keep-app-open catch-up (i18n copy) in an assertive live region so it is announced.
   const [catchUpPending, setCatchUpPending] = useState(false)
-  const focusRef = useRef<unknown>(null)
+  const focusRef = useRef<View>(null)
   const lastAnnouncedId = useRef<string | null>(null)
 
   // Subscribe to coordinator changes.
@@ -74,7 +84,8 @@ export const useApprovalCoordinator = (coordinator: ApprovalCoordinator) => {
 
     if (active.kind === "request") {
       // Announce the PLAIN-LANGUAGE action (issue #1): "update your follow list", never the
-      // raw dump or the runtime's technical fallback string.
+      // raw dump or the runtime's technical fallback string. A kind:3 carries its counts, and a
+      // drastic shrink its warning — screen readers hear the same as sighted users (FR-25).
       AccessibilityInfo.announceForAccessibility(
         buildAnnouncement({
           index: 1,
@@ -85,12 +96,17 @@ export const useApprovalCoordinator = (coordinator: ApprovalCoordinator) => {
             eventKind: active.eventKind,
             uHost: active.uHost,
             fallback: active.humanAction,
+            followDelta: active.followListDelta,
           }),
+          warning: followShrinkWarningText(
+            LL.NostrRequestApprovalScreen,
+            active.followListDelta,
+          ),
         }),
       )
     }
 
-    const node = focusRef.current ? findNodeHandle(focusRef.current as never) : null
+    const node = focusRef.current ? findNodeHandle(focusRef.current) : null
     if (node) AccessibilityInfo.setAccessibilityFocus(node)
   }, [visible, active, coordinator, LL])
 

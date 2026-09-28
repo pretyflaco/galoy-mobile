@@ -197,7 +197,8 @@ const ApprovalOverlay: React.FC<{
 }> = ({ coordinator }) => {
   const styles = useStyles()
   const navigation = useNavigation<Nav>()
-  const { active, depth, visible, approve, reject } = useApprovalCoordinator(coordinator)
+  const { active, depth, visible, approve, reject, focusRef } =
+    useApprovalCoordinator(coordinator)
 
   // Is this active request part of a same-client BURST (>= threshold pending requests)? If so we
   // render the "Review all" surface instead of paging one-by-one (B5 / Flow 4).
@@ -268,6 +269,7 @@ const ApprovalOverlay: React.FC<{
               onReject={reject}
               onReviewApprove={onReviewApprove}
               onReviewReject={onReviewReject}
+              defaultFocusRef={focusRef}
             />
           ) : null}
         </View>
@@ -289,6 +291,8 @@ const ActiveSurface: React.FC<{
   onReject: () => void
   onReviewApprove: (ids: string[]) => void
   onReviewReject: (ids: string[]) => void
+  /** The coordinator hook's focus ref — attached by the request surface to its default focus. */
+  defaultFocusRef: React.Ref<View>
 }> = ({
   active,
   coordinator,
@@ -301,6 +305,7 @@ const ActiveSurface: React.FC<{
   onReject,
   onReviewApprove,
   onReviewReject,
+  defaultFocusRef,
 }) => {
   const { LL } = useI18nContext()
 
@@ -360,6 +365,7 @@ const ActiveSurface: React.FC<{
       total={depth}
       onApprove={onApprove}
       onReject={onReject}
+      defaultFocusRef={defaultFocusRef}
     />
   )
 }

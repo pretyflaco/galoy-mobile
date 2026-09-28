@@ -50,6 +50,19 @@ const KIND_LABELS: Record<number, (T: ActionT, f: NostrActionFields) => string> 
 export const isDrasticFollowShrink = (d?: { before: number; after: number }): boolean =>
   Boolean(d && d.after < d.before / 2)
 
+/**
+ * The FR-25 list-shrink warning sentence when the delta is drastic, else undefined. ONE source
+ * for every channel that must carry it — the visual banner, the surface's accessible label,
+ * and the assertive announcement (Story 3.5: "is announced"; 09 label pattern).
+ */
+export const followShrinkWarningText = (
+  T: TranslationFunctions["NostrRequestApprovalScreen"],
+  d?: { before: number; after: number },
+): string | undefined =>
+  d && isDrasticFollowShrink(d)
+    ? T.followShrinkWarning({ before: d.before, after: d.after })
+    : undefined
+
 /** Derive the human action phrase, e.g. "update your follow list" / "log in to primal.net". */
 export const nostrActionLabel = (T: ActionT, f: NostrActionFields): string => {
   if (f.method === "sign_event") {

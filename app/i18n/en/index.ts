@@ -4551,6 +4551,7 @@ const en: BaseTranslation = {
     hideRawEvent: "Hide raw event",
     followShrinkWarning:
       "This replaces your {before:number} follows with {after:number}. Only continue if you mean to unfollow most accounts.",
+    followListUnchecked: "Couldn't check your current follow list",
     approve: "Approve",
     reject: "Reject",
     counter: "Request {index:number} of {total:number} from {client:string}",

@@ -232,6 +232,41 @@ describe("request-approval screen — issue #1 (large events / plain-language ac
     expect(queryByTestId("nostr-request-follow-warning")).toBeNull()
   })
 
+  it("shows the quiet fail-open hint only for a kind:3 whose read was unavailable (D4b)", async () => {
+    const unavailable = renderScreenEn({
+      method: "sign_event",
+      eventKind: 3,
+      followListDeltaUnavailable: true,
+    })
+    await flushEffects()
+    const hint = unavailable.getByTestId("nostr-request-follow-unchecked")
+    expect(hint.props.children).toBe("Couldn't check your current follow list")
+    // Quiet, not an error: grey2 p3, plain headline, no warning banner.
+    const hintStyle = StyleSheet.flatten(hint.props.style)
+    expect(hintStyle.color).toBe(light.grey2)
+    expect(hintStyle.fontSize).toBe(14)
+    expect(unavailable.getByTestId("nostr-request-action").props.children).toBe(
+      "Update your follow list",
+    )
+    expect(unavailable.queryByTestId("nostr-request-follow-warning")).toBeNull()
+    unavailable.unmount()
+
+    // Delta read succeeded → counts in the headline, no hint.
+    const withDelta = renderScreenEn({
+      method: "sign_event",
+      eventKind: 3,
+      followListDelta: { before: 685, after: 686 },
+    })
+    await flushEffects()
+    expect(withDelta.queryByTestId("nostr-request-follow-unchecked")).toBeNull()
+    withDelta.unmount()
+
+    // Not a kind:3 (the raise sites never set the flag) → nothing.
+    const note = renderScreenEn({ method: "sign_event", eventKind: 1 })
+    await flushEffects()
+    expect(note.queryByTestId("nostr-request-follow-unchecked")).toBeNull()
+  })
+
   it("styles the shrink banner with {consent-danger} tokens, an icon, and grey0 p2 copy", async () => {
     const { getByTestId } = renderScreenEn({
       method: "sign_event",

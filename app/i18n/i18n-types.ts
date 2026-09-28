@@ -14489,6 +14489,10 @@ type RootTranslation = {
 		 */
 		followShrinkWarning: RequiredParams<'after' | 'before'>
 		/**
+		 * C​o​u​l​d​n​'​t​ ​c​h​e​c​k​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​f​o​l​l​o​w​ ​l​i​s​t
+		 */
+		followListUnchecked: string
+		/**
 		 * A​p​p​r​o​v​e
 		 */
 		approve: string
@@ -29245,6 +29249,10 @@ export type TranslationFunctions = {
 		 * This replaces your {before} follows with {after}. Only continue if you mean to unfollow most accounts.
 		 */
 		followShrinkWarning: (arg: { after: number, before: number }) => LocalizedString
+		/**
+		 * Couldn't check your current follow list
+		 */
+		followListUnchecked: () => LocalizedString
 		/**
 		 * Approve
 		 */

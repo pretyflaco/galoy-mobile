@@ -102,6 +102,22 @@ describe("ApprovalSurfaceHost (render-from-state overlay)", () => {
     expect(queryByTestId("nostr-review-all")).toBeNull()
   })
 
+  it("passes the entry's follow-list-unavailable flag to the request surface (FR-25 D4b)", async () => {
+    const { queryByTestId } = renderHost()
+    testCoordinator.enqueue({
+      id: "k3",
+      kind: "request",
+      clientPubkey: "c-k3",
+      method: "sign_event",
+      eventKind: 3,
+      humanAction: "sign an event",
+      followListDeltaUnavailable: true,
+    })
+    await waitFor(() =>
+      expect(queryByTestId("nostr-request-follow-unchecked")).toBeTruthy(),
+    )
+  })
+
   it("CONNECTION approve resolves + navigates to the client's Activity screen (from the hub base)", async () => {
     const { getByTestId } = renderHost()
     const decision = testCoordinator.enqueue({

@@ -24,6 +24,11 @@ type Props = {
   uHost?: string | null
   /** For a kind:3 sign_event: published vs proposed follow counts (issue #2 mitigation). */
   followListDelta?: { before: number; after: number }
+  /**
+   * For a kind:3 sign_event whose published-list read timed out / failed / found no list
+   * (FR-25 fail-open, D4b): show a quiet "couldn't check" line. Never set for other kinds.
+   */
+  followListDeltaUnavailable?: boolean
   /** Bounded summary of the EXACT content (what is signed is unchanged). */
   contentPreview: string
   /** The EXACT untruncated content; when it differs from the summary, an expander is offered. */
@@ -61,6 +66,7 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
   eventKind,
   uHost,
   followListDelta,
+  followListDeltaUnavailable,
   contentPreview,
   contentPreviewFull,
   index,
@@ -127,6 +133,18 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
         <Text type="h2" style={styles.title} testID="nostr-request-action">
           {capitalizeAction(action)}
         </Text>
+
+        {/* FR-25 fail-open (D4b): the kind:3 read timed out / failed / found no list, so the
+            headline is the plain one. Say so quietly — not an error, no banner, no alarm. */}
+        {followListDeltaUnavailable && !followListDelta ? (
+          <Text
+            type="p3"
+            style={styles.uncheckedHint}
+            testID="nostr-request-follow-unchecked"
+          >
+            {T.followListUnchecked()}
+          </Text>
+        ) : null}
 
         {/* "What will be signed": the bounded summary by default; the EXACT content (SM-C3)
             expands below. Consequence copy never truncates silently — the expander always
@@ -229,6 +247,9 @@ const useStyles = makeStyles(({ colors }) => ({
   },
   title: {
     color: colors.black,
+  },
+  uncheckedHint: {
+    color: colors.grey2, // de-emphasized helper copy — deliberately not an error colour
   },
   panelLabel: {
     color: colors.grey2,

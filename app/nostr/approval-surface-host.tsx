@@ -353,6 +353,7 @@ const ActiveSurface: React.FC<{
       eventKind={active.eventKind}
       uHost={active.uHost}
       followListDelta={active.followListDelta}
+      followListDeltaUnavailable={active.followListDeltaUnavailable}
       contentPreview={active.contentPreview ?? ""}
       contentPreviewFull={active.contentPreviewFull}
       index={1}

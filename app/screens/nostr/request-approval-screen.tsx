@@ -7,7 +7,7 @@ import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
 import { useI18nContext } from "@app/i18n/i18n-react"
 
-import { capitalizeAction, nostrActionLabel } from "./action-label"
+import { capitalizeAction, isDrasticFollowShrink, nostrActionLabel } from "./action-label"
 
 type Props = {
   clientName: string
@@ -21,6 +21,8 @@ type Props = {
   eventKind?: number
   /** For a kind-27235 sign_event: normalized host of the `u` tag. */
   uHost?: string | null
+  /** For a kind:3 sign_event: published vs proposed follow counts (issue #2 mitigation). */
+  followListDelta?: { before: number; after: number }
   /** Bounded summary of the EXACT content (what is signed is unchanged). */
   contentPreview: string
   /** The EXACT untruncated content; when it differs from the summary, an expander is offered. */
@@ -57,6 +59,7 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
   method,
   eventKind,
   uHost,
+  followListDelta,
   contentPreview,
   contentPreviewFull,
   index,
@@ -74,6 +77,7 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
     eventKind,
     uHost,
     fallback: humanAction,
+    followDelta: followListDelta,
   })
   const hasFull =
     contentPreviewFull !== undefined && contentPreviewFull !== contentPreview
@@ -122,6 +126,21 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
         <Text type="h2" style={styles.title} testID="nostr-request-action">
           {capitalizeAction(action)}
         </Text>
+
+        {/* Issue #2 mitigation: a kind:3 is a FULL replacement list — when the raise site could
+            compare it to the published list and it would drop most follows, say so LOUDLY
+            before the buttons. (Primal once built a 1-tag list from a stale fetch; the user
+            approved the exact content and lost 685 follows.) */}
+        {followListDelta && isDrasticFollowShrink(followListDelta) ? (
+          <View style={styles.warningBanner} testID="nostr-request-follow-warning">
+            <Text type="p3" style={styles.warningText}>
+              {T.followShrinkWarning({
+                before: followListDelta.before,
+                after: followListDelta.after,
+              })}
+            </Text>
+          </View>
+        ) : null}
 
         {/* "What will be signed": the bounded summary by default; the EXACT content (SM-C3)
             expands below. Consequence copy never truncates silently — the expander always
@@ -226,5 +245,16 @@ const useStyles = makeStyles(({ colors }) => ({
     borderTopColor: colors.grey5,
     padding: 20,
     rowGap: 10,
+  },
+  warningBanner: {
+    backgroundColor: colors.error9,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    padding: 12,
+  },
+  warningText: {
+    color: colors.black,
+    fontWeight: "600",
   },
 }))

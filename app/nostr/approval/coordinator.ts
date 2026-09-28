@@ -70,6 +70,13 @@ export interface RequestApprovalEntry {
    * SM-C3's exactness while the default view stays bounded.
    */
   contentPreviewFull?: string
+  /**
+   * For a kind:3 sign_event: the published follow count vs the proposed one, e.g.
+   * `{before: 685, after: 1}` (issue #2 hazard mitigation). Display-only — the surface
+   * renders it in the headline and warns when the list would shrink drastically. Best-effort
+   * at raise time; undefined when the current list could not be fetched (fail-open).
+   */
+  followListDelta?: { before: number; after: number }
 }
 
 /** The FIFO carries both kinds through one queue. */

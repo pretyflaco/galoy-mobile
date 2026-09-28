@@ -436,6 +436,65 @@ const createDuplicateConnectGuard = (ttlMs: number): ((key: string) => boolean) 
   }
 }
 
+/**
+ * Per-relay delivery health (Amber-parity badges). A side-map of how many of our published
+ * NIP-46 events each relay ACKed (accepted). Purely observational: recorded from the OK
+ * channel pool.publish already returns, WITHOUT gating delivery (publishConfirmed's control
+ * flow is the hard-won reliability path and is left untouched). Surfaced via relayHealth().
+ */
+const createRelayHealthTracker = (): {
+  relayAccepts: Map<string, number>
+  observeRelayOutcomes: (relays: string[], results: Promise<string>[]) => void
+} => {
+  const relayAccepts = new Map<string, number>()
+  const observeRelayOutcomes = (relays: string[], results: Promise<string>[]): void => {
+    relays.forEach((url, i) => {
+      const p = results[i]
+      if (!p) return
+      // Swallow rejections — a failed relay simply doesn't increment (renders as "?"/0).
+      p.then(() => {
+        relayAccepts.set(url, (relayAccepts.get(url) ?? 0) + 1)
+      }).catch(() => undefined)
+    })
+  }
+  return { relayAccepts, observeRelayOutcomes }
+}
+
+/**
+ * Issue #2 hazard mitigation: compare a proposed kind:3 (a FULL replacement list, NIP-01
+ * replaceable kinds) against the currently-published one. A client that built its list from
+ * a stale/failed relay fetch can present a near-empty list (observed 2026-09-28: Primal Web
+ * sent 1 tag replacing 685 follows; the user approved the exact content and lost the list).
+ * Best-effort + BOUNDED (≤ ~3s): any failure, timeout, or missing pool read ⇒ undefined
+ * (fail-open — the surface simply shows the plain headline without counts).
+ */
+const fetchFollowListDelta = async (args: {
+  event: { kind: number; tags: string[][] }
+  userNpub: string
+  pool: RelayPool
+  relays: string[]
+}): Promise<{ before: number; after: number } | undefined> => {
+  const { event, userNpub, pool, relays } = args
+  if (event.kind !== 3 || !pool.get) return undefined
+  try {
+    const { type, data } = nip19.decode(userNpub)
+    if (type !== "npub") return undefined
+    const current = (await Promise.race([
+      pool.get(relays, { kinds: [3], authors: [data] }, { maxWait: 2500 }),
+      new Promise<null>((resolve) => {
+        setTimeout(() => resolve(null), 3000)
+      }),
+    ])) as { tags?: string[][] } | null
+    if (!current?.tags) return undefined
+    return {
+      before: current.tags.filter((t) => t[0] === "p").length,
+      after: event.tags.filter((t) => t[0] === "p").length,
+    }
+  } catch {
+    return undefined
+  }
+}
+
 export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   const log = deps.log ?? ((): void => undefined)
   // Account-scoped persistence (2026-08-20): every storage key is suffixed with the ACTIVE
@@ -512,21 +571,9 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   let relaySnapshot: string[] = []
   let recordSnapshot: ConnectionRecordLike[] = []
 
-  // Per-relay delivery health (Amber-parity badges). A side-map of how many of our published
-  // NIP-46 events each relay ACKed (accepted). Purely observational: recorded from the OK channel
-  // pool.publish already returns, WITHOUT gating delivery (publishConfirmed's control flow is the
-  // hard-won reliability path and is left untouched). Surfaced to the UI via relayHealth().
-  const relayAccepts = new Map<string, number>()
-  const observeRelayOutcomes = (relays: string[], results: Promise<string>[]): void => {
-    relays.forEach((url, i) => {
-      const p = results[i]
-      if (!p) return
-      // Swallow rejections — a failed relay simply doesn't increment (renders as "?"/0).
-      p.then(() => {
-        relayAccepts.set(url, (relayAccepts.get(url) ?? 0) + 1)
-      }).catch(() => undefined)
-    })
-  }
+  // Per-relay delivery health (Amber-parity badges) — see createRelayHealthTracker (module
+  // level) for the observational, non-gating contract. Surfaced via relayHealth().
+  const { relayAccepts, observeRelayOutcomes } = createRelayHealthTracker()
   const syncSnapshots = async (): Promise<void> => {
     const records = await store.list()
     recordSnapshot = toRecordLike(records)
@@ -622,6 +669,16 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
   const runSignEvent = async (decoded: DecodedRequest): Promise<void> => {
     if (!(await admitApprovalGated(decoded))) return
     const userNpub = await signer.getPublicKey()
+
+    // Issue #2 hazard mitigation: kind:3 REPLACES the whole follow list; a stale client
+    // build can present a near-empty list (2026-09-28: 1 tag vs 685 follows). Fail-open.
+    const followDeltaFor = (event: { kind: number; tags: string[][] }) =>
+      fetchFollowListDelta({
+        event,
+        userNpub,
+        pool,
+        relays: relaySnapshot.length > 0 ? relaySnapshot : [...PROFILE_INDEXER_RELAYS],
+      })
     // Resolve per request (the account's username can appear after a sign-in); fail-open.
     const lightningAddress = deps.readLightningAddress
       ? await deps.readLightningAddress().catch(() => undefined)
@@ -631,13 +688,14 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
       userNpub,
       now: () => Math.floor(Date.now() / 1000),
       lightningAddress,
-      requestApproval: (event) => {
+      requestApproval: async (event) => {
         // H3 fix (audit WP3): bind the human decision to the identity + account scope it was
         // raised under. A decision made against identity N / scope A must never execute
         // against a replacement identity or after an account switch — the approval resolves
         // as NOT approved and the client gets the standard rejection instead of a signature
         // from a key the user never consented to serve.
         const scopeAtRaise = deps.accountScopeKey?.() ?? null
+        const followListDelta = await followDeltaFor(event)
         return raiseApprovalDecision({
           id: decoded.request.id,
           kind: "request",
@@ -655,6 +713,7 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
           // view, plus the EXACT untruncated event for the "View raw event" expander (SM-C3).
           contentPreview: formatSignEventPanel(buildSignEventPreview(event)),
           contentPreviewFull: formatSignEventPanelFull(event),
+          followListDelta,
         }).then(async (decision) => {
           if (!decision.approved) return { approved: false }
           const [scopeNow, npubNow] = await Promise.all([

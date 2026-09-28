@@ -19,22 +19,36 @@ export type NostrActionFields = {
   uHost?: string | null
   /** Fallback phrase when the method/kind cannot be classified (the runtime's string). */
   fallback?: string
+  /** For a kind:3 sign_event: published follow count vs proposed (issue #2 mitigation). */
+  followDelta?: { before: number; after: number }
 }
 
 /** The i18n namespace these labels read from. */
 type ActionT = TranslationFunctions["NostrActionKind"]
 
 /** Base-registry kinds with a dedicated phrase; anything else falls back to the kind number. */
-const KIND_LABELS: Record<number, (T: ActionT) => string> = {
+const KIND_LABELS: Record<number, (T: ActionT, f: NostrActionFields) => string> = {
   0: (T) => T.updateProfile(),
   1: (T) => T.postNote(),
-  3: (T) => T.updateFollowList(),
+  // kind 3 is a FULL replacement list — when the raise site could compare against the
+  // currently-published list, the headline carries the counts (issue #2 hazard mitigation).
+  3: (T, f) =>
+    f.followDelta
+      ? T.updateFollowListDelta({
+          before: f.followDelta.before,
+          after: f.followDelta.after,
+        })
+      : T.updateFollowList(),
   4: (T) => T.sendDirectMessage(),
   6: (T) => T.repostNote(),
   7: (T) => T.reactToNote(),
   22242: (T) => T.relayAuth(),
   30023: (T) => T.publishArticle(),
 }
+
+/** True when a kind:3 delta would drop more than half of the followed accounts. */
+export const isDrasticFollowShrink = (d?: { before: number; after: number }): boolean =>
+  Boolean(d && d.after < d.before / 2)
 
 /** Derive the human action phrase, e.g. "update your follow list" / "log in to primal.net". */
 export const nostrActionLabel = (T: ActionT, f: NostrActionFields): string => {
@@ -44,7 +58,7 @@ export const nostrActionLabel = (T: ActionT, f: NostrActionFields): string => {
       return f.uHost ? T.logInTo({ host: f.uHost }) : T.logInGeneric()
     }
     const known = f.eventKind === undefined ? undefined : KIND_LABELS[f.eventKind]
-    if (known) return known(T)
+    if (known) return known(T, f)
     if (f.eventKind !== undefined) return T.signKindEvent({ kind: f.eventKind })
   }
   if (f.method === "nip04_encrypt" || f.method === "nip44_encrypt")

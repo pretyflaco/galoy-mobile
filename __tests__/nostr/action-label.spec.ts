@@ -7,7 +7,11 @@
 import type { TranslationFunctions } from "@app/i18n/i18n-types"
 import en from "@app/i18n/en"
 
-import { capitalizeAction, nostrActionLabel } from "@app/screens/nostr/action-label"
+import {
+  capitalizeAction,
+  isDrasticFollowShrink,
+  nostrActionLabel,
+} from "@app/screens/nostr/action-label"
 
 type ActionT = TranslationFunctions["NostrActionKind"]
 
@@ -27,6 +31,31 @@ const label = (f: Parameters<typeof nostrActionLabel>[1]): string =>
 describe("nostrActionLabel — sign_event kinds (NIP-01 registry + NIP-98)", () => {
   it("kind 3 → update your follow list", () => {
     expect(label({ method: "sign_event", eventKind: 3 })).toBe("update your follow list")
+  })
+
+  it("kind 3 with a delta names the counts (issue #2 mitigation)", () => {
+    expect(
+      label({
+        method: "sign_event",
+        eventKind: 3,
+        followDelta: { before: 685, after: 686 },
+      }),
+    ).toBe("update your follow list (685 → 686 follows)")
+    expect(
+      label({
+        method: "sign_event",
+        eventKind: 3,
+        followDelta: { before: 685, after: 1 },
+      }),
+    ).toBe("update your follow list (685 → 1 follows)")
+  })
+
+  it("isDrasticFollowShrink flags >50% drops only", () => {
+    expect(isDrasticFollowShrink({ before: 685, after: 1 })).toBe(true)
+    expect(isDrasticFollowShrink({ before: 100, after: 49 })).toBe(true)
+    expect(isDrasticFollowShrink({ before: 100, after: 50 })).toBe(false)
+    expect(isDrasticFollowShrink({ before: 685, after: 686 })).toBe(false)
+    expect(isDrasticFollowShrink(undefined)).toBe(false)
   })
 
   it("kind 1 → post a note; kind 0 → update profile; kind 30023 → article", () => {

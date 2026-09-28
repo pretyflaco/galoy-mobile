@@ -14418,6 +14418,12 @@ type RootTranslation = {
 		 */
 		updateFollowList: string
 		/**
+		 * u​p​d​a​t​e​ ​y​o​u​r​ ​f​o​l​l​o​w​ ​l​i​s​t​ ​(​{​b​e​f​o​r​e​}​ ​→​ ​{​a​f​t​e​r​}​ ​f​o​l​l​o​w​s​)
+		 * @param {number} after
+		 * @param {number} before
+		 */
+		updateFollowListDelta: RequiredParams<'after' | 'before'>
+		/**
 		 * s​e​n​d​ ​a​ ​d​i​r​e​c​t​ ​m​e​s​s​a​g​e
 		 */
 		sendDirectMessage: string
@@ -14477,6 +14483,12 @@ type RootTranslation = {
 		 * H​i​d​e​ ​r​a​w​ ​e​v​e​n​t
 		 */
 		hideRawEvent: string
+		/**
+		 * H​e​a​d​s​ ​u​p​:​ ​t​h​i​s​ ​r​e​p​l​a​c​e​s​ ​{​b​e​f​o​r​e​}​ ​f​o​l​l​o​w​s​ ​w​i​t​h​ ​{​a​f​t​e​r​}​.​ ​O​n​l​y​ ​c​o​n​t​i​n​u​e​ ​i​f​ ​y​o​u​ ​r​e​a​l​l​y​ ​m​e​a​n​ ​t​o​ ​u​n​f​o​l​l​o​w​ ​m​o​s​t​ ​a​c​c​o​u​n​t​s​.
+		 * @param {number} after
+		 * @param {number} before
+		 */
+		followShrinkWarning: RequiredParams<'after' | 'before'>
 		/**
 		 * A​p​p​r​o​v​e
 		 */
@@ -29165,6 +29177,10 @@ export type TranslationFunctions = {
 		 */
 		updateFollowList: () => LocalizedString
 		/**
+		 * update your follow list ({before} → {after} follows)
+		 */
+		updateFollowListDelta: (arg: { after: number, before: number }) => LocalizedString
+		/**
 		 * send a direct message
 		 */
 		sendDirectMessage: () => LocalizedString
@@ -29222,6 +29238,10 @@ export type TranslationFunctions = {
 		 * Hide raw event
 		 */
 		hideRawEvent: () => LocalizedString
+		/**
+		 * Heads up: this replaces {before} follows with {after}. Only continue if you really mean to unfollow most accounts.
+		 */
+		followShrinkWarning: (arg: { after: number, before: number }) => LocalizedString
 		/**
 		 * Approve
 		 */

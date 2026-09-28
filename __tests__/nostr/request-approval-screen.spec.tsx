@@ -159,6 +159,41 @@ describe("request-approval screen — issue #1 (large events / plain-language ac
     )
   })
 
+  it("carries the follow-count delta in the kind:3 headline (issue #2)", async () => {
+    const { getByTestId } = renderScreenEn({
+      method: "sign_event",
+      eventKind: 3,
+      followListDelta: { before: 685, after: 686 },
+    })
+    await flushEffects()
+    expect(getByTestId("nostr-request-action").props.children).toBe(
+      "Update your follow list (685 → 686 follows)",
+    )
+  })
+
+  it("warns LOUDLY when a kind:3 would drop most follows; no banner on healthy updates", async () => {
+    const { getByTestId } = renderScreenEn({
+      method: "sign_event",
+      eventKind: 3,
+      followListDelta: { before: 685, after: 1 },
+    })
+    await flushEffects()
+    expect(getByTestId("nostr-request-action").props.children).toBe(
+      "Update your follow list (685 → 1 follows)",
+    )
+    const banner = getByTestId("nostr-request-follow-warning")
+    const bannerText = String(banner.props.children.props.children)
+    expect(bannerText).toContain("replaces 685 follows with 1")
+
+    const { queryByTestId } = renderScreenEn({
+      method: "sign_event",
+      eventKind: 3,
+      followListDelta: { before: 685, after: 686 },
+    })
+    await flushEffects()
+    expect(queryByTestId("nostr-request-follow-warning")).toBeNull()
+  })
+
   it("renders the bounded summary by default and expands to the EXACT full event", async () => {
     const { getByTestId, queryByTestId } = renderScreen({
       method: "sign_event",

@@ -4531,6 +4531,8 @@ const en: BaseTranslation = {
     updateProfile: "update your profile",
     postNote: "post a note",
     updateFollowList: "update your follow list",
+    updateFollowListDelta:
+      "update your follow list ({before:number} → {after:number} follows)",
     sendDirectMessage: "send a direct message",
     repostNote: "repost a note",
     reactToNote: "react to a note",
@@ -4547,6 +4549,8 @@ const en: BaseTranslation = {
     whatWillBeSigned: "What will be signed",
     viewRawEvent: "View raw event",
     hideRawEvent: "Hide raw event",
+    followShrinkWarning:
+      "Heads up: this replaces {before:number} follows with {after:number}. Only continue if you really mean to unfollow most accounts.",
     approve: "Approve",
     reject: "Reject",
     counter: "Request {index:number} of {total:number} from {client:string}",

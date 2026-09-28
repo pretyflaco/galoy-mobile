@@ -322,6 +322,7 @@ const ActiveSurface: React.FC<{
     eventKind: active.eventKind,
     uHost: active.uHost,
     fallback: active.humanAction,
+    followDelta: active.followListDelta,
   })
 
   if (showReviewAll) {
@@ -351,6 +352,7 @@ const ActiveSurface: React.FC<{
       method={active.method}
       eventKind={active.eventKind}
       uHost={active.uHost}
+      followListDelta={active.followListDelta}
       contentPreview={active.contentPreview ?? ""}
       contentPreviewFull={active.contentPreviewFull}
       index={1}

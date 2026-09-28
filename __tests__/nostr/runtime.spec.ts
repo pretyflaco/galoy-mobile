@@ -279,6 +279,86 @@ describe("signer runtime assembly (A1)", () => {
     expect(runtime.awaitingFollowup.current()?.clientPubkey).toBe(clientPubkey) // overlay stays up
   })
 
+  it("kind:3 sign carries the follow-list delta on the approval entry (issue #2)", async () => {
+    const holder: { runtime?: ReturnType<typeof createSignerRuntime> } = {}
+    let captured: { followListDelta?: { before: number; after: number } } | undefined
+    const present = jest.fn(async (entry: unknown) => {
+      const e = entry as {
+        kind: string
+        followListDelta?: { before: number; after: number }
+      }
+      if (e.kind === "request") captured = e
+      holder.runtime?.coordinator.resolveActive({ approved: true })
+    })
+    const decodeForTest = () => ({
+      scheme: "nip44" as const,
+      clientPubkey,
+      request: {
+        id: "sign-k3",
+        method: "sign_event",
+        params: [
+          JSON.stringify({
+            kind: 3,
+            content: "",
+            tags: [
+              ["p", "a".repeat(64)],
+              ["p", "b".repeat(64)],
+            ],
+          }),
+        ],
+      },
+    })
+    // A pool whose one-shot `get` answers with the currently-published list: 685 follows.
+    const base = makeFakePool()
+    const poolWithGet = {
+      ...base.pool,
+      get: async () => ({
+        tags: Array.from({ length: 685 }, (_, i) => ["p", `${i}`.padStart(64, "0")]),
+      }),
+    }
+    const runtime = createSignerRuntime(
+      makeDeps({
+        present,
+        decodeForTest,
+        createPool: () => poolWithGet,
+        readTransportSkHex: readNsecHex,
+      }),
+    )
+    holder.runtime = runtime
+    await runtime.grantForTest(clientPubkey, [])
+
+    runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
+    await flushAsync()
+
+    expect(present).toHaveBeenCalledTimes(1)
+    expect(captured?.followListDelta).toEqual({ before: 685, after: 2 })
+  })
+
+  it("kind:3 delta fetch FAILS OPEN when the pool cannot read the published list", async () => {
+    const decodeForTest = () => ({
+      scheme: "nip44" as const,
+      clientPubkey,
+      request: {
+        id: "sign-k3b",
+        method: "sign_event",
+        params: [JSON.stringify({ kind: 3, content: "", tags: [["p", "a".repeat(64)]] })],
+      },
+    })
+    // The default fake pool has NO `get` — the fetch is skipped, no delta, surface still raised.
+    const present = jest.fn(async (_entry: unknown) => undefined)
+    const runtime = createSignerRuntime(makeDeps({ present, decodeForTest }))
+    await runtime.grantForTest(clientPubkey, [])
+
+    runtime.handleInbound(makeInbound("verified") as never).catch(() => undefined)
+    await flushAsync()
+
+    expect(present).toHaveBeenCalledTimes(1)
+    const entry = present.mock.calls[0][0] as {
+      followListDelta?: { before: number; after: number }
+    }
+    expect(entry.followListDelta).toBeUndefined()
+  })
+
   it("listConnections + disconnect manage the store (fix #3)", async () => {
     const runtime = createSignerRuntime(makeDeps())
     await runtime.grantForTest(clientPubkey, ["sign_event:22242"])

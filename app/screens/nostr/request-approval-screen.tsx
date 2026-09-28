@@ -163,6 +163,7 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
             onPress={() => setExpanded((e) => !e)}
             testID="nostr-request-expand"
             accessibilityRole="button"
+            accessibilityState={{ expanded }}
             accessibilityLabel={expanded ? T.hideRawEvent() : T.viewRawEvent()}
           >
             <Text type="p3" style={styles.expandText}>

@@ -239,6 +239,29 @@ describe("request-approval screen — issue #1 (large events / plain-language ac
     expect(getByTestId("nostr-request-content").props.children).not.toContain("more tags")
   })
 
+  it("exposes the raw-event toggle's expanded state to assistive tech", async () => {
+    const { getByTestId } = renderScreen({
+      method: "sign_event",
+      eventKind: 3,
+      contentPreview: summary,
+      contentPreviewFull: full,
+    })
+    await flushEffects()
+    expect(getByTestId("nostr-request-expand").props.accessibilityState).toEqual({
+      expanded: false,
+    })
+    fireEvent.press(getByTestId("nostr-request-expand"))
+    await flushEffects()
+    expect(getByTestId("nostr-request-expand").props.accessibilityState).toEqual({
+      expanded: true,
+    })
+    fireEvent.press(getByTestId("nostr-request-expand"))
+    await flushEffects()
+    expect(getByTestId("nostr-request-expand").props.accessibilityState).toEqual({
+      expanded: false,
+    })
+  })
+
   it("offers no expander when the summary IS the exact content", async () => {
     const { queryByTestId } = renderScreen({
       method: "nip44_decrypt",

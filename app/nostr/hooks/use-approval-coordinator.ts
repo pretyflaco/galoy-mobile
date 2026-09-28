@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { AccessibilityInfo, AppState, Platform, findNodeHandle } from "react-native"
 
+import { useI18nContext } from "@app/i18n/i18n-react"
+import { nostrActionLabel } from "@app/screens/nostr/action-label"
 import type { ApprovalCoordinator, ApprovalEntry } from "@app/nostr/approval/coordinator"
 import {
   buildAnnouncement,
@@ -26,6 +28,7 @@ const platform = (): SignerPlatform => (Platform.OS === "ios" ? "ios" : "android
  * driven purely by AppState.
  */
 export const useApprovalCoordinator = (coordinator: ApprovalCoordinator) => {
+  const { LL } = useI18nContext()
   const [active, setActive] = useState<ApprovalEntry | null>(coordinator.activeEntry())
   const [depth, setDepth] = useState<number>(coordinator.queueDepth())
   const [appState, setAppState] = useState<AppStateValue>(
@@ -70,19 +73,26 @@ export const useApprovalCoordinator = (coordinator: ApprovalCoordinator) => {
     lastAnnouncedId.current = active.id
 
     if (active.kind === "request") {
+      // Announce the PLAIN-LANGUAGE action (issue #1): "update your follow list", never the
+      // raw dump or the runtime's technical fallback string.
       AccessibilityInfo.announceForAccessibility(
         buildAnnouncement({
           index: 1,
           total: coordinator.queueDepth(),
           client: active.clientPubkey,
-          action: active.humanAction,
+          action: nostrActionLabel(LL.NostrActionKind, {
+            method: active.method,
+            eventKind: active.eventKind,
+            uHost: active.uHost,
+            fallback: active.humanAction,
+          }),
         }),
       )
     }
 
     const node = focusRef.current ? findNodeHandle(focusRef.current as never) : null
     if (node) AccessibilityInfo.setAccessibilityFocus(node)
-  }, [visible, active, coordinator])
+  }, [visible, active, coordinator, LL])
 
   const approve = useCallback(() => {
     coordinator.resolveActive({ approved: true })

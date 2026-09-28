@@ -64,6 +64,12 @@ export interface RequestApprovalEntry {
   humanAction: string
   /** Human-readable content preview of what will be signed/decrypted. */
   contentPreview?: string
+  /**
+   * The EXACT untruncated sign_event panel (full content, every tag — issue #1). When it
+   * differs from `contentPreview` the surface offers a "View raw event" expander, keeping
+   * SM-C3's exactness while the default view stays bounded.
+   */
+  contentPreviewFull?: string
 }
 
 /** The FIFO carries both kinds through one queue. */

@@ -29,6 +29,17 @@ export interface PreviewableEvent {
 /** Content longer than this is truncated in the preview (the full event is still what's signed). */
 export const PREVIEW_CONTENT_MAX = 500
 
+/**
+ * Tags beyond this count are elided from the summary panel with a "+N more" marker (issue #1:
+ * a kind:3 contact list carries hundreds of `p` tags and made the approval surface unusable).
+ * The exact, unelided event stays available via `formatSignEventPanelFull`.
+ */
+export const PREVIEW_TAG_RENDER_MAX = 20
+
+/** Render a tags array as the multi-line JSON block shared by both panel formats. */
+const renderTags = (tags: string[][]): string =>
+  tags.length ? `[\n${tags.map((t) => `  ${JSON.stringify(t)}`).join(",\n")}\n]` : "[]"
+
 /** Build the sign_event preview: the exact fields being signed, content bounded for display. */
 export const buildSignEventPreview = (event: PreviewableEvent): SignEventPreview => ({
   kind: event.kind,
@@ -44,18 +55,35 @@ export const buildSignEventPreview = (event: PreviewableEvent): SignEventPreview
 /**
  * Serialize a sign_event preview into the monospace panel text (kind / created_at / content /
  * tags), one field per line. Kept deterministic so the surface + tests share one format.
+ * Summary-bounded (issue #1): only the first `PREVIEW_TAG_RENDER_MAX` tags render, with a
+ * "+N more" marker — the full panel below carries the exact unelided event.
  */
 export const formatSignEventPanel = (p: SignEventPreview): string => {
-  const tags = p.tags.length
-    ? `[\n${p.tags.map((t) => `  ${JSON.stringify(t)}`).join(",\n")}\n]`
-    : "[]"
-  return [
+  const shown = p.tags.slice(0, PREVIEW_TAG_RENDER_MAX)
+  const hidden = p.tags.length - shown.length
+  const lines = [
     `kind: ${p.kind}`,
     `created_at: ${p.createdAt}`,
     `content: ${JSON.stringify(p.content)}`,
-    `tags: ${tags}`,
-  ].join("\n")
+    `tags: ${renderTags(shown)}`,
+  ]
+  if (hidden > 0) lines.push(`… +${hidden} more tags`)
+  return lines.join("\n")
 }
+
+/**
+ * The EXACT panel (SM-C3): full content (never truncated) and every tag, straight off the event
+ * being signed. This is what the approval surface's "View raw event" expander renders, so the
+ * exactness rule holds even when the default view is the bounded summary above.
+ */
+export const formatSignEventPanelFull = (event: PreviewableEvent): string =>
+  [
+    `kind: ${event.kind}`,
+    // eslint-disable-next-line camelcase
+    `created_at: ${event.created_at}`,
+    `content: ${JSON.stringify(event.content)}`,
+    `tags: ${renderTags(event.tags)}`,
+  ].join("\n")
 
 /** NIP-46 capability methods that carry a payload we must NOT surface. */
 type CapabilityMethod =

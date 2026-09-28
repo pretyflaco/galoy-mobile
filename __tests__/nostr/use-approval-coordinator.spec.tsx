@@ -11,6 +11,8 @@ import {
   type RequestApprovalEntry,
 } from "@app/nostr/approval/coordinator"
 
+import { ContextForScreen } from "../screens/helper"
+
 const entry = (id: string): RequestApprovalEntry => ({
   id,
   kind: "request",
@@ -24,7 +26,9 @@ const entry = (id: string): RequestApprovalEntry => ({
 describe("useApprovalCoordinator (reactive wiring)", () => {
   it("exposes the active entry + depth and updates as the queue drains", () => {
     const coordinator = createApprovalCoordinator({ present: async () => undefined })
-    const { result } = renderHook(() => useApprovalCoordinator(coordinator))
+    const { result } = renderHook(() => useApprovalCoordinator(coordinator), {
+      wrapper: ContextForScreen,
+    })
 
     expect(result.current.active).toBeNull()
     expect(result.current.depth).toBe(0)
@@ -51,7 +55,9 @@ describe("useApprovalCoordinator (reactive wiring)", () => {
 
   it("approve/reject resolve the pending enqueue decision through the coordinator", async () => {
     const coordinator = createApprovalCoordinator({ present: async () => undefined })
-    const { result } = renderHook(() => useApprovalCoordinator(coordinator))
+    const { result } = renderHook(() => useApprovalCoordinator(coordinator), {
+      wrapper: ContextForScreen,
+    })
 
     let decision: { approved: boolean } | undefined
     act(() => {

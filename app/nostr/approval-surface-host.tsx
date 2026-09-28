@@ -25,6 +25,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
 import { makeStyles } from "@rn-vui/themed"
 
+import { useI18nContext } from "@app/i18n/i18n-react"
+
 import { Screen } from "@app/components/screen"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 import { NostrConnectionApprovalScreen } from "@app/screens/nostr/connection-approval-screen"
@@ -34,6 +36,8 @@ import {
   NostrReviewAllScreen,
   type ReviewAllItem,
 } from "@app/screens/nostr/review-all-screen"
+
+import { nostrActionLabel } from "@app/screens/nostr/action-label"
 
 import { NostrAwaitingFollowupScreen } from "@app/screens/nostr/awaiting-followup-screen"
 
@@ -298,6 +302,8 @@ const ActiveSurface: React.FC<{
   onReviewApprove,
   onReviewReject,
 }) => {
+  const { LL } = useI18nContext()
+
   if (active.kind === "connection") {
     return (
       <NostrConnectionApprovalScreen
@@ -309,13 +315,22 @@ const ActiveSurface: React.FC<{
     )
   }
 
+  // Plain-language action derived once per entry (issue #1): the structured method/kind/uHost
+  // fields every request entry carries, resolved against the i18n registry.
+  const action = nostrActionLabel(LL.NostrActionKind, {
+    method: active.method,
+    eventKind: active.eventKind,
+    uHost: active.uHost,
+    fallback: active.humanAction,
+  })
+
   if (showReviewAll) {
     const requests = coordinator
       .pendingEntries()
       .filter((e) => e.kind === "request" && e.clientPubkey === active.clientPubkey)
     const items: ReviewAllItem[] = requests.map((r) => ({
       id: r.id,
-      action: r.kind === "request" ? r.humanAction : "",
+      action,
       preview: (r.kind === "request" && r.contentPreview) || "",
     }))
     return (
@@ -333,7 +348,11 @@ const ActiveSurface: React.FC<{
       clientName={clientLabel}
       clientImage={clientImage}
       humanAction={active.humanAction}
+      method={active.method}
+      eventKind={active.eventKind}
+      uHost={active.uHost}
       contentPreview={active.contentPreview ?? ""}
+      contentPreviewFull={active.contentPreviewFull}
       index={1}
       total={depth}
       onApprove={onApprove}

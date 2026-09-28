@@ -39,6 +39,7 @@ import {
   buildCapabilityPreview,
   buildSignEventPreview,
   formatSignEventPanel,
+  formatSignEventPanelFull,
 } from "./approval/request-preview"
 import {
   createConnectionStore,
@@ -647,9 +648,13 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
           // pre-approves 27235 only when this equals the connect-time app origin. Defensive parse
           // (malformed/absent → null → prompt). Non-27235 kinds carry no u-host.
           uHost: uHostForSign(event),
-          humanAction: "sign-in-and-sign",
-          // Structured "what will be signed" panel (B4): the exact fields being signed.
+          // Fallback phrase only — the surface derives the plain-language action from the
+          // method/eventKind/uHost fields above (issue #1); this never shows for mapped kinds.
+          humanAction: "sign an event",
+          // Structured "what will be signed" panel (B4): the bounded summary for the default
+          // view, plus the EXACT untruncated event for the "View raw event" expander (SM-C3).
           contentPreview: formatSignEventPanel(buildSignEventPreview(event)),
+          contentPreviewFull: formatSignEventPanelFull(event),
         }).then(async (decision) => {
           if (!decision.approved) return { approved: false }
           const [scopeNow, npubNow] = await Promise.all([

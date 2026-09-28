@@ -247,7 +247,10 @@ describe("sign_event", () => {
       method: "sign_event",
       eventKind: 27235,
       uHost: "vezir.twentyone.ist",
-      humanAction: "sign-in-and-sign",
+      // Fallback phrase only — the surface derives "log in to <uHost>" from the fields above.
+      humanAction: "sign an event",
+      // The exact panel travels alongside the bounded summary for the expander (SM-C3).
+      contentPreviewFull: expect.stringContaining("kind: 27235"),
     })
 
     expect(results).toHaveLength(1)

@@ -8,7 +8,9 @@ import {
   buildCapabilityPreview,
   buildSignEventPreview,
   formatSignEventPanel,
+  formatSignEventPanelFull,
   PREVIEW_CONTENT_MAX,
+  PREVIEW_TAG_RENDER_MAX,
 } from "../../app/nostr/approval/request-preview"
 
 describe("buildSignEventPreview + formatSignEventPanel (B4)", () => {
@@ -44,6 +46,35 @@ describe("buildSignEventPreview + formatSignEventPanel (B4)", () => {
       buildSignEventPreview({ kind: 1, created_at: 1, content: "gm", tags: [] }),
     )
     expect(panel).toContain("tags: []")
+  })
+
+  it("caps rendered tags with a +N marker (issue #1: kind:3 contact lists)", () => {
+    const tags = Array.from({ length: PREVIEW_TAG_RENDER_MAX + 40 }, (_, i) => [
+      "p",
+      `${i}`.padStart(64, "0"),
+    ])
+    const panel = formatSignEventPanel(
+      buildSignEventPreview({ kind: 3, created_at: 1, content: "", tags }),
+    )
+    expect(panel.match(/"p"/g)).toHaveLength(PREVIEW_TAG_RENDER_MAX)
+    expect(panel).toContain(`… +40 more tags`)
+  })
+
+  it("formatSignEventPanelFull carries the EXACT untruncated event (SM-C3)", () => {
+    const long = "y".repeat(PREVIEW_CONTENT_MAX + 500)
+    const tags = Array.from({ length: PREVIEW_TAG_RENDER_MAX + 10 }, (_, i) => [
+      "p",
+      `${i}`.padStart(64, "0"),
+    ])
+    const event = { kind: 3, created_at: 1734163200, content: long, tags }
+    const full = formatSignEventPanelFull(event)
+    // Content never truncated — the whole payload is present verbatim.
+    expect(full).toContain(JSON.stringify(long))
+    // Every tag renders — nothing elided.
+    expect(full.match(/"p"/g)).toHaveLength(tags.length)
+    expect(full).not.toContain("more tags")
+    // And the summary differs, so the surface can detect "has more to expand".
+    expect(full).not.toBe(formatSignEventPanel(buildSignEventPreview(event)))
   })
 })
 

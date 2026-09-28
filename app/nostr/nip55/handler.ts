@@ -17,7 +17,11 @@
 import * as nip19 from "nostr-tools/nip19"
 
 import type { ApprovalCoordinator } from "../approval/coordinator"
-import { buildSignEventPreview, formatSignEventPanel } from "../approval/request-preview"
+import {
+  buildSignEventPreview,
+  formatSignEventPanel,
+  formatSignEventPanelFull,
+} from "../approval/request-preview"
 import { NIP98_KIND } from "../core/policy-check"
 import type { NostrSigner } from "../core/signer"
 import { normalizeHost } from "../core/url-origin"
@@ -169,8 +173,11 @@ export const createNip55Handler = (ports: Nip55HandlerPorts): Nip55Handler => {
               method: "sign_event",
               eventKind: event.kind,
               uHost: uHostForSign(event),
-              humanAction: "sign-in-and-sign",
+              // Fallback phrase only — the surface derives the plain-language action from
+              // method/eventKind/uHost (issue #1); this never shows for mapped kinds.
+              humanAction: "sign an event",
               contentPreview: formatSignEventPanel(buildSignEventPreview(event)),
+              contentPreviewFull: formatSignEventPanelFull(event),
             })
             .then(async (decision) => {
               if (!decision.approved) return { approved: false }

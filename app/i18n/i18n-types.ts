@@ -14404,6 +14404,62 @@ type RootTranslation = {
 		 */
 		footer: string
 	}
+	NostrActionKind: {
+		/**
+		 * u​p​d​a​t​e​ ​y​o​u​r​ ​p​r​o​f​i​l​e
+		 */
+		updateProfile: string
+		/**
+		 * p​o​s​t​ ​a​ ​n​o​t​e
+		 */
+		postNote: string
+		/**
+		 * u​p​d​a​t​e​ ​y​o​u​r​ ​f​o​l​l​o​w​ ​l​i​s​t
+		 */
+		updateFollowList: string
+		/**
+		 * s​e​n​d​ ​a​ ​d​i​r​e​c​t​ ​m​e​s​s​a​g​e
+		 */
+		sendDirectMessage: string
+		/**
+		 * r​e​p​o​s​t​ ​a​ ​n​o​t​e
+		 */
+		repostNote: string
+		/**
+		 * r​e​a​c​t​ ​t​o​ ​a​ ​n​o​t​e
+		 */
+		reactToNote: string
+		/**
+		 * a​u​t​h​e​n​t​i​c​a​t​e​ ​w​i​t​h​ ​a​ ​r​e​l​a​y
+		 */
+		relayAuth: string
+		/**
+		 * l​o​g​ ​i​n​ ​t​o​ ​{​h​o​s​t​}
+		 * @param {string} host
+		 */
+		logInTo: RequiredParams<'host'>
+		/**
+		 * l​o​g​ ​i​n​ ​t​o​ ​a​ ​w​e​b​s​i​t​e
+		 */
+		logInGeneric: string
+		/**
+		 * p​u​b​l​i​s​h​ ​a​ ​l​o​n​g​-​f​o​r​m​ ​a​r​t​i​c​l​e
+		 */
+		publishArticle: string
+		/**
+		 * s​i​g​n​ ​a​ ​k​i​n​d​ ​{​k​i​n​d​}​ ​e​v​e​n​t
+		 * @param {number} kind
+		 */
+		signKindEvent: RequiredParams<'kind'>
+		/**
+		 * e​n​c​r​y​p​t​ ​a​ ​m​e​s​s​a​g​e
+		 */
+		encryptMessage: string
+		/**
+		 * d​e​c​r​y​p​t​ ​a​ ​m​e​s​s​a​g​e
+		 */
+		decryptMessage: string
+	}
 	NostrRequestApprovalScreen: {
 		/**
 		 * A​p​p​r​o​v​e​ ​r​e​q​u​e​s​t
@@ -14413,6 +14469,14 @@ type RootTranslation = {
 		 * W​h​a​t​ ​w​i​l​l​ ​b​e​ ​s​i​g​n​e​d
 		 */
 		whatWillBeSigned: string
+		/**
+		 * V​i​e​w​ ​r​a​w​ ​e​v​e​n​t
+		 */
+		viewRawEvent: string
+		/**
+		 * H​i​d​e​ ​r​a​w​ ​e​v​e​n​t
+		 */
+		hideRawEvent: string
 		/**
 		 * A​p​p​r​o​v​e
 		 */
@@ -14429,12 +14493,11 @@ type RootTranslation = {
 		 */
 		counter: RequiredParams<'client' | 'index' | 'total'>
 		/**
-		 * {​c​l​i​e​n​t​}​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}​ ​—​ ​{​p​r​e​v​i​e​w​}​.​ ​A​p​p​r​o​v​e​ ​o​r​ ​r​e​j​e​c​t​.
+		 * {​c​l​i​e​n​t​}​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}​.​ ​A​p​p​r​o​v​e​ ​o​r​ ​r​e​j​e​c​t​.
 		 * @param {string} action
 		 * @param {string} client
-		 * @param {string} preview
 		 */
-		srLabel: RequiredParams<'action' | 'client' | 'preview'>
+		srLabel: RequiredParams<'action' | 'client'>
 		/**
 		 * R​e​q​u​e​s​t​ ​{​i​n​d​e​x​}​ ​o​f​ ​{​t​o​t​a​l​}​ ​f​r​o​m​ ​{​c​l​i​e​n​t​}​,​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}
 		 * @param {string} action
@@ -29088,6 +29151,60 @@ export type TranslationFunctions = {
 		 */
 		footer: () => LocalizedString
 	}
+	NostrActionKind: {
+		/**
+		 * update your profile
+		 */
+		updateProfile: () => LocalizedString
+		/**
+		 * post a note
+		 */
+		postNote: () => LocalizedString
+		/**
+		 * update your follow list
+		 */
+		updateFollowList: () => LocalizedString
+		/**
+		 * send a direct message
+		 */
+		sendDirectMessage: () => LocalizedString
+		/**
+		 * repost a note
+		 */
+		repostNote: () => LocalizedString
+		/**
+		 * react to a note
+		 */
+		reactToNote: () => LocalizedString
+		/**
+		 * authenticate with a relay
+		 */
+		relayAuth: () => LocalizedString
+		/**
+		 * log in to {host}
+		 */
+		logInTo: (arg: { host: string }) => LocalizedString
+		/**
+		 * log in to a website
+		 */
+		logInGeneric: () => LocalizedString
+		/**
+		 * publish a long-form article
+		 */
+		publishArticle: () => LocalizedString
+		/**
+		 * sign a kind {kind} event
+		 */
+		signKindEvent: (arg: { kind: number }) => LocalizedString
+		/**
+		 * encrypt a message
+		 */
+		encryptMessage: () => LocalizedString
+		/**
+		 * decrypt a message
+		 */
+		decryptMessage: () => LocalizedString
+	}
 	NostrRequestApprovalScreen: {
 		/**
 		 * Approve request
@@ -29097,6 +29214,14 @@ export type TranslationFunctions = {
 		 * What will be signed
 		 */
 		whatWillBeSigned: () => LocalizedString
+		/**
+		 * View raw event
+		 */
+		viewRawEvent: () => LocalizedString
+		/**
+		 * Hide raw event
+		 */
+		hideRawEvent: () => LocalizedString
 		/**
 		 * Approve
 		 */
@@ -29110,9 +29235,9 @@ export type TranslationFunctions = {
 		 */
 		counter: (arg: { client: string, index: number, total: number }) => LocalizedString
 		/**
-		 * {client} wants to {action} — {preview}. Approve or reject.
+		 * {client} wants to {action}. Approve or reject.
 		 */
-		srLabel: (arg: { action: string, client: string, preview: string }) => LocalizedString
+		srLabel: (arg: { action: string, client: string }) => LocalizedString
 		/**
 		 * Request {index} of {total} from {client}, wants to {action}
 		 */

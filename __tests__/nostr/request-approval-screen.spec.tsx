@@ -9,7 +9,9 @@
  * the source-scan test.
  */
 import React from "react"
-import { render, fireEvent } from "@testing-library/react-native"
+import { StyleSheet } from "react-native"
+import type { ReactTestInstance } from "react-test-renderer"
+import { render, fireEvent, within } from "@testing-library/react-native"
 
 import { ThemeProvider } from "@rn-vui/themed"
 
@@ -21,11 +23,22 @@ import {
   formatSignEventPanel,
   formatSignEventPanelFull,
 } from "@app/nostr/approval/request-preview"
+import { light } from "@app/rne-theme/colors"
 import theme from "@app/rne-theme/theme"
 import { NostrRequestApprovalScreen } from "@app/screens/nostr/request-approval-screen"
 
 import { ContextForScreen } from "../screens/helper"
 import { flushEffects } from "../helpers/flush-effects"
+
+/** Whether `node` sits (at any depth) inside the element carrying `testID`. */
+const hasAncestor = (node: ReactTestInstance, testID: string): boolean => {
+  let walker = node.parent
+  while (walker) {
+    if ((walker as { props?: { testID?: string } }).props?.testID === testID) return true
+    walker = walker.parent
+  }
+  return false
+}
 
 const renderScreen = (
   props: Partial<React.ComponentProps<typeof NostrRequestApprovalScreen>> = {},
@@ -205,9 +218,10 @@ describe("request-approval screen — issue #1 (large events / plain-language ac
     expect(getByTestId("nostr-request-action").props.children).toBe(
       "Update your follow list (685 → 1 follows)",
     )
-    const banner = getByTestId("nostr-request-follow-warning")
-    const bannerText = String(banner.props.children.props.children)
-    expect(bannerText).toContain("replaces 685 follows with 1")
+    expect(getByTestId("nostr-request-follow-warning")).toBeTruthy()
+    expect(String(getByTestId("nostr-request-follow-warning-text").props.children)).toBe(
+      "This replaces your 685 follows with 1. Only continue if you mean to unfollow most accounts.",
+    )
 
     const { queryByTestId } = renderScreenEn({
       method: "sign_event",
@@ -216,6 +230,56 @@ describe("request-approval screen — issue #1 (large events / plain-language ac
     })
     await flushEffects()
     expect(queryByTestId("nostr-request-follow-warning")).toBeNull()
+  })
+
+  it("styles the shrink banner with {consent-danger} tokens, an icon, and grey0 p2 copy", async () => {
+    const { getByTestId } = renderScreenEn({
+      method: "sign_event",
+      eventKind: 3,
+      followListDelta: { before: 685, after: 1 },
+    })
+    await flushEffects()
+    const banner = getByTestId("nostr-request-follow-warning")
+    const bannerStyle = StyleSheet.flatten(banner.props.style)
+    // Border = {consent-danger} (error), NOT the recoverable `warning` token.
+    expect(bannerStyle.borderColor).toBe(light.error)
+    expect(bannerStyle.borderColor).not.toBe(light.warning)
+    // Wash = {consent-danger-bg} (error9).
+    expect(bannerStyle.backgroundColor).toBe(light.error9)
+    // Consequence copy: on-surface grey0 at p2 — never red text.
+    const textStyle = StyleSheet.flatten(
+      getByTestId("nostr-request-follow-warning-text").props.style,
+    )
+    expect(textStyle.color).toBe(light.grey0)
+    expect(textStyle.color).not.toBe(light.error)
+    expect(textStyle.fontSize).toBe(16)
+    // Colour is never the only signal: an icon pairs with the copy.
+    expect(within(banner).getByTestId("icon-warning")).toBeTruthy()
+  })
+
+  it("pins the shrink banner directly above the footer, outside the scroll", async () => {
+    const { getByTestId } = renderScreenEn({
+      method: "sign_event",
+      eventKind: 3,
+      followListDelta: { before: 685, after: 1 },
+    })
+    await flushEffects()
+    const banner = getByTestId("nostr-request-follow-warning")
+    expect(hasAncestor(banner, "nostr-request-scroll")).toBe(false)
+    expect(hasAncestor(banner, "nostr-request-footer")).toBe(false)
+    // Document (= AT reading) order over host nodes: summary panel → expander → warning →
+    // footer, with nothing between the warning and the decision controls.
+    const ids = getByTestId("nostr-request-approval")
+      .findAll((n) => typeof n.type === "string" && typeof n.props.testID === "string")
+      .map((n) => n.props.testID as string)
+    const warningAt = ids.indexOf("nostr-request-follow-warning")
+    expect(ids.indexOf("nostr-request-content")).toBeLessThan(warningAt)
+    const afterWarning = ids
+      .slice(warningAt)
+      .filter(
+        (id) => !id.startsWith("nostr-request-follow-warning") && id !== "icon-warning",
+      )
+    expect(afterWarning[0]).toBe("nostr-request-footer")
   })
 
   it("renders the bounded summary by default and expands to the EXACT full event", async () => {
@@ -280,19 +344,6 @@ describe("request-approval screen — issue #1 (large events / plain-language ac
       contentPreviewFull: full,
     })
     await flushEffects()
-
-    const hasAncestor = (
-      node: ReturnType<typeof getByTestId>,
-      testID: string,
-    ): boolean => {
-      let walker = node.parent
-      while (walker) {
-        if ((walker as { props?: { testID?: string } }).props?.testID === testID)
-          return true
-        walker = walker.parent
-      }
-      return false
-    }
 
     // The decision buttons live in the footer — a sibling of the ScrollView, never inside it.
     expect(

@@ -3,6 +3,7 @@ import { ScrollView, TouchableOpacity, View } from "react-native"
 
 import { Avatar, Text, makeStyles } from "@rn-vui/themed"
 
+import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
 import { useI18nContext } from "@app/i18n/i18n-react"
@@ -127,21 +128,6 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
           {capitalizeAction(action)}
         </Text>
 
-        {/* Issue #2 mitigation: a kind:3 is a FULL replacement list — when the raise site could
-            compare it to the published list and it would drop most follows, say so LOUDLY
-            before the buttons. (Primal once built a 1-tag list from a stale fetch; the user
-            approved the exact content and lost 685 follows.) */}
-        {followListDelta && isDrasticFollowShrink(followListDelta) ? (
-          <View style={styles.warningBanner} testID="nostr-request-follow-warning">
-            <Text type="p3" style={styles.warningText}>
-              {T.followShrinkWarning({
-                before: followListDelta.before,
-                after: followListDelta.after,
-              })}
-            </Text>
-          </View>
-        ) : null}
-
         {/* "What will be signed": the bounded summary by default; the EXACT content (SM-C3)
             expands below. Consequence copy never truncates silently — the expander always
             offers the full record. */}
@@ -172,6 +158,28 @@ export const NostrRequestApprovalScreen: React.FC<Props> = ({
           </TouchableOpacity>
         ) : null}
       </ScrollView>
+
+      {/* FR-25 list-shrink warning (issue #2): a kind:3 is a FULL replacement list — when the
+          raise site could compare it to the published list and it would drop most follows,
+          say so before the decision. Pinned directly above the footer (outside the scroll) so
+          it can never scroll away, and read after the expander, before the controls (Story
+          3.4 AT order). {consent-danger} on border + icon only, {consent-danger-bg} wash,
+          consequence copy in grey0 — never red text (DESIGN list-shrink row). */}
+      {followListDelta && isDrasticFollowShrink(followListDelta) ? (
+        <View style={styles.warningBanner} testID="nostr-request-follow-warning">
+          <GaloyIcon name="warning" size={20} color={styles.warningIcon.color} />
+          <Text
+            type="p2"
+            style={styles.warningText}
+            testID="nostr-request-follow-warning-text"
+          >
+            {T.followShrinkWarning({
+              before: followListDelta.before,
+              after: followListDelta.after,
+            })}
+          </Text>
+        </View>
+      ) : null}
 
       {/* Sticky footer (issue #1): the decision is always reachable — the panel scrolls, the
           buttons never move. Affirmative (approve) is the default focus target; reject is
@@ -247,15 +255,26 @@ const useStyles = makeStyles(({ colors }) => ({
     padding: 20,
     rowGap: 10,
   },
+  // FR-25 list-shrink warning — an irreversible consent moment, so {consent-danger}, not
+  // `warning` (DESIGN.md: that would mislabel it as recoverable).
   warningBanner: {
-    backgroundColor: colors.error9,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    columnGap: 10,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.warning,
-    padding: 12,
+    borderColor: colors.error, // {consent-danger} on border/icon ONLY
+    backgroundColor: colors.error9, // {consent-danger-bg} wash
+  },
+  warningIcon: {
+    color: colors.error, // {consent-danger}
   },
   warningText: {
-    color: colors.black,
+    flexShrink: 1,
+    color: colors.grey0, // consequence copy NEVER danger red (≥ 4.5:1 on the wash)
     fontWeight: "600",
   },
 }))

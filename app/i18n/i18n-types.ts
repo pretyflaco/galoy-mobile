@@ -14483,7 +14483,7 @@ type RootTranslation = {
 		 */
 		hideRawEvent: string
 		/**
-		 * H​e​a​d​s​ ​u​p​:​ ​t​h​i​s​ ​r​e​p​l​a​c​e​s​ ​{​b​e​f​o​r​e​}​ ​f​o​l​l​o​w​s​ ​w​i​t​h​ ​{​a​f​t​e​r​}​.​ ​O​n​l​y​ ​c​o​n​t​i​n​u​e​ ​i​f​ ​y​o​u​ ​r​e​a​l​l​y​ ​m​e​a​n​ ​t​o​ ​u​n​f​o​l​l​o​w​ ​m​o​s​t​ ​a​c​c​o​u​n​t​s​.
+		 * T​h​i​s​ ​r​e​p​l​a​c​e​s​ ​y​o​u​r​ ​{​b​e​f​o​r​e​}​ ​f​o​l​l​o​w​s​ ​w​i​t​h​ ​{​a​f​t​e​r​}​.​ ​O​n​l​y​ ​c​o​n​t​i​n​u​e​ ​i​f​ ​y​o​u​ ​m​e​a​n​ ​t​o​ ​u​n​f​o​l​l​o​w​ ​m​o​s​t​ ​a​c​c​o​u​n​t​s​.
 		 * @param {number} after
 		 * @param {number} before
 		 */
@@ -29242,7 +29242,7 @@ export type TranslationFunctions = {
 		 */
 		hideRawEvent: () => LocalizedString
 		/**
-		 * Heads up: this replaces {before} follows with {after}. Only continue if you really mean to unfollow most accounts.
+		 * This replaces your {before} follows with {after}. Only continue if you mean to unfollow most accounts.
 		 */
 		followShrinkWarning: (arg: { after: number, before: number }) => LocalizedString
 		/**

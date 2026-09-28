@@ -75,10 +75,12 @@ describe("nostrActionLabel — sign_event kinds (NIP-01 registry + NIP-98)", () 
     )
   })
 
-  it("unknown kinds fall back to naming the kind number", () => {
-    expect(label({ method: "sign_event", eventKind: 9999 })).toBe(
-      "sign a kind 9999 event",
-    )
+  it("unknown kinds read as an unrecognised event type — never the bare kind number", () => {
+    const unknown = label({ method: "sign_event", eventKind: 1984 })
+    expect(unknown).toBe("sign an event type Blink doesn't recognise")
+    // FR-12 / 09 a11y floor: no digit of the kind may reach the headline or any label.
+    expect(unknown).not.toMatch(/\d/)
+    expect(label({ method: "sign_event", eventKind: 9999 })).not.toMatch(/\d/)
     // No eventKind stamped (never happens from the runtime) → method-name fallback.
     expect(label({ method: "sign_event" })).toBe("sign_event")
   })

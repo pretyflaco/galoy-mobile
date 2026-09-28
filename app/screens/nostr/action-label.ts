@@ -26,7 +26,7 @@ export type NostrActionFields = {
 /** The i18n namespace these labels read from. */
 type ActionT = TranslationFunctions["NostrActionKind"]
 
-/** Base-registry kinds with a dedicated phrase; anything else falls back to the kind number. */
+/** Base-registry kinds with a dedicated phrase; anything else reads as an unrecognised type. */
 const KIND_LABELS: Record<number, (T: ActionT, f: NostrActionFields) => string> = {
   0: (T) => T.updateProfile(),
   1: (T) => T.postNote(),
@@ -59,7 +59,9 @@ export const nostrActionLabel = (T: ActionT, f: NostrActionFields): string => {
     }
     const known = f.eventKind === undefined ? undefined : KIND_LABELS[f.eventKind]
     if (known) return known(T, f)
-    if (f.eventKind !== undefined) return T.signKindEvent({ kind: f.eventKind })
+    // Never a bare kind number in the headline or any accessible label (FR-12, 09 a11y
+    // floor) — the number shows only in the visual panel (`kind: N`).
+    if (f.eventKind !== undefined) return T.signUnknownEvent()
   }
   if (f.method === "nip04_encrypt" || f.method === "nip44_encrypt")
     return T.encryptMessage()

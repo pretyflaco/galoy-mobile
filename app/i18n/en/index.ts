@@ -4540,7 +4540,7 @@ const en: BaseTranslation = {
     logInTo: "log in to {host:string}",
     logInGeneric: "log in to a website",
     publishArticle: "publish a long-form article",
-    signKindEvent: "sign a kind {kind:number} event",
+    signUnknownEvent: "sign an event type Blink doesn't recognise",
     encryptMessage: "encrypt a message",
     decryptMessage: "decrypt a message",
   },

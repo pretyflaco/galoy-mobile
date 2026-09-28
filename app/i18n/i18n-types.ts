@@ -14453,10 +14453,9 @@ type RootTranslation = {
 		 */
 		publishArticle: string
 		/**
-		 * s​i​g​n​ ​a​ ​k​i​n​d​ ​{​k​i​n​d​}​ ​e​v​e​n​t
-		 * @param {number} kind
+		 * s​i​g​n​ ​a​n​ ​e​v​e​n​t​ ​t​y​p​e​ ​B​l​i​n​k​ ​d​o​e​s​n​'​t​ ​r​e​c​o​g​n​i​s​e
 		 */
-		signKindEvent: RequiredParams<'kind'>
+		signUnknownEvent: string
 		/**
 		 * e​n​c​r​y​p​t​ ​a​ ​m​e​s​s​a​g​e
 		 */
@@ -29213,9 +29212,9 @@ export type TranslationFunctions = {
 		 */
 		publishArticle: () => LocalizedString
 		/**
-		 * sign a kind {kind} event
+		 * sign an event type Blink doesn't recognise
 		 */
-		signKindEvent: (arg: { kind: number }) => LocalizedString
+		signUnknownEvent: () => LocalizedString
 		/**
 		 * encrypt a message
 		 */

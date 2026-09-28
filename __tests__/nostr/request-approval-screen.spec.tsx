@@ -159,6 +159,30 @@ describe("request-approval screen — issue #1 (large events / plain-language ac
     )
   })
 
+  it("keeps an unmapped kind number OUT of the headline/label/announce; only the panel shows it", async () => {
+    const panel = formatSignEventPanel(
+      buildSignEventPreview({ kind: 1984, created_at: 1, content: "", tags: [] }),
+    )
+    const { getByTestId } = renderScreenEn({
+      method: "sign_event",
+      eventKind: 1984,
+      contentPreview: panel,
+    })
+    await flushEffects()
+    const headline = String(getByTestId("nostr-request-action").props.children)
+    expect(headline).toBe("Sign an event type Blink doesn't recognise")
+    expect(headline).not.toMatch(/\d/)
+    const srLabel = String(getByTestId("nostr-request-approval").props.accessibilityLabel)
+    expect(srLabel).toContain("sign an event type Blink doesn't recognise")
+    expect(srLabel).not.toMatch(/\d/)
+    // The announce carries the queue position ("Request 1 of 2") but never the kind.
+    const announce = String(getByTestId("nostr-request-counter").props.accessibilityLabel)
+    expect(announce).toContain("sign an event type Blink doesn't recognise")
+    expect(announce).not.toContain("1984")
+    // The number belongs in the visual panel only.
+    expect(getByTestId("nostr-request-content").props.children).toContain("kind: 1984")
+  })
+
   it("carries the follow-count delta in the kind:3 headline (issue #2)", async () => {
     const { getByTestId } = renderScreenEn({
       method: "sign_event",

@@ -6,11 +6,23 @@ name: Support-chat smoke (Hermes)
 # scripts/support-chat-ci/), builds the app against them (ENVFILE), and drives the
 # full loop via adb: onboard → nostr identity → start chat → greeting → send →
 # live E2EE reply. Everything the job uses is throwaway, public data — no secrets.
+#
+# SECURITY (self-hosted runner on a PUBLIC repo, F-M16-12): the runner is a dedicated,
+# sandboxed user on the operator's machine (scripts/support-chat-ci/install-runner.sh).
+# The real protections live OUTSIDE this file, because a fork PR runs its OWN copy of
+# the workflow: repo setting "require approval for all external contributors", a
+# read-only default GITHUB_TOKEN, a runner that carries ONLY the label below (no
+# `self-hosted` default label, so upstream workflows never land on it), and the
+# runner's systemd sandbox (no /home, private /tmp, own adb server). The `if:` below
+# is defense in depth only.
 
 on:
   pull_request:
     branches: [main, feat/support-chat]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -19,11 +31,23 @@ concurrency:
 jobs:
   support-chat-smoke-android:
     name: Android (Hermes)
-    runs-on: self-hosted
+    runs-on: supportchat-muscle
+    timeout-minutes: 90
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      # Own adb server (the runner user cannot open USB devices, and the host user's
+      # adb server on :5037 — which owns the operator's phone — is never used), and
+      # every adb call pinned to the emulator.
+      ANDROID_ADB_SERVER_PORT: "5039"
+      ANDROID_SERIAL: emulator-5554
+      LANG: en_US.UTF-8
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: DeterminateSystems/magic-nix-cache-action@v2
+        continue-on-error: true # a cache-service hiccup must not fail the smoke
       - uses: actions/cache@v4
         with:
           path: node_modules
@@ -33,10 +57,8 @@ jobs:
 
       - name: Install Node modules
         run: nix develop -c yarn install
-        env:
-          LANG: en_US.UTF-8
 
-      - name: Fetch wok and start the relay on :7777
+      - name: Fetch wok and start the relay on :7787
         run: |
           cd scripts/support-chat-ci && ./fetch-wok.sh && cd ../..
           mkdir -p /tmp/wok-smoke-db
@@ -46,7 +68,7 @@ jobs:
           tail -5 /tmp/wok-smoke.log
 
       - name: Smoke prep (throwaway roster + snapshot + env)
-        run: nix develop -c node scripts/support-chat-ci/prep.mjs ws://10.0.2.2:7777 .env.support-smoke /tmp/support-chat-smoke-state
+        run: nix develop -c node scripts/support-chat-ci/prep.mjs ws://10.0.2.2:7787 .env.support-smoke /tmp/support-chat-smoke-state
 
       - name: Build debug APK (ENVFILE=.env.support-smoke)
         run: |
@@ -57,14 +79,16 @@ jobs:
 
       - name: Start peer bot (local relay)
         run: |
-          nohup nix develop -c node scripts/support-chat-ci/peer.mjs ws://127.0.0.1:7777 /tmp/support-chat-smoke-state/bot.json > /tmp/smoke-peer.log 2>&1 &
+          nohup nix develop -c node scripts/support-chat-ci/peer.mjs ws://127.0.0.1:7787 /tmp/support-chat-smoke-state/bot.json > /tmp/smoke-peer.log 2>&1 &
           echo $! > /tmp/smoke-peer.pid
           sleep 5
           grep -q "discovery published" /tmp/smoke-peer.log || (cat /tmp/smoke-peer.log && exit 1)
 
       - name: Boot emulator
+        # Pixel_API_36 is created by the flake's shellHook on `nix develop` (F-M16-12:
+        # the workflow asked for Pixel_API_34, which never existed).
         run: |
-          nix develop -c sh -c 'emulator -avd Pixel_API_34 -gpu swiftshader -wipe-data -no-boot-anim' &
+          nix develop -c sh -c 'emulator -avd Pixel_API_36 -port 5554 -gpu swiftshader -wipe-data -no-boot-anim -no-window -no-audio' &
           nix develop -c adb wait-for-device
           nix develop -c sh -c 'adb shell while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done'
 
@@ -86,7 +110,7 @@ jobs:
         run: |
           mkdir -p smoke-artifacts
           cp /tmp/wok-smoke.log /tmp/smoke-peer.log smoke-artifacts/ 2>/dev/null || true
-          adb logcat -d -s ReactNativeJS > smoke-artifacts/app-logcat.txt 2>/dev/null || true
+          nix develop -c adb logcat -d -s ReactNativeJS > smoke-artifacts/app-logcat.txt 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -100,3 +124,4 @@ jobs:
           kill $(cat /tmp/smoke-peer.pid) 2>/dev/null || true
           kill $(cat /tmp/wok-smoke.pid) 2>/dev/null || true
           nix develop -c adb emu kill || true
+          nix develop -c adb kill-server || true

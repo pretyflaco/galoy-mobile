@@ -1,0 +1,107 @@
+name: Support-chat smoke (Hermes)
+
+# Req 10 (spec 03 §4): a device smoke test that starts a conversation on Hermes —
+# a successful bundle proved nothing three times in the POC. Boots the emulator,
+# runs a local wok relay, a throwaway roster + peer bot (blink-support-chat repo),
+# builds the app against them (ENVFILE), and drives the full loop via adb:
+# onboard → nostr identity → start chat → greeting → send → live E2EE reply.
+# The app's roster pin/relay are BUILD-TIME config (react-native-config), so this
+# job needs no secrets — everything it uses is throwaway, public data.
+
+on:
+  pull_request:
+    branches: [main, feat/support-chat]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  support-chat-smoke-android:
+    name: Android (Hermes)
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout blink-support-chat (peer + relay tooling)
+        uses: actions/checkout@v4
+        with:
+          repository: blinkbitcoin/blink-support-chat
+          ref: main
+          path: blink-support-chat
+
+      - uses: DeterminateSystems/magic-nix-cache-action@v2
+      - uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-supportchat-deps-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-supportchat-deps-
+
+      - name: Install Node modules
+        run: nix develop -c yarn install
+        env:
+          LANG: en_US.UTF-8
+
+      - name: Fetch wok relay and start it on :7777
+        run: |
+          cd blink-support-chat/relay && ./fetch-wok.sh
+          nohup ./bin/wok --config wok.toml relay > /tmp/wok-smoke.log 2>&1 &
+          echo $! > /tmp/wok-smoke.pid
+          sleep 3
+          curl -s http://127.0.0.1:7778/health || (cat /tmp/wok-smoke.log && exit 1) || true
+
+      - name: Smoke prep (throwaway roster + snapshot + env)
+        run: |
+          cd blink-support-chat/interop/v2 && npm install
+          cd ../..
+          node blink-support-chat/interop/v2/ci-smoke-prep.mjs ws://10.0.2.2:7777 .env.support-smoke /tmp/support-chat-smoke-state
+
+      - name: Build debug APK (ENVFILE=.env.support-smoke)
+        run: |
+          rm -rf android/app/.cxx
+          nix develop -c sh -c 'unset ANDROID_SDK_ROOT; export ENVFILE=../../.env.support-smoke && yarn android:prepareAssets && ./android/gradlew -b ./android/build.gradle assembleDebug -PreactNativeArchitectures=x86_64 "-Dorg.gradle.jvmargs=-Xmx4g"'
+        env:
+          ENVFILE: .env.support-smoke
+
+      - name: Start peer bot (local relay)
+        run: |
+          cd blink-support-chat/interop/v2
+          nohup env PEER_IDENTITY_FILE=/tmp/support-chat-smoke-state/bot.json PEER_NAME="CI Smoke Bot" node p1-peer-bot.mjs ws://127.0.0.1:7777 > /tmp/smoke-peer.log 2>&1 &
+          echo $! > /tmp/smoke-peer.pid
+          sleep 5
+          grep -q "discovery published" /tmp/smoke-peer.log || (cat /tmp/smoke-peer.log && exit 1)
+
+      - name: Boot emulator
+        run: |
+          nix develop -c sh -c 'emulator -avd Pixel_API_34 -gpu swiftshader -wipe-data -no-boot-anim' &
+          nix develop -c adb wait-for-device
+          nix develop -c sh -c 'adb shell while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done'
+
+      - name: Drive the smoke (onboard → chat → round trip)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 2
+          command: node blink-support-chat/interop/v2/ci-smoke-drive.mjs android/app/build/outputs/apk/debug/x86_64/app-x86_64-debug.apk
+
+      - name: Artifacts
+        if: always()
+        run: |
+          mkdir -p smoke-artifacts
+          cp /tmp/wok-smoke.log /tmp/smoke-peer.log smoke-artifacts/ 2>/dev/null || true
+          adb logcat -d -s ReactNativeJS > smoke-artifacts/app-logcat.txt 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: support-chat-smoke
+          path: smoke-artifacts
+
+      - name: Cleanup
+        if: always()
+        continue-on-error: true
+        run: |
+          kill $(cat /tmp/smoke-peer.pid) 2>/dev/null || true
+          kill $(cat /tmp/wok-smoke.pid) 2>/dev/null || true
+          nix develop -c adb emu kill || true

@@ -48,8 +48,15 @@ import { SUPPORT_ROSTER_PUBKEY, ROSTER_SNAPSHOT } from "./roster-config"
 import { createBlinkEventSigner } from "./blink-signer"
 import { EncryptedKeyValueStore } from "./encrypted-store"
 
-/** Staging relay of the POC (wok, NIP-42 AUTH for gift wraps). */
-export const SUPPORT_CHAT_RELAYS = ["wss://relay.twentyone.ist"]
+import Config from "react-native-config"
+
+/** Chat relays (req 15: the dedicated NIP-42 pool). Staging by default; CI smoke
+ *  overrides via ENVFILE (SUPPORT_CHAT_RELAY=ws://10.0.2.2:7777 against a local wok). */
+const configuredRelay =
+  typeof Config?.SUPPORT_CHAT_RELAY === "string" && Config.SUPPORT_CHAT_RELAY.startsWith("ws")
+    ? Config.SUPPORT_CHAT_RELAY
+    : undefined
+export const SUPPORT_CHAT_RELAYS = [configuredRelay ?? "wss://relay.twentyone.ist"]
 const MAX_ITEMS = 500
 
 export type ChatItem = {

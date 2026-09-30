@@ -63,5 +63,7 @@ const makeCapture = () => ({ id: ++captures, callback: () => "accept" })
   const g = load(async () => 0)
   await assert.rejects(g(makeCapture, params, log, "e4"), /F-M16-1: processMessage returned a non-object twice/)
   assert.equal(anomalies.at(-1).kind, "processMessage-gave-up")
+  assert.equal(anomalies.at(-1).groupId, "00", "gave-up names the group (the app's stuck detector keys on it)")
+  assert.equal(anomalies.at(-1).epoch, 1)
 }
 console.log("F-M16-1 guard: 4/4 pass")

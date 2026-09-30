@@ -39,6 +39,100 @@ import { readFileSync, writeFileSync } from "node:fs"
 const root = new URL("../node_modules/@internet-privacy/marmot-ts/dist/", import.meta.url).pathname
 const PATCH_MARKER = "M9 spike patch"
 
+// F-M16-1 guard helper, injected before isPermanentDecryptFailure. V1 (2026-10-01, first
+// cut: gave-up carried no groupId) is kept verbatim so installed trees upgrade in place.
+const GUARD_HELPER_V1 = `// ${PATCH_MARKER} (F-M16-1): processMessage guard — see scripts/patch-marmot-ts-v2.mjs.
+function describeResult(v) {
+    return v !== null && typeof v === "object" ? \`object(kind=\${v.kind})\` : \`\${typeof v}(\${String(v)})\`;
+}
+function reportIngestAnomaly(anomaly) {
+    try {
+        const hook = globalThis.__marmotIngestAnomaly;
+        if (typeof hook === "function")
+            hook(anomaly);
+        else
+            console.warn("[marmot-ts F-M16-1]", JSON.stringify(anomaly));
+    }
+    catch { }
+}
+async function processMessageGuarded(makeCapture, makeParams, log, label) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        const capture = makeCapture();
+        const params = makeParams(capture.callback);
+        const pending = processMessage(params);
+        let settled;
+        pending.then((v) => { settled = { v }; }, () => { });
+        const result = await pending;
+        if (result !== null && typeof result === "object")
+            return { result, capture };
+        const promiseView = settled === undefined ? "unsettled" : describeResult(settled.v);
+        const anomaly = {
+            kind: "processMessage-non-object",
+            envelope: label,
+            attempt,
+            awaited: describeResult(result),
+            promise: promiseView,
+            groupId: bytesToHex(params.state.groupContext.groupId),
+            epoch: Number(params.state.groupContext.epoch),
+        };
+        log("envelope:%s F-M16-1 processMessage non-object (attempt %d): await=%s promise=%s", label, attempt, anomaly.awaited, promiseView);
+        if (settled !== undefined && settled.v !== null && typeof settled.v === "object") {
+            reportIngestAnomaly({ ...anomaly, recovered: "promise-value" });
+            return { result: settled.v, capture };
+        }
+        reportIngestAnomaly(anomaly);
+    }
+    reportIngestAnomaly({ kind: "processMessage-gave-up", envelope: label });
+    throw new Error(\`F-M16-1: processMessage returned a non-object twice for envelope \${label}\`);
+}
+function isPermanentDecryptFailure(error) {`
+const GUARD_HELPER = `// ${PATCH_MARKER} (F-M16-1): processMessage guard — see scripts/patch-marmot-ts-v2.mjs.
+function describeResult(v) {
+    return v !== null && typeof v === "object" ? \`object(kind=\${v.kind})\` : \`\${typeof v}(\${String(v)})\`;
+}
+function reportIngestAnomaly(anomaly) {
+    try {
+        const hook = globalThis.__marmotIngestAnomaly;
+        if (typeof hook === "function")
+            hook(anomaly);
+        else
+            console.warn("[marmot-ts F-M16-1]", JSON.stringify(anomaly));
+    }
+    catch { }
+}
+async function processMessageGuarded(makeCapture, makeParams, log, label) {
+    let where;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        const capture = makeCapture();
+        const params = makeParams(capture.callback);
+        const pending = processMessage(params);
+        let settled;
+        pending.then((v) => { settled = { v }; }, () => { });
+        const result = await pending;
+        if (result !== null && typeof result === "object")
+            return { result, capture };
+        where = { groupId: bytesToHex(params.state.groupContext.groupId), epoch: Number(params.state.groupContext.epoch) };
+        const promiseView = settled === undefined ? "unsettled" : describeResult(settled.v);
+        const anomaly = {
+            kind: "processMessage-non-object",
+            envelope: label,
+            attempt,
+            awaited: describeResult(result),
+            promise: promiseView,
+            ...where,
+        };
+        log("envelope:%s F-M16-1 processMessage non-object (attempt %d): await=%s promise=%s", label, attempt, anomaly.awaited, promiseView);
+        if (settled !== undefined && settled.v !== null && typeof settled.v === "object") {
+            reportIngestAnomaly({ ...anomaly, recovered: "promise-value" });
+            return { result: settled.v, capture };
+        }
+        reportIngestAnomaly(anomaly);
+    }
+    reportIngestAnomaly({ kind: "processMessage-gave-up", envelope: label, ...where });
+    throw new Error(\`F-M16-1: processMessage returned a non-object twice for envelope \${label}\`);
+}
+function isPermanentDecryptFailure(error) {`
+
 const edits = [
   {
     file: `${root}client/marmot-client.js`,
@@ -138,51 +232,9 @@ const edits = [
   {
     file: `${root}engine/ingest.js`,
     find: `function isPermanentDecryptFailure(error) {`,
-    replace: `// ${PATCH_MARKER} (F-M16-1): processMessage guard — see scripts/patch-marmot-ts-v2.mjs.
-function describeResult(v) {
-    return v !== null && typeof v === "object" ? \`object(kind=\${v.kind})\` : \`\${typeof v}(\${String(v)})\`;
-}
-function reportIngestAnomaly(anomaly) {
-    try {
-        const hook = globalThis.__marmotIngestAnomaly;
-        if (typeof hook === "function")
-            hook(anomaly);
-        else
-            console.warn("[marmot-ts F-M16-1]", JSON.stringify(anomaly));
-    }
-    catch { }
-}
-async function processMessageGuarded(makeCapture, makeParams, log, label) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-        const capture = makeCapture();
-        const params = makeParams(capture.callback);
-        const pending = processMessage(params);
-        let settled;
-        pending.then((v) => { settled = { v }; }, () => { });
-        const result = await pending;
-        if (result !== null && typeof result === "object")
-            return { result, capture };
-        const promiseView = settled === undefined ? "unsettled" : describeResult(settled.v);
-        const anomaly = {
-            kind: "processMessage-non-object",
-            envelope: label,
-            attempt,
-            awaited: describeResult(result),
-            promise: promiseView,
-            groupId: bytesToHex(params.state.groupContext.groupId),
-            epoch: Number(params.state.groupContext.epoch),
-        };
-        log("envelope:%s F-M16-1 processMessage non-object (attempt %d): await=%s promise=%s", label, attempt, anomaly.awaited, promiseView);
-        if (settled !== undefined && settled.v !== null && typeof settled.v === "object") {
-            reportIngestAnomaly({ ...anomaly, recovered: "promise-value" });
-            return { result: settled.v, capture };
-        }
-        reportIngestAnomaly(anomaly);
-    }
-    reportIngestAnomaly({ kind: "processMessage-gave-up", envelope: label });
-    throw new Error(\`F-M16-1: processMessage returned a non-object twice for envelope \${label}\`);
-}
-function isPermanentDecryptFailure(error) {`,
+    marker: "async function processMessageGuarded(",
+    upgradeFrom: [GUARD_HELPER_V1],
+    replace: GUARD_HELPER,
   },
   {
     // the non-commit loop (proposals + application messages)
@@ -301,14 +353,19 @@ function isPermanentDecryptFailure(error) {`,
 ]
 
 let failed = false
-for (const { file, find, replace, upgradeFrom = [] } of edits) {
+for (const { file, find, replace, upgradeFrom = [], marker } of edits) {
   const text = readFileSync(file, "utf8")
   if (text.includes(replace)) {
     console.log(`patch-marmot-ts-v2: already patched (${file.split("/dist/")[1]})`)
     continue
   }
-  // an earlier version of this edit is in place (e.g. F-M12-2 → F-M16-1): swap it
-  const from = [find, ...upgradeFrom].find((f) => text.split(f).length === 2)
+  // An earlier version of this edit is in place (e.g. F-M12-2 → F-M16-1): swap it.
+  // Upgrades are tried FIRST, and an insertion edit (whose `find` survives inside its
+  // own `replace`) carries a `marker`: marker present + no known version = drift,
+  // never a second insertion.
+  const upgrade = upgradeFrom.find((f) => text.split(f).length === 2)
+  const fresh = !marker || !text.includes(marker)
+  const from = upgrade ?? (fresh && text.split(find).length === 2 ? find : undefined)
   if (!from) {
     console.error(`patch-marmot-ts-v2: DRIFT — pattern not found (or not unique) in ${file}`)
     failed = true

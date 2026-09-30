@@ -16,6 +16,11 @@ export class SimplePoolNetwork {
   constructor({ signer, relays = [] }) {
     this.signer = signer
     this.relays = relays
+    // F-M12-2 stall detection: last time a kind-445 (group traffic) event was
+    // delivered on ANY subscription, and an optional hook fired when a
+    // subscription closes (a silently dead sub = missed messages).
+    this.activity445At = 0
+    this.onSubClosed = null
     this.pool = new SimplePool({
       automaticallyAuth: () => (event) => Promise.resolve(this.signer.signEvent(event)),
     })
@@ -76,13 +81,18 @@ export class SimplePoolNetwork {
             onevent: (event) => {
               if (seen.has(event.id)) return
               seen.add(event.id)
+              // F-M12-2: transport activity signal for the stall detector
+              if (filter.kinds?.includes(445)) this.activity445At = Date.now()
               // TEMP M12 debug (F-M12-2): live-delivery visibility
               if (seen.size === 1 || seen.size % 10 === 0)
                 console.log(`[support-chat-net] sub live event #${seen.size} (kinds=[${filter.kinds}])`)
               observer.next?.(event)
             },
             onauth: signEvent,
-            onclose: (reason) => console.log(`[support-chat-net] sub closed: ${reason ?? "?"}`),
+            onclose: (reason) => {
+              console.log(`[support-chat-net] sub closed: ${reason ?? "?"}`)
+              this.onSubClosed?.(reason)
+            },
           }),
         )
         console.log(`[support-chat-net] sub opened (kinds=[${list.map((f) => f.kinds).join("|")}])`)

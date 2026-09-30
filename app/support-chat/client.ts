@@ -99,6 +99,13 @@ export class SupportChatClient {
   private history: EncryptedKeyValueStore<ChatItem[]>
   private attached = new Set<AnyGroup>()
   private destroyed = false
+  // F-M12-2 stall detection: the engine can go silently dead (nondeterministic
+  // processMessage failure on Hermes) while transport keeps delivering. The proven
+  // recovery is a client re-init (fresh engine state re-ingests everything).
+  private engineActivityAt = Date.now()
+  private stallWatch: ReturnType<typeof setInterval> | null = null
+  private reInits = 0
+  private reIniting = false
 
   constructor(
     private readonly runtime: SignerRuntime,
@@ -121,12 +128,80 @@ export class SupportChatClient {
     console.log(`[support-chat] ${msg}`) // no secrets: pubkeys, ids, statuses only
   }
 
+  /** F-M12-2: any engine-visible signal counts as liveness. */
+  private noteEngineActivity() {
+    this.engineActivityAt = Date.now()
+  }
+
+  /**
+   * F-M12-2 mitigation: if transport delivered group traffic recently but the
+   * engine produced nothing for 90s (or a subscription died), rebuild the client —
+   * the fresh engine re-ingests from the store and recovers (proven on device).
+   * Bounded at 3 re-inits per session, then surfaces a status instead.
+   */
+  private startStallWatcher() {
+    this.stopStallWatcher()
+    this.stallWatch = setInterval(() => {
+      if (this.destroyed || this.reIniting) return
+      const engineIdleMs = Date.now() - this.engineActivityAt
+      const transportAlive = Date.now() - (this.network?.activity445At ?? 0) < 90_000
+      if (engineIdleMs > 90_000 && transportAlive) {
+        void this.reInit(`stall: engine silent ${Math.round(engineIdleMs / 1000)}s while transport delivering`)
+      }
+    }, 30_000)
+  }
+
+  private stopStallWatcher() {
+    if (this.stallWatch !== null) {
+      clearInterval(this.stallWatch)
+      this.stallWatch = null
+    }
+  }
+
+  private async reInit(reason: string): Promise<void> {
+    if (this.destroyed || this.reIniting) return
+    if (this.reInits >= 3) {
+      this.log(`recovery gave up after 3 re-inits (last reason: ${reason})`)
+      this.status = "degraded"
+      this.emit()
+      return
+    }
+    this.reIniting = true
+    this.reInits++
+    this.status = "reconnecting"
+    this.emit()
+    this.log(`recovering (${reason}; re-init #${this.reInits})`)
+    try {
+      this.inviteWatch?.abort()
+      this.conn?.unsubscribe()
+      this.inviteListen?.unsubscribe()
+      this.stopStallWatcher()
+      for (const g of this.attached) await g.save(true).catch(() => undefined)
+      await this.network?.destroy()
+      this.attached.clear()
+      this.group = null
+      this.client = null
+      this.network = null
+      await this.init()
+      this.log("recovered: client rebuilt")
+    } catch (e) {
+      this.log(`recovery failed: ${(e as Error).message}`)
+    } finally {
+      this.reIniting = false
+    }
+  }
+
   async init(): Promise<void> {
     const t0 = Date.now()
     ensureUrlCanParse() // app.tsx's URL polyfill ran, but be explicit (F-M6-3/F-M9-10)
     const signer = await createBlinkEventSigner(this.runtime)
     this.pubkey = await signer.getPublicKey()
     this.network = new SimplePoolNetwork({ signer, relays: SUPPORT_CHAT_RELAYS })
+    // F-M12-2: a silently closed subscription = missed messages; rebuild.
+    this.network.onSubClosed = (reason: unknown) => {
+      if (!this.destroyed && !this.reIniting)
+        void this.reInit(`subscription closed (${String(reason).slice(0, 40)})`)
+    }
     const store = (prefix: string): any =>
       new EncryptedKeyValueStore(this.accountKey, prefix)
     this.client = new MarmotClient({
@@ -199,6 +274,7 @@ export class SupportChatClient {
     this.client.groups.on("created", (g: AnyGroup) => this.attach(g))
     this.client.groups.on("joined", (g: AnyGroup) => this.attach(g))
     this.client.groups.on("removed", (gid: Uint8Array) => {
+      this.noteEngineActivity()
       this.push({
         id: `removed-${hex(gid)}`,
         at: now(),
@@ -209,13 +285,17 @@ export class SupportChatClient {
     })
     this.client.groups.on(
       "unreadable",
-      (_gid: Uint8Array, event: { id: string }) =>
-        this.log(`inbound ${short(event.id)} unreadable (dropped by connect())`),
+      (_gid: Uint8Array, event: { id: string }) => {
+        this.noteEngineActivity()
+        this.log(`inbound ${short(event.id)} unreadable (dropped by connect())`)
+      },
     )
     this.client.groups.on(
       "rejected",
-      (_gid: Uint8Array, event: { id: string }, reason: unknown) =>
-        this.log(`inbound ${short(event.id)} rejected at trust boundary (${reason})`),
+      (_gid: Uint8Array, event: { id: string }, reason: unknown) => {
+        this.noteEngineActivity()
+        this.log(`inbound ${short(event.id)} rejected at trust boundary (${reason})`)
+      },
     )
 
     // Fault-tolerant load (F-M9-7 on 0.6.0): one unreadable group never fails start;
@@ -264,6 +344,7 @@ export class SupportChatClient {
       await this.metaStore.setItem("meta", this.meta)
     }
     void this.watchForInvites()
+    this.startStallWatcher()
     this.status = "ready"
     this.emit()
   }
@@ -383,10 +464,12 @@ export class SupportChatClient {
     const gid = hex(group.groupData.nostrGroupId)
     this.groupId = gid
     group.on("stateChanged", (state: { groupContext: { epoch: bigint } }) => {
+      this.noteEngineActivity()
       // TEMP M12 debug (F-M12-2): epoch visibility on device
       console.log(`[support-chat] ${gid.slice(0, 8)} epoch ${state.groupContext.epoch}`)
     })
     group.on("applicationMessage", (data: Uint8Array) => {
+      this.noteEngineActivity()
       // v2: the engine already bound the rumor's author to the MLS sender leaf
       // (F-M9-3) — anything delivered here is authenticated to its sender.
       try {
@@ -419,6 +502,7 @@ export class SupportChatClient {
 
   async destroy(): Promise<void> {
     this.destroyed = true
+    this.stopStallWatcher()
     this.inviteWatch?.abort()
     this.conn?.unsubscribe()
     this.inviteListen?.unsubscribe()

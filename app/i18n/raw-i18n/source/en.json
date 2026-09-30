@@ -4276,7 +4276,21 @@
         "composerPlaceholder": "Message",
         "composerBlockedPlaceholder": "Sending paused — see the warning above",
         "send": "Send",
-        "unverifiedBlocked": "Someone unverified is in this chat: {members:string}. Sending is paused until they leave or are verified."
+        "unverifiedBlocked": "Someone unverified is in this chat: {members:string}. Sending is paused until they leave or are verified.",
+        "newConversation": "New conversation",
+        "startNew": "Start a new conversation",
+        "endedUser": "This conversation has ended.",
+        "endedReplaced": "This conversation has ended — a newer one replaced it.",
+        "endedStuck": "This conversation can't continue on this device. Your messages are saved below — start a new conversation and support will pick up from here.",
+        "endedRemoved": "You were removed from this conversation.",
+        "endedUnrestorable": "This conversation could not be restored after an app update. Earlier messages are shown read-only.",
+        "previousConversations": "Previous conversations ({count:number})",
+        "hidePrevious": "Hide previous conversations",
+        "conversationItem": "{date:string} · {status:string}",
+        "statusActive": "active",
+        "statusEnded": "ended",
+        "viewingPast": "A previous conversation (read-only)",
+        "backToCurrent": "Back to the current conversation"
     },
     "NostrActivityScreen": {
         "title": "Activity",

@@ -14335,6 +14335,65 @@ type RootTranslation = {
 		 * @param {string} members
 		 */
 		unverifiedBlocked: RequiredParams<'members'>
+		/**
+		 * N​e​w​ ​c​o​n​v​e​r​s​a​t​i​o​n
+		 */
+		newConversation: string
+		/**
+		 * S​t​a​r​t​ ​a​ ​n​e​w​ ​c​o​n​v​e​r​s​a​t​i​o​n
+		 */
+		startNew: string
+		/**
+		 * T​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​h​a​s​ ​e​n​d​e​d​.
+		 */
+		endedUser: string
+		/**
+		 * T​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​h​a​s​ ​e​n​d​e​d​ ​—​ ​a​ ​n​e​w​e​r​ ​o​n​e​ ​r​e​p​l​a​c​e​d​ ​i​t​.
+		 */
+		endedReplaced: string
+		/**
+		 * T​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​c​a​n​'​t​ ​c​o​n​t​i​n​u​e​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.​ ​Y​o​u​r​ ​m​e​s​s​a​g​e​s​ ​a​r​e​ ​s​a​v​e​d​ ​b​e​l​o​w​ ​—​ ​s​t​a​r​t​ ​a​ ​n​e​w​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​a​n​d​ ​s​u​p​p​o​r​t​ ​w​i​l​l​ ​p​i​c​k​ ​u​p​ ​f​r​o​m​ ​h​e​r​e​.
+		 */
+		endedStuck: string
+		/**
+		 * Y​o​u​ ​w​e​r​e​ ​r​e​m​o​v​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​.
+		 */
+		endedRemoved: string
+		/**
+		 * T​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​s​t​o​r​e​d​ ​a​f​t​e​r​ ​a​n​ ​a​p​p​ ​u​p​d​a​t​e​.​ ​E​a​r​l​i​e​r​ ​m​e​s​s​a​g​e​s​ ​a​r​e​ ​s​h​o​w​n​ ​r​e​a​d​-​o​n​l​y​.
+		 */
+		endedUnrestorable: string
+		/**
+		 * P​r​e​v​i​o​u​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​s​ ​(​{​c​o​u​n​t​}​)
+		 * @param {number} count
+		 */
+		previousConversations: RequiredParams<'count'>
+		/**
+		 * H​i​d​e​ ​p​r​e​v​i​o​u​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​s
+		 */
+		hidePrevious: string
+		/**
+		 * {​d​a​t​e​}​ ​·​ ​{​s​t​a​t​u​s​}
+		 * @param {string} date
+		 * @param {string} status
+		 */
+		conversationItem: RequiredParams<'date' | 'status'>
+		/**
+		 * a​c​t​i​v​e
+		 */
+		statusActive: string
+		/**
+		 * e​n​d​e​d
+		 */
+		statusEnded: string
+		/**
+		 * A​ ​p​r​e​v​i​o​u​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​(​r​e​a​d​-​o​n​l​y​)
+		 */
+		viewingPast: string
+		/**
+		 * B​a​c​k​ ​t​o​ ​t​h​e​ ​c​u​r​r​e​n​t​ ​c​o​n​v​e​r​s​a​t​i​o​n
+		 */
+		backToCurrent: string
 	}
 	NostrActivityScreen: {
 		/**
@@ -29188,6 +29247,62 @@ export type TranslationFunctions = {
 		 * Someone unverified is in this chat: {members}. Sending is paused until they leave or are verified.
 		 */
 		unverifiedBlocked: (arg: { members: string }) => LocalizedString
+		/**
+		 * New conversation
+		 */
+		newConversation: () => LocalizedString
+		/**
+		 * Start a new conversation
+		 */
+		startNew: () => LocalizedString
+		/**
+		 * This conversation has ended.
+		 */
+		endedUser: () => LocalizedString
+		/**
+		 * This conversation has ended — a newer one replaced it.
+		 */
+		endedReplaced: () => LocalizedString
+		/**
+		 * This conversation can't continue on this device. Your messages are saved below — start a new conversation and support will pick up from here.
+		 */
+		endedStuck: () => LocalizedString
+		/**
+		 * You were removed from this conversation.
+		 */
+		endedRemoved: () => LocalizedString
+		/**
+		 * This conversation could not be restored after an app update. Earlier messages are shown read-only.
+		 */
+		endedUnrestorable: () => LocalizedString
+		/**
+		 * Previous conversations ({count})
+		 */
+		previousConversations: (arg: { count: number }) => LocalizedString
+		/**
+		 * Hide previous conversations
+		 */
+		hidePrevious: () => LocalizedString
+		/**
+		 * {date} · {status}
+		 */
+		conversationItem: (arg: { date: string, status: string }) => LocalizedString
+		/**
+		 * active
+		 */
+		statusActive: () => LocalizedString
+		/**
+		 * ended
+		 */
+		statusEnded: () => LocalizedString
+		/**
+		 * A previous conversation (read-only)
+		 */
+		viewingPast: () => LocalizedString
+		/**
+		 * Back to the current conversation
+		 */
+		backToCurrent: () => LocalizedString
 	}
 	NostrActivityScreen: {
 		/**

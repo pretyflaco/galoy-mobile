@@ -8,7 +8,7 @@ import { useI18nContext } from "@app/i18n/i18n-react"
 import { testProps } from "@app/utils/testProps"
 
 import { useSupportChat } from "@app/support-chat/use-support-chat"
-import type { ChatItem, MemberLabel } from "@app/support-chat/client"
+import type { ChatItem, EndReason, MemberLabel } from "@app/support-chat/client"
 
 /**
  * The support-chat conversation screen (P2): roster-labelled messages, membership
@@ -28,10 +28,26 @@ export const SupportChatScreen: React.FC = () => {
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
 
+  const [showPrevious, setShowPrevious] = useState(false)
+
   const T = LL.SupportChatScreen
   const unverified = client?.unverifiedMembers() ?? []
   const sendingBlocked = unverified.length > 0
   const handoff = client?.handoffState() ?? "bot"
+  // Option C: conversations are sessions — an ended one is readable, never a dead end
+  const current = client?.current() ?? null
+  const ended = current?.status === "ended"
+  const viewingPast = Boolean(client?.viewing)
+  const previous = (client?.conversations() ?? []).filter(
+    (c) => c.gid !== client?.groupId,
+  )
+  const endedText: Record<EndReason, () => string> = {
+    user: T.endedUser,
+    replaced: T.endedReplaced,
+    stuck: T.endedStuck,
+    removed: T.endedRemoved,
+    unrestorable: T.endedUnrestorable,
+  }
 
   const run = async (fn: () => Promise<void>) => {
     setBusy(true)
@@ -39,7 +55,10 @@ export const SupportChatScreen: React.FC = () => {
     try {
       await fn()
     } catch (e) {
-      console.log("[support-chat] action failed:", e instanceof Error ? e.stack : String(e))
+      console.log(
+        "[support-chat] action failed:",
+        e instanceof Error ? e.stack : String(e),
+      )
       setActionError(e instanceof Error ? e.message : String(e))
     } finally {
       setBusy(false)
@@ -64,7 +83,10 @@ export const SupportChatScreen: React.FC = () => {
       )
     if (item.type === "warning")
       return (
-        <Text style={[styles.notice, { color: colors.error }]} {...testProps("support-chat-warning")}>
+        <Text
+          style={[styles.notice, { color: colors.error }]}
+          {...testProps("support-chat-warning")}
+        >
           ⚠ {item.text}
         </Text>
       )
@@ -76,7 +98,12 @@ export const SupportChatScreen: React.FC = () => {
         {...testProps("support-chat-message")}
       >
         {who && (
-          <Text style={[styles.sender, { color: who.verified ? colors._green ?? colors.primary : colors.error }]}>
+          <Text
+            style={[
+              styles.sender,
+              { color: who.verified ? colors._green ?? colors.primary : colors.error },
+            ]}
+          >
             {who.verified ? "✓ " : "⚠ "}
             {who.text}
           </Text>
@@ -100,21 +127,33 @@ export const SupportChatScreen: React.FC = () => {
         </Text>
 
         <Text
-          style={[styles.handoff, { color: handoff === "agent" ? colors._green ?? colors.primary : colors.grey2 }]}
+          style={[
+            styles.handoff,
+            {
+              color: handoff === "agent" ? colors._green ?? colors.primary : colors.grey2,
+            },
+          ]}
           {...testProps("support-chat-handoff")}
         >
           {handoff === "agent" ? T.handoffAgent() : T.handoffBot()}
         </Text>
 
         {(error || actionError) && (
-          <Text style={[styles.error, { color: colors.error }]} {...testProps("support-chat-error")}>
+          <Text
+            style={[styles.error, { color: colors.error }]}
+            {...testProps("support-chat-error")}
+          >
             {error ?? actionError}
           </Text>
         )}
 
         {sendingBlocked && (
-          <Text style={[styles.blocked, { color: colors.error }]} {...testProps("support-chat-unverified")}>
-            ⚠ {T.unverifiedBlocked({ members: unverified.map((m) => m.text).join("; ") })}
+          <Text
+            style={[styles.blocked, { color: colors.error }]}
+            {...testProps("support-chat-unverified")}
+          >
+            ⚠{" "}
+            {T.unverifiedBlocked({ members: unverified.map((m) => m.text).join("; ") })}
           </Text>
         )}
 
@@ -131,20 +170,94 @@ export const SupportChatScreen: React.FC = () => {
           />
         )}
 
+        {client && viewingPast && (
+          <View style={styles.banner}>
+            <Text style={styles.bannerText} {...testProps("support-chat-viewing-past")}>
+              {T.viewingPast()}
+            </Text>
+            <Pressable
+              onPress={() => void client.view(null)}
+              {...testProps("support-chat-back")}
+            >
+              <Text style={[styles.link, { color: colors.primary }]}>
+                {T.backToCurrent()}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
+        {client && current && ended && !viewingPast && (
+          <View style={styles.banner}>
+            <Text style={styles.bannerText} {...testProps("support-chat-ended")}>
+              {endedText[current.reason ?? "user"]()}
+            </Text>
+            <GaloyPrimaryButton
+              title={busy ? T.starting() : T.startNew()}
+              disabled={busy || client.status !== "ready"}
+              onPress={() => void run(() => client.startNew())}
+              {...testProps("support-chat-start-new")}
+            />
+          </View>
+        )}
+
+        {client && current && !ended && !viewingPast && (
+          <Pressable
+            disabled={busy || client.status !== "ready"}
+            onPress={() => void run(() => client.startNew())}
+            {...testProps("support-chat-new-conversation")}
+          >
+            <Text style={[styles.link, { color: colors.primary }]}>
+              {T.newConversation()}
+            </Text>
+          </Pressable>
+        )}
+
+        {client && previous.length > 0 && !viewingPast && (
+          <View>
+            <Pressable
+              onPress={() => setShowPrevious(!showPrevious)}
+              {...testProps("support-chat-previous-toggle")}
+            >
+              <Text style={[styles.link, { color: colors.primary }]}>
+                {showPrevious
+                  ? T.hidePrevious()
+                  : T.previousConversations({ count: previous.length })}
+              </Text>
+            </Pressable>
+            {showPrevious &&
+              previous.map((c) => (
+                <Pressable
+                  key={c.gid}
+                  onPress={() => void client.view(c.gid)}
+                  {...testProps("support-chat-previous-item")}
+                >
+                  <Text style={styles.previousItem}>
+                    {T.conversationItem({
+                      date: new Date(c.startedAt * 1000).toLocaleString(),
+                      status: c.status === "ended" ? T.statusEnded() : T.statusActive(),
+                    })}
+                  </Text>
+                </Pressable>
+              ))}
+          </View>
+        )}
+
         <FlatList
           style={styles.list}
-          data={client ? client.items : []}
+          data={client ? (viewingPast ? client.viewItems : client.items) : []}
           inverted
           keyExtractor={(i) => i.id}
           renderItem={renderItem}
           ListEmptyComponent={<Text style={styles.empty}>{T.empty()}</Text>}
         />
 
-        {client?.groupId && (
+        {client?.groupId && !ended && !viewingPast && (
           <View style={styles.composer}>
             <TextInput
               style={[styles.input, { borderColor: colors.grey3, color: colors.black }]}
-              placeholder={sendingBlocked ? T.composerBlockedPlaceholder() : T.composerPlaceholder()}
+              placeholder={
+                sendingBlocked ? T.composerBlockedPlaceholder() : T.composerPlaceholder()
+              }
               placeholderTextColor={colors.grey3}
               value={draft}
               onChangeText={setDraft}
@@ -154,7 +267,11 @@ export const SupportChatScreen: React.FC = () => {
             <Pressable
               disabled={busy || sendingBlocked || !draft.trim()}
               onPress={send}
-              style={[styles.send, { backgroundColor: colors.primary }, (busy || sendingBlocked || !draft.trim()) && { opacity: 0.5 }]}
+              style={[
+                styles.send,
+                { backgroundColor: colors.primary },
+                (busy || sendingBlocked || !draft.trim()) && { opacity: 0.5 },
+              ]}
               {...testProps("support-chat-send")}
             >
               <Text style={{ color: colors.white }}>{T.send()}</Text>
@@ -174,7 +291,13 @@ const useStyles = makeStyles(({ colors }) => ({
   blocked: { marginTop: 8, fontSize: 12, fontWeight: "bold" },
   list: { flex: 1, marginTop: 8 },
   empty: { textAlign: "center", color: colors.grey2, marginTop: 32 },
-  notice: { textAlign: "center", fontStyle: "italic", fontSize: 12, marginVertical: 4, color: colors.grey2 },
+  notice: {
+    textAlign: "center",
+    fontStyle: "italic",
+    fontSize: 12,
+    marginVertical: 4,
+    color: colors.grey2,
+  },
   bubble: { maxWidth: "85%", marginVertical: 4, padding: 8, borderRadius: 8 },
   mine: { alignSelf: "flex-end", backgroundColor: colors.grey4 },
   theirs: { alignSelf: "flex-start", backgroundColor: colors.grey5 },
@@ -182,4 +305,14 @@ const useStyles = makeStyles(({ colors }) => ({
   composer: { flexDirection: "row", alignItems: "center", gap: 8 },
   input: { flex: 1, borderWidth: 1, borderRadius: 8, padding: 8 },
   send: { padding: 10, borderRadius: 8 },
+  banner: {
+    marginTop: 8,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.grey5,
+    gap: 8,
+  },
+  bannerText: { fontSize: 13 },
+  link: { fontSize: 12, marginTop: 6, textDecorationLine: "underline" },
+  previousItem: { fontSize: 12, marginVertical: 3, color: colors.grey2 },
 }))

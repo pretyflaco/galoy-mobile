@@ -16,6 +16,16 @@
 //             in a KP-level app_data_dictionary, alongside the legacy MLS extension
 //             0x000a for v1 readers (MDK tolerates both).
 //
+//   F-M16-1 — processMessage guard (marmot-ts#78; supersedes the F-M12-2 log-only edit):
+//             a non-object result (Hermes: the literal 0) is recovered from the promise,
+//             recomputed once, or thrown into the engine's retry path — never silently
+//             dropped; anomalies go to globalThis.__marmotIngestAnomaly. Plus a
+//             behavior-neutral layer-2 probe in ts-mls processMessage. Unit test:
+//             scripts/test-patch-f-m16-1.mjs.
+//
+// Edits may carry `upgradeFrom`: earlier versions of the same edit that are swapped
+// in place (so an installed tree upgrades without a reinstall).
+//
 // NOT included, deliberately: the 0x800b (encrypted-media v2) false-advertise probe —
 // advertising an unimplemented codec must not ship (F-M9-14 probe, product consequence).
 //
@@ -110,21 +120,126 @@ const edits = [
     find: `const keyPackageRef = await calculateKeyPackageRef(keyPackage);`,
     replace: `const keyPackageRef = await calculateKeyPackageRef(keyPackage, options.cryptoProvider); // ${PATCH_MARKER} (F-M9-1)`,
   },
+  // --- F-M16-1 (marmot-ts#78): the processMessage guard (A′) ----------------------
+  // On Hermes, `await processMessage(...)` inside ingest's Babel-lowered async
+  // generator has resolved to the literal number 0 (findings/M12, M14, M16). The stock
+  // loops have no branch for a non-object result: the envelope is dropped with no log,
+  // no disposition and no yield, and the group stalls at its epoch. The guard:
+  //   1. watches the promise itself (.then registered before the await) — if the
+  //      promise resolved an object but the await produced a non-object, the await path
+  //      is at fault and the promise's value is used (same computation, same capture);
+  //   2. otherwise recomputes once with a fresh proposal capture (safe: processMessage
+  //      does not mutate its input state — copy-on-write secret tree, sliced ratchet
+  //      tree, sliced tree-hash cache; verified 2026-10-01);
+  //   3. otherwise THROWS, so the envelope takes the engine's own "failed — queued for
+  //      retry" path (errors list + bounded retry passes) instead of vanishing.
+  // Every anomaly is logged and reported to globalThis.__marmotIngestAnomaly (the app's
+  // stuck-conversation detector) or console.warn when no hook is installed.
   {
-    // F-M12-2 observability: the commit loop's stock code has NO else branch for a
-    // non-newState processMessage result — such a commit is dropped with no log,
-    // no disposition, no yield. On Hermes we observed processMessage resolve to
-    // the literal number 0 here (nondeterministically; findings/M12-bot-v2.md),
-    // silently stalling the group at its epoch. This block only LOGS the case;
-    // behavior is unchanged. Worth reporting upstream with our trace.
     file: `${root}engine/ingest.js`,
-    find: `                state: parentForAuth,
+    find: `function isPermanentDecryptFailure(error) {`,
+    replace: `// ${PATCH_MARKER} (F-M16-1): processMessage guard — see scripts/patch-marmot-ts-v2.mjs.
+function describeResult(v) {
+    return v !== null && typeof v === "object" ? \`object(kind=\${v.kind})\` : \`\${typeof v}(\${String(v)})\`;
+}
+function reportIngestAnomaly(anomaly) {
+    try {
+        const hook = globalThis.__marmotIngestAnomaly;
+        if (typeof hook === "function")
+            hook(anomaly);
+        else
+            console.warn("[marmot-ts F-M16-1]", JSON.stringify(anomaly));
+    }
+    catch { }
+}
+async function processMessageGuarded(makeCapture, makeParams, log, label) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        const capture = makeCapture();
+        const params = makeParams(capture.callback);
+        const pending = processMessage(params);
+        let settled;
+        pending.then((v) => { settled = { v }; }, () => { });
+        const result = await pending;
+        if (result !== null && typeof result === "object")
+            return { result, capture };
+        const promiseView = settled === undefined ? "unsettled" : describeResult(settled.v);
+        const anomaly = {
+            kind: "processMessage-non-object",
+            envelope: label,
+            attempt,
+            awaited: describeResult(result),
+            promise: promiseView,
+            groupId: bytesToHex(params.state.groupContext.groupId),
+            epoch: Number(params.state.groupContext.epoch),
+        };
+        log("envelope:%s F-M16-1 processMessage non-object (attempt %d): await=%s promise=%s", label, attempt, anomaly.awaited, promiseView);
+        if (settled !== undefined && settled.v !== null && typeof settled.v === "object") {
+            reportIngestAnomaly({ ...anomaly, recovered: "promise-value" });
+            return { result: settled.v, capture };
+        }
+        reportIngestAnomaly(anomaly);
+    }
+    reportIngestAnomaly({ kind: "processMessage-gave-up", envelope: label });
+    throw new Error(\`F-M16-1: processMessage returned a non-object twice for envelope \${label}\`);
+}
+function isPermanentDecryptFailure(error) {`,
+  },
+  {
+    // the non-commit loop (proposals + application messages)
+    file: `${root}engine/ingest.js`,
+    find: `            const parentForAuth = ctx.getState();
+            const capture = withCapturedProposals(ctx.createAdminCallback(parentForAuth));
+            const result = await processMessage({
+                context: {
+                    cipherSuite: ctx.ciphersuite,
+                    authService: marmotAuthService,
+                    externalPsks: {},
+                },
+                state: parentForAuth,
+                message,
+                callback: capture.callback,
+            });
+            const captured = capture.take();`,
+    replace: `            const parentForAuth = ctx.getState();
+            const { result, capture } = await processMessageGuarded(() => withCapturedProposals(ctx.createAdminCallback(parentForAuth)), (callback) => ({
+                context: {
+                    cipherSuite: ctx.ciphersuite,
+                    authService: marmotAuthService,
+                    externalPsks: {},
+                },
+                state: parentForAuth,
+                message,
+                callback,
+            }), log, envelopeLabel(envelope)); // ${PATCH_MARKER} (F-M16-1)
+            const captured = capture.take();`,
+  },
+  {
+    // the commit loop. Supersedes the F-M12-2 observability-only edit (upgradeFrom).
+    file: `${root}engine/ingest.js`,
+    find: `            const parentForAuth = ctx.getState();
+            const capture = withCapturedProposals(ctx.createAdminCallback(parentForAuth));
+            const result = await processMessage({
+                context: {
+                    cipherSuite: ctx.ciphersuite,
+                    authService: marmotAuthService,
+                    externalPsks: {},
+                },
+                state: parentForAuth,
                 message,
                 callback: capture.callback,
             });
             const capturedCommit = capture.take();
             if (result.kind === "newState") {`,
-    replace: `                state: parentForAuth,
+    upgradeFrom: [
+      `            const parentForAuth = ctx.getState();
+            const capture = withCapturedProposals(ctx.createAdminCallback(parentForAuth));
+            const result = await processMessage({
+                context: {
+                    cipherSuite: ctx.ciphersuite,
+                    authService: marmotAuthService,
+                    externalPsks: {},
+                },
+                state: parentForAuth,
                 message,
                 callback: capture.callback,
             });
@@ -132,22 +247,74 @@ const edits = [
             if (!result || result.kind !== "newState") // ${PATCH_MARKER} (F-M12-2)
                 log("commit envelope:%s NON-NEWSTATE result (stall risk): ctor=%s kind=%s", envelopeLabel(envelope), result?.constructor?.name, result?.kind);
             if (result.kind === "newState") {`,
+    ],
+    replace: `            const parentForAuth = ctx.getState();
+            const { result, capture } = await processMessageGuarded(() => withCapturedProposals(ctx.createAdminCallback(parentForAuth)), (callback) => ({
+                context: {
+                    cipherSuite: ctx.ciphersuite,
+                    authService: marmotAuthService,
+                    externalPsks: {},
+                },
+                state: parentForAuth,
+                message,
+                callback,
+            }), log, envelopeLabel(envelope)); // ${PATCH_MARKER} (F-M16-1)
+            const capturedCommit = capture.take();
+            if (result.kind !== "newState") // ${PATCH_MARKER} (F-M12-2)
+                log("commit envelope:%s NON-NEWSTATE result (stall risk): ctor=%s kind=%s", envelopeLabel(envelope), result?.constructor?.name, result?.kind);
+            if (result.kind === "newState") {`,
+  },
+  {
+    // Layer-2 probe (behavior-neutral: the same promise is returned; one extra
+    // reaction): does the private-message promise ITSELF resolve a non-object? With
+    // the ingest guard's await-vs-promise comparison this bisects where the 0 is born.
+    file: `${root}vendor/ts-mls/processMessages.js`,
+    find: `    else
+        return processPrivateMessage({
+            context: { cipherSuite: cs, authService, externalPsks, clientConfig },
+            state,
+            privateMessage: message.privateMessage,
+            callback: action,
+        });
+}`,
+    replace: `    else {
+        const pending = processPrivateMessage({
+            context: { cipherSuite: cs, authService, externalPsks, clientConfig },
+            state,
+            privateMessage: message.privateMessage,
+            callback: action,
+        });
+        pending.then((v) => { // ${PATCH_MARKER} (F-M16-1) layer-2 probe
+            if (v === null || typeof v !== "object") {
+                try {
+                    const anomaly = { kind: "processPrivateMessage-non-object", value: \`\${typeof v}(\${String(v)})\` };
+                    if (typeof globalThis.__marmotIngestAnomaly === "function") globalThis.__marmotIngestAnomaly(anomaly);
+                    else console.warn("[marmot-ts F-M16-1]", JSON.stringify(anomaly));
+                }
+                catch { }
+            }
+        }, () => { });
+        return pending;
+    }
+}`,
   },
 ]
 
 let failed = false
-for (const { file, find, replace } of edits) {
+for (const { file, find, replace, upgradeFrom = [] } of edits) {
   const text = readFileSync(file, "utf8")
   if (text.includes(replace)) {
     console.log(`patch-marmot-ts-v2: already patched (${file.split("/dist/")[1]})`)
     continue
   }
-  if (!text.includes(find)) {
-    console.error(`patch-marmot-ts-v2: DRIFT — pattern not found in ${file}`)
+  // an earlier version of this edit is in place (e.g. F-M12-2 → F-M16-1): swap it
+  const from = [find, ...upgradeFrom].find((f) => text.split(f).length === 2)
+  if (!from) {
+    console.error(`patch-marmot-ts-v2: DRIFT — pattern not found (or not unique) in ${file}`)
     failed = true
     continue
   }
-  writeFileSync(file, text.replace(find, replace))
-  console.log(`patch-marmot-ts-v2: applied (${file.split("/dist/")[1]})`)
+  writeFileSync(file, text.replace(from, replace))
+  console.log(`patch-marmot-ts-v2: ${from === find ? "applied" : "upgraded"} (${file.split("/dist/")[1]})`)
 }
 if (failed) process.exit(1)

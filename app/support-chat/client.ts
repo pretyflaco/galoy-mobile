@@ -470,6 +470,13 @@ export class SupportChatClient {
     })
     group.on("applicationMessage", (data: Uint8Array) => {
       this.noteEngineActivity()
+      // TEMP M12 debug (F-M12-2): engine-level receipt signal for the repro loop
+      try {
+        const r = deserializeApplicationData(data)
+        console.log(`[support-chat] recv ${r.pubkey.slice(0, 8)} len=${r.content?.length ?? -1}`)
+      } catch {
+        console.log("[support-chat] recv (undecodable)")
+      }
       // v2: the engine already bound the rumor's author to the MLS sender leaf
       // (F-M9-3) — anything delivered here is authenticated to its sender.
       try {

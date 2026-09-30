@@ -244,7 +244,9 @@ export const SupportChatScreen: React.FC = () => {
 
         <FlatList
           style={styles.list}
-          data={client ? (viewingPast ? client.viewItems : client.items) : []}
+          // inverted list: newest first, so the latest message sits at the bottom
+          // above the composer (F-M16-9: it was rendering chronological data upside down)
+          data={client ? [...(viewingPast ? client.viewItems : client.items)].reverse() : []}
           inverted
           keyExtractor={(i) => i.id}
           renderItem={renderItem}

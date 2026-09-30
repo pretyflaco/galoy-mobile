@@ -39,6 +39,11 @@ import { ensureDiscoverable, fetchKeyPackageEvent } from "@blink-support-chat/ad
 import type { SignerRuntime } from "@app/nostr/runtime"
 import { ensureUrlCanParse } from "@app/polyfills/url-can-parse"
 
+// TEMP M12 debug (F-M12-2): surface the library's internal logger — the connect
+// drain swallows ingest exceptions into it ("connect: ingest failed …").
+import debug from "debug"
+debug.enable("marmot-ts:*")
+
 import { SUPPORT_ROSTER_PUBKEY, ROSTER_SNAPSHOT } from "./roster-config"
 import { createBlinkEventSigner } from "./blink-signer"
 import { EncryptedKeyValueStore } from "./encrypted-store"
@@ -86,6 +91,7 @@ export class SupportChatClient {
   private roster: any
   private rosterSub: { unsubscribe: () => void } | null = null
   private conn: { unsubscribe: () => void } | null = null
+  private inviteListen: { unsubscribe: () => void } | null = null
   private inviteWatch: AbortController | null = null
   private group: AnyGroup = null
   private meta: Meta = {}
@@ -133,6 +139,17 @@ export class SupportChatClient {
       removedMarkerStore: store("removed:"), // removal tombstones (F-M6-4 class)
       clientId: "blink-support-chat",
       cryptoProvider: hermesCryptoProvider, // pure JS: Hermes has no crypto.subtle (M2)
+      // TEMP M12 debug (F-M12-2): forensic sink — where do the fetched commits die?
+      audit: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        record: (e: any) => {
+          if (
+            ["ingest_entry", "ingest_outcome", "ingest_error", "epoch_confirmed", "epoch_rolled_back", "epoch_state_changed"].includes(e?.type)
+          )
+            console.log(`[support-chat-audit] ${e.type} ${JSON.stringify(e).slice(0, 260)}`)
+        },
+      },
+      auditContext: { engineId: "phone-debug" },
     })
     this.roster = new RosterVerifier({
       rosterPubkey: SUPPORT_ROSTER_PUBKEY,
@@ -216,6 +233,10 @@ export class SupportChatClient {
       })
 
     this.conn = this.client.groups.connectAll({ fallbackRelays: SUPPORT_CHAT_RELAYS })
+    // The library's invite listener (1059 on our advertised inbox relays → ingest →
+    // decrypt); watchInvites() below only watches the store — without listen(),
+    // support-initited invites never arrive (M12 finding, fixed in the bot too).
+    this.inviteListen = await this.client.invites.listen(SUPPORT_CHAT_RELAYS)
     const active = groups.find(
       (g) => g.groupData && hex(g.groupData.nostrGroupId) === this.meta.activeGroup,
     )
@@ -361,6 +382,10 @@ export class SupportChatClient {
     this.group = group
     const gid = hex(group.groupData.nostrGroupId)
     this.groupId = gid
+    group.on("stateChanged", (state: { groupContext: { epoch: bigint } }) => {
+      // TEMP M12 debug (F-M12-2): epoch visibility on device
+      console.log(`[support-chat] ${gid.slice(0, 8)} epoch ${state.groupContext.epoch}`)
+    })
     group.on("applicationMessage", (data: Uint8Array) => {
       // v2: the engine already bound the rumor's author to the MLS sender leaf
       // (F-M9-3) — anything delivered here is authenticated to its sender.
@@ -396,6 +421,7 @@ export class SupportChatClient {
     this.destroyed = true
     this.inviteWatch?.abort()
     this.conn?.unsubscribe()
+    this.inviteListen?.unsubscribe()
     this.rosterSub?.unsubscribe()
     if (this.group) await this.group.save(true).catch(() => undefined)
     await this.network?.destroy()

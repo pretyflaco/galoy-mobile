@@ -40,6 +40,7 @@ export class SimplePoolNetwork {
   /** One-shot request: collects events until EOSE (with AUTH) per filter, deduped by id. */
   async request(relays, filters) {
     const list = Array.isArray(filters) ? filters : [filters]
+    const t0 = Date.now()
     const found = new Map()
     await Promise.all(
       list.map(
@@ -54,7 +55,12 @@ export class SimplePoolNetwork {
           }),
       ),
     )
-    return [...found.values()]
+    const events = [...found.values()]
+    // TEMP M12 debug (F-M12-2): fetch visibility — is the backfill getting events?
+    console.log(
+      `[support-chat-net] request kinds=[${list.map((f) => f.kinds).join("|")}] h=${list[0]["#h"]?.[0]?.slice(0, 8) ?? "-"} → ${events.length} events in ${Date.now() - t0}ms`,
+    )
+    return events
   }
 
   /** Live subscription of single events. Returns a Subscribable per NostrNetworkInterface. */
@@ -70,11 +76,16 @@ export class SimplePoolNetwork {
             onevent: (event) => {
               if (seen.has(event.id)) return
               seen.add(event.id)
+              // TEMP M12 debug (F-M12-2): live-delivery visibility
+              if (seen.size === 1 || seen.size % 10 === 0)
+                console.log(`[support-chat-net] sub live event #${seen.size} (kinds=[${filter.kinds}])`)
               observer.next?.(event)
             },
             onauth: signEvent,
+            onclose: (reason) => console.log(`[support-chat-net] sub closed: ${reason ?? "?"}`),
           }),
         )
+        console.log(`[support-chat-net] sub opened (kinds=[${list.map((f) => f.kinds).join("|")}])`)
         return { unsubscribe: () => subs.forEach((s) => s.close()) }
       },
     }

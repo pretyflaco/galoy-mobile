@@ -232,13 +232,13 @@ export const defaultRemoteConfig: RemoteConfig = {
    *  The less intrusive home-screen nudge banner takes over in the meantime, so the
    *  warning never disappears entirely (#4156). */
   backupNudgeModalCooldownMs: 24 * 60 * 60 * 1000,
-  nonCustodialEnabled: false,
+  nonCustodialEnabled: true, // DEV-BUILD LOCAL OVERRIDE (uncommitted): P1 device smoke
   delegatedGrantsEnabled: false,
   stableBalanceEnabled: false,
   /** NIP-05 verified handles (POC): off until the lnurl-server routes are deployed. */
   nostrNip05Enabled: false,
   /** Support chat (P1): off unless a build turns it on; requires nostrSignerEnabled. */
-  supportChatEnabled: false,
+  supportChatEnabled: true, // DEV-BUILD LOCAL OVERRIDE (uncommitted): P1 device smoke
   // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
   nostrSignerEnabled: true,
   dollarRestrictionCacheEnabled: true,
@@ -269,11 +269,11 @@ export const defaultRemoteConfig: RemoteConfig = {
 
 const defaultFeatureFlags: FeatureFlags = {
   deviceAccountEnabled: false,
-  nonCustodialEnabled: false,
+  nonCustodialEnabled: true, // DEV-BUILD LOCAL OVERRIDE (uncommitted): P1 device smoke
   delegatedGrantsEnabled: false,
   stableBalanceEnabled: false,
   nostrNip05Enabled: false,
-  supportChatEnabled: false,
+  supportChatEnabled: true, // DEV-BUILD LOCAL OVERRIDE (uncommitted): P1 device smoke
   // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
   nostrSignerEnabled: true,
   remoteConfigReady: false,

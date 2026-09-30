@@ -3742,9 +3742,9 @@
   resolved "https://registry.yarnpkg.com/@img/sharp-win32-x64/-/sharp-win32-x64-0.35.3.tgz#8a25cacdc75a8c26077c07fba51e8056aae474f1"
   integrity sha512-D4y1vNeZrIIJCN+uHaWVtH86B+aCrdMYYjicy9pXHvbGZeGYLLSd3wdVuC37FxVXlU1ARsk84eKWfWMXGYEqvA==
 
-"@internet-privacy/marmot-ts@file:../lib-pins/internet-privacy-marmot-ts-0.6.0-64e195a.tgz":
+"@internet-privacy/marmot-ts@file:vendor/lib-pins/internet-privacy-marmot-ts-0.6.0-64e195a.tgz":
   version "0.6.0"
-  resolved "file:../lib-pins/internet-privacy-marmot-ts-0.6.0-64e195a.tgz#00502c480989f931389358516dc543dc9f784e09"
+  resolved "file:vendor/lib-pins/internet-privacy-marmot-ts-0.6.0-64e195a.tgz#00502c480989f931389358516dc543dc9f784e09"
   dependencies:
     "@hpke/core" "1.9.0"
     "@noble/ciphers" "^2.2.0"

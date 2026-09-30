@@ -20,7 +20,7 @@ export const SupportChatPocSetting: React.FC = () => {
       title="Support chat"
       subtitle="End-to-end encrypted chat with Blink Support"
       leftGaloyIcon="headset"
-      action={() => navigation.navigate("supportChatPoc")}
+      action={() => navigation.navigate("supportChat")}
     />
   )
 }

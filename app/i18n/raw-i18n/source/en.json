@@ -4262,6 +4262,22 @@
         "keepBothA11y": "Keep both the existing and the new connection for {client:string}.",
         "srLabel": "{client:string} is already connected. Replace the old connection, keep both, or cancel."
     },
+    "SupportChatScreen": {
+        "title": "Support",
+        "statusStarting": "Connecting…",
+        "statusReady": "E2EE (Marmot/MLS)",
+        "statusReconnecting": "Reconnecting…",
+        "statusDegraded": "Connection issues — messages may be delayed",
+        "handoffBot": "Automated support is answering. A human can join this chat.",
+        "handoffAgent": "A member of the Blink Support team is helping you.",
+        "start": "Start a support chat",
+        "starting": "Starting…",
+        "empty": "No messages yet.",
+        "composerPlaceholder": "Message",
+        "composerBlockedPlaceholder": "Sending paused — see the warning above",
+        "send": "Send",
+        "unverifiedBlocked": "Someone unverified is in this chat: {members:string}. Sending is paused until they leave or are verified."
+    },
     "NostrActivityScreen": {
         "title": "Activity",
         "titleForClient": "{client:string} — Activity",

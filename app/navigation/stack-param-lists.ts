@@ -123,8 +123,8 @@ export type RootStackParamList = {
   nostrActivity: { clientPubkey: string }
   // One-click BTCPay setup interstitial (first/returning explainer → magic-link sign-in).
   btcpaySetup: undefined
-  // Support chat (P1): E2EE support chat over Marmot v2, gated by supportChatEnabled.
-  supportChatPoc: undefined
+  // Support chat (P2): E2EE support chat over Marmot v2, gated by supportChatEnabled.
+  supportChat: undefined
   // NB: the connection / request / review-all APPROVAL surfaces are NOT routes — they are
   // rendered by the ApprovalSurfaceHost as a state-driven full-screen overlay (see
   // approval-surface-host.tsx), so no stack entries exist for them.

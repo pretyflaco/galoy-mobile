@@ -14277,6 +14277,65 @@ type RootTranslation = {
 		 */
 		srLabel: RequiredParams<'client'>
 	}
+	SupportChatScreen: {
+		/**
+		 * S​u​p​p​o​r​t
+		 */
+		title: string
+		/**
+		 * C​o​n​n​e​c​t​i​n​g​…
+		 */
+		statusStarting: string
+		/**
+		 * E​2​E​E​ ​(​M​a​r​m​o​t​/​M​L​S​)
+		 */
+		statusReady: string
+		/**
+		 * R​e​c​o​n​n​e​c​t​i​n​g​…
+		 */
+		statusReconnecting: string
+		/**
+		 * C​o​n​n​e​c​t​i​o​n​ ​i​s​s​u​e​s​ ​—​ ​m​e​s​s​a​g​e​s​ ​m​a​y​ ​b​e​ ​d​e​l​a​y​e​d
+		 */
+		statusDegraded: string
+		/**
+		 * A​u​t​o​m​a​t​e​d​ ​s​u​p​p​o​r​t​ ​i​s​ ​a​n​s​w​e​r​i​n​g​.​ ​A​ ​h​u​m​a​n​ ​c​a​n​ ​j​o​i​n​ ​t​h​i​s​ ​c​h​a​t​.
+		 */
+		handoffBot: string
+		/**
+		 * A​ ​m​e​m​b​e​r​ ​o​f​ ​t​h​e​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t​ ​t​e​a​m​ ​i​s​ ​h​e​l​p​i​n​g​ ​y​o​u​.
+		 */
+		handoffAgent: string
+		/**
+		 * S​t​a​r​t​ ​a​ ​s​u​p​p​o​r​t​ ​c​h​a​t
+		 */
+		start: string
+		/**
+		 * S​t​a​r​t​i​n​g​…
+		 */
+		starting: string
+		/**
+		 * N​o​ ​m​e​s​s​a​g​e​s​ ​y​e​t​.
+		 */
+		empty: string
+		/**
+		 * M​e​s​s​a​g​e
+		 */
+		composerPlaceholder: string
+		/**
+		 * S​e​n​d​i​n​g​ ​p​a​u​s​e​d​ ​—​ ​s​e​e​ ​t​h​e​ ​w​a​r​n​i​n​g​ ​a​b​o​v​e
+		 */
+		composerBlockedPlaceholder: string
+		/**
+		 * S​e​n​d
+		 */
+		send: string
+		/**
+		 * S​o​m​e​o​n​e​ ​u​n​v​e​r​i​f​i​e​d​ ​i​s​ ​i​n​ ​t​h​i​s​ ​c​h​a​t​:​ ​{​m​e​m​b​e​r​s​}​.​ ​S​e​n​d​i​n​g​ ​i​s​ ​p​a​u​s​e​d​ ​u​n​t​i​l​ ​t​h​e​y​ ​l​e​a​v​e​ ​o​r​ ​a​r​e​ ​v​e​r​i​f​i​e​d​.
+		 * @param {string} members
+		 */
+		unverifiedBlocked: RequiredParams<'members'>
+	}
 	NostrActivityScreen: {
 		/**
 		 * A​c​t​i​v​i​t​y
@@ -29071,6 +29130,64 @@ export type TranslationFunctions = {
 		 * {client} is already connected. Replace the old connection, keep both, or cancel.
 		 */
 		srLabel: (arg: { client: string }) => LocalizedString
+	}
+	SupportChatScreen: {
+		/**
+		 * Support
+		 */
+		title: () => LocalizedString
+		/**
+		 * Connecting…
+		 */
+		statusStarting: () => LocalizedString
+		/**
+		 * E2EE (Marmot/MLS)
+		 */
+		statusReady: () => LocalizedString
+		/**
+		 * Reconnecting…
+		 */
+		statusReconnecting: () => LocalizedString
+		/**
+		 * Connection issues — messages may be delayed
+		 */
+		statusDegraded: () => LocalizedString
+		/**
+		 * Automated support is answering. A human can join this chat.
+		 */
+		handoffBot: () => LocalizedString
+		/**
+		 * A member of the Blink Support team is helping you.
+		 */
+		handoffAgent: () => LocalizedString
+		/**
+		 * Start a support chat
+		 */
+		start: () => LocalizedString
+		/**
+		 * Starting…
+		 */
+		starting: () => LocalizedString
+		/**
+		 * No messages yet.
+		 */
+		empty: () => LocalizedString
+		/**
+		 * Message
+		 */
+		composerPlaceholder: () => LocalizedString
+		/**
+		 * Sending paused — see the warning above
+		 */
+		composerBlockedPlaceholder: () => LocalizedString
+		/**
+		 * Send
+		 */
+		send: () => LocalizedString
+		/**
+		 * Someone unverified is in this chat: {members}. Sending is paused until they leave or are verified.
+		 */
+		unverifiedBlocked: (arg: { members: string }) => LocalizedString
 	}
 	NostrActivityScreen: {
 		/**

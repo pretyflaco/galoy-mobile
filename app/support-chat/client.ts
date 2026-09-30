@@ -61,7 +61,7 @@ export type ChatItem = {
   text: string
 }
 
-export type MemberLabel = { pubkey: string; text: string; verified: boolean }
+export type MemberLabel = { pubkey: string; text: string; verified: boolean; role?: string }
 
 type Meta = { activeGroup?: string }
 /** Persisted roster state shape (M11 roster.js persistence port). */
@@ -99,6 +99,7 @@ export class SupportChatClient {
   private history: EncryptedKeyValueStore<ChatItem[]>
   private attached = new Set<AnyGroup>()
   private destroyed = false
+  private knownMembers = new Set<string>() // membership notices (req 5): diff on stateChanged
   // F-M12-2 stall detection: the engine can go silently dead (nondeterministic
   // processMessage failure on Hermes) while transport keeps delivering. The proven
   // recovery is a client re-init (fresh engine state re-ingests everything).
@@ -247,6 +248,18 @@ export class SupportChatClient {
         this.log(
           `roster ${prev ? "replaced" : "loaded"} ${short(r.id)}: ${r.members.size} members`,
         )
+        // Revocation relabeling (03 §5: "as of now" default): warn when a current
+        // member's verification changed with the new roster.
+        if (prev && this.group) {
+          const unverified = this.unverifiedMembers()
+          if (unverified.length)
+            void this.push({
+              id: `roster-${r.id}`,
+              at: now(),
+              type: "warning",
+              text: `Blink Support roster changed: ${unverified.map((m) => m.text).join("; ")}`,
+            })
+        }
         this.emit()
       },
     })
@@ -388,10 +401,12 @@ export class SupportChatClient {
 
   label(pubkey: string): MemberLabel {
     if (!this.roster) return { pubkey, text: short(pubkey), verified: false }
+    const l = this.roster.label(pubkey)
     return {
       pubkey,
       text: this.roster.display(pubkey),
-      verified: this.roster.label(pubkey).verified,
+      verified: l.verified,
+      role: l.role,
     }
   }
 
@@ -400,6 +415,20 @@ export class SupportChatClient {
     return getGroupMembers(this.group.state)
       .filter((pk: string) => pk !== this.pubkey)
       .map((pk: string) => this.label(pk))
+  }
+
+  /** Req 12: who is answering right now — a human agent present, or the automated bot. */
+  handoffState(): "agent" | "bot" {
+    return this.members().some((m) => m.verified && m.role === "agent") ? "agent" : "bot"
+  }
+
+  /**
+   * Policy default (03 §5, patternn "add" risk point): while an UNVERIFIED member is
+   * in the conversation, warn AND block sending. Returns the offending members (the
+   * screen composes the warning); null when sending is allowed.
+   */
+  unverifiedMembers(): MemberLabel[] {
+    return this.members().filter((m) => !m.verified)
   }
 
   /** Start a conversation with the support bot named on the roster. */
@@ -438,6 +467,10 @@ export class SupportChatClient {
   async send(text: string): Promise<void> {
     const group = this.group
     if (!group || !text.trim()) return
+    // Policy default: warn + BLOCK while an unverified member is present (03 §5).
+    const unverified = this.unverifiedMembers()
+    if (unverified.length)
+      throw new Error(`sending blocked: ${unverified.map((m) => m.text).join("; ")}`)
     const t0 = Date.now()
     await this.client.groups.send(
       group.id,
@@ -463,10 +496,13 @@ export class SupportChatClient {
     this.group = group
     const gid = hex(group.groupData.nostrGroupId)
     this.groupId = gid
+    // Membership notices (req 5): baseline = who is here at attach time.
+    this.knownMembers = new Set<string>(getGroupMembers(group.state))
     group.on("stateChanged", (state: { groupContext: { epoch: bigint } }) => {
       this.noteEngineActivity()
       // TEMP M12 debug (F-M12-2): epoch visibility on device
       console.log(`[support-chat] ${gid.slice(0, 8)} epoch ${state.groupContext.epoch}`)
+      void this.membershipNotices(gid, state)
     })
     group.on("applicationMessage", (data: Uint8Array) => {
       this.noteEngineActivity()
@@ -498,6 +534,38 @@ export class SupportChatClient {
       void this.metaStore.setItem("meta", this.meta)
     }
     this.emit()
+  }
+
+  /** Req 5: every membership change is shown ("X joined", "X left"), roster-labelled. */
+  private async membershipNotices(gid: string, state: unknown) {
+    try {
+      const members = new Set<string>(getGroupMembers(state as AnyGroup["state"]))
+      this.knownMembers ??= new Set()
+      const joined = [...members].filter((pk) => !this.knownMembers.has(pk))
+      const left = [...this.knownMembers].filter((pk) => !members.has(pk))
+      this.knownMembers = members
+      const at = now()
+      for (const pk of joined)
+        if (pk !== this.pubkey)
+          await this.push({
+            id: `mn-j-${gid}-${pk}-${at}`,
+            at,
+            type: "notice",
+            text: `joined: ${this.label(pk).text}`,
+          })
+      for (const pk of left)
+        await this.push({
+          id: `mn-l-${gid}-${pk}-${at}`,
+          at,
+          type: "notice",
+          text:
+            pk === this.pubkey
+              ? "You were removed from this chat"
+              : `left: ${this.label(pk).text}`,
+        })
+    } catch (e) {
+      this.log(`membership notice error: ${(e as Error).message}`)
+    }
   }
 
   private async push(item: ChatItem) {

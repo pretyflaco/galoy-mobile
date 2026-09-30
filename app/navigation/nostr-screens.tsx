@@ -66,7 +66,7 @@ import { useNostrRuntime } from "@app/nostr/nostr-runtime-provider"
 import { Screen } from "@app/components/screen"
 
 import { RootStackParamList } from "./stack-param-lists"
-import { SupportChatPocScreen } from "@app/screens/support-chat-poc/support-chat-poc-screen"
+import { SupportChatScreen } from "@app/screens/support-chat/support-chat-screen"
 
 type Nav = NativeStackNavigationProp<RootStackParamList>
 
@@ -126,9 +126,9 @@ export const NostrRootScreens = (
       options={{ title: LL.BtcpaySetupScreen.title() }}
     />
     <RootNavigator.Screen
-      name="supportChatPoc"
-      component={SupportChatPocScreen}
-      options={{ title: "Support chat" }}
+      name="supportChat"
+      component={SupportChatScreen}
+      options={{ title: LL.SupportChatScreen.title() }}
     />
     <RootNavigator.Screen
       name="delegatedGrants"

@@ -1832,6 +1832,9 @@
     "@noble/hashes" "^1.1.5"
     "@noble/secp256k1" "^1.7.1"
 
+"@blink-support-chat/adapters@file:./vendor/blink-support-chat-adapters":
+  version "0.0.0"
+
 "@blinkbitcoin/blink-client@1.1.1":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@blinkbitcoin/blink-client/-/blink-client-1.1.1.tgz#a5f101966d1e13ac5388f74ee7ad0b1cc0d4e951"
@@ -3549,6 +3552,13 @@
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@hpke/core/-/core-1.9.0.tgz#4eced0597787f51fdb53ad515c3d47a3abc9fe3a"
   integrity sha512-pFxWl1nNJeQCSUFs7+GAblHvXBCjn9EPN65vdKlYQil2aURaRxfGMO6vBKGqm1YHTKwiAxJQNEI70PbSowMP9Q==
+  dependencies:
+    "@hpke/common" "^1.10.0"
+
+"@hpke/dhkem-x25519@1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@hpke/dhkem-x25519/-/dhkem-x25519-1.8.0.tgz#4b795ead9363847e82884b900e65018143d8b99a"
+  integrity sha512-S1MWWkAfu+TFxySgv5+2P3O4Mx/jk7BsoplzQaA1s3sfUJVJ2UsZsSzSsMc+FXJumLXncoJFlO6mK6mDGspfmA==
   dependencies:
     "@hpke/common" "^1.10.0"
 

@@ -1,0 +1,7 @@
+{
+  "name": "@blink-support-chat/adapters",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Vendored snapshot of blink-support-chat packages/adapters (v2 subset) for the support-chat product build. Source commit and fork adaptations recorded in SOURCE.md.",
+  "type": "module"
+}

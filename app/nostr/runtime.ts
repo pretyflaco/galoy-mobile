@@ -229,6 +229,16 @@ export interface SignerRuntime {
    * not a client-requested path. Returns true when >=1 relay ACKed.
    */
   signAndPublish(template: EventTemplate, relays: string[]): Promise<boolean>
+  /**
+   * FIRST-PARTY end-to-end encryption for the in-app support chat (Marmot/MLS). The
+   * app's own Marmot client signs its events (incl. NIP-42 AUTH, kind 22242) with
+   * `signAuthEvent` and opens gift-wrapped invites with these NIP-44 methods. Like
+   * `signAuthEvent`: self-initiated, local, no approval prompt, never reachable by a
+   * NIP-46 or NIP-55 client. The secret stays behind the signer seam.
+   */
+  getPublicKeyHex(): Promise<string>
+  nip44EncryptSelf(pubkeyHex: string, plaintext: string): Promise<string>
+  nip44DecryptSelf(pubkeyHex: string, ciphertext: string): Promise<string>
   /** The LOCAL identity's CURRENT raw kind-0 content (for merge-before-publish), or null. */
   fetchOwnProfileMetadata(): Promise<string | null>
   /** Test-only: grant a scope to a client (simulates a completed connect). */
@@ -1185,6 +1195,11 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     subscribeActivity: (listener) => activityLog.subscribe(listener),
     fetchOwnProfilePicture,
     signAuthEvent: (template) => signer.signEvent(template),
+    // In-app support chat (P1): first-party, prompt-free — same policy as signAuthEvent.
+    getPublicKeyHex: getUserPubkeyHex,
+    nip44EncryptSelf: (pubkeyHex, plaintext) => signer.nip44Encrypt(pubkeyHex, plaintext),
+    nip44DecryptSelf: (pubkeyHex, ciphertext) =>
+      signer.nip44Decrypt(pubkeyHex, ciphertext),
     // Self-initiated profile writes (avatar upload → kind-0): local sign through the seam,
     // then confirmed+retried publish. Never used for client-requested events.
     signAndPublish: async (template, relays) => {

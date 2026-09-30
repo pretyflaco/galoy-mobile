@@ -47,6 +47,7 @@ import { FeeRatesSetting } from "./settings/fee-rates"
 import { ApiAccessSetting } from "./settings/advanced-api-access"
 import { ExportCsvSetting } from "./settings/advanced-export-csv"
 import { JoinCommunitySetting } from "./settings/community-join"
+import { SupportChatPocSetting } from "./settings/support-chat-poc"
 import { NeedHelpSetting } from "./settings/community-need-help"
 import { CurrencySetting } from "./settings/preferences-currency"
 import { LanguageSetting } from "./settings/preferences-language"
@@ -174,7 +175,7 @@ export const SettingsScreen: React.FC = () => {
       ExportCsvSetting,
       ApiAccessSetting,
     ],
-    community: [NeedHelpSetting, JoinCommunitySetting],
+    community: [SupportChatPocSetting, NeedHelpSetting, JoinCommunitySetting],
   }
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()

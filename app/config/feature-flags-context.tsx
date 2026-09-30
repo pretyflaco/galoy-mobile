@@ -44,6 +44,8 @@ const NonCustodialEnabledKey = "nonCustodialEnabled"
 const DelegatedGrantsEnabledKey = "delegatedGrantsEnabled"
 const StableBalanceEnabledKey = "stableBalanceEnabled"
 const NostrNip05EnabledKey = "nostrNip05Enabled"
+/** Support chat (P1): E2EE support chat over Marmot v2. Off by default; requires nostrSignerEnabled. */
+const SupportChatEnabledKey = "supportChatEnabled"
 const DollarRestrictionCacheEnabledKey = "dollarRestrictionCacheEnabled"
 const BtcMapPlacesEnabledKey = "btcMapPlacesEnabled"
 const AutoConvertMaxAttemptsKey = "autoConvertMaxAttempts"
@@ -83,6 +85,7 @@ type FeatureFlags = {
   stableBalanceEnabled: boolean
   nostrSignerEnabled: boolean
   nostrNip05Enabled: boolean
+  supportChatEnabled: boolean
   delegatedGrantsEnabled: boolean
   remoteConfigReady: boolean
 }
@@ -117,6 +120,7 @@ type RemoteConfig = {
   [DelegatedGrantsEnabledKey]: boolean
   [StableBalanceEnabledKey]: boolean
   [NostrNip05EnabledKey]: boolean
+  [SupportChatEnabledKey]: boolean
   [SignerEnabledKey]: boolean
   [DollarRestrictionCacheEnabledKey]: boolean
   [BtcMapPlacesEnabledKey]: boolean
@@ -233,6 +237,8 @@ export const defaultRemoteConfig: RemoteConfig = {
   stableBalanceEnabled: false,
   /** NIP-05 verified handles (POC): off until the lnurl-server routes are deployed. */
   nostrNip05Enabled: false,
+  /** Support chat (P1): off unless a build turns it on; requires nostrSignerEnabled. */
+  supportChatEnabled: false,
   // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
   nostrSignerEnabled: true,
   dollarRestrictionCacheEnabled: true,
@@ -267,6 +273,7 @@ const defaultFeatureFlags: FeatureFlags = {
   delegatedGrantsEnabled: false,
   stableBalanceEnabled: false,
   nostrNip05Enabled: false,
+  supportChatEnabled: false,
   // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
   nostrSignerEnabled: true,
   remoteConfigReady: false,
@@ -442,6 +449,10 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           .getValue(NostrNip05EnabledKey)
           .asBoolean()
 
+        const supportChatEnabled = remoteConfigInstance()
+          .getValue(SupportChatEnabledKey)
+          .asBoolean()
+
         const dollarRestrictionCacheEnabled = remoteConfigInstance()
           .getValue(DollarRestrictionCacheEnabledKey)
           .asBoolean()
@@ -550,6 +561,7 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           stableBalanceEnabled,
           nostrSignerEnabled,
           nostrNip05Enabled,
+          supportChatEnabled,
           dollarRestrictionCacheEnabled,
           btcMapPlacesEnabled,
           autoConvertMaxAttempts,
@@ -587,6 +599,8 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
       remoteConfig.nonCustodialEnabled && remoteConfig.stableBalanceEnabled,
     nostrSignerEnabled: remoteConfig.nostrSignerEnabled,
     nostrNip05Enabled: remoteConfig.nostrSignerEnabled && remoteConfig.nostrNip05Enabled,
+    supportChatEnabled:
+      remoteConfig.nostrSignerEnabled && remoteConfig.supportChatEnabled,
     delegatedGrantsEnabled: remoteConfig.delegatedGrantsEnabled,
     remoteConfigReady,
   }

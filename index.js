@@ -18,6 +18,11 @@ import "./app/polyfills/text-encoding"
 // for aux randomness; without it every signed NIP-46 event throws and the connect-ack never
 // publishes (BTCPay plugin then times out).
 import "./app/polyfills/crypto-get-random-values"
+// THIRD (P1): full URL implementation + URL.canParse for marmot-ts v2's relay-URL
+// validation (canParse, M2 — and `new URL(u).hostname` on wss://, F-M9-10). Imported
+// here so the globals are ready before any consumer module evaluates; the support
+// chat re-runs ensureUrlCanParse() when it starts (F-M6-3: app.tsx replaces URL).
+import "./app/polyfills/url-can-parse"
 
 import "@react-native-firebase/app"
 import * as React from "react"

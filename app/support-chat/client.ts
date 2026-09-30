@@ -256,8 +256,9 @@ export class SupportChatClient {
         for (const { invite, joinable } of invites) {
           if (!joinable) continue
           try {
+            // UnreadInvite extends Rumor — the invite IS the welcome rumor.
             const { group } = await this.client.joinGroupFromWelcome({
-              welcomeRumor: invite.rumor,
+              welcomeRumor: invite,
             })
             await this.client.invites.markAsRead(invite.id)
             this.attach(group)

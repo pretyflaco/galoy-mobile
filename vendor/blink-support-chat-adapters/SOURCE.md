@@ -39,3 +39,12 @@ Runtime peer dependencies resolve from the app: `nostr-tools` (direct dep),
 `@hpke/core`/`@hpke/common` (hoisted via marmot-ts), `@hpke/dhkem-x25519`
 (direct dep, added for this file), `@noble/*` (the app's frozen copies),
 `@internet-privacy/marmot-ts` (the pinned tarball).
+
+## Gotcha: yarn `file:` COPIES at install time
+
+`node_modules/@blink-support-chat/adapters/` is a copy made when `yarn install`
+last ran — editing files here in `vendor/` does NOT reach the bundle until the
+copy is refreshed (`cp vendor/blink-support-chat-adapters/<file>.js
+node_modules/@blink-support-chat/adapters/` for quick probes, then a full
+`yarn install` to make it stick). Found the hard way during F-M12-2
+instrumentation (edits silently absent from the built APK).

@@ -110,6 +110,29 @@ const edits = [
     find: `const keyPackageRef = await calculateKeyPackageRef(keyPackage);`,
     replace: `const keyPackageRef = await calculateKeyPackageRef(keyPackage, options.cryptoProvider); // ${PATCH_MARKER} (F-M9-1)`,
   },
+  {
+    // F-M12-2 observability: the commit loop's stock code has NO else branch for a
+    // non-newState processMessage result — such a commit is dropped with no log,
+    // no disposition, no yield. On Hermes we observed processMessage resolve to
+    // the literal number 0 here (nondeterministically; findings/M12-bot-v2.md),
+    // silently stalling the group at its epoch. This block only LOGS the case;
+    // behavior is unchanged. Worth reporting upstream with our trace.
+    file: `${root}engine/ingest.js`,
+    find: `                state: parentForAuth,
+                message,
+                callback: capture.callback,
+            });
+            const capturedCommit = capture.take();
+            if (result.kind === "newState") {`,
+    replace: `                state: parentForAuth,
+                message,
+                callback: capture.callback,
+            });
+            const capturedCommit = capture.take();
+            if (!result || result.kind !== "newState") // ${PATCH_MARKER} (F-M12-2)
+                log("commit envelope:%s NON-NEWSTATE result (stall risk): ctor=%s kind=%s", envelopeLabel(envelope), result?.constructor?.name, result?.kind);
+            if (result.kind === "newState") {`,
+  },
 ]
 
 let failed = false

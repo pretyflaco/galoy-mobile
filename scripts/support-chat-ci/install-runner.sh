@@ -32,6 +32,8 @@ RUSER=gh-runner
 RHOME=/home/$RUSER
 DIR=$RHOME/actions-runner
 UNIT=/etc/systemd/system/gh-runner-supportchat.service
+# systemd does not read the login profile, where Determinate Nix puts itself on PATH
+SVC_PATH=$RHOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 [ "$(id -u)" = 0 ] || { echo "run with sudo" >&2; exit 1; }
 # the token is only needed for a first registration; re-runs (unit updates) ignore it
@@ -88,8 +90,7 @@ Restart=always
 RestartSec=15
 KillSignal=SIGTERM
 TimeoutStopSec=5min
-# systemd does not read the login profile, where Determinate Nix puts itself on PATH
-Environment=PATH=$RHOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PATH=$SVC_PATH
 Environment=ANDROID_ADB_SERVER_PORT=5039
 UMask=0077
 # every /home but the runner's own is invisible (the operator's home is world-readable)
@@ -126,9 +127,11 @@ pid=$(systemctl show -p MainPID --value gh-runner-supportchat.service)
 echo "/home as the runner sees it: $(nsenter -t "$pid" -m ls -A /home | tr '\n' ' ')"
 nsenter -t "$pid" -m test -e /home/kasita && { echo "SANDBOX FAILURE: /home/kasita visible" >&2; exit 1; } || echo "operator home: invisible ✓"
 echo "/tmp entries visible to the runner: $(nsenter -t "$pid" -m ls -A /tmp | wc -l) (private)"
-# the jobs' PATH: run nix exactly as the service would (same user, sandbox, PATH)
+# the jobs' PATH: run nix exactly as the service would (same user, sandbox, PATH). The
+# program is /bin/sh so `nix` is resolved INSIDE the unit — systemd-run resolves a bare
+# command on the caller's PATH (sudo's secure_path has no /nix), which proved nothing.
 nixv=$(systemd-run --quiet --wait --pipe --uid="$RUSER" -p ProtectHome=tmpfs -p BindPaths="$RHOME" -p PrivateTmp=true \
-  -p "Environment=PATH=$RHOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin" \
-  nix --version) || { echo "SANDBOX FAILURE: nix not runnable with the service PATH" >&2; exit 1; }
+  -p "Environment=PATH=$SVC_PATH" /bin/sh -c 'nix --version') \
+  || { echo "SANDBOX FAILURE: nix not runnable with the service PATH" >&2; exit 1; }
 echo "nix inside the service environment: $nixv ✓"
 echo "done — the runner should show Idle at $URL/settings/actions/runners"

@@ -68,7 +68,7 @@ export const SupportChatScreen: React.FC = () => {
     if (!client || !draft.trim()) return
     const text = draft
     setDraft("")
-    void run(async () => {
+    run(async () => {
       await client.send(text)
     })
   }
@@ -164,7 +164,7 @@ export const SupportChatScreen: React.FC = () => {
           <GaloyPrimaryButton
             title={busy ? T.starting() : T.start()}
             disabled={busy || client.status !== "ready"}
-            onPress={() => void run(() => client.start())}
+            onPress={() => run(() => client.start())}
             testID="support-chat-start"
           />
         )}
@@ -174,7 +174,7 @@ export const SupportChatScreen: React.FC = () => {
             <Text style={styles.bannerText} testID="support-chat-viewing-past">
               {T.viewingPast()}
             </Text>
-            <Pressable onPress={() => void client.view(null)} testID="support-chat-back">
+            <Pressable onPress={() => client.view(null)} testID="support-chat-back">
               <Text style={[styles.link, { color: colors.primary }]}>
                 {T.backToCurrent()}
               </Text>
@@ -190,7 +190,7 @@ export const SupportChatScreen: React.FC = () => {
             <GaloyPrimaryButton
               title={busy ? T.starting() : T.startNew()}
               disabled={busy || client.status !== "ready"}
-              onPress={() => void run(() => client.startNew())}
+              onPress={() => run(() => client.startNew())}
               testID="support-chat-start-new"
             />
           </View>
@@ -199,7 +199,7 @@ export const SupportChatScreen: React.FC = () => {
         {client && current && !ended && !viewingPast && (
           <Pressable
             disabled={busy || client.status !== "ready"}
-            onPress={() => void run(() => client.startNew())}
+            onPress={() => run(() => client.startNew())}
             testID="support-chat-new-conversation"
           >
             <Text style={[styles.link, { color: colors.primary }]}>
@@ -224,7 +224,7 @@ export const SupportChatScreen: React.FC = () => {
               previous.map((c) => (
                 <Pressable
                   key={c.gid}
-                  onPress={() => void client.view(c.gid)}
+                  onPress={() => client.view(c.gid)}
                   testID="support-chat-previous-item"
                 >
                   <Text style={styles.previousItem}>
@@ -270,7 +270,7 @@ export const SupportChatScreen: React.FC = () => {
               style={[
                 styles.send,
                 { backgroundColor: colors.primary },
-                (busy || sendingBlocked || !draft.trim()) && { opacity: 0.5 },
+                (busy || sendingBlocked || !draft.trim()) && styles.sendDisabled,
               ]}
               testID="support-chat-send"
             >
@@ -305,6 +305,7 @@ const useStyles = makeStyles(({ colors }) => ({
   composer: { flexDirection: "row", alignItems: "center", gap: 8 },
   input: { flex: 1, borderWidth: 1, borderRadius: 8, padding: 8 },
   send: { padding: 10, borderRadius: 8 },
+  sendDisabled: { opacity: 0.5 },
   banner: {
     marginTop: 8,
     padding: 8,

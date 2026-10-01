@@ -1195,11 +1195,9 @@ export const createSignerRuntime = (deps: SignerRuntimeDeps): SignerRuntime => {
     subscribeActivity: (listener) => activityLog.subscribe(listener),
     fetchOwnProfilePicture,
     signAuthEvent: (template) => signer.signEvent(template),
-    // In-app support chat (P1): first-party, prompt-free — same policy as signAuthEvent.
-    getPublicKeyHex: getUserPubkeyHex,
-    nip44EncryptSelf: (pubkeyHex, plaintext) => signer.nip44Encrypt(pubkeyHex, plaintext),
-    nip44DecryptSelf: (pubkeyHex, ciphertext) =>
-      signer.nip44Decrypt(pubkeyHex, ciphertext),
+    getPublicKeyHex: getUserPubkeyHex, // support chat: first-party, like signAuthEvent
+    nip44EncryptSelf: (pk, text) => signer.nip44Encrypt(pk, text),
+    nip44DecryptSelf: (pk, text) => signer.nip44Decrypt(pk, text),
     // Self-initiated profile writes (avatar upload → kind-0): local sign through the seam,
     // then confirmed+retried publish. Never used for client-requested events.
     signAndPublish: async (template, relays) => {

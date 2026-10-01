@@ -42,11 +42,6 @@ import {
 import type { SignerRuntime } from "@app/nostr/runtime"
 import { ensureUrlCanParse } from "@app/polyfills/url-can-parse"
 
-// TEMP M12 debug (F-M12-2): surface the library's internal logger — the connect
-// drain swallows ingest exceptions into it ("connect: ingest failed …").
-import debug from "debug"
-debug.enable("marmot-ts:*")
-
 import { SUPPORT_ROSTER_PUBKEY, ROSTER_SNAPSHOT } from "./roster-config"
 import { createBlinkEventSigner } from "./blink-signer"
 import { EncryptedKeyValueStore } from "./encrypted-store"
@@ -229,7 +224,7 @@ export class SupportChatClient {
       if (this.destroyed || this.groupId !== gid) return
       if (group.state.groupContext.epoch !== epoch)
         return this.log(`stuck suspicion cleared (epoch moved)`)
-      void this.endConversation(gid, "stuck")
+      this.endConversation(gid, "stuck")
     }, STUCK_GRACE_MS)
   }
 
@@ -283,7 +278,7 @@ export class SupportChatClient {
       const engineIdleMs = Date.now() - this.engineActivityAt
       const transportAlive = Date.now() - (this.network?.activity445At ?? 0) < 90_000
       if (engineIdleMs > 90_000 && transportAlive) {
-        void this.reInit(
+        this.reInit(
           `stall: engine silent ${Math.round(engineIdleMs / 1000)}s while transport delivering`,
         )
       }
@@ -306,7 +301,7 @@ export class SupportChatClient {
       return
     }
     this.reIniting = true
-    this.reInits++
+    this.reInits += 1
     this.status = "reconnecting"
     this.emit()
     this.log(`recovering (${reason}; re-init #${this.reInits})`)
@@ -333,13 +328,16 @@ export class SupportChatClient {
   async init(): Promise<void> {
     const t0 = Date.now()
     ensureUrlCanParse() // app.tsx's URL polyfill ran, but be explicit (F-M6-3/F-M9-10)
+    // P7: no committed roster default — a build without one fails closed, up front
+    if (!SUPPORT_ROSTER_PUBKEY)
+      throw new Error("support chat: no roster key in this build")
     const signer = await createBlinkEventSigner(this.runtime)
     this.pubkey = await signer.getPublicKey()
     this.network = new SimplePoolNetwork({ signer, relays: SUPPORT_CHAT_RELAYS })
     // F-M12-2: a silently closed subscription = missed messages; rebuild.
     this.network.onSubClosed = (reason: unknown) => {
       if (!this.destroyed && !this.reIniting)
-        void this.reInit(`subscription closed (${String(reason).slice(0, 40)})`)
+        this.reInit(`subscription closed (${String(reason).slice(0, 40)})`)
     }
     const store = (prefix: string): any =>
       new EncryptedKeyValueStore(this.accountKey, prefix)
@@ -353,26 +351,6 @@ export class SupportChatClient {
       removedMarkerStore: store("removed:"), // removal tombstones (F-M6-4 class)
       clientId: "blink-support-chat",
       cryptoProvider: hermesCryptoProvider, // pure JS: Hermes has no crypto.subtle (M2)
-      // TEMP M12 debug (F-M12-2): forensic sink — where do the fetched commits die?
-      audit: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        record: (e: any) => {
-          if (
-            [
-              "ingest_entry",
-              "ingest_outcome",
-              "ingest_error",
-              "epoch_confirmed",
-              "epoch_rolled_back",
-              "epoch_state_changed",
-            ].includes(e?.type)
-          )
-            console.log(
-              `[support-chat-audit] ${e.type} ${JSON.stringify(e).slice(0, 260)}`,
-            )
-        },
-      },
-      auditContext: { engineId: "phone-debug" },
     })
     this.roster = new RosterVerifier({
       rosterPubkey: SUPPORT_ROSTER_PUBKEY,
@@ -399,7 +377,7 @@ export class SupportChatClient {
         if (prev && this.group) {
           const unverified = this.unverifiedMembers()
           if (unverified.length)
-            void this.push({
+            this.push({
               id: `roster-${r.id}`,
               at: now(),
               type: "warning",
@@ -434,13 +412,13 @@ export class SupportChatClient {
     this.client.groups.on("joined", (g: AnyGroup) => this.attach(g))
     this.client.groups.on("removed", (gid: Uint8Array) => {
       this.noteEngineActivity()
-      void this.pushTo(hex(gid), {
+      this.pushTo(hex(gid), {
         id: `removed-${hex(gid)}`,
         at: now(),
         type: "warning",
         text: "You were removed from this chat",
       })
-      void this.endConversation(hex(gid), "removed")
+      this.endConversation(hex(gid), "removed")
     })
     this.client.groups.on("unreadable", (_gid: Uint8Array, event: { id: string }) => {
       this.noteEngineActivity()
@@ -496,7 +474,7 @@ export class SupportChatClient {
       }
       await this.endConversation(old, "unrestorable")
     }
-    void this.watchForInvites()
+    this.watchForInvites()
     this.startStallWatcher()
     this.status = "ready"
     this.emit()
@@ -508,8 +486,9 @@ export class SupportChatClient {
     this.inviteWatch = new AbortController()
     try {
       for await (const invites of this.client.watchInvites()) {
-        for (const { invite, joinable } of invites) {
-          if (!joinable) continue
+        for (const { invite } of invites.filter(
+          (i: { joinable: boolean }) => i.joinable,
+        )) {
           try {
             // UnreadInvite extends Rumor — the invite IS the welcome rumor.
             const { group } = await this.client.joinGroupFromWelcome({
@@ -651,8 +630,9 @@ export class SupportChatClient {
     // Option C: a newly attached conversation (created, or support-initiated) replaces
     // the current one, which ends; its record is created on first attach.
     if (this.groupId && this.groupId !== gid)
-      void this.endConversation(this.groupId, "replaced")
-    const conversations = (this.meta.conversations ??= {})
+      this.endConversation(this.groupId, "replaced")
+    this.meta.conversations ??= {}
+    const conversations = this.meta.conversations
     conversations[gid] ??= { gid, startedAt: now(), status: "active" }
     this.group = group
     this.groupId = gid
@@ -660,27 +640,16 @@ export class SupportChatClient {
     this.knownMembers.set(gid, new Set<string>(getGroupMembers(group.state)))
     group.on("stateChanged", (state: { groupContext: { epoch: bigint } }) => {
       this.noteEngineActivity()
-      // TEMP M12 debug (F-M12-2): epoch visibility on device
-      console.log(`[support-chat] ${gid.slice(0, 8)} epoch ${state.groupContext.epoch}`)
-      void this.membershipNotices(gid, state)
+      this.membershipNotices(gid, state)
     })
     group.on("applicationMessage", (data: Uint8Array) => {
       this.noteEngineActivity()
-      // TEMP M12 debug (F-M12-2): engine-level receipt signal for the repro loop
-      try {
-        const r = deserializeApplicationData(data)
-        console.log(
-          `[support-chat] recv ${r.pubkey.slice(0, 8)} len=${r.content?.length ?? -1}`,
-        )
-      } catch {
-        console.log("[support-chat] recv (undecodable)")
-      }
       // v2: the engine already bound the rumor's author to the MLS sender leaf
       // (F-M9-3) — anything delivered here is authenticated to its sender.
       try {
         const rumor = deserializeApplicationData(data)
         if (rumor.pubkey === this.pubkey) return
-        void this.pushTo(gid, {
+        this.pushTo(gid, {
           id: `r-${rumor.id}`,
           at: now(),
           type: "msg",
@@ -692,7 +661,7 @@ export class SupportChatClient {
       }
     })
     this.meta.activeGroup = gid
-    void this.saveMeta()
+    this.saveMeta()
     this.emit()
   }
 

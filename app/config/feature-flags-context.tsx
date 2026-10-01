@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from "react"
 import remoteConfigInstance from "@react-native-firebase/remote-config"
+import Config from "react-native-config"
 
 import { useLevel } from "@app/graphql/level-context"
 import { useAppConfig } from "@app/hooks/use-app-config"
@@ -46,6 +47,12 @@ const StableBalanceEnabledKey = "stableBalanceEnabled"
 const NostrNip05EnabledKey = "nostrNip05Enabled"
 /** Support chat (P1): E2EE support chat over Marmot v2. Off by default; requires nostrSignerEnabled. */
 const SupportChatEnabledKey = "supportChatEnabled"
+/**
+ * P7: support-chat builds opt in at BUILD time (ENVFILE `SUPPORT_CHAT_BUILD=on` — the CI
+ * smoke and the dogfood build). Without it the support chat is off and the
+ * self-custodial default is upstream's (off); remote config can still turn either on.
+ */
+const supportChatBuild = Config?.SUPPORT_CHAT_BUILD === "on"
 const DollarRestrictionCacheEnabledKey = "dollarRestrictionCacheEnabled"
 const BtcMapPlacesEnabledKey = "btcMapPlacesEnabled"
 const AutoConvertMaxAttemptsKey = "autoConvertMaxAttempts"
@@ -232,13 +239,13 @@ export const defaultRemoteConfig: RemoteConfig = {
    *  The less intrusive home-screen nudge banner takes over in the meantime, so the
    *  warning never disappears entirely (#4156). */
   backupNudgeModalCooldownMs: 24 * 60 * 60 * 1000,
-  nonCustodialEnabled: true, // DEV-BUILD LOCAL OVERRIDE (uncommitted): P1 device smoke
+  nonCustodialEnabled: supportChatBuild, // upstream default: false
   delegatedGrantsEnabled: false,
   stableBalanceEnabled: false,
   /** NIP-05 verified handles (POC): off until the lnurl-server routes are deployed. */
   nostrNip05Enabled: false,
-  /** Support chat (P1): off unless a build turns it on; requires nostrSignerEnabled. */
-  supportChatEnabled: true, // DEV-BUILD LOCAL OVERRIDE (uncommitted): P1 device smoke
+  /** Support chat: off unless the build opts in (above); requires nostrSignerEnabled. */
+  supportChatEnabled: supportChatBuild,
   // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
   nostrSignerEnabled: true,
   dollarRestrictionCacheEnabled: true,
@@ -269,11 +276,11 @@ export const defaultRemoteConfig: RemoteConfig = {
 
 const defaultFeatureFlags: FeatureFlags = {
   deviceAccountEnabled: false,
-  nonCustodialEnabled: true, // DEV-BUILD LOCAL OVERRIDE (uncommitted): P1 device smoke
+  nonCustodialEnabled: supportChatBuild, // upstream default: false
   delegatedGrantsEnabled: false,
   stableBalanceEnabled: false,
   nostrNip05Enabled: false,
-  supportChatEnabled: true, // DEV-BUILD LOCAL OVERRIDE (uncommitted): P1 device smoke
+  supportChatEnabled: supportChatBuild,
   // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
   nostrSignerEnabled: true,
   remoteConfigReady: false,

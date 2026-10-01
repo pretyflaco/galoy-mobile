@@ -23,7 +23,14 @@ the library's connect()/ingestion pool replaces it, M9 retirement table),
 `store.js` (node:fs), `index.js` (would pull store.js into the Metro graph),
 `async-storage.js` (the app uses the encrypted store instead).
 
-## Fork adaptations vs the POC source (exactly two, both in hermes-crypto-provider.js)
+## Fork adaptations vs the POC source
+
+`network.js` (F-M12-2, fork-only): `activity445At` (last kind-445 delivery on any
+subscription) and the `onSubClosed` hook feed the app's stall detector; a closed
+subscription is logged (`[support-chat-net] sub closed`, a dead sub = missed
+messages). The TEMP M12 request/live-event logs were removed in P7.
+
+`hermes-crypto-provider.js` (exactly two):
 
 1. `sha256` imported from `@noble/hashes/sha256.js` (was `sha2.js`): this file
    resolves `@noble/*` from the fork ROOT — the app's own copies (hashes 1.8.0,

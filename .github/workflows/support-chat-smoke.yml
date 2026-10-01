@@ -118,7 +118,10 @@ jobs:
         run: |
           nix develop -c sh -c 'emulator -avd Pixel_API_36 -port 5554 -gpu swiftshader -wipe-data -no-boot-anim -no-window -no-audio' &
           nix develop -c adb wait-for-device
-          nix develop -c sh -c 'adb shell while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done'
+          # poll FROM THE HOST (the old `sh -c 'adb shell while …; do …'` was parsed by the
+          # host shell: syntax error), bounded so a dead boot cannot eat the job timeout
+          timeout 600 nix develop -c sh -c 'until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; do sleep 3; done'
+          nix develop -c adb shell getprop ro.build.version.release
 
       - name: Find the built APK
         run: |

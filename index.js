@@ -34,6 +34,11 @@ globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true
 import { AppRegistry, LogBox } from "react-native"
 
 import { App } from "./app/app.tsx"
+import { registerPushBackgroundHandler } from "./app/support-chat/push"
+
+// Support chat (M18): content-free wake from the push server → local notification.
+// Must be registered outside React; no-op unless the build configures push.
+registerPushBackgroundHandler()
 
 // Disables showing errors and warnings on UI - they still get shown on console
 // Ensures elements are visible deterministically during tests

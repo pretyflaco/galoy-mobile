@@ -16,7 +16,10 @@ cp ~/Documents/BLINK/blink-support-chat/packages/adapters/<file>.js ./
 (TestEventSigner — tests/dev only; the app uses `app/support-chat/blink-signer.ts`),
 `load-groups.js` (fault-tolerant load, F-M9-7), `roster.js` (verifier with
 persistence + snapshot seed, M11), `key-package-publish.js` (ensureDiscoverable,
-F-M9-7/F-M9-12), `hermes-crypto-provider.js`.
+F-M9-7/F-M9-12), `hermes-crypto-provider.js`, `push-mip05.js` (M18: marmot-push-v1 client —
+token encryption to the notification server, owner-signed kind 447/449, record state,
+kind 446 triggers; verbatim from blink-support-chat @ 7b6c85a, 10/10 unit tests also pass
+against this tree's @noble/nostr-tools copies).
 
 NOT vendored (v1-only or Node-only): `ingestor.js` (GroupIngestor retired on v2 —
 the library's connect()/ingestion pool replaces it, M9 retirement table),

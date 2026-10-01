@@ -39,10 +39,18 @@ import {
   fetchKeyPackageEvent,
 } from "@blink-support-chat/adapters/key-package-publish.js"
 
+import messaging from "@react-native-firebase/messaging"
+
 import type { SignerRuntime } from "@app/nostr/runtime"
 import { ensureUrlCanParse } from "@app/polyfills/url-can-parse"
 
 import { SUPPORT_ROSTER_PUBKEY, ROSTER_SNAPSHOT } from "./roster-config"
+import {
+  PUSH_SERVER_PUBKEY,
+  announcementKey,
+  buildTokenAnnouncement,
+  getPushToken,
+} from "./push"
 import { createBlinkEventSigner } from "./blink-signer"
 import { EncryptedKeyValueStore } from "./encrypted-store"
 
@@ -90,7 +98,12 @@ export type Conversation = {
   endedAt?: number
   reason?: EndReason
 }
-type Meta = { activeGroup?: string; conversations?: Record<string, Conversation> }
+type Meta = {
+  activeGroup?: string
+  conversations?: Record<string, Conversation>
+  /** M18: per conversation, the push announcement already sent (announcementKey) */
+  pushAnnounced?: Record<string, string>
+}
 
 /** F-M16-1 guard anomalies (scripts/patch-marmot-ts-v2.mjs → globalThis hook). */
 type IngestAnomaly = {
@@ -158,6 +171,8 @@ export class SupportChatClient {
   viewItems: ChatItem[] = []
   private stuckTimer: ReturnType<typeof setTimeout> | null = null
   private readonly onAnomaly = (a: IngestAnomaly) => this.handleAnomaly(a)
+  private signer: Awaited<ReturnType<typeof createBlinkEventSigner>> | null = null
+  private tokenRefreshSub: (() => void) | null = null
 
   constructor(
     private readonly runtime: SignerRuntime,
@@ -332,6 +347,7 @@ export class SupportChatClient {
     if (!SUPPORT_ROSTER_PUBKEY)
       throw new Error("support chat: no roster key in this build")
     const signer = await createBlinkEventSigner(this.runtime)
+    this.signer = signer
     this.pubkey = await signer.getPublicKey()
     this.network = new SimplePoolNetwork({ signer, relays: SUPPORT_CHAT_RELAYS })
     // F-M12-2: a silently closed subscription = missed messages; rebuild.
@@ -478,6 +494,41 @@ export class SupportChatClient {
     this.startStallWatcher()
     this.status = "ready"
     this.emit()
+    if (PUSH_SERVER_PUBKEY && !this.tokenRefreshSub)
+      this.tokenRefreshSub = messaging().onTokenRefresh(() => this.announcePush())
+    this.announcePush()
+  }
+
+  /**
+   * M18: announce this device's push token in the current conversation (kind 447,
+   * marmot-push-v1) once per token/leaf/server; re-announced on token refresh and for
+   * every new conversation. Best effort: push is optional, chat never depends on it.
+   */
+  async announcePush(): Promise<void> {
+    const group = this.group
+    const gid = this.groupId
+    if (!PUSH_SERVER_PUBKEY || !group || !gid || !this.signer || this.isEnded()) return
+    try {
+      const token = await getPushToken()
+      if (!token) return
+      const leafIndex: number = group.state.privatePath.leafIndex
+      const key = announcementKey(token, leafIndex)
+      if (this.meta.pushAnnounced?.[gid] === key) return
+      const rumor = await buildTokenAnnouncement({
+        signer: this.signer,
+        pubkey: this.pubkey,
+        groupIdHex: hex(group.state.groupContext.groupId),
+        leafIndex,
+        token,
+        relayHint: SUPPORT_CHAT_RELAYS[0],
+      })
+      await this.client.groups.send(group.id, createApplicationMessageIntent(rumor))
+      this.meta.pushAnnounced = { ...this.meta.pushAnnounced, [gid]: key }
+      await this.saveMeta()
+      this.log(`push: ${token.platform} token announced in ${short(gid)}`)
+    } catch (e) {
+      this.log(`push: announcement failed: ${(e as Error).message}`)
+    }
   }
 
   /** Support-initiated conversations: the library's invite watch loop (live + backfill). */
@@ -496,6 +547,7 @@ export class SupportChatClient {
             })
             await this.client.invites.markAsRead(invite.id)
             this.attach(group)
+            this.announcePush()
             this.push({
               id: `joined-${invite.id}`,
               at: now(),
@@ -577,6 +629,7 @@ export class SupportChatClient {
     this.log(
       `group ${short(this.groupId ?? "")} created, bot ${short(botPk)} invited (${Date.now() - t0}ms)`,
     )
+    this.announcePush() // after the invite commit: the bot can read it
     await this.push({
       id: `n-${Date.now()}`,
       at: now(),
@@ -649,6 +702,9 @@ export class SupportChatClient {
       try {
         const rumor = deserializeApplicationData(data)
         if (rumor.pubkey === this.pubkey) return
+        // only chat (kind 9) is shown; app payloads such as push token gossip
+        // (447/448/449) from other members' clients are not messages (M18)
+        if (rumor.kind !== 9) return
         this.pushTo(gid, {
           id: `r-${rumor.id}`,
           at: now(),
@@ -729,6 +785,7 @@ export class SupportChatClient {
     this.conn?.unsubscribe()
     this.inviteListen?.unsubscribe()
     this.rosterSub?.unsubscribe()
+    this.tokenRefreshSub?.()
     if (this.group) await this.group.save(true).catch(() => undefined)
     await this.network?.destroy()
   }

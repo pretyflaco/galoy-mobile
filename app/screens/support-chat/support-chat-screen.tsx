@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { ActivityIndicator, FlatList, Pressable, TextInput, View } from "react-native"
 import { Text, makeStyles, useTheme } from "@rn-vui/themed"
 
@@ -7,6 +7,7 @@ import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { useI18nContext } from "@app/i18n/i18n-react"
 
 import { useSupportChat } from "@app/support-chat/use-support-chat"
+import { PUSH_SERVER_PUBKEY, askPermission } from "@app/support-chat/push"
 import type { ChatItem, EndReason, MemberLabel } from "@app/support-chat/client"
 
 /**
@@ -23,6 +24,16 @@ export const SupportChatScreen: React.FC = () => {
     theme: { colors },
   } = useTheme()
   const { client, error } = useSupportChat()
+
+  // M18: ask for notification permission here, where the user sees why; then announce
+  // the push token in the conversation (no-op unless the build configures push).
+  const status = client?.status
+  useEffect(() => {
+    if (!PUSH_SERVER_PUBKEY || status !== "ready" || !client) return
+    askPermission()
+      .then((granted) => (granted ? client.announcePush() : undefined))
+      .catch(() => undefined)
+  }, [client, status])
   const [draft, setDraft] = useState("")
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)

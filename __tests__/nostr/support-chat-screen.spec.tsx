@@ -9,6 +9,11 @@ import { render } from "@testing-library/react-native"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let mockedClient: any = null
+// M18: push is not under test here (and its notification lib is untranspiled ESM)
+jest.mock("@app/support-chat/push", () => ({
+  PUSH_SERVER_PUBKEY: "",
+  askPermission: jest.fn(async () => false),
+}))
 jest.mock("@app/support-chat/use-support-chat", () => ({
   useSupportChat: () => ({ client: mockedClient, error: null }),
 }))

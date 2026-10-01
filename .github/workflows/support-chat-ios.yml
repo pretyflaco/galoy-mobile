@@ -33,6 +33,9 @@ jobs:
       MAESTRO_CLI_NO_ANALYTICS: "1"
       MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED: "true"
       MAESTRO_DISABLE_UPDATE_CHECK: "true"
+      # the XCTest driver missed Maestro's default startup window on a cold hosted
+      # simulator (run 36840981637: "iOS driver not ready in time")
+      MAESTRO_DRIVER_STARTUP_TIMEOUT: "600000"
 
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +50,10 @@ jobs:
           xcodebuild -version
           uname -m; node --version; yarn --version; pod --version; java -version 2>&1 | head -1
 
-      - uses: actions/cache@v4
+      # restore + an explicit save right after the install: actions/cache saves only when
+      # the whole job succeeds, so every failing iteration re-ran an 8-minute install
+      - uses: actions/cache/restore@v4
+        id: deps
         with:
           path: |
             node_modules
@@ -63,6 +69,14 @@ jobs:
           yarn install --frozen-lockfile 2>&1 | tee smoke-artifacts/install.log
           # both guards must report applied / OK (AGENTS.md: after ANY install, in every tree)
           grep -E "patch-marmot-ts-v2|noble" smoke-artifacts/install.log | tail -8
+
+      - uses: actions/cache/save@v4
+        if: steps.deps.outputs.cache-hit != 'true'
+        with:
+          path: |
+            node_modules
+            ios/Pods
+          key: ${{ runner.os }}-${{ runner.arch }}-supportchat-ios-${{ hashFiles('yarn.lock', 'ios/Podfile.lock') }}
 
       - name: Vendored adapters → node_modules (yarn 1 never refreshes a file dep's copy)
         # node_modules comes from a cache keyed on yarn.lock, and an edit under vendor/
@@ -135,6 +149,12 @@ jobs:
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl install "$UDID" "$APP_PATH"
+          # warm-up launch (first start under Rosetta is slow) + evidence even if the
+          # driver below fails: does the app reach its first screen?
+          xcrun simctl launch "$UDID" io.galoy.bitcoinbeach
+          sleep 90
+          xcrun simctl io "$UDID" screenshot smoke-artifacts/warmup.png
+          xcrun simctl terminate "$UDID" io.galoy.bitcoinbeach || true
 
       - name: Install Maestro (pinned, checksum-verified)
         run: |

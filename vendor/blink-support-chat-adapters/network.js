@@ -21,6 +21,7 @@ export class SimplePoolNetwork {
     // subscription closes (a silently dead sub = missed messages).
     this.activity445At = 0
     this.onSubClosed = null
+    this.destroyed = false
     this.pool = new SimplePool({
       automaticallyAuth: () => (event) => Promise.resolve(this.signer.signEvent(event)),
     })
@@ -66,27 +67,41 @@ export class SimplePoolNetwork {
   subscription(relays, filters) {
     const list = Array.isArray(filters) ? filters : [filters]
     const pool = this.pool
-    const signEvent = (event) => Promise.resolve(this.signer.signEvent(event))
+    // `this` inside the returned object's subscribe() is that object, not the network
+    // (F-M18-7: the F-M12-2 hooks below were set on it and never fired) — use `net`.
+    const net = this
+    const signEvent = (event) => Promise.resolve(net.signer.signEvent(event))
     return {
       subscribe(observer) {
         const seen = new Set()
+        let closedByUs = false
         const subs = list.map((filter) =>
           pool.subscribeMany(relays, filter, {
             onevent: (event) => {
               if (seen.has(event.id)) return
               seen.add(event.id)
               // F-M12-2: transport activity signal for the stall detector
-              if (filter.kinds?.includes(445)) this.activity445At = Date.now()
+              if (filter.kinds?.includes(445)) net.activity445At = Date.now()
               observer.next?.(event)
             },
             onauth: signEvent,
-            onclose: (reason) => {
-              console.log(`[support-chat-net] sub closed: ${reason ?? "?"}`)
-              this.onSubClosed?.(reason)
+            onclose: (reasons) => {
+              // nostr-tools passes [{ url, reason }] (one per relay)
+              const reason = Array.isArray(reasons)
+                ? reasons.map((r) => (r && typeof r === "object" ? `${r.url}: ${r.reason}` : String(r))).join("; ")
+                : String(reasons ?? "?")
+              console.log(`[support-chat-net] sub closed${closedByUs || net.destroyed ? " (by us)" : ""}: ${reason}`)
+              // only an unexpected close (relay or connection) is a dead subscription
+              if (!closedByUs && !net.destroyed) net.onSubClosed?.(reason)
             },
           }),
         )
-        return { unsubscribe: () => subs.forEach((s) => s.close()) }
+        return {
+          unsubscribe: () => {
+            closedByUs = true
+            subs.forEach((s) => s.close())
+          },
+        }
       },
     }
   }
@@ -102,6 +117,7 @@ export class SimplePoolNetwork {
   }
 
   async destroy() {
+    this.destroyed = true // its subscriptions' closes are ours, never "dead"
     await this.pool.destroy()
   }
 }

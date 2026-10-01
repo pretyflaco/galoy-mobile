@@ -31,7 +31,10 @@ the library's connect()/ingestion pool replaces it, M9 retirement table),
 `network.js` (F-M12-2, fork-only): `activity445At` (last kind-445 delivery on any
 subscription) and the `onSubClosed` hook feed the app's stall detector; a closed
 subscription is logged (`[support-chat-net] sub closed`, a dead sub = missed
-messages). The TEMP M12 request/live-event logs were removed in P7.
+messages). The TEMP M12 request/live-event logs were removed in P7. F-M18-7: both hooks were
+set on the wrong object (`this` inside the returned `subscribe()`), so neither ever fired
+— fixed (`net`); closes caused by our own `unsubscribe()`/`destroy()` no longer count as a
+dead subscription.
 
 `hermes-crypto-provider.js` (exactly two):
 

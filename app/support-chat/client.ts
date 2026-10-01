@@ -39,6 +39,7 @@ import {
   fetchKeyPackageEvent,
 } from "@blink-support-chat/adapters/key-package-publish.js"
 
+import { AppState, type AppStateStatus, type NativeEventSubscription } from "react-native"
 import messaging from "@react-native-firebase/messaging"
 
 import type { SignerRuntime } from "@app/nostr/runtime"
@@ -173,6 +174,12 @@ export class SupportChatClient {
   private readonly onAnomaly = (a: IngestAnomaly) => this.handleAnomaly(a)
   private signer: Awaited<ReturnType<typeof createBlinkEventSigner>> | null = null
   private tokenRefreshSub: (() => void) | null = null
+  // F-M18-7: Android closes the relay sockets of a backgrounded app. A close seen in
+  // the background is remembered and repaired when the app is in front again (a
+  // reconnect in the background would just be closed again).
+  private appStateSub: NativeEventSubscription | null = null
+  private backgroundSince: number | null = null
+  private closedInBackground = false
 
   constructor(
     private readonly runtime: SignerRuntime,
@@ -181,6 +188,7 @@ export class SupportChatClient {
     this.metaStore = new EncryptedKeyValueStore<Meta>(accountKey, "meta:")
     this.history = new EncryptedKeyValueStore<ChatItem[]>(accountKey, "history:")
     anomalyListeners.add(this.onAnomaly)
+    this.appStateSub = AppState.addEventListener("change", (s) => this.onAppState(s))
   }
 
   // --- Option C: conversations as sessions ------------------------------------------
@@ -307,19 +315,24 @@ export class SupportChatClient {
     }
   }
 
-  private async reInit(reason: string): Promise<void> {
+  /**
+   * Rebuild the client. `counted` re-inits (stalls, foreground socket loss) share a
+   * budget of 3 per session; the foreground reconnect after a background is routine on
+   * Android and does not spend it (F-M18-7).
+   */
+  private async reInit(reason: string, { counted = true } = {}): Promise<void> {
     if (this.destroyed || this.reIniting) return
-    if (this.reInits >= 3) {
+    if (counted && this.reInits >= 3) {
       this.log(`recovery gave up after 3 re-inits (last reason: ${reason})`)
       this.status = "degraded"
       this.emit()
       return
     }
     this.reIniting = true
-    this.reInits += 1
+    if (counted) this.reInits += 1
     this.status = "reconnecting"
     this.emit()
-    this.log(`recovering (${reason}; re-init #${this.reInits})`)
+    this.log(`recovering (${reason}${counted ? `; re-init #${this.reInits}` : ""})`)
     try {
       this.inviteWatch?.abort()
       this.conn?.unsubscribe()
@@ -352,8 +365,12 @@ export class SupportChatClient {
     this.network = new SimplePoolNetwork({ signer, relays: SUPPORT_CHAT_RELAYS })
     // F-M12-2: a silently closed subscription = missed messages; rebuild.
     this.network.onSubClosed = (reason: unknown) => {
-      if (!this.destroyed && !this.reIniting)
-        this.reInit(`subscription closed (${String(reason).slice(0, 40)})`)
+      if (this.destroyed || this.reIniting) return
+      if (AppState.currentState !== "active") {
+        this.closedInBackground = true // repaired on foreground (onAppState)
+        return
+      }
+      this.reInit(`subscription closed (${String(reason).slice(0, 60)})`)
     }
     const store = (prefix: string): any =>
       new EncryptedKeyValueStore(this.accountKey, prefix)
@@ -776,8 +793,30 @@ export class SupportChatClient {
     await this.history.setItem(gid, this.items)
   }
 
+  /**
+   * F-M18-7: back in front after a background → reconnect + backfill, so a message
+   * that woke us (push) or arrived meanwhile shows within seconds. Also when no close
+   * was seen: after a while in the background Android drops sockets silently.
+   */
+  private onAppState(state: AppStateStatus) {
+    if (state !== "active") {
+      this.backgroundSince ??= Date.now()
+      return
+    }
+    const away = this.backgroundSince === null ? 0 : Date.now() - this.backgroundSince
+    this.backgroundSince = null
+    if (this.destroyed || this.status === "starting" || !this.client) return
+    if (this.closedInBackground || away > 20_000) {
+      this.closedInBackground = false
+      this.reInit(`foreground after ${Math.round(away / 1000)}s in background`, {
+        counted: false,
+      })
+    }
+  }
+
   async destroy(): Promise<void> {
     this.destroyed = true
+    this.appStateSub?.remove()
     anomalyListeners.delete(this.onAnomaly)
     if (this.stuckTimer) clearTimeout(this.stuckTimer)
     this.stopStallWatcher()

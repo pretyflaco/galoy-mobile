@@ -1,0 +1,154 @@
+name: Support-chat smoke (iOS simulator)
+
+# P5 (blink-wip#1500): the first iOS build of the support-chat app plus the same
+# device smoke as the Android job — onboard → nostr identity → start chat → live
+# E2EE greeting → send → reply — on a GitHub-HOSTED macOS runner (free on the public
+# fork; nothing of ours runs on it). Unsigned simulator build: no Apple team, no
+# certificates, no secrets. Everything is throwaway: local wok relay, throwaway
+# roster + peer (scripts/support-chat-ci/), a synthetic Firebase plist.
+
+on:
+  pull_request:
+    branches: [main, feat/support-chat]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  support-chat-smoke-ios:
+    name: iOS (simulator)
+    runs-on: macos-26
+    timeout-minutes: 150
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      LANG: en_US.UTF-8
+      XCODE_APP: /Applications/Xcode_26.5.app # = the flake's XCODE_VERSION/BUILD (26.5/17F42)
+      MAESTRO_VERSION: "2.11.0"
+      MAESTRO_SHA256: 5384593cb4e7a106489e75a821d157dd43f4e438df6bc308b72e82c685e1283a
+      MAESTRO_CLI_NO_ANALYTICS: "1"
+      MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED: "true"
+      MAESTRO_DISABLE_UPDATE_CHECK: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Toolchain
+        run: |
+          sudo xcode-select -s "$XCODE_APP"
+          xcodebuild -version
+          uname -m; node --version; yarn --version; pod --version; java -version 2>&1 | head -1
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ios/Pods
+          key: ${{ runner.os }}-${{ runner.arch }}-supportchat-ios-${{ hashFiles('yarn.lock', 'ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-supportchat-ios-
+
+      - name: Install Node modules (+ patch guards + pod install via postinstall)
+        run: |
+          set -o pipefail
+          mkdir -p smoke-artifacts
+          yarn install --frozen-lockfile 2>&1 | tee smoke-artifacts/install.log
+          # both guards must report applied / OK (AGENTS.md: after ANY install, in every tree)
+          grep -E "patch-marmot-ts-v2|noble" smoke-artifacts/install.log | tail -8
+
+      - name: Fetch wok and start the relay on :7787
+        run: |
+          scripts/support-chat-ci/fetch-wok.sh
+          nohup scripts/support-chat-ci/bin/wok --config scripts/support-chat-ci/wok.toml relay > /tmp/wok-smoke.log 2>&1 &
+          sleep 3
+          tail -5 /tmp/wok-smoke.log
+
+      - name: Smoke prep (throwaway roster + snapshot + env)
+        # the simulator shares the host's network: 127.0.0.1 (not the emulator's 10.0.2.2)
+        run: node scripts/support-chat-ci/prep.mjs ws://127.0.0.1:7787 .env.support-smoke /tmp/support-chat-smoke-state
+
+      - name: Build the simulator app (Debug, JS bundle embedded, unsigned)
+        # FORCE_BUNDLING embeds main.jsbundle in a Debug simulator build; without a running
+        # Metro the RCTBundleURLProvider falls back to it. RCT_NO_LAUNCH_PACKAGER stops the
+        # build phase from opening a Terminal Metro. ENVFILE is read by react-native-config's
+        # pod script phase, repo-relative.
+        run: |
+          set -o pipefail
+          cp scripts/support-chat-ci/GoogleService-Info.ci.plist ios/GoogleService-Info.plist
+          xcodebuild -workspace ios/GaloyApp.xcworkspace -scheme GaloyApp -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios/build ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO \
+            build > smoke-artifacts/ios-build.log 2>&1 \
+            || { grep -nE "error:|BUILD FAILED" smoke-artifacts/ios-build.log | head -60; tail -80 smoke-artifacts/ios-build.log; exit 1; }
+          tail -3 smoke-artifacts/ios-build.log
+          APP=ios/build/Build/Products/Debug-iphonesimulator/Blink.app
+          ls -la "$APP/main.jsbundle"
+          grep -q "ws://127.0.0.1:7787" node_modules/react-native-config/ios/ReactNativeConfig/GeneratedDotEnv.m || { echo "ENVFILE not picked up"; exit 1; }
+          echo "APP_PATH=$APP" >> "$GITHUB_ENV"
+        env:
+          ENVFILE: .env.support-smoke
+          FORCE_BUNDLING: "1"
+          RCT_NO_LAUNCH_PACKAGER: "1"
+
+      - name: Start peer bot (local relay)
+        run: |
+          nohup node scripts/support-chat-ci/peer.mjs ws://127.0.0.1:7787 /tmp/support-chat-smoke-state/bot.json > /tmp/smoke-peer.log 2>&1 &
+          echo $! > /tmp/smoke-peer.pid
+          for i in $(seq 1 45); do
+            grep -q "discovery published" /tmp/smoke-peer.log && break
+            kill -0 "$(cat /tmp/smoke-peer.pid)" 2>/dev/null || break
+            sleep 2
+          done
+          grep -q "discovery published" /tmp/smoke-peer.log || { cat /tmp/smoke-peer.log; exit 1; }
+
+      - name: Boot a simulator and install the app
+        run: |
+          # newest iOS runtime, an iPhone on it
+          UDID=$(xcrun simctl list devices available -j | node -e '
+            const d = JSON.parse(require("fs").readFileSync(0, "utf8")).devices
+            const rts = Object.keys(d).filter((k) => k.includes("SimRuntime.iOS-")).sort((a, b) =>
+              b.split("iOS-")[1].localeCompare(a.split("iOS-")[1], undefined, { numeric: true }))
+            for (const r of rts) {
+              const x = d[r].find((x) => /^iPhone \d+$/.test(x.name)) ?? d[r].find((x) => x.name.startsWith("iPhone"))
+              if (x) { console.error(`${r} ${x.name}`); console.log(x.udid); break }
+            }')
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" "$APP_PATH"
+
+      - name: Install Maestro (pinned, checksum-verified)
+        run: |
+          curl -sfL "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip" -o /tmp/maestro.zip
+          echo "${MAESTRO_SHA256}  /tmp/maestro.zip" | shasum -a 256 -c -
+          unzip -q /tmp/maestro.zip -d "$HOME"
+          echo "$HOME/maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Drive the smoke (onboard → chat → round trip)
+        run: |
+          maestro --device "$SIM_UDID" test scripts/support-chat-ci/ios-smoke.yaml \
+            --debug-output smoke-artifacts/maestro-debug \
+            --test-output-dir smoke-artifacts/maestro-out
+
+      - name: Artifacts
+        if: always()
+        run: |
+          mkdir -p smoke-artifacts
+          cp /tmp/wok-smoke.log /tmp/smoke-peer.log smoke-artifacts/ 2>/dev/null || true
+          if [ -n "${SIM_UDID:-}" ]; then
+            xcrun simctl io "$SIM_UDID" screenshot smoke-artifacts/final.png || true
+            timeout 120 xcrun simctl spawn "$SIM_UDID" log show --last 60m --style compact \
+              --predicate 'subsystem == "com.facebook.react.log" OR process == "Blink"' \
+              > smoke-artifacts/app-log.txt 2>/dev/null || true
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: support-chat-smoke-ios
+          path: smoke-artifacts

@@ -5,7 +5,6 @@ import { Text, makeStyles, useTheme } from "@rn-vui/themed"
 import { Screen } from "@app/components/screen"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { useI18nContext } from "@app/i18n/i18n-react"
-import { testProps } from "@app/utils/testProps"
 
 import { useSupportChat } from "@app/support-chat/use-support-chat"
 import type { ChatItem, EndReason, MemberLabel } from "@app/support-chat/client"
@@ -77,7 +76,7 @@ export const SupportChatScreen: React.FC = () => {
   const renderItem = ({ item }: { item: ChatItem }) => {
     if (item.type === "notice")
       return (
-        <Text style={styles.notice} {...testProps("support-chat-notice")}>
+        <Text style={styles.notice} testID="support-chat-notice">
           » {item.text}
         </Text>
       )
@@ -85,7 +84,7 @@ export const SupportChatScreen: React.FC = () => {
       return (
         <Text
           style={[styles.notice, { color: colors.error }]}
-          {...testProps("support-chat-warning")}
+          testID="support-chat-warning"
         >
           ⚠ {item.text}
         </Text>
@@ -95,7 +94,7 @@ export const SupportChatScreen: React.FC = () => {
     return (
       <View
         style={[styles.bubble, item.mine ? styles.mine : styles.theirs]}
-        {...testProps("support-chat-message")}
+        testID="support-chat-message"
       >
         {who && (
           <Text
@@ -115,7 +114,7 @@ export const SupportChatScreen: React.FC = () => {
 
   return (
     <Screen preset="fixed" keyboardShouldPersistTaps="handled">
-      <View style={styles.root} {...testProps("support-chat-screen")}>
+      <View style={styles.root} testID="support-chat-screen">
         <Text style={styles.status}>
           {client
             ? client.status === "reconnecting"
@@ -133,7 +132,7 @@ export const SupportChatScreen: React.FC = () => {
               color: handoff === "agent" ? colors._green ?? colors.primary : colors.grey2,
             },
           ]}
-          {...testProps("support-chat-handoff")}
+          testID="support-chat-handoff"
         >
           {handoff === "agent" ? T.handoffAgent() : T.handoffBot()}
         </Text>
@@ -141,7 +140,7 @@ export const SupportChatScreen: React.FC = () => {
         {(error || actionError) && (
           <Text
             style={[styles.error, { color: colors.error }]}
-            {...testProps("support-chat-error")}
+            testID="support-chat-error"
           >
             {error ?? actionError}
           </Text>
@@ -150,7 +149,7 @@ export const SupportChatScreen: React.FC = () => {
         {sendingBlocked && (
           <Text
             style={[styles.blocked, { color: colors.error }]}
-            {...testProps("support-chat-unverified")}
+            testID="support-chat-unverified"
           >
             ⚠{" "}
             {T.unverifiedBlocked({ members: unverified.map((m) => m.text).join("; ") })}
@@ -166,19 +165,16 @@ export const SupportChatScreen: React.FC = () => {
             title={busy ? T.starting() : T.start()}
             disabled={busy || client.status !== "ready"}
             onPress={() => void run(() => client.start())}
-            {...testProps("support-chat-start")}
+            testID="support-chat-start"
           />
         )}
 
         {client && viewingPast && (
           <View style={styles.banner}>
-            <Text style={styles.bannerText} {...testProps("support-chat-viewing-past")}>
+            <Text style={styles.bannerText} testID="support-chat-viewing-past">
               {T.viewingPast()}
             </Text>
-            <Pressable
-              onPress={() => void client.view(null)}
-              {...testProps("support-chat-back")}
-            >
+            <Pressable onPress={() => void client.view(null)} testID="support-chat-back">
               <Text style={[styles.link, { color: colors.primary }]}>
                 {T.backToCurrent()}
               </Text>
@@ -188,14 +184,14 @@ export const SupportChatScreen: React.FC = () => {
 
         {client && current && ended && !viewingPast && (
           <View style={styles.banner}>
-            <Text style={styles.bannerText} {...testProps("support-chat-ended")}>
+            <Text style={styles.bannerText} testID="support-chat-ended">
               {endedText[current.reason ?? "user"]()}
             </Text>
             <GaloyPrimaryButton
               title={busy ? T.starting() : T.startNew()}
               disabled={busy || client.status !== "ready"}
               onPress={() => void run(() => client.startNew())}
-              {...testProps("support-chat-start-new")}
+              testID="support-chat-start-new"
             />
           </View>
         )}
@@ -204,7 +200,7 @@ export const SupportChatScreen: React.FC = () => {
           <Pressable
             disabled={busy || client.status !== "ready"}
             onPress={() => void run(() => client.startNew())}
-            {...testProps("support-chat-new-conversation")}
+            testID="support-chat-new-conversation"
           >
             <Text style={[styles.link, { color: colors.primary }]}>
               {T.newConversation()}
@@ -216,7 +212,7 @@ export const SupportChatScreen: React.FC = () => {
           <View>
             <Pressable
               onPress={() => setShowPrevious(!showPrevious)}
-              {...testProps("support-chat-previous-toggle")}
+              testID="support-chat-previous-toggle"
             >
               <Text style={[styles.link, { color: colors.primary }]}>
                 {showPrevious
@@ -229,7 +225,7 @@ export const SupportChatScreen: React.FC = () => {
                 <Pressable
                   key={c.gid}
                   onPress={() => void client.view(c.gid)}
-                  {...testProps("support-chat-previous-item")}
+                  testID="support-chat-previous-item"
                 >
                   <Text style={styles.previousItem}>
                     {T.conversationItem({
@@ -246,7 +242,9 @@ export const SupportChatScreen: React.FC = () => {
           style={styles.list}
           // inverted list: newest first, so the latest message sits at the bottom
           // above the composer (F-M16-9: it was rendering chronological data upside down)
-          data={client ? [...(viewingPast ? client.viewItems : client.items)].reverse() : []}
+          data={
+            client ? [...(viewingPast ? client.viewItems : client.items)].reverse() : []
+          }
           inverted
           keyExtractor={(i) => i.id}
           renderItem={renderItem}
@@ -264,7 +262,7 @@ export const SupportChatScreen: React.FC = () => {
               value={draft}
               onChangeText={setDraft}
               editable={!sendingBlocked}
-              {...testProps("support-chat-input")}
+              testID="support-chat-input"
             />
             <Pressable
               disabled={busy || sendingBlocked || !draft.trim()}
@@ -274,7 +272,7 @@ export const SupportChatScreen: React.FC = () => {
                 { backgroundColor: colors.primary },
                 (busy || sendingBlocked || !draft.trim()) && { opacity: 0.5 },
               ]}
-              {...testProps("support-chat-send")}
+              testID="support-chat-send"
             >
               <Text style={{ color: colors.white }}>{T.send()}</Text>
             </Pressable>

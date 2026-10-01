@@ -6,7 +6,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { useFeatureFlags } from "@app/config/feature-flags-context"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 
-import { useRunningSupportChat } from "@app/support-chat/use-support-chat"
+import { useRunningSupportChat } from "@app/support-chat/registry"
 
 import { SettingsRow } from "../row"
 

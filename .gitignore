@@ -123,3 +123,4 @@ bmad-custom-src
 .history # a defined place to dump all that intermediate stuff from AI agents
 .env.support-smoke
 .env.support-dogfood
+.env.alpha

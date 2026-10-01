@@ -33,6 +33,18 @@ import { isUnlockInProgress } from "./unlock-routes"
 
 const navigationRef = createNavigationContainerRef<RootStackParamList>()
 
+/** In-app route requests (support chat notification taps, M18): delivered through
+ *  navigationRef under the same unlock + auth gate as deferred links, never through a
+ *  Linking.openURL round-trip — with several Blink builds installed that pops Android's
+ *  app chooser (and lets another app claim the scheme). Latest-wins. */
+type InAppRoute = "supportChat"
+let pendingInAppRoute: InAppRoute | null = null
+const inAppRouteListeners = new Set<() => void>()
+export const requestInAppRoute = (route: InAppRoute): void => {
+  pendingInAppRoute = route
+  inAppRouteListeners.forEach((notify) => notify())
+}
+
 /** The one deeplink the account-closed gate still allows through: the migration entry. */
 const MIGRATION_DEEPLINK_PATH = "account-migration"
 
@@ -250,6 +262,24 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
     }
   }, [canHandlePayments, isAppLocked, urlAfterUnlockAndAuth])
 
+  /** In-app route requests (see requestInAppRoute): re-check on every request, unlock,
+   *  auth change, and once the container is ready. */
+  const [inAppRouteTick, bumpInAppRoute] = React.useReducer((x: number) => x + 1, 0)
+  useEffect(() => {
+    inAppRouteListeners.add(bumpInAppRoute)
+    return () => {
+      inAppRouteListeners.delete(bumpInAppRoute)
+    }
+  }, [])
+  useEffect(() => {
+    if (!pendingInAppRoute || !canHandlePayments || isAppLocked) return
+    if (!navigationRef.isReady()) return
+    const route = pendingInAppRoute
+    pendingInAppRoute = null
+    if (isBlockerVisibleRef.current) return // the account-closed gate wins
+    navigationRef.navigate(route)
+  }, [canHandlePayments, isAppLocked, inAppRouteTick])
+
   /** Deliver a nostrconnect:// URI that arrived while locked, once unlock + auth land
    *  (same conditions as the generic deferred-URL effect above). */
   useEffect(() => {
@@ -380,6 +410,7 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
            *  gate self-releases at its cap, so this can never defer the hide unbounded. */
           bootSplashGate.whenReleased().then(() => RNBootSplash.hide({ fade: true }))
           console.log("NavigationContainer onReady")
+          bumpInAppRoute() // a route requested before the container was ready
           /** Cold-started already gated: reset now that the container is ready, since the
            *  effect above may have run before isReady() turned true. */
           if (isBlockerVisibleRef.current) resetToBlocker("gate-armed")

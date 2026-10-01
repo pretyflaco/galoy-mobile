@@ -51,8 +51,16 @@ appId: io.galoy.bitcoinbeach
     timeout: 30000
 - tapOn:
     id: "Nostr identity"
+# The hub's empty state wraps its buttons in a testProps container
+# ("nostr-identity-hub-empty": accessible + label), which on iOS hides the buttons
+# from XCUITest (and VoiceOver) — so this is the one tap by position (the "Create
+# new" button, 1st action under the hero; run 36850459669 screenshot).
+- extendedWaitUntil:
+    visible:
+      id: "nostr-identity-hub-empty"
+    timeout: 30000
 - tapOn:
-    id: "Create new"
+    point: "50%,32%"
 - extendedWaitUntil:
     notVisible:
       text: "Generating…"

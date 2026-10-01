@@ -120,16 +120,16 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
-            // Support chat P1 (M6 pattern, never for production): installs as
-            // com.galoyapp.supportchat, beside com.galoyapp and the POC ids. The
-            // debug-only (git-ignored) google-services.json carries a client for this
-            // package; strings.xml the label. F-M6-8: App Check 403s on the cloned
-            // client, so the device flow uses a self-custodial wallet.
-            applicationIdSuffix ".supportchat"
-            versionNameSuffix "-supportchat"
-            // react-native-config reads BuildConfig of `build_config_package`; with a suffix the
-            // runtime package differs from the BuildConfig namespace (com.galoyapp), Config comes
-            // back empty and Spark SDK init throws (the .nostrpoc2 lesson). Point it at the namespace.
+            // Blink Alpha (internal pre-release channel, never production): the debug
+            // variant installs as com.blinkbtc.alpha (set below via the variant API — a
+            // build-type suffix cannot change the base), beside com.galoyapp. Its own
+            // Firebase project; the git-ignored debug google-services.json carries the
+            // com.blinkbtc.alpha client (CI: scripts/support-chat-ci/google-services.ci.json).
+            versionNameSuffix "-alpha"
+            // react-native-config reads BuildConfig of `build_config_package`; the runtime
+            // package differs from the BuildConfig namespace (com.galoyapp), so Config would
+            // come back empty and Spark SDK init throws (the .nostrpoc2 lesson). Point it at
+            // the namespace.
             resValue "string", "build_config_package", "com.galoyapp"
         }
         release {
@@ -156,6 +156,13 @@ android {
         unitTests {
             includeAndroidResources true
         }
+    }
+}
+
+// Blink Alpha: the debug variant's application id (see buildTypes.debug).
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        variant.applicationId.set("com.blinkbtc.alpha")
     }
 }
 

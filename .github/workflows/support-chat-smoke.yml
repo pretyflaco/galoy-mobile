@@ -105,7 +105,7 @@ jobs:
         run: |
           set -o pipefail
           rm -rf android/app/.cxx
-          # The debug variant's app id (com.galoyapp.supportchat) is only in the git-ignored
+          # The debug variant's app id (com.blinkbtc.alpha, Blink Alpha) is only in the git-ignored
           # local android/app/src/debug/google-services.json (Blink's PRODUCTION Firebase
           # project — never in CI). CI gets a synthetic, CI-only config: well-formed dummy
           # values, no real project; Firebase calls fail at runtime, which the smoke does

@@ -10,7 +10,7 @@ import { execSync } from "node:child_process"
 import { mkdirSync, writeFileSync } from "node:fs"
 
 const APK = process.argv[2] ?? "android/app/build/outputs/apk/debug/app-x86_64-debug.apk"
-const PKG = "com.galoyapp.supportchat"
+const PKG = "com.blinkbtc.alpha"
 const OUT = "smoke-artifacts"
 mkdirSync(OUT, { recursive: true })
 

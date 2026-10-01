@@ -109,7 +109,13 @@ jobs:
         run: |
           nohup nix develop -c node scripts/support-chat-ci/peer.mjs ws://127.0.0.1:7787 /tmp/support-chat-smoke-state/bot.json > /tmp/smoke-peer.log 2>&1 &
           echo $! > /tmp/smoke-peer.pid
-          sleep 5
+          # `nix develop` evaluation + node start + relay connect can exceed a fixed 5 s
+          # (run 36831465573 failed with only the nix eval warnings in the log): poll ≤ 90 s
+          for i in $(seq 1 45); do
+            grep -q "discovery published" /tmp/smoke-peer.log && break
+            kill -0 "$(cat /tmp/smoke-peer.pid)" 2>/dev/null || break
+            sleep 2
+          done
           grep -q "discovery published" /tmp/smoke-peer.log || (cat /tmp/smoke-peer.log && exit 1)
 
       - name: Boot emulator

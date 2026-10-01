@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react"
 import { useFocusEffect } from "@react-navigation/native"
-import { useHeaderHeight } from "@react-navigation/elements"
 import {
   ActivityIndicator,
   FlatList,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   TextInput,
   View,
 } from "react-native"
+import Animated, { useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Text, makeStyles, useTheme } from "@rn-vui/themed"
 
 import { Screen } from "@app/components/screen"
@@ -59,7 +59,21 @@ export const SupportChatScreen: React.FC = () => {
     theme: { colors },
   } = useTheme()
   const { client, error } = useSupportChat()
-  const headerHeight = useHeaderHeight()
+  // Android draws edge-to-edge, so adjustResize no longer lifts the content, and
+  // KeyboardAvoidingView misjudged the overlap there (it left the composer under the
+  // keyboard on the A56). The IME inset is exact: lift by it, minus the bottom inset the
+  // Screen already pads. iOS: the Screen's own KeyboardAvoidingView handles it.
+  const keyboard = useAnimatedKeyboard()
+  const { bottom: bottomInset } = useSafeAreaInsets()
+  const liftForKeyboard = Platform.OS === "android"
+  const keyboardLift = useAnimatedStyle(
+    () => ({
+      paddingBottom: liftForKeyboard
+        ? Math.max(0, keyboard.height.value - bottomInset)
+        : 0,
+    }),
+    [bottomInset, liftForKeyboard], // explicit deps: also valid without the worklets plugin (jest)
+  )
 
   // unread: nothing counts while this screen is in front
   useFocusEffect(
@@ -244,13 +258,7 @@ export const SupportChatScreen: React.FC = () => {
 
   return (
     <Screen preset="fixed" keyboardShouldPersistTaps="handled">
-      {/* Android draws edge-to-edge, so adjustResize no longer lifts the content: the
-          chat lifts itself above the keyboard on both platforms. */}
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0}
-      >
+      <Animated.View style={[styles.flex, keyboardLift]}>
         <View style={styles.root} testID="support-chat-screen">
           {/* top bar: encryption + who is answering + menu */}
           <View style={styles.topBar}>
@@ -447,7 +455,7 @@ export const SupportChatScreen: React.FC = () => {
             </View>
           )}
         </View>
-      </KeyboardAvoidingView>
+      </Animated.View>
     </Screen>
   )
 }

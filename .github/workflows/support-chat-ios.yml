@@ -98,19 +98,22 @@ jobs:
         # the simulator shares the host's network: 127.0.0.1 (not the emulator's 10.0.2.2)
         run: node scripts/support-chat-ci/prep.mjs ws://127.0.0.1:7787 .env.support-smoke /tmp/support-chat-smoke-state
 
-      - name: Build the simulator app (Debug, JS bundle embedded, unsigned)
+      - name: Build the simulator app (Debug, JS bundle embedded, ad-hoc signed)
         # FORCE_BUNDLING embeds main.jsbundle in a Debug simulator build; without a running
         # Metro the RCTBundleURLProvider falls back to it. RCT_NO_LAUNCH_PACKAGER stops the
         # build phase from opening a Terminal Metro. ENVFILE is read by react-native-config's
         # pod script phase, repo-relative. x86_64 like upstream: the Podfile excludes arm64
         # for the simulator (the arm64 build had no valid arch, run 36837196114); the
-        # simulator runs it under Rosetta on the arm64 runner.
+        # simulator runs it under Rosetta on the arm64 runner. Signed AD-HOC ("-", no team,
+        # no profile — still no secrets): a fully unsigned app has no entitlements, so every
+        # keychain call failed with -34018 and wallet creation died (run 36846147324).
         run: |
           set -o pipefail
           cp scripts/support-chat-ci/GoogleService-Info.ci.plist ios/GoogleService-Info.plist
           xcodebuild -workspace ios/GaloyApp.xcworkspace -scheme GaloyApp -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath ios/build ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO \
+            -derivedDataPath ios/build ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
             build > smoke-artifacts/ios-build.log 2>&1 \
             || { grep -nE "error:|BUILD FAILED" smoke-artifacts/ios-build.log | head -60; tail -80 smoke-artifacts/ios-build.log; exit 1; }
           tail -3 smoke-artifacts/ios-build.log

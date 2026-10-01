@@ -148,6 +148,25 @@ describe("support-chat screen", () => {
     expect(getByText("Blink assistant")).toBeTruthy()
   })
 
+  it("a pause of more than 5 minutes starts a new run (author shown again)", async () => {
+    const bot = "b".repeat(64)
+    const { getAllByText } = renderScreen({
+      ...baseClient,
+      items: [
+        { id: "1", at: 1000, type: "msg", from: bot, text: "Support (pretyflaco): one" },
+        {
+          id: "2",
+          at: 1000 + 6 * 60,
+          type: "msg",
+          from: bot,
+          text: "Support (pretyflaco): two",
+        },
+      ],
+    })
+    await flushEffects()
+    expect(getAllByText("pretyflaco · Blink Support")).toHaveLength(2)
+  })
+
   it("shows the agent handoff state when a verified agent is present", async () => {
     const { getByTestId } = renderScreen({ ...baseClient, handoffState: () => "agent" })
     await flushEffects()

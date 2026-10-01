@@ -31,6 +31,8 @@ const relayedAuthor = (text: string): { name: string | null; body: string } => {
   return m ? { name: m[1], body: text.slice(m[0].length) } : { name: null, body: text }
 }
 
+/** A pause longer than this starts a new run (its own time label), like messengers do. */
+const RUN_GAP_S = 5 * 60
 const dayOf = (at: number) => new Date(at * 1000).toDateString()
 const timeOf = (at: number) =>
   new Date(at * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -169,16 +171,17 @@ export const SupportChatScreen: React.FC = () => {
       if (item.type === "msg") key = item.mine ? "me" : `${item.from}|${author}`
       return { item, author, verified, body, key, day: dayOf(item.at) }
     })
-    // pass 2: run boundaries and day separators
+    // pass 2: run boundaries (same author, same day, ≤ 5 min apart) and day separators
+    const joins = (a: (typeof meta)[number], b: (typeof meta)[number]) =>
+      Boolean(a.key) &&
+      a.key === b.key &&
+      a.day === b.day &&
+      b.item.at - a.item.at <= RUN_GAP_S
     const out: Row[] = meta.map((m, i) => {
       const prev = meta[i - 1]
       const next = meta[i + 1]
-      const sameAsPrev = Boolean(
-        prev && m.key && prev.key === m.key && prev.day === m.day,
-      )
-      const sameAsNext = Boolean(
-        next && m.key && next.key === m.key && next.day === m.day,
-      )
+      const sameAsPrev = Boolean(prev && joins(prev, m))
+      const sameAsNext = Boolean(next && joins(m, next))
       return {
         item: m.item,
         author: m.author,

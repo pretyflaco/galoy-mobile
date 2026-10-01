@@ -34,8 +34,9 @@ DIR=$RHOME/actions-runner
 UNIT=/etc/systemd/system/gh-runner-supportchat.service
 
 [ "$(id -u)" = 0 ] || { echo "run with sudo" >&2; exit 1; }
-TOKEN=$(head -c 200 | tr -d '\r\n ')
-[ -n "$TOKEN" ] || { echo "no registration token on stdin" >&2; exit 1; }
+# the token is only needed for a first registration; re-runs (unit updates) ignore it
+TOKEN=""
+[ -t 0 ] || TOKEN=$(head -c 200 | tr -d '\r\n ')
 
 echo "== user checks"
 id "$RUSER" >/dev/null
@@ -60,6 +61,8 @@ fi
 
 echo "== register ($NAME, label $LABEL only)"
 if [ ! -f "$DIR/.runner" ]; then
+  [ -n "$TOKEN" ] || { echo "no registration token on stdin (needed for the first registration)" >&2; exit 1; }
+  cd "$DIR" # config.sh checks ./bin relative to the cwd
   # the token goes in via the environment (the runner reads ACTIONS_RUNNER_INPUT_*), not argv
   sudo -u "$RUSER" env ACTIONS_RUNNER_INPUT_TOKEN="$TOKEN" "$DIR/config.sh" --unattended \
     --url "$URL" --name "$NAME" --labels "$LABEL" --no-default-labels --work _work --replace
@@ -85,6 +88,8 @@ Restart=always
 RestartSec=15
 KillSignal=SIGTERM
 TimeoutStopSec=5min
+# systemd does not read the login profile, where Determinate Nix puts itself on PATH
+Environment=PATH=$RHOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=ANDROID_ADB_SERVER_PORT=5039
 UMask=0077
 # every /home but the runner's own is invisible (the operator's home is world-readable)
@@ -111,7 +116,8 @@ TasksMax=8192
 WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
-systemctl enable --now gh-runner-supportchat.service
+systemctl enable gh-runner-supportchat.service
+systemctl restart gh-runner-supportchat.service # a re-run applies a changed unit
 sleep 8
 systemctl is-active gh-runner-supportchat.service
 
@@ -120,4 +126,9 @@ pid=$(systemctl show -p MainPID --value gh-runner-supportchat.service)
 echo "/home as the runner sees it: $(nsenter -t "$pid" -m ls -A /home | tr '\n' ' ')"
 nsenter -t "$pid" -m test -e /home/kasita && { echo "SANDBOX FAILURE: /home/kasita visible" >&2; exit 1; } || echo "operator home: invisible ✓"
 echo "/tmp entries visible to the runner: $(nsenter -t "$pid" -m ls -A /tmp | wc -l) (private)"
+# the jobs' PATH: run nix exactly as the service would (same user, sandbox, PATH)
+nixv=$(systemd-run --quiet --wait --pipe --uid="$RUSER" -p ProtectHome=tmpfs -p BindPaths="$RHOME" -p PrivateTmp=true \
+  -p "Environment=PATH=$RHOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin" \
+  nix --version) || { echo "SANDBOX FAILURE: nix not runnable with the service PATH" >&2; exit 1; }
+echo "nix inside the service environment: $nixv ✓"
 echo "done — the runner should show Idle at $URL/settings/actions/runners"

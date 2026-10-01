@@ -46,8 +46,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: DeterminateSystems/magic-nix-cache-action@v2
-        continue-on-error: true # a cache-service hiccup must not fail the smoke
+
+      - name: Reap leftovers of earlier (cancelled) jobs
+        # A cancelled job leaves its nohup'd relay, adb server and emulator behind (seen:
+        # wok :7787 + a hung `adb logcat` 6 h after a timeout). Only this runner user's
+        # own processes — the job cannot see or signal anyone else's.
+        run: |
+          for pat in 'support-chat-ci/bin/wok' 'support-chat-ci/peer.mjs' 'qemu-system' 'emulator -avd' 'adb logcat' 'adb -L tcp:5039'; do
+            pkill -u "$(id -u)" -f "$pat" && echo "reaped: $pat" || true
+          done
+          sleep 2
+
+      - name: Gradle memory (the runner user's own gradle.properties)
+        # prepareAssets runs `gradlew clean -b ./android/build.gradle` from the repo root,
+        # which does not pick up android/gradle.properties → the daemon ran out of its
+        # 512 MiB default heap (F-M16-12). The user-level file is always read.
+        run: |
+          mkdir -p ~/.gradle
+          printf 'org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=2g\norg.gradle.daemon=true\n' > ~/.gradle/gradle.properties
       - uses: actions/cache@v4
         with:
           path: node_modules
@@ -70,10 +86,16 @@ jobs:
       - name: Smoke prep (throwaway roster + snapshot + env)
         run: nix develop -c node scripts/support-chat-ci/prep.mjs ws://10.0.2.2:7787 .env.support-smoke /tmp/support-chat-smoke-state
 
-      - name: Build debug APK (ENVFILE=.env.support-smoke)
+      - name: Build debug APK (ENVFILE=.env.support-smoke, x86_64 for the emulator)
+        # react-native-config resolves "$rootDir/../$ENVFILE" with rootDir=android/, so the
+        # value is REPO-relative (the old `../../` pointed outside the repo: "Missing .env").
         run: |
+          set -o pipefail
           rm -rf android/app/.cxx
-          nix develop -c sh -c 'unset ANDROID_SDK_ROOT; export ENVFILE=../../.env.support-smoke && yarn android:prepareAssets && ./android/gradlew -b ./android/build.gradle assembleDebug "-Dorg.gradle.jvmargs=-Xmx4g"'
+          mkdir -p smoke-artifacts
+          nix develop -c sh -c 'unset ANDROID_SDK_ROOT; yarn android:prepareAssets && ./android/gradlew -b ./android/build.gradle assembleDebug -PreactNativeArchitectures=x86_64' 2>&1 | tee smoke-artifacts/build.log
+          grep -q "Reading env from: .env.support-smoke" smoke-artifacts/build.log || { echo "ENVFILE not picked up"; exit 1; }
+          ! grep -q "Missing .env file" smoke-artifacts/build.log || { echo "Missing .env file"; exit 1; }
         env:
           ENVFILE: .env.support-smoke
 
@@ -110,7 +132,8 @@ jobs:
         run: |
           mkdir -p smoke-artifacts
           cp /tmp/wok-smoke.log /tmp/smoke-peer.log smoke-artifacts/ 2>/dev/null || true
-          nix develop -c adb logcat -d -s ReactNativeJS > smoke-artifacts/app-logcat.txt 2>/dev/null || true
+          # `adb logcat` waits forever without a device — that hang ate a 90-min timeout
+          timeout 60 nix develop -c adb logcat -d -s ReactNativeJS > smoke-artifacts/app-logcat.txt 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -123,5 +146,6 @@ jobs:
         run: |
           kill $(cat /tmp/smoke-peer.pid) 2>/dev/null || true
           kill $(cat /tmp/wok-smoke.pid) 2>/dev/null || true
-          nix develop -c adb emu kill || true
-          nix develop -c adb kill-server || true
+          timeout 60 nix develop -c adb emu kill || true
+          timeout 60 nix develop -c adb kill-server || true
+          pkill -u "$(id -u)" -f 'qemu-system' || true

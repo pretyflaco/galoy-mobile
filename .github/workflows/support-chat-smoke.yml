@@ -84,7 +84,11 @@ jobs:
           tail -5 /tmp/wok-smoke.log
 
       - name: Smoke prep (throwaway roster + snapshot + env)
-        run: nix develop -c node scripts/support-chat-ci/prep.mjs ws://10.0.2.2:7787 .env.support-smoke /tmp/support-chat-smoke-state
+        # ONE relay URL for app and peer: 127.0.0.1, reverse-forwarded into the emulator
+        # (Boot step). With 10.0.2.2 for the app and 127.0.0.1 for the peer, the peer's
+        # advertised inbox (10050) pointed the app's Welcome at the emulator's own
+        # loopback and the group relay was unreachable from the host (run 36833568030).
+        run: nix develop -c node scripts/support-chat-ci/prep.mjs ws://127.0.0.1:7787 .env.support-smoke /tmp/support-chat-smoke-state
 
       - name: Build debug APK (ENVFILE=.env.support-smoke, x86_64 for the emulator)
         # react-native-config resolves "$rootDir/../$ENVFILE" with rootDir=android/, so the
@@ -128,6 +132,9 @@ jobs:
           # host shell: syntax error), bounded so a dead boot cannot eat the job timeout
           timeout 600 nix develop -c sh -c 'until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; do sleep 3; done'
           nix develop -c adb shell getprop ro.build.version.release
+          # the emulator's 127.0.0.1:7787 → the host relay (runner's own adb server :5039)
+          nix develop -c adb reverse tcp:7787 tcp:7787
+          nix develop -c adb reverse --list
 
       - name: Find the built APK
         run: |

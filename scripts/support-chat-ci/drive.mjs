@@ -69,7 +69,9 @@ async function tap(attr, value, { waitMs = 2500, tries = 8 } = {}) {
   return false
 }
 const tapText = (t, o) => tap("text", t, o)
-const tapId = (id, o) => tap("content-desc", id, o)
+// testProps ids land in content-desc; plain testID ids in resource-id
+const tapId = async (id, o) =>
+  (await tap("content-desc", id, { ...o, tries: 2 })) || tap("resource-id", id, o)
 async function waitFor(pattern, timeoutMs) {
   const t0 = Date.now()
   while (Date.now() - t0 < timeoutMs) {
@@ -90,7 +92,7 @@ async function scrollToText(text, waitMs = 6000) {
   return false
 }
 async function openSettings() {
-  if (!(await waitFor('content-desc="home-settings-button"', 40000))) return false
+  if (!(await waitFor('content-desc="home-settings-button"', 120000))) return false
   return tapId("home-settings-button", { waitMs: 2000 })
 }
 const logcat = () => { try { return adb("logcat -d -s ReactNativeJS") } catch { return "" } }
@@ -101,8 +103,10 @@ adb("logcat -c")
 adb(`shell pm clear ${PKG}`)
 adb(`shell am start -n ${PKG}/com.galoyapp.MainActivity`)
 
-// onboarding (self-custodial, no backend needed)
-ok("onboard: create account", await tapText("Create new account", { waitMs: 4000, tries: 20 }))
+// onboarding (self-custodial, no backend needed). The first launch on a freshly
+// wiped emulator sat on the splash past a 20-try wait (run 36833568030, attempt 1).
+ok("app started (get-started screen)", await waitFor('text="Create new account"', 180000))
+ok("onboard: create account", await tapText("Create new account", { waitMs: 4000 }))
 ok("onboard: non-custodial", await tapText("Non-custodial", { waitMs: 1500 }))
 ok("onboard: continue", await tapText("Continue", { waitMs: 6000 }))
 ok("onboard: enhanced mode", await tapText("Enhanced&#10;Mode", { waitMs: 1500 }))
@@ -119,7 +123,9 @@ evidence("after-create-identity")
 adb("shell input keyevent 4")
 await sleep(2000)
 
-// the chat screen (settings → Support chat)
+// the chat screen (settings → Support chat). A plain `am start` resumed the settings
+// screen; a cold start lands on home.
+adb(`shell am force-stop ${PKG}`)
 adb(`shell am start -n ${PKG}/com.galoyapp.MainActivity`)
 ok("settings (chat)", await openSettings())
 ok("support chat row", await scrollToText("Support chat", 8000))
@@ -131,7 +137,7 @@ ok(
   (await tapId("support-chat-start", { waitMs: 3000, tries: 10 })) ||
     (await tapText("Start a support chat", { waitMs: 3000, tries: 2 })),
 )
-ok("composer shown (group created)", await waitFor('content-desc="support-chat-input"', 60000))
+ok("composer shown (group created)", await waitFor('"support-chat-input"', 60000))
 ok("peer joined + greeting shown (live E2EE)", await waitFor("CI Smoke Bot joined", 60000))
 
 // send + assert the reply

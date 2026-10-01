@@ -5,7 +5,7 @@
  * notice/warning/item rendering.
  */
 import React from "react"
-import { render } from "@testing-library/react-native"
+import { fireEvent, render } from "@testing-library/react-native"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let mockedClient: any = null
@@ -115,10 +115,37 @@ describe("support-chat screen", () => {
       </ContextForScreen>,
     )
     await flushEffects()
-    expect(getByTestId("support-chat-notice").props.children.join("")).toContain(
-      "joined:",
-    )
+    expect(String(getByTestId("support-chat-notice").props.children)).toContain("joined:")
     expect(getByTestId("support-chat-warning")).toBeTruthy()
+  })
+
+  it("shows a relayed human reply under its author, prefix stripped, one label per run", async () => {
+    const bot = "b".repeat(64)
+    const { getByText, getAllByText, queryByText } = renderScreen({
+      ...baseClient,
+      items: [
+        { id: "1", at: 100, type: "msg", from: bot, text: "Support (pretyflaco): hello" },
+        {
+          id: "2",
+          at: 101,
+          type: "msg",
+          from: bot,
+          text: "Support (pretyflaco): how can I help",
+        },
+        {
+          id: "3",
+          at: 102,
+          type: "msg",
+          from: bot,
+          text: "Support (Blink assistant): hi",
+        },
+      ],
+    })
+    await flushEffects()
+    expect(getAllByText("pretyflaco · Blink Support")).toHaveLength(1) // one run
+    expect(getByText("hello")).toBeTruthy()
+    expect(queryByText("Support (pretyflaco): hello")).toBeNull()
+    expect(getByText("Blink assistant")).toBeTruthy()
   })
 
   it("shows the agent handoff state when a verified agent is present", async () => {
@@ -128,9 +155,11 @@ describe("support-chat screen", () => {
   })
 
   /** Option C (F-M16-1): conversations are sessions; an ended one is never a dead end. */
-  it("an active conversation offers 'New conversation' next to the composer", async () => {
+  it("an active conversation offers 'New conversation' in the menu", async () => {
     const { getByTestId, queryByTestId } = renderScreen({ ...baseClient })
     await flushEffects()
+    expect(queryByTestId("support-chat-new-conversation")).toBeNull() // tucked away
+    fireEvent.press(getByTestId("support-chat-menu"))
     expect(getByTestId("support-chat-new-conversation")).toBeTruthy()
     expect(queryByTestId("support-chat-ended")).toBeNull()
   })
@@ -159,6 +188,7 @@ describe("support-chat screen", () => {
       conversations: () => [{ gid: "group1", startedAt: 2, status: "active" }, past],
     })
     await flushEffects()
+    fireEvent.press(listed.getByTestId("support-chat-menu"))
     expect(listed.getByTestId("support-chat-previous-toggle")).toBeTruthy()
 
     const viewing = renderScreen({
@@ -171,7 +201,7 @@ describe("support-chat screen", () => {
     expect(viewing.getByTestId("support-chat-viewing-past")).toBeTruthy()
     expect(viewing.getByTestId("support-chat-back")).toBeTruthy()
     expect(viewing.queryByTestId("support-chat-input")).toBeNull()
-    expect(viewing.getByTestId("support-chat-notice").props.children.join("")).toContain(
+    expect(String(viewing.getByTestId("support-chat-notice").props.children)).toContain(
       "an old notice",
     )
   })

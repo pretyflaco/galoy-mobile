@@ -14394,6 +14394,47 @@ type RootTranslation = {
 		 * B​a​c​k​ ​t​o​ ​t​h​e​ ​c​u​r​r​e​n​t​ ​c​o​n​v​e​r​s​a​t​i​o​n
 		 */
 		backToCurrent: string
+		/**
+		 * E​n​d​-​t​o​-​e​n​d​ ​e​n​c​r​y​p​t​e​d​ ​·​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t
+		 */
+		encrypted: string
+		/**
+		 * A​u​t​o​m​a​t​e​d​ ​a​s​s​i​s​t​a​n​t
+		 */
+		pillBot: string
+		/**
+		 * S​u​p​p​o​r​t​ ​a​g​e​n​t
+		 */
+		pillAgent: string
+		/**
+		 * M​o​r​e​ ​o​p​t​i​o​n​s
+		 */
+		menu: string
+		/**
+		 * C​h​a​t​ ​w​i​t​h​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t
+		 */
+		emptyTitle: string
+		/**
+		 * A​s​k​ ​u​s​ ​a​n​y​t​h​i​n​g​.​ ​T​h​i​s​ ​c​h​a​t​ ​i​s​ ​e​n​d​-​t​o​-​e​n​d​ ​e​n​c​r​y​p​t​e​d​ ​—​ ​o​n​l​y​ ​y​o​u​ ​a​n​d​ ​t​h​e​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t​ ​t​e​a​m​ ​c​a​n​ ​r​e​a​d​ ​i​t​.
+		 */
+		emptyBody: string
+		/**
+		 * B​l​i​n​k​ ​a​s​s​i​s​t​a​n​t
+		 */
+		assistantName: string
+		/**
+		 * {​n​a​m​e​}​ ​·​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t
+		 * @param {string} name
+		 */
+		agentLabel: RequiredParams<'name'>
+		/**
+		 * T​o​d​a​y
+		 */
+		today: string
+		/**
+		 * Y​e​s​t​e​r​d​a​y
+		 */
+		yesterday: string
 	}
 	NostrActivityScreen: {
 		/**
@@ -29303,6 +29344,46 @@ export type TranslationFunctions = {
 		 * Back to the current conversation
 		 */
 		backToCurrent: () => LocalizedString
+		/**
+		 * End-to-end encrypted · Blink Support
+		 */
+		encrypted: () => LocalizedString
+		/**
+		 * Automated assistant
+		 */
+		pillBot: () => LocalizedString
+		/**
+		 * Support agent
+		 */
+		pillAgent: () => LocalizedString
+		/**
+		 * More options
+		 */
+		menu: () => LocalizedString
+		/**
+		 * Chat with Blink Support
+		 */
+		emptyTitle: () => LocalizedString
+		/**
+		 * Ask us anything. This chat is end-to-end encrypted — only you and the Blink Support team can read it.
+		 */
+		emptyBody: () => LocalizedString
+		/**
+		 * Blink assistant
+		 */
+		assistantName: () => LocalizedString
+		/**
+		 * {name} · Blink Support
+		 */
+		agentLabel: (arg: { name: string }) => LocalizedString
+		/**
+		 * Today
+		 */
+		today: () => LocalizedString
+		/**
+		 * Yesterday
+		 */
+		yesterday: () => LocalizedString
 	}
 	NostrActivityScreen: {
 		/**

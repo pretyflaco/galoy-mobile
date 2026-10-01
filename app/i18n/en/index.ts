@@ -4525,6 +4525,17 @@ const en: BaseTranslation = {
     statusEnded: "ended",
     viewingPast: "A previous conversation (read-only)",
     backToCurrent: "Back to the current conversation",
+    encrypted: "End-to-end encrypted · Blink Support",
+    pillBot: "Automated assistant",
+    pillAgent: "Support agent",
+    menu: "More options",
+    emptyTitle: "Chat with Blink Support",
+    emptyBody:
+      "Ask us anything. This chat is end-to-end encrypted — only you and the Blink Support team can read it.",
+    assistantName: "Blink assistant",
+    agentLabel: "{name:string} · Blink Support",
+    today: "Today",
+    yesterday: "Yesterday",
   },
   NostrActivityScreen: {
     title: "Activity",

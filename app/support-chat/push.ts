@@ -17,7 +17,6 @@
 import { PermissionsAndroid, Platform } from "react-native"
 import Config from "react-native-config"
 import messaging from "@react-native-firebase/messaging"
-import PushNotification from "react-native-push-notification"
 
 import {
   acceptSignedProof,
@@ -27,6 +26,8 @@ import {
   tokenFingerprint,
   tokenUpdateRumor,
 } from "@blink-support-chat/adapters/push-mip05.js"
+
+import { showWakeNotification } from "./push-notify"
 
 const configured = Config?.SUPPORT_PUSH_SERVER_PUBKEY
 export const PUSH_SERVER_PUBKEY: string =
@@ -131,25 +132,6 @@ export const buildTokenAnnouncement = async (o: {
   const sig = acceptSignedProof(await o.signer.signEvent({ ...template }), template)
   return tokenUpdateRumor({ pubkey: o.pubkey, entries: [{ ...entry, owner_sig: sig }] })
   /* eslint-enable camelcase */
-}
-
-const CHANNEL = "support-chat"
-let channelReady = false
-/** Content-free local notification for a push wake (Android). */
-export const showWakeNotification = (): void => {
-  if (!channelReady) {
-    PushNotification.createChannel(
-      { channelId: CHANNEL, channelName: "Support chat", importance: 4 },
-      () => undefined,
-    )
-    channelReady = true
-  }
-  PushNotification.localNotification({
-    channelId: CHANNEL,
-    title: "Blink Support",
-    message: "You have a new message in your support chat.",
-    tag: CHANNEL, // one notification, replaced, not a pile
-  })
 }
 
 /**

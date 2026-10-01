@@ -92,6 +92,12 @@ jobs:
         run: |
           set -o pipefail
           rm -rf android/app/.cxx
+          # The debug variant's app id (com.galoyapp.supportchat) is only in the git-ignored
+          # local android/app/src/debug/google-services.json (Blink's PRODUCTION Firebase
+          # project — never in CI). CI gets a synthetic, CI-only config: well-formed dummy
+          # values, no real project; Firebase calls fail at runtime, which the smoke does
+          # not need (push is blink-wip#1498).
+          cp scripts/support-chat-ci/google-services.ci.json android/app/src/debug/google-services.json
           mkdir -p smoke-artifacts
           nix develop -c sh -c 'unset ANDROID_SDK_ROOT; yarn android:prepareAssets && ./android/gradlew -b ./android/build.gradle assembleDebug -PreactNativeArchitectures=x86_64' 2>&1 | tee smoke-artifacts/build.log
           grep -q "Reading env from: .env.support-smoke" smoke-artifacts/build.log || { echo "ENVFILE not picked up"; exit 1; }

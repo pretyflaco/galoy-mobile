@@ -53,7 +53,9 @@ if [ ! -x "$DIR/config.sh" ]; then
   curl -sfL -o "$tmp/runner.tgz" "https://github.com/actions/runner/releases/download/v$VERSION/actions-runner-linux-x64-$VERSION.tar.gz"
   echo "$SHA256  $tmp/runner.tgz" | sha256sum -c -
   install -d -o "$RUSER" -g "$RUSER" -m 750 "$DIR"
-  sudo -u "$RUSER" tar -xzf "$tmp/runner.tgz" -C "$DIR"
+  # root opens the verified tarball (its mktemp dir is 0700) and feeds it to tar running
+  # as the runner user — the runner user never needs access to root's temp dir
+  sudo -u "$RUSER" tar -xzf - -C "$DIR" < "$tmp/runner.tgz"
 fi
 
 echo "== register ($NAME, label $LABEL only)"

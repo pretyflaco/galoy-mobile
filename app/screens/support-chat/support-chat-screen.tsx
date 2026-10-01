@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
+import { useFocusEffect } from "@react-navigation/native"
 import { ActivityIndicator, FlatList, Pressable, TextInput, View } from "react-native"
 import { Text, makeStyles, useTheme } from "@rn-vui/themed"
 
@@ -24,6 +25,14 @@ export const SupportChatScreen: React.FC = () => {
     theme: { colors },
   } = useTheme()
   const { client, error } = useSupportChat()
+
+  // unread: nothing counts while this screen is in front
+  useFocusEffect(
+    useCallback(() => {
+      client?.setScreenFocused(true)
+      return () => client?.setScreenFocused(false)
+    }, [client]),
+  )
 
   // M18: ask for notification permission here, where the user sees why; then announce
   // the push token in the conversation (no-op unless the build configures push).

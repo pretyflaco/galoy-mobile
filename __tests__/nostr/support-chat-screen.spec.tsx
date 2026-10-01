@@ -49,6 +49,7 @@ const baseClient: any = {
   current: () => ({ gid: "group1", startedAt: 1, status: "active" }),
   conversations: () => [{ gid: "group1", startedAt: 1, status: "active" }],
   subscribe: () => () => {},
+  setScreenFocused: jest.fn(),
 }
 
 const renderScreen = (client: any) => {
@@ -67,6 +68,13 @@ describe("support-chat screen", () => {
     expect(getByTestId("support-chat-handoff")).toBeTruthy()
     expect(getByTestId("support-chat-input")).toBeTruthy()
     expect(queryByTestId("support-chat-start")).toBeNull()
+  })
+
+  it("marks the client focused while the screen is in front (unread badge)", async () => {
+    const client = { ...baseClient, setScreenFocused: jest.fn() }
+    renderScreen(client)
+    await flushEffects()
+    expect(client.setScreenFocused).toHaveBeenCalledWith(true)
   })
 
   it("shows the start button only without an active conversation", async () => {

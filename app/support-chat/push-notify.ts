@@ -4,3 +4,6 @@
  * implementation is push-notify.android.ts.
  */
 export const showWakeNotification = (): void => undefined
+
+/** iOS: handled with the APNs alert (later); nothing to register here. */
+export const onWakeTap = (_onTap: () => void): void => undefined

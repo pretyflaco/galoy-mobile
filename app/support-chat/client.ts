@@ -104,6 +104,8 @@ type Meta = {
   conversations?: Record<string, Conversation>
   /** M18: per conversation, the push announcement already sent (announcementKey) */
   pushAnnounced?: Record<string, string>
+  /** messages from support not yet seen on the chat screen (current conversation) */
+  unread?: number
 }
 
 /** F-M16-1 guard anomalies (scripts/patch-marmot-ts-v2.mjs → globalThis hook). */
@@ -180,6 +182,7 @@ export class SupportChatClient {
   private appStateSub: NativeEventSubscription | null = null
   private backgroundSince: number | null = null
   private closedInBackground = false
+  private screenFocused = false
 
   constructor(
     private readonly runtime: SignerRuntime,
@@ -779,6 +782,32 @@ export class SupportChatClient {
   }
 
   /** Append to a conversation's history; only the current one is in memory. */
+  /** Unseen messages from support in the current conversation (settings badge). */
+  get unread(): number {
+    return this.meta.unread ?? 0
+  }
+
+  /** The chat screen is (not) in front: while it is, nothing counts as unread. */
+  setScreenFocused(focused: boolean): void {
+    this.screenFocused = focused
+    if (focused && this.unread) {
+      this.meta.unread = 0
+      this.saveMeta()
+      this.emit()
+    }
+  }
+
+  /**
+   * Does this account have a conversation on this device? Reads only the encrypted meta
+   * store — no client, no relay traffic (the app starts the client at launch only then).
+   */
+  static async hasConversation(accountKey: string): Promise<boolean> {
+    const meta = await new EncryptedKeyValueStore<Meta>(accountKey, "meta:")
+      .getItem("meta")
+      .catch(() => null)
+    return Boolean(meta?.activeGroup)
+  }
+
   private async pushTo(gid: string, item: ChatItem) {
     if (gid !== this.groupId) {
       // an older (ended) conversation still receiving: keep its history complete
@@ -789,6 +818,10 @@ export class SupportChatClient {
     }
     if (this.items.some((x) => x.id === item.id)) return
     this.items = [...this.items, item].slice(-MAX_ITEMS)
+    if (item.type === "msg" && item.from !== this.pubkey && !this.screenFocused) {
+      this.meta.unread = (this.meta.unread ?? 0) + 1
+      this.saveMeta()
+    }
     this.emit()
     await this.history.setItem(gid, this.items)
   }

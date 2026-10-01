@@ -21,6 +21,7 @@ import { GaloyThemeProvider } from "./components/galoy-theme-provider"
 import { GaloyToast } from "./components/galoy-toast"
 import { NotificationsProvider } from "./components/notifications/index"
 import { PushNotificationComponent } from "./components/push-notification"
+import { SupportChatMount } from "./support-chat/support-chat-mount"
 import { FeatureFlagContextProvider } from "./config/feature-flags-context"
 import { CustodialWalletProvider } from "./custodial/providers/wallet"
 import {
@@ -90,6 +91,7 @@ export const App = () => (
                                           <NotificationsProvider>
                                             <AppStateWrapper />
                                             <PushNotificationComponent />
+                                            <SupportChatMount />
                                             <AutoConvertListenerMount />
                                             <AccountModeSyncMount />
                                             <DisplayCurrencyFromRegionMount />

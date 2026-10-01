@@ -42,6 +42,8 @@ export const DEEP_LINK_SCREENS: NonNullable<
   notificationSettingsScreen: "settings/notifications",
   emailRegistrationInitiate: "settings/email",
   settings: "settings",
+  // support chat: a tap on its push notification opens it (support-chat-mount.tsx)
+  supportChat: "support-chat",
   cardDashboardScreen: "card",
   cardDetailsScreen: "card/details",
   cardLimitsScreen: "card/limits",

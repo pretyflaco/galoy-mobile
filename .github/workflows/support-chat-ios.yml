@@ -42,6 +42,8 @@ jobs:
       - name: Toolchain
         run: |
           sudo xcode-select -s "$XCODE_APP"
+          # the x86_64 simulator app (see the build step) runs under Rosetta
+          [ "$(uname -m)" != arm64 ] || /usr/bin/pgrep -q oahd || sudo softwareupdate --install-rosetta --agree-to-license
           xcodebuild -version
           uname -m; node --version; yarn --version; pod --version; java -version 2>&1 | head -1
 
@@ -62,6 +64,15 @@ jobs:
           # both guards must report applied / OK (AGENTS.md: after ANY install, in every tree)
           grep -E "patch-marmot-ts-v2|noble" smoke-artifacts/install.log | tail -8
 
+      - name: Vendored adapters → node_modules (yarn 1 never refreshes a file dep's copy)
+        # node_modules comes from a cache keyed on yarn.lock, and an edit under vendor/
+        # does not change the lock → without this the app bundles a STALE adapters copy
+        # (the SOURCE.md gotcha, F-M12-2).
+        run: |
+          rm -rf node_modules/@blink-support-chat/adapters
+          cp -R vendor/blink-support-chat-adapters node_modules/@blink-support-chat/adapters
+          diff -r vendor/blink-support-chat-adapters node_modules/@blink-support-chat/adapters
+
       - name: Fetch wok and start the relay on :7787
         run: |
           scripts/support-chat-ci/fetch-wok.sh
@@ -77,13 +88,15 @@ jobs:
         # FORCE_BUNDLING embeds main.jsbundle in a Debug simulator build; without a running
         # Metro the RCTBundleURLProvider falls back to it. RCT_NO_LAUNCH_PACKAGER stops the
         # build phase from opening a Terminal Metro. ENVFILE is read by react-native-config's
-        # pod script phase, repo-relative.
+        # pod script phase, repo-relative. x86_64 like upstream: the Podfile excludes arm64
+        # for the simulator (the arm64 build had no valid arch, run 36837196114); the
+        # simulator runs it under Rosetta on the arm64 runner.
         run: |
           set -o pipefail
           cp scripts/support-chat-ci/GoogleService-Info.ci.plist ios/GoogleService-Info.plist
           xcodebuild -workspace ios/GaloyApp.xcworkspace -scheme GaloyApp -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath ios/build ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO \
+            -derivedDataPath ios/build ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO \
             build > smoke-artifacts/ios-build.log 2>&1 \
             || { grep -nE "error:|BUILD FAILED" smoke-artifacts/ios-build.log | head -60; tail -80 smoke-artifacts/ios-build.log; exit 1; }
           tail -3 smoke-artifacts/ios-build.log

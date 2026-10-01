@@ -74,8 +74,9 @@ const tapId = async (id, o) =>
   (await tap("content-desc", id, { ...o, tries: 2 })) || tap("resource-id", id, o)
 async function waitFor(pattern, timeoutMs) {
   const t0 = Date.now()
+  const hit = (xml) => (pattern instanceof RegExp ? pattern.test(xml) : xml.includes(pattern))
   while (Date.now() - t0 < timeoutMs) {
-    if (dump().includes(pattern)) return true
+    if (hit(dump())) return true
     await sleep(1500)
   }
   return false
@@ -149,7 +150,9 @@ await sleep(1200)
 ok("send", await tapId("support-chat-send", { waitMs: 1500 }))
 ok(
   "peer reply shown (E2EE round trip on Hermes)",
-  await waitFor("copy &quot;ci smoke roundtrip&quot;", 45000),
+  // uiautomator single-quotes an attribute whose text holds `"` (run 36837196029: the
+  // reply WAS on screen, the &quot; pattern missed it)
+  await waitFor(/copy (&quot;|")ci smoke roundtrip(&quot;|")/, 45000),
 )
 evidence("final")
 

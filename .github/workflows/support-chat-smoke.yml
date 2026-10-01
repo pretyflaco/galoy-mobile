@@ -74,6 +74,15 @@ jobs:
       - name: Install Node modules
         run: nix develop -c yarn install
 
+      - name: Vendored adapters → node_modules (yarn 1 never refreshes a file dep's copy)
+        # node_modules comes from a cache keyed on yarn.lock, and an edit under vendor/
+        # does not change the lock → without this the app bundles a STALE adapters copy
+        # (the SOURCE.md gotcha, F-M12-2).
+        run: |
+          rm -rf node_modules/@blink-support-chat/adapters
+          cp -R vendor/blink-support-chat-adapters node_modules/@blink-support-chat/adapters
+          diff -r vendor/blink-support-chat-adapters node_modules/@blink-support-chat/adapters
+
       - name: Fetch wok and start the relay on :7787
         run: |
           cd scripts/support-chat-ci && ./fetch-wok.sh && cd ../..

@@ -46,36 +46,48 @@ const client = new MarmotClient({
 await ensureDiscoverable(client, network, { relays: [RELAY], signer })
 console.log(`[${ts()}] discovery published (30443 + 10051/10050/10002)`)
 
-let group = null
-let conn = null
+// Every Welcome is joined (a retried drive starts a NEW conversation on a fresh app
+// identity — the single-group peer ignored it, run 36837196029 attempt 2).
+const joined = new Set()
 const replies = new Set()
-const send = (content) =>
-  client.groups.send(group.id, createApplicationMessageIntent(createChatRumor({ pubkey: signer.publicKey, content })))
+
+async function join(welcome) {
+  const { group } = await client.joinGroupFromWelcome({ welcomeRumor: welcome })
+  await client.invites.markAsRead(welcome.id)
+  const gid = Buffer.from(group.groupData.nostrGroupId).toString("hex")
+  if (joined.has(gid)) return
+  joined.add(gid)
+  console.log(`[${ts()}] joined group ${gid.slice(0, 12)}… from Welcome`)
+  const send = (content) =>
+    client.groups.send(group.id, createApplicationMessageIntent(createChatRumor({ pubkey: signer.publicKey, content })))
+  // marmot-ts 0.6.0 binds the rumor author to the MLS sender before this fires (F-M9-3)
+  group.on("applicationMessage", async (d) => {
+    const rumor = deserializeApplicationData(d)
+    if (rumor.pubkey === signer.publicKey || replies.has(rumor.id)) return
+    replies.add(rumor.id)
+    console.log(`[${ts()}] ${gid.slice(0, 8)} app says: "${rumor.content}"`)
+    try {
+      await send(`${NAME}: copy "${rumor.content.slice(0, 60)}"`)
+      console.log(`[${ts()}] -> replied`)
+    } catch (e) {
+      console.log(`[${ts()}] reply failed: ${e.message}`)
+    }
+  })
+  await client.groups.connect(group.id)
+  await send(`${NAME} joined`)
+}
 
 for (;;) {
-  if (!group) {
-    const wraps = await network.request([RELAY], { kinds: [1059], "#p": [signer.publicKey] })
-    if (wraps.length) {
-      await client.invites.ingestEvents(wraps)
-      await client.invites.decryptGiftWraps()
-      const [w] = await client.invites.getUnread()
-      if (w) {
-        const { group: g } = await client.joinGroupFromWelcome({ welcomeRumor: w })
+  const wraps = await network.request([RELAY], { kinds: [1059], "#p": [signer.publicKey] })
+  if (wraps.length) {
+    await client.invites.ingestEvents(wraps)
+    await client.invites.decryptGiftWraps()
+    for (const w of await client.invites.getUnread()) {
+      try {
+        await join(w)
+      } catch (e) {
+        console.log(`[${ts()}] join failed: ${e.message}`)
         await client.invites.markAsRead(w.id)
-        group = g
-        const gid = Buffer.from(group.groupData.nostrGroupId).toString("hex")
-        console.log(`[${ts()}] joined group ${gid.slice(0, 12)}… from Welcome`)
-        group.on("applicationMessage", async (d) => {
-          const rumor = deserializeApplicationData(d)
-          if (rumor.pubkey === signer.publicKey) return
-          console.log(`[${ts()}] app says: "${rumor.content}"`)
-          const reply = `${NAME}: copy "${rumor.content.slice(0, 60)}"`
-          if (replies.has(rumor.id)) return
-          replies.add(rumor.id)
-          try { await send(reply); console.log(`[${ts()}] -> replied`) } catch (e) { console.log(`[${ts()}] reply failed: ${e.message}`) }
-        })
-        conn = await client.groups.connect(group.id)
-        await send(`${NAME} joined`)
       }
     }
   }

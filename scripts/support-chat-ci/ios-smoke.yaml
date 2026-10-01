@@ -106,6 +106,7 @@ appId: io.galoy.bitcoinbeach
 - tapOn:
     id: "support-chat-input"
 - inputText: "ci smoke roundtrip"
+- hideKeyboard # the keyboard may cover the composer's Send (Android: ESC first, too)
 - tapOn:
     id: "support-chat-send"
 - extendedWaitUntil:

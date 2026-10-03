@@ -4,7 +4,6 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import {
   ActivityIndicator,
   FlatList,
-  Platform,
   Pressable,
   TextInput,
   TouchableOpacity,
@@ -72,20 +71,16 @@ export const SupportChatScreen: React.FC = () => {
   } = useTheme()
   const { client, error } = useSupportChat()
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-  // Android draws edge-to-edge, so adjustResize no longer lifts the content, and
-  // KeyboardAvoidingView misjudged the overlap there (it left the composer under the
-  // keyboard on the A56). The IME inset is exact: lift by it, minus the bottom inset the
-  // Screen already pads. iOS: the Screen's own KeyboardAvoidingView handles it.
+  // The composer is lifted by the keyboard's exact height, minus the bottom inset the
+  // Screen already pads — on BOTH platforms. KeyboardAvoidingView misjudged the overlap on
+  // each: Android draws edge-to-edge, so adjustResize no longer lifts (A56, F-M18-8), and on
+  // the iPhone 12 (iOS 26.6) the Screen's padding KAV left the composer under the keyboard
+  // (M19). The Screen's own KAV is off for this screen (avoidKeyboard={false}).
   const keyboard = useAnimatedKeyboard()
   const { bottom: bottomInset } = useSafeAreaInsets()
-  const liftForKeyboard = Platform.OS === "android"
   const keyboardLift = useAnimatedStyle(
-    () => ({
-      paddingBottom: liftForKeyboard
-        ? Math.max(0, keyboard.height.value - bottomInset)
-        : 0,
-    }),
-    [bottomInset, liftForKeyboard], // explicit deps: also valid without the worklets plugin (jest)
+    () => ({ paddingBottom: Math.max(0, keyboard.height.value - bottomInset) }),
+    [bottomInset], // explicit deps: also valid without the worklets plugin (jest)
   )
 
   // unread: nothing counts while this screen is in front
@@ -284,7 +279,7 @@ export const SupportChatScreen: React.FC = () => {
           : null
 
   return (
-    <Screen preset="fixed" keyboardShouldPersistTaps="handled">
+    <Screen preset="fixed" keyboardShouldPersistTaps="handled" avoidKeyboard={false}>
       <Animated.View style={[styles.flex, keyboardLift]}>
         <View style={styles.root} testID="support-chat-screen">
           {statusLine && (

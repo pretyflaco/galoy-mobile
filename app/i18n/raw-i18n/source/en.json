@@ -4315,7 +4315,12 @@
         "imageCheck": "Check the picture first: it must not show your backup phrase, keys or anything private you don't want support to see.",
         "sendImage": "Send picture",
         "cancel": "Cancel",
-        "imageTooLarge": "This picture is too large to send."
+        "imageTooLarge": "This picture is too large to send.",
+        "viewerClose": "Close",
+        "viewerSave": "Save to Photos",
+        "viewerSaved": "Saved to your Photos",
+        "viewerSaveFailed": "Could not save the picture",
+        "viewerShare": "Share"
     },
     "SupportConversationsScreen": {
         "title": "Conversations",

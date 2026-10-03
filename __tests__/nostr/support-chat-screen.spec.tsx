@@ -34,6 +34,15 @@ jest.mock("react-native-fs", () => ({
   DocumentDirectoryPath: "/mock/documents",
   readFile: jest.fn(async () => "AAEC"),
 }))
+const mockSaveAsset = jest.fn(async () => ({}))
+jest.mock("@react-native-camera-roll/camera-roll", () => ({
+  CameraRoll: { saveAsset: (...args: unknown[]) => mockSaveAsset(...(args as [])) },
+}))
+const mockShareOpen = jest.fn(async () => ({}))
+jest.mock("react-native-share", () => ({
+  __esModule: true,
+  default: { open: (...args: unknown[]) => mockShareOpen(...(args as [])) },
+}))
 const navigate = jest.fn()
 let headerOptions: any = null
 jest.mock("@react-navigation/native", () => ({
@@ -314,6 +323,38 @@ describe("support-chat screen", () => {
       expect.objectContaining({ mime: "image/jpeg", width: 800, height: 1600 }),
     )
     expect(queryByTestId("support-chat-image-preview")).toBeNull()
+  })
+
+  it("tapping a picture opens it full screen with Save to Photos and Share", async () => {
+    const { getByTestId, queryByTestId } = renderScreen({
+      ...baseClient,
+      items: [
+        {
+          id: "i",
+          at: 1,
+          type: "msg",
+          from: "b".repeat(64),
+          text: "Support (pattern): tap here",
+          image: { path: "/docs/p.png", width: 400, height: 800 },
+        },
+      ],
+    })
+    await flushEffects()
+    expect(queryByTestId("support-image-save")).toBeNull()
+    fireEvent.press(getByTestId("support-chat-image-open"))
+    fireEvent.press(getByTestId("support-image-save"))
+    await flushEffects()
+    expect(mockSaveAsset).toHaveBeenCalledWith("file:///docs/p.png", {
+      type: "photo",
+      album: "Blink Support",
+    })
+    fireEvent.press(getByTestId("support-image-share"))
+    expect(mockShareOpen).toHaveBeenCalledWith(
+      expect.objectContaining({ url: "file:///docs/p.png", type: "image/png" }),
+    )
+    fireEvent.press(getByTestId("support-image-close"))
+    await flushEffects()
+    expect(queryByTestId("support-image-save")).toBeNull()
   })
 
   it("renders a sent screenshot as an image bubble", async () => {

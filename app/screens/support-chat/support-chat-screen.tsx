@@ -25,6 +25,8 @@ import { RootStackParamList } from "@app/navigation/stack-param-lists"
 
 import { useSupportChat } from "@app/support-chat/use-support-chat"
 import { MAX_IMAGE_BYTES } from "@app/support-chat/media"
+
+import { SupportImageViewer, type ViewerImage } from "./support-image-viewer"
 import { PUSH_SERVER_PUBKEY, askPermission } from "@app/support-chat/push"
 import type { ChatItem, EndReason, MemberLabel } from "@app/support-chat/client"
 
@@ -107,6 +109,7 @@ export const SupportChatScreen: React.FC = () => {
 
   const [draft, setDraft] = useState("")
   const [shareOpen, setShareOpen] = useState(false)
+  const [viewerImage, setViewerImage] = useState<ViewerImage | null>(null)
   // M19 screenshots: the picked (already resized) image, previewed before sending
   const [pickedImage, setPickedImage] = useState<{
     uri: string
@@ -318,18 +321,24 @@ export const SupportChatScreen: React.FC = () => {
           testID="support-chat-message"
         >
           {item.image ? (
-            <Image
-              source={{ uri: `file://${item.image.path}` }}
-              style={[
-                styles.image,
-                item.image.width && item.image.height
-                  ? { aspectRatio: item.image.width / item.image.height }
-                  : null,
-              ]}
-              resizeMode="cover"
-              accessibilityLabel={row.body}
-              testID="support-chat-image"
-            />
+            <Pressable
+              onPress={() => setViewerImage(item.image ?? null)}
+              accessibilityRole="imagebutton"
+              testID="support-chat-image-open"
+            >
+              <Image
+                source={{ uri: `file://${item.image.path}` }}
+                style={[
+                  styles.image,
+                  item.image.width && item.image.height
+                    ? { aspectRatio: item.image.width / item.image.height }
+                    : null,
+                ]}
+                resizeMode="cover"
+                accessibilityLabel={row.body}
+                testID="support-chat-image"
+              />
+            </Pressable>
           ) : (
             <Text style={[styles.body, mine && styles.bodyMine]}>{row.body}</Text>
           )}
@@ -372,6 +381,7 @@ export const SupportChatScreen: React.FC = () => {
 
   return (
     <Screen preset="fixed" keyboardShouldPersistTaps="handled" avoidKeyboard={false}>
+      <SupportImageViewer image={viewerImage} onClose={() => setViewerImage(null)} />
       <Animated.View style={[styles.flex, keyboardLift]}>
         <View style={styles.root} testID="support-chat-screen">
           {statusLine && (

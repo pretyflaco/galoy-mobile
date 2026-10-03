@@ -14486,6 +14486,26 @@ type RootTranslation = {
 		 * T​h​i​s​ ​p​i​c​t​u​r​e​ ​i​s​ ​t​o​o​ ​l​a​r​g​e​ ​t​o​ ​s​e​n​d​.
 		 */
 		imageTooLarge: string
+		/**
+		 * C​l​o​s​e
+		 */
+		viewerClose: string
+		/**
+		 * S​a​v​e​ ​t​o​ ​P​h​o​t​o​s
+		 */
+		viewerSave: string
+		/**
+		 * S​a​v​e​d​ ​t​o​ ​y​o​u​r​ ​P​h​o​t​o​s
+		 */
+		viewerSaved: string
+		/**
+		 * C​o​u​l​d​ ​n​o​t​ ​s​a​v​e​ ​t​h​e​ ​p​i​c​t​u​r​e
+		 */
+		viewerSaveFailed: string
+		/**
+		 * S​h​a​r​e
+		 */
+		viewerShare: string
 	}
 	SupportConversationsScreen: {
 		/**
@@ -29515,6 +29535,26 @@ export type TranslationFunctions = {
 		 * This picture is too large to send.
 		 */
 		imageTooLarge: () => LocalizedString
+		/**
+		 * Close
+		 */
+		viewerClose: () => LocalizedString
+		/**
+		 * Save to Photos
+		 */
+		viewerSave: () => LocalizedString
+		/**
+		 * Saved to your Photos
+		 */
+		viewerSaved: () => LocalizedString
+		/**
+		 * Could not save the picture
+		 */
+		viewerSaveFailed: () => LocalizedString
+		/**
+		 * Share
+		 */
+		viewerShare: () => LocalizedString
 	}
 	SupportConversationsScreen: {
 		/**

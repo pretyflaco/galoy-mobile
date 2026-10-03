@@ -4554,6 +4554,11 @@ const en: BaseTranslation = {
     sendImage: "Send picture",
     cancel: "Cancel",
     imageTooLarge: "This picture is too large to send.",
+    viewerClose: "Close",
+    viewerSave: "Save to Photos",
+    viewerSaved: "Saved to your Photos",
+    viewerSaveFailed: "Could not save the picture",
+    viewerShare: "Share",
   },
   SupportConversationsScreen: {
     title: "Conversations",

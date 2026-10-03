@@ -314,9 +314,11 @@ export const SupportChatScreen: React.FC = () => {
               <Text style={styles.cardText} testID="support-chat-viewing-past">
                 {T.viewingPast()}
               </Text>
-              <Pressable onPress={() => client.view(null)} testID="support-chat-back">
-                <Text style={styles.link}>{T.backToCurrent()}</Text>
-              </Pressable>
+              {client.groupId && (
+                <Pressable onPress={() => client.view(null)} testID="support-chat-back">
+                  <Text style={styles.link}>{T.backToCurrent()}</Text>
+                </Pressable>
+              )}
             </View>
           )}
 

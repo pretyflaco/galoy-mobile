@@ -253,6 +253,18 @@ describe("support-chat screen", () => {
     await flushEffects()
     expect(viewing.getByTestId("support-chat-viewing-past")).toBeTruthy()
     expect(viewing.getByTestId("support-chat-back")).toBeTruthy()
+    // no current conversation (e.g. only imported ones): no "back", the start button instead
+    const noCurrent = renderScreen({
+      ...baseClient,
+      groupId: null,
+      current: () => null,
+      viewing: "old1",
+      viewItems: [],
+      conversations: () => [past],
+    })
+    await flushEffects()
+    expect(noCurrent.queryByTestId("support-chat-back")).toBeNull()
+    expect(noCurrent.getByTestId("support-chat-start")).toBeTruthy()
     expect(viewing.queryByTestId("support-chat-input")).toBeNull()
     expect(String(viewing.getByTestId("support-chat-notice").props.children)).toContain(
       "an old notice",

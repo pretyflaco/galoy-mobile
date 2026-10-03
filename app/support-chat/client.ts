@@ -657,6 +657,8 @@ export class SupportChatClient {
     const [botPk] = bots[0] as [string, unknown]
     const kp = await fetchKeyPackageEvent(this.network, SUPPORT_CHAT_RELAYS, botPk)
     if (!kp) throw new Error("the support bot has no key package on the relay")
+    // a new conversation is the one on screen, also when started from a read-only one
+    if (this.viewing) await this.view(null)
     const t0 = Date.now()
     const group = await this.client.groups.create("Blink support", {
       relays: SUPPORT_CHAT_RELAYS,

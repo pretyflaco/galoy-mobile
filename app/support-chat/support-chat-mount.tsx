@@ -3,9 +3,10 @@
  * mounts. Renders nothing.
  *  - a tap on the support-chat notification opens the chat, also from a cold start
  *    (requestInAppRoute: waits behind unlock + auth like any link, no app chooser);
- *  - if this account already has a conversation, the client starts at app launch —
- *    it catches up and shows unread messages without visiting the screen first. An
- *    account that never used support chat starts nothing (no relay traffic).
+ *  - if this device already has a conversation, the client starts at app launch —
+ *    it catches up and shows unread messages without visiting the screen first. A
+ *    device that never used support chat starts nothing (no relay traffic). M19: the
+ *    chat runs on the device's support key, with or without an account.
  */
 import { useEffect } from "react"
 
@@ -32,15 +33,15 @@ export const SupportChatMount = (): null => {
   }, [supportChatEnabled])
 
   useEffect(() => {
-    if (!supportChatEnabled || !nostr || !accountKey) return
+    if (!supportChatEnabled) return
     let cancelled = false
-    SupportChatClient.hasConversation(accountKey).then((has) => {
-      if (has && !cancelled) ensureSupportChatClient(nostr.runtime, accountKey)
+    SupportChatClient.hasConversation().then((has) => {
+      if (has && !cancelled) ensureSupportChatClient(accountKey)
     })
     return () => {
       cancelled = true
     }
-  }, [supportChatEnabled, nostr, accountKey])
+  }, [supportChatEnabled, accountKey])
 
   return null
 }

@@ -1,7 +1,9 @@
-# iOS simulator smoke (Maestro) — the same loop as drive.mjs on Android:
-# onboard (self-custodial) → nostr identity → support chat → start → the peer's
-# live E2EE greeting → send → the peer's reply ON SCREEN. Selectors are testIDs
-# (accessibilityIdentifier) or GaloyPrimaryButton titles (testProps(title)).
+# iOS simulator smoke (Maestro) — the same loop as drive.mjs on Android. M19: the chat
+# has its own device key, so it STARTS before any account exists (Get started → Contact
+# support → start → the peer's live E2EE greeting), then onboards (self-custodial), finds
+# the SAME conversation under Settings → Support after a relaunch, sends, sees the peer's
+# reply ON SCREEN, and opens Conversations (header clock). Selectors are testIDs
+# (accessibilityIdentifier) or titles (testProps(title)).
 appId: io.galoy.bitcoinbeach
 ---
 - launchApp:
@@ -14,6 +16,35 @@ appId: io.galoy.bitcoinbeach
       id: "Create new account"
     timeout: 180000 # first launch: dev bundle from the .app, cold Hermes
 - takeScreenshot: 01-get-started
+
+# support before an account exists
+- tapOn:
+    id: "get-started-contact-support"
+- extendedWaitUntil:
+    visible:
+      id: "support-chat-start"
+    timeout: 60000
+- takeScreenshot: 02-pre-account-chat
+# start: roster gate → bot discovery → create + invite → peer Welcome → greeting
+- tapOn:
+    id: "support-chat-start"
+- extendedWaitUntil:
+    visible:
+      id: "support-chat-input"
+    timeout: 90000
+- extendedWaitUntil:
+    visible:
+      text: ".*CI Smoke Bot joined.*"
+    timeout: 90000
+- takeScreenshot: 03-greeting
+
+# back to Get started by relaunching (iOS has no hardware back); keychain + stores stay
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "Create new account"
+    timeout: 90000
 - tapOn:
     id: "Create new account"
 - tapOn:
@@ -32,66 +63,25 @@ appId: io.galoy.bitcoinbeach
     visible:
       id: "Accept"
     timeout: 60000
-- takeScreenshot: 02-terms
+- takeScreenshot: 04-terms
 - tapOn:
     id: "Accept"
 - extendedWaitUntil:
     visible:
       id: "home-settings-button"
     timeout: 90000
-- takeScreenshot: 03-home
+- takeScreenshot: 05-home
 
-# nostr identity (fresh install → no backed-up phrase → random key, auto-exit)
+# the same conversation under Settings → Support (no Nostr identity was ever created)
 - tapOn:
     id: "home-settings-button"
 - scrollUntilVisible:
     element:
-      id: "Nostr identity"
+      id: "Support"
     direction: DOWN
     timeout: 30000
 - tapOn:
-    id: "Nostr identity"
-# The hub's empty state wraps its buttons in a testProps container
-# ("nostr-identity-hub-empty": accessible + label), which on iOS hides the buttons
-# from XCUITest (and VoiceOver) — so this is the one tap by position (the "Create
-# new" button, 1st action under the hero; run 36850459669 screenshot).
-- extendedWaitUntil:
-    visible:
-      id: "nostr-identity-hub-empty"
-    timeout: 30000
-- tapOn:
-    point: "50%,32%"
-- extendedWaitUntil:
-    notVisible:
-      text: "Generating…"
-    timeout: 60000
-- takeScreenshot: 04-identity
-
-# back to home by relaunching (iOS has no hardware back), then settings → Support chat
-- stopApp
-- launchApp
-- extendedWaitUntil:
-    visible:
-      id: "home-settings-button"
-    timeout: 90000
-- tapOn:
-    id: "home-settings-button"
-- scrollUntilVisible:
-    element:
-      id: "Support chat"
-    direction: DOWN
-    timeout: 30000
-- tapOn:
-    id: "Support chat"
-- extendedWaitUntil:
-    visible:
-      id: "support-chat-start"
-    timeout: 60000
-- takeScreenshot: 05-chat-screen
-
-# start: roster gate → bot discovery → create + invite → peer Welcome → greeting
-- tapOn:
-    id: "support-chat-start"
+    id: "Support"
 - extendedWaitUntil:
     visible:
       id: "support-chat-input"
@@ -99,8 +89,8 @@ appId: io.galoy.bitcoinbeach
 - extendedWaitUntil:
     visible:
       text: ".*CI Smoke Bot joined.*"
-    timeout: 90000
-- takeScreenshot: 06-greeting
+    timeout: 60000
+- takeScreenshot: 06-same-conversation
 
 # send + the reply
 - tapOn:
@@ -114,3 +104,14 @@ appId: io.galoy.bitcoinbeach
       text: '.*copy "ci smoke roundtrip".*'
     timeout: 60000
 - takeScreenshot: 07-reply
+
+# Conversations (header clock): the current one checked, titled by the first message
+- tapOn:
+    id: "support-chat-conversations"
+- extendedWaitUntil:
+    visible:
+      id: "support-conversation-current"
+    timeout: 15000
+- assertVisible:
+    text: "ci smoke roundtrip"
+- takeScreenshot: 08-conversations

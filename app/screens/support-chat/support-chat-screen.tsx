@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react"
-import { useFocusEffect } from "@react-navigation/native"
+import { useFocusEffect, useNavigation } from "@react-navigation/native"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import {
   ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native"
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated"
@@ -15,7 +17,9 @@ import { Text, makeStyles, useTheme } from "@rn-vui/themed"
 import { Screen } from "@app/components/screen"
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
+import { headerRightNoGlass, noHeaderRight } from "@app/components/header-no-glass"
 import { useI18nContext } from "@app/i18n/i18n-react"
+import { RootStackParamList } from "@app/navigation/stack-param-lists"
 
 import { useSupportChat } from "@app/support-chat/use-support-chat"
 import { PUSH_SERVER_PUBKEY, askPermission } from "@app/support-chat/push"
@@ -47,12 +51,18 @@ type Row = {
   day: string | null // a day separator above this row
 }
 
+/** Old history items carry lowercase "joined:" / "left:" notices (before M19). */
+const capitalized = (text: string) =>
+  text.replace(/^(joined|left):/, (m) => m.charAt(0).toUpperCase() + m.slice(1))
+
 /**
  * The support-chat conversation screen: a messenger layout (blink-brand product rules —
- * Source Sans Pro scale 16/14/12, spacing tokens, radii 16 and pill) over the same
- * client logic as before: roster-labelled messages, membership notices, handoff state
- * (req 12), unverified members warn AND block sending (spec 03 §5), Option C sessions,
- * client statuses (starting / reconnecting / degraded). Test ids are unchanged.
+ * Source Sans Pro scale 16/14/12, spacing tokens, radii 16 and pill) over the client:
+ * roster-labelled messages (each author label says who answers — req 12), membership
+ * notices, unverified members warn AND block sending (spec 03 §5), Option C sessions,
+ * client statuses (starting / reconnecting / degraded).
+ * M19 (Andrej's redesign): no top bar; the header's clock opens the Conversations screen
+ * (list, titles, "Start new"), which replaced the ⋯ menu.
  */
 export const SupportChatScreen: React.FC = () => {
   const { LL } = useI18nContext()
@@ -61,6 +71,7 @@ export const SupportChatScreen: React.FC = () => {
     theme: { colors },
   } = useTheme()
   const { client, error } = useSupportChat()
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   // Android draws edge-to-edge, so adjustResize no longer lifts the content, and
   // KeyboardAvoidingView misjudged the overlap there (it left the composer under the
   // keyboard on the A56). The IME inset is exact: lift by it, minus the bottom inset the
@@ -98,28 +109,41 @@ export const SupportChatScreen: React.FC = () => {
   const [draft, setDraft] = useState("")
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [showPrevious, setShowPrevious] = useState(false)
-  const [showDetails, setShowDetails] = useState(false)
 
   const T = LL.SupportChatScreen
   const unverified = client?.unverifiedMembers() ?? []
   const sendingBlocked = unverified.length > 0
-  const handoff = client?.handoffState() ?? "bot"
   // Option C: conversations are sessions — an ended one is readable, never a dead end
   const current = client?.current() ?? null
   const ended = current?.status === "ended"
   const viewingPast = Boolean(client?.viewing)
-  const previous = (client?.conversations() ?? []).filter(
-    (c) => c.gid !== client?.groupId,
-  )
+  const hasConversations = (client?.conversations().length ?? 0) > 0
   const endedText: Record<EndReason, () => string> = {
     user: T.endedUser,
     replaced: T.endedReplaced,
     stuck: T.endedStuck,
     removed: T.endedRemoved,
     unrestorable: T.endedUnrestorable,
+    identity: T.endedIdentity,
   }
+
+  // the clock in the header opens the Conversations screen (once there is one)
+  useEffect(() => {
+    navigation.setOptions(
+      hasConversations
+        ? headerRightNoGlass(() => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate("supportChatConversations")}
+              accessibilityRole="button"
+              accessibilityLabel={T.conversations()}
+              testID="support-chat-conversations"
+            >
+              <GaloyIcon name="clock" size={22} />
+            </TouchableOpacity>
+          ))
+        : noHeaderRight,
+    )
+  }, [navigation, hasConversations, T])
   const canWrite = Boolean(client?.groupId) && !ended && !viewingPast
   const sendDisabled = busy || sendingBlocked || !draft.trim()
 
@@ -221,7 +245,7 @@ export const SupportChatScreen: React.FC = () => {
                 item.type === "warning" ? "support-chat-warning" : "support-chat-notice"
               }
             >
-              {item.type === "warning" ? `⚠ ${item.text}` : item.text}
+              {item.type === "warning" ? `⚠ ${item.text}` : capitalized(item.text)}
             </Text>
           </View>
         </View>
@@ -263,97 +287,6 @@ export const SupportChatScreen: React.FC = () => {
     <Screen preset="fixed" keyboardShouldPersistTaps="handled">
       <Animated.View style={[styles.flex, keyboardLift]}>
         <View style={styles.root} testID="support-chat-screen">
-          {/* top bar: encryption + who is answering + menu */}
-          <View style={styles.topBar}>
-            <Pressable
-              style={styles.e2ee}
-              onPress={() => setShowDetails(!showDetails)}
-              testID="support-chat-details-toggle"
-              accessibilityRole="button"
-            >
-              <GaloyIcon name="lock-closed" size={14} color={colors.grey2} />
-              <Text style={styles.e2eeText} numberOfLines={1}>
-                {T.encrypted()}
-              </Text>
-            </Pressable>
-            <Text
-              style={[styles.handoffPill, handoff === "agent" && styles.handoffAgent]}
-              testID="support-chat-handoff"
-              accessibilityLabel={handoff === "agent" ? T.handoffAgent() : T.handoffBot()}
-            >
-              {handoff === "agent" ? T.pillAgent() : T.pillBot()}
-            </Text>
-            {client && (current || previous.length > 0) && !viewingPast && (
-              <Pressable
-                onPress={() => setMenuOpen(!menuOpen)}
-                style={styles.menuButton}
-                testID="support-chat-menu"
-                accessibilityRole="button"
-                accessibilityLabel={T.menu()}
-              >
-                <Text style={styles.menuDots}>⋯</Text>
-              </Pressable>
-            )}
-          </View>
-
-          {showDetails && client && (
-            <Text style={styles.details} testID="support-chat-details">
-              {`${T.statusReady()} · ${client.rosterStatus()}${
-                client.groupId ? ` · ${client.groupId.slice(0, 8)}` : ""
-              }`}
-            </Text>
-          )}
-
-          {menuOpen && client && !viewingPast && (
-            <View style={styles.menu}>
-              {current && !ended && (
-                <Pressable
-                  disabled={busy || client.status !== "ready"}
-                  onPress={() => {
-                    setMenuOpen(false)
-                    run(() => client.startNew())
-                  }}
-                  testID="support-chat-new-conversation"
-                  style={styles.menuItem}
-                >
-                  <Text style={styles.menuText}>{T.newConversation()}</Text>
-                </Pressable>
-              )}
-              {previous.length > 0 && (
-                <Pressable
-                  onPress={() => setShowPrevious(!showPrevious)}
-                  testID="support-chat-previous-toggle"
-                  style={styles.menuItem}
-                >
-                  <Text style={styles.menuText}>
-                    {showPrevious
-                      ? T.hidePrevious()
-                      : T.previousConversations({ count: previous.length })}
-                  </Text>
-                </Pressable>
-              )}
-              {showPrevious &&
-                previous.map((c) => (
-                  <Pressable
-                    key={c.gid}
-                    onPress={() => {
-                      setMenuOpen(false)
-                      client.view(c.gid)
-                    }}
-                    testID="support-chat-previous-item"
-                    style={styles.menuItem}
-                  >
-                    <Text style={styles.previousItem}>
-                      {T.conversationItem({
-                        date: new Date(c.startedAt * 1000).toLocaleString(),
-                        status: c.status === "ended" ? T.statusEnded() : T.statusActive(),
-                      })}
-                    </Text>
-                  </Pressable>
-                ))}
-            </View>
-          )}
-
           {statusLine && (
             <View style={styles.statusBar}>
               {client?.status !== "degraded" && (
@@ -411,7 +344,9 @@ export const SupportChatScreen: React.FC = () => {
             keyboardShouldPersistTaps="handled"
             ListEmptyComponent={
               <View style={styles.empty}>
-                <GaloyIcon name="lock-closed" size={30} color={colors.grey2} />
+                <View style={styles.emptyIcon}>
+                  <GaloyIcon name="headset" size={24} color={colors._green} />
+                </View>
                 <Text style={styles.emptyTitle}>{T.emptyTitle()}</Text>
                 <Text style={styles.emptyBody}>{T.emptyBody()}</Text>
               </View>
@@ -467,45 +402,6 @@ export const SupportChatScreen: React.FC = () => {
 const useStyles = makeStyles(({ colors }) => ({
   flex: { flex: 1 },
   root: { flex: 1 },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.grey4,
-  },
-  e2ee: { flex: 1, flexDirection: "row", alignItems: "center", gap: 5 },
-  e2eeText: { fontSize: 14, color: colors.grey2 },
-  handoffPill: {
-    fontSize: 12,
-    color: colors.grey1,
-    backgroundColor: colors.grey5,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    overflow: "hidden",
-  },
-  handoffAgent: { color: ON_PRIMARY, backgroundColor: colors.primary },
-  menuButton: { paddingHorizontal: 8, paddingVertical: 3 },
-  menuDots: { fontSize: 20, color: colors.grey1 },
-  details: {
-    fontSize: 12,
-    color: colors.grey2,
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-  },
-  menu: {
-    marginHorizontal: 14,
-    marginTop: 5,
-    borderRadius: 16,
-    backgroundColor: colors.grey5,
-    paddingVertical: 5,
-  },
-  menuItem: { paddingHorizontal: 14, paddingVertical: 10 },
-  menuText: { fontSize: 16, color: colors.grey0 },
-  previousItem: { fontSize: 14, color: colors.grey2 },
   statusBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -578,9 +474,18 @@ const useStyles = makeStyles(({ colors }) => ({
   empty: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     gap: 10,
-    padding: 30,
+    paddingHorizontal: 30,
+    paddingTop: 30,
+  },
+  emptyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: colors.grey5,
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyTitle: {
     fontSize: 20,

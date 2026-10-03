@@ -42,7 +42,6 @@ import {
 import { AppState, type AppStateStatus, type NativeEventSubscription } from "react-native"
 import messaging from "@react-native-firebase/messaging"
 
-import type { SignerRuntime } from "@app/nostr/runtime"
 import { ensureUrlCanParse } from "@app/polyfills/url-can-parse"
 
 import { SUPPORT_ROSTER_PUBKEY, ROSTER_SNAPSHOT } from "./roster-config"
@@ -52,7 +51,8 @@ import {
   buildTokenAnnouncement,
   getPushToken,
 } from "./push"
-import { createBlinkEventSigner } from "./blink-signer"
+import type { BlinkEventSigner } from "./blink-signer"
+import { SUPPORT_SCOPE, createSupportSigner, loadOrCreateSupportKey } from "./support-key"
 import { EncryptedKeyValueStore } from "./encrypted-store"
 
 import Config from "react-native-config"
@@ -91,13 +91,22 @@ export type MemberLabel = {
  * (["supersedes", gid] on its first rumor) so support closes the old thread and a human
  * handoff carries over.
  */
-export type EndReason = "user" | "stuck" | "removed" | "unrestorable" | "replaced"
+/** "identity": a conversation from before the device support key (M19), kept read-only. */
+export type EndReason =
+  | "user"
+  | "stuck"
+  | "removed"
+  | "unrestorable"
+  | "replaced"
+  | "identity"
 export type Conversation = {
   gid: string
   startedAt: number
   status: "active" | "ended"
   endedAt?: number
   reason?: EndReason
+  /** M19: shown in the Conversations list — the user's first message, shortened */
+  title?: string
 }
 type Meta = {
   activeGroup?: string
@@ -106,6 +115,14 @@ type Meta = {
   pushAnnounced?: Record<string, string>
   /** messages from support not yet seen on the chat screen (current conversation) */
   unread?: number
+  /** M19: accounts whose Nostr-identity conversations were imported read-only */
+  importedAccounts?: string[]
+}
+
+/** M19: a conversation's list title from the user's first message. */
+export const titleFrom = (text: string): string => {
+  const line = text.trim().split("\n")[0].trim()
+  return line.length > 48 ? `${line.slice(0, 47).trimEnd()}…` : line
 }
 
 /** F-M16-1 guard anomalies (scripts/patch-marmot-ts-v2.mjs → globalThis hook). */
@@ -174,7 +191,7 @@ export class SupportChatClient {
   viewItems: ChatItem[] = []
   private stuckTimer: ReturnType<typeof setTimeout> | null = null
   private readonly onAnomaly = (a: IngestAnomaly) => this.handleAnomaly(a)
-  private signer: Awaited<ReturnType<typeof createBlinkEventSigner>> | null = null
+  private signer: BlinkEventSigner | null = null
   private tokenRefreshSub: (() => void) | null = null
   // F-M18-7: Android closes the relay sockets of a backgrounded app. A close seen in
   // the background is remembered and repaired when the app is in front again (a
@@ -184,12 +201,13 @@ export class SupportChatClient {
   private closedInBackground = false
   private screenFocused = false
 
-  constructor(
-    private readonly runtime: SignerRuntime,
-    private readonly accountKey: string,
-  ) {
-    this.metaStore = new EncryptedKeyValueStore<Meta>(accountKey, "meta:")
-    this.history = new EncryptedKeyValueStore<ChatItem[]>(accountKey, "history:")
+  /**
+   * M19: one client per DEVICE, on the device's own support key (support-key.ts) — no
+   * Nostr identity and no account needed. `scope` exists for tests.
+   */
+  constructor(private readonly scope: string = SUPPORT_SCOPE) {
+    this.metaStore = new EncryptedKeyValueStore<Meta>(scope, "meta:")
+    this.history = new EncryptedKeyValueStore<ChatItem[]>(scope, "history:")
     anomalyListeners.add(this.onAnomaly)
     this.appStateSub = AppState.addEventListener("change", (s) => this.onAppState(s))
   }
@@ -362,7 +380,7 @@ export class SupportChatClient {
     // P7: no committed roster default — a build without one fails closed, up front
     if (!SUPPORT_ROSTER_PUBKEY)
       throw new Error("support chat: no roster key in this build")
-    const signer = await createBlinkEventSigner(this.runtime)
+    const signer = createSupportSigner(await loadOrCreateSupportKey())
     this.signer = signer
     this.pubkey = await signer.getPublicKey()
     this.network = new SimplePoolNetwork({ signer, relays: SUPPORT_CHAT_RELAYS })
@@ -375,8 +393,7 @@ export class SupportChatClient {
       }
       this.reInit(`subscription closed (${String(reason).slice(0, 60)})`)
     }
-    const store = (prefix: string): any =>
-      new EncryptedKeyValueStore(this.accountKey, prefix)
+    const store = (prefix: string): any => new EncryptedKeyValueStore(this.scope, prefix)
     this.client = new MarmotClient({
       signer,
       network: this.network,
@@ -395,11 +412,11 @@ export class SupportChatClient {
       snapshot: ROSTER_SNAPSHOT,
       persistence: {
         load: () =>
-          new EncryptedKeyValueStore<RosterPersisted>(this.accountKey, "roster:").getItem(
+          new EncryptedKeyValueStore<RosterPersisted>(this.scope, "roster:").getItem(
             "state",
           ),
         save: (state: RosterPersisted) =>
-          new EncryptedKeyValueStore<RosterPersisted>(this.accountKey, "roster:").setItem(
+          new EncryptedKeyValueStore<RosterPersisted>(this.scope, "roster:").setItem(
             "state",
             state,
           ),
@@ -424,6 +441,7 @@ export class SupportChatClient {
       },
     })
     this.meta = (await this.metaStore.getItem("meta")) ?? {}
+    await this.backfillTitles()
     // restore()/refresh(): persisted floor + everListed first, snapshot seed, then relay
     const rosterStatus = await this.roster.refresh().catch((e: Error) => {
       // relay unreachable: restored/snapshot state still applies (offline restart)
@@ -685,6 +703,11 @@ export class SupportChatClient {
       ),
     )
     this.log(`sent (${Date.now() - t0}ms)`)
+    const record = this.current()
+    if (record && !record.title) {
+      record.title = titleFrom(text)
+      await this.saveMeta()
+    }
     await this.push({
       id: `m-${Date.now()}`,
       at: now(),
@@ -756,7 +779,7 @@ export class SupportChatClient {
             id: `mn-j-${gid}-${pk}-${at}`,
             at,
             type: "notice",
-            text: `joined: ${this.label(pk).text}`,
+            text: `Joined: ${this.label(pk).text}`,
           })
       for (const pk of left)
         await this.pushTo(gid, {
@@ -766,7 +789,7 @@ export class SupportChatClient {
           text:
             pk === this.pubkey
               ? "You were removed from this chat"
-              : `left: ${this.label(pk).text}`,
+              : `Left: ${this.label(pk).text}`,
         })
     } catch (e) {
       this.log(`membership notice error: ${(e as Error).message}`)
@@ -797,12 +820,68 @@ export class SupportChatClient {
     }
   }
 
+  /** M19: conversations from before titles existed get one from their stored history. */
+  private async backfillTitles() {
+    let changed = false
+    const untitled = Object.values(this.meta.conversations ?? {}).filter((c) => !c.title)
+    for (const c of untitled) {
+      const items = (await this.history.getItem(c.gid).catch(() => null)) ?? []
+      const first = items.find((i) => i.type === "msg" && i.mine)
+      if (first) {
+        c.title = titleFrom(first.text)
+        changed = true
+      }
+    }
+    if (changed) await this.saveMeta()
+  }
+
   /**
-   * Does this account have a conversation on this device? Reads only the encrypted meta
-   * store — no client, no relay traffic (the app starts the client at launch only then).
+   * M19 migration: the account's conversations from the Nostr-identity era (stored under
+   * the account scope) are copied into this device's list as ENDED, read-only history
+   * ("identity"). Their MLS state is left where it was and never loaded: the device's
+   * support key is not a member of those groups. Runs once per account.
    */
-  static async hasConversation(accountKey: string): Promise<boolean> {
-    const meta = await new EncryptedKeyValueStore<Meta>(accountKey, "meta:")
+  async importLegacy(accountKey: string): Promise<number> {
+    if (!accountKey || accountKey === this.scope) return 0
+    if (this.meta.importedAccounts?.includes(accountKey)) return 0
+    const legacyMeta = await new EncryptedKeyValueStore<Meta>(accountKey, "meta:")
+      .getItem("meta")
+      .catch(() => null)
+    const legacyHistory = new EncryptedKeyValueStore<ChatItem[]>(accountKey, "history:")
+    let imported = 0
+    this.meta.conversations ??= {}
+    const conversations = this.meta.conversations
+    const legacy = Object.values(legacyMeta?.conversations ?? {}).filter(
+      (c) => !conversations[c.gid],
+    )
+    for (const c of legacy) {
+      const items = (await legacyHistory.getItem(c.gid).catch(() => null)) ?? []
+      await this.history.setItem(c.gid, items)
+      const first = items.find((i) => i.type === "msg" && i.mine)
+      conversations[c.gid] = {
+        ...c,
+        status: "ended",
+        reason: c.status === "ended" ? c.reason : "identity",
+        endedAt: c.endedAt ?? now(),
+        title: c.title ?? (first ? titleFrom(first.text) : undefined),
+      }
+      imported += 1
+    }
+    this.meta.importedAccounts = [...(this.meta.importedAccounts ?? []), accountKey]
+    await this.saveMeta()
+    if (imported) {
+      this.log(`imported ${imported} earlier conversation(s) read-only`)
+      this.emit()
+    }
+    return imported
+  }
+
+  /**
+   * Does this device have a support conversation? Reads only the encrypted meta store —
+   * no client, no relay traffic (the app starts the client at launch only then).
+   */
+  static async hasConversation(scope: string = SUPPORT_SCOPE): Promise<boolean> {
+    const meta = await new EncryptedKeyValueStore<Meta>(scope, "meta:")
       .getItem("meta")
       .catch(() => null)
     return Boolean(meta?.activeGroup)

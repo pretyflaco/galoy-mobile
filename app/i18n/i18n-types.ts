@@ -6440,6 +6440,10 @@ type RootTranslation = {
 		 */
 		createAccount: string
 		/**
+		 * C​o​n​t​a​c​t​ ​s​u​p​p​o​r​t
+		 */
+		contactSupport: string
+		/**
 		 * E​x​p​l​o​r​e​ ​w​a​l​l​e​t
 		 */
 		exploreWallet: string
@@ -14287,10 +14291,6 @@ type RootTranslation = {
 		 */
 		statusStarting: string
 		/**
-		 * E​2​E​E​ ​(​M​a​r​m​o​t​/​M​L​S​)
-		 */
-		statusReady: string
-		/**
 		 * R​e​c​o​n​n​e​c​t​i​n​g​…
 		 */
 		statusReconnecting: string
@@ -14299,25 +14299,13 @@ type RootTranslation = {
 		 */
 		statusDegraded: string
 		/**
-		 * A​u​t​o​m​a​t​e​d​ ​s​u​p​p​o​r​t​ ​i​s​ ​a​n​s​w​e​r​i​n​g​.​ ​A​ ​h​u​m​a​n​ ​c​a​n​ ​j​o​i​n​ ​t​h​i​s​ ​c​h​a​t​.
-		 */
-		handoffBot: string
-		/**
-		 * A​ ​m​e​m​b​e​r​ ​o​f​ ​t​h​e​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t​ ​t​e​a​m​ ​i​s​ ​h​e​l​p​i​n​g​ ​y​o​u​.
-		 */
-		handoffAgent: string
-		/**
-		 * S​t​a​r​t​ ​a​ ​s​u​p​p​o​r​t​ ​c​h​a​t
+		 * S​t​a​r​t​ ​c​h​a​t
 		 */
 		start: string
 		/**
 		 * S​t​a​r​t​i​n​g​…
 		 */
 		starting: string
-		/**
-		 * N​o​ ​m​e​s​s​a​g​e​s​ ​y​e​t​.
-		 */
-		empty: string
 		/**
 		 * M​e​s​s​a​g​e
 		 */
@@ -14335,10 +14323,6 @@ type RootTranslation = {
 		 * @param {string} members
 		 */
 		unverifiedBlocked: RequiredParams<'members'>
-		/**
-		 * N​e​w​ ​c​o​n​v​e​r​s​a​t​i​o​n
-		 */
-		newConversation: string
 		/**
 		 * S​t​a​r​t​ ​a​ ​n​e​w​ ​c​o​n​v​e​r​s​a​t​i​o​n
 		 */
@@ -14364,28 +14348,9 @@ type RootTranslation = {
 		 */
 		endedUnrestorable: string
 		/**
-		 * P​r​e​v​i​o​u​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​s​ ​(​{​c​o​u​n​t​}​)
-		 * @param {number} count
+		 * A​n​ ​e​a​r​l​i​e​r​ ​c​o​n​v​e​r​s​a​t​i​o​n​,​ ​f​r​o​m​ ​b​e​f​o​r​e​ ​s​u​p​p​o​r​t​ ​c​h​a​t​ ​g​o​t​ ​i​t​s​ ​o​w​n​ ​k​e​y​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.​ ​I​t​ ​i​s​ ​r​e​a​d​-​o​n​l​y​ ​—​ ​s​t​a​r​t​ ​a​ ​n​e​w​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​t​o​ ​c​o​n​t​i​n​u​e​.
 		 */
-		previousConversations: RequiredParams<'count'>
-		/**
-		 * H​i​d​e​ ​p​r​e​v​i​o​u​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​s
-		 */
-		hidePrevious: string
-		/**
-		 * {​d​a​t​e​}​ ​·​ ​{​s​t​a​t​u​s​}
-		 * @param {string} date
-		 * @param {string} status
-		 */
-		conversationItem: RequiredParams<'date' | 'status'>
-		/**
-		 * a​c​t​i​v​e
-		 */
-		statusActive: string
-		/**
-		 * e​n​d​e​d
-		 */
-		statusEnded: string
+		endedIdentity: string
 		/**
 		 * A​ ​p​r​e​v​i​o​u​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​(​r​e​a​d​-​o​n​l​y​)
 		 */
@@ -14395,27 +14360,15 @@ type RootTranslation = {
 		 */
 		backToCurrent: string
 		/**
-		 * E​n​d​-​t​o​-​e​n​d​ ​e​n​c​r​y​p​t​e​d​ ​·​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t
+		 * C​o​n​v​e​r​s​a​t​i​o​n​s
 		 */
-		encrypted: string
-		/**
-		 * A​u​t​o​m​a​t​e​d​ ​a​s​s​i​s​t​a​n​t
-		 */
-		pillBot: string
-		/**
-		 * S​u​p​p​o​r​t​ ​a​g​e​n​t
-		 */
-		pillAgent: string
-		/**
-		 * M​o​r​e​ ​o​p​t​i​o​n​s
-		 */
-		menu: string
+		conversations: string
 		/**
 		 * C​h​a​t​ ​w​i​t​h​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t
 		 */
 		emptyTitle: string
 		/**
-		 * A​s​k​ ​u​s​ ​a​n​y​t​h​i​n​g​.​ ​T​h​i​s​ ​c​h​a​t​ ​i​s​ ​e​n​d​-​t​o​-​e​n​d​ ​e​n​c​r​y​p​t​e​d​ ​—​ ​o​n​l​y​ ​y​o​u​ ​a​n​d​ ​t​h​e​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t​ ​t​e​a​m​ ​c​a​n​ ​r​e​a​d​ ​i​t​.
+		 * A​s​k​ ​u​s​ ​a​n​y​t​h​i​n​g​.​ ​T​h​i​s​ ​c​h​a​t​ ​i​s​ ​e​n​d​-​t​o​-​e​n​d​ ​e​n​c​r​y​p​t​e​d​.​ ​O​n​l​y​ ​y​o​u​ ​a​n​d​ ​t​h​e​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t​ ​t​e​a​m​ ​c​a​n​ ​r​e​a​d​ ​i​t​.
 		 */
 		emptyBody: string
 		/**
@@ -14435,6 +14388,32 @@ type RootTranslation = {
 		 * Y​e​s​t​e​r​d​a​y
 		 */
 		yesterday: string
+	}
+	SupportConversationsScreen: {
+		/**
+		 * C​o​n​v​e​r​s​a​t​i​o​n​s
+		 */
+		title: string
+		/**
+		 * C​o​n​v​e​r​s​a​t​i​o​n
+		 */
+		untitled: string
+		/**
+		 * C​u​r​r​e​n​t​ ​c​o​n​v​e​r​s​a​t​i​o​n
+		 */
+		current: string
+		/**
+		 * N​o​ ​c​o​n​v​e​r​s​a​t​i​o​n​s​ ​y​e​t​.
+		 */
+		empty: string
+		/**
+		 * S​t​a​r​t​ ​n​e​w
+		 */
+		startNew: string
+		/**
+		 * S​t​a​r​t​i​n​g​…
+		 */
+		starting: string
 	}
 	NostrActivityScreen: {
 		/**
@@ -21578,6 +21557,10 @@ export type TranslationFunctions = {
 		 * Create new account
 		 */
 		createAccount: () => LocalizedString
+		/**
+		 * Contact support
+		 */
+		contactSupport: () => LocalizedString
 		/**
 		 * Explore wallet
 		 */
@@ -29241,10 +29224,6 @@ export type TranslationFunctions = {
 		 */
 		statusStarting: () => LocalizedString
 		/**
-		 * E2EE (Marmot/MLS)
-		 */
-		statusReady: () => LocalizedString
-		/**
 		 * Reconnecting…
 		 */
 		statusReconnecting: () => LocalizedString
@@ -29253,25 +29232,13 @@ export type TranslationFunctions = {
 		 */
 		statusDegraded: () => LocalizedString
 		/**
-		 * Automated support is answering. A human can join this chat.
-		 */
-		handoffBot: () => LocalizedString
-		/**
-		 * A member of the Blink Support team is helping you.
-		 */
-		handoffAgent: () => LocalizedString
-		/**
-		 * Start a support chat
+		 * Start chat
 		 */
 		start: () => LocalizedString
 		/**
 		 * Starting…
 		 */
 		starting: () => LocalizedString
-		/**
-		 * No messages yet.
-		 */
-		empty: () => LocalizedString
 		/**
 		 * Message
 		 */
@@ -29288,10 +29255,6 @@ export type TranslationFunctions = {
 		 * Someone unverified is in this chat: {members}. Sending is paused until they leave or are verified.
 		 */
 		unverifiedBlocked: (arg: { members: string }) => LocalizedString
-		/**
-		 * New conversation
-		 */
-		newConversation: () => LocalizedString
 		/**
 		 * Start a new conversation
 		 */
@@ -29317,25 +29280,9 @@ export type TranslationFunctions = {
 		 */
 		endedUnrestorable: () => LocalizedString
 		/**
-		 * Previous conversations ({count})
+		 * An earlier conversation, from before support chat got its own key on this device. It is read-only — start a new conversation to continue.
 		 */
-		previousConversations: (arg: { count: number }) => LocalizedString
-		/**
-		 * Hide previous conversations
-		 */
-		hidePrevious: () => LocalizedString
-		/**
-		 * {date} · {status}
-		 */
-		conversationItem: (arg: { date: string, status: string }) => LocalizedString
-		/**
-		 * active
-		 */
-		statusActive: () => LocalizedString
-		/**
-		 * ended
-		 */
-		statusEnded: () => LocalizedString
+		endedIdentity: () => LocalizedString
 		/**
 		 * A previous conversation (read-only)
 		 */
@@ -29345,27 +29292,15 @@ export type TranslationFunctions = {
 		 */
 		backToCurrent: () => LocalizedString
 		/**
-		 * End-to-end encrypted · Blink Support
+		 * Conversations
 		 */
-		encrypted: () => LocalizedString
-		/**
-		 * Automated assistant
-		 */
-		pillBot: () => LocalizedString
-		/**
-		 * Support agent
-		 */
-		pillAgent: () => LocalizedString
-		/**
-		 * More options
-		 */
-		menu: () => LocalizedString
+		conversations: () => LocalizedString
 		/**
 		 * Chat with Blink Support
 		 */
 		emptyTitle: () => LocalizedString
 		/**
-		 * Ask us anything. This chat is end-to-end encrypted — only you and the Blink Support team can read it.
+		 * Ask us anything. This chat is end-to-end encrypted. Only you and the Blink Support team can read it.
 		 */
 		emptyBody: () => LocalizedString
 		/**
@@ -29384,6 +29319,32 @@ export type TranslationFunctions = {
 		 * Yesterday
 		 */
 		yesterday: () => LocalizedString
+	}
+	SupportConversationsScreen: {
+		/**
+		 * Conversations
+		 */
+		title: () => LocalizedString
+		/**
+		 * Conversation
+		 */
+		untitled: () => LocalizedString
+		/**
+		 * Current conversation
+		 */
+		current: () => LocalizedString
+		/**
+		 * No conversations yet.
+		 */
+		empty: () => LocalizedString
+		/**
+		 * Start new
+		 */
+		startNew: () => LocalizedString
+		/**
+		 * Starting…
+		 */
+		starting: () => LocalizedString
 	}
 	NostrActivityScreen: {
 		/**

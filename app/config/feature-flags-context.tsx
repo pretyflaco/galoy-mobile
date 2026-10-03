@@ -244,7 +244,7 @@ export const defaultRemoteConfig: RemoteConfig = {
   stableBalanceEnabled: false,
   /** NIP-05 verified handles (POC): off until the lnurl-server routes are deployed. */
   nostrNip05Enabled: false,
-  /** Support chat: off unless the build opts in (above); requires nostrSignerEnabled. */
+  /** Support chat: off unless the build opts in (above). Own device key since M19. */
   supportChatEnabled: supportChatBuild,
   // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
   nostrSignerEnabled: true,
@@ -606,8 +606,8 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
       remoteConfig.nonCustodialEnabled && remoteConfig.stableBalanceEnabled,
     nostrSignerEnabled: remoteConfig.nostrSignerEnabled,
     nostrNip05Enabled: remoteConfig.nostrSignerEnabled && remoteConfig.nostrNip05Enabled,
-    supportChatEnabled:
-      remoteConfig.nostrSignerEnabled && remoteConfig.supportChatEnabled,
+    // M19: the chat runs on its own per-device key — no Nostr signer needed
+    supportChatEnabled: remoteConfig.supportChatEnabled,
     delegatedGrantsEnabled: remoteConfig.delegatedGrantsEnabled,
     remoteConfigReady,
   }

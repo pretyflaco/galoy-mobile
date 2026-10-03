@@ -5,13 +5,13 @@ import Toast from "react-native-toast-message"
 import { requestInAppRoute } from "@app/navigation/navigation-container-wrapper"
 
 import { useNostrRuntime } from "@app/nostr/nostr-runtime-provider"
-import type { SignerRuntime } from "@app/nostr/runtime"
 
 import { SupportChatClient } from "./client"
 import { supportChatClients as clients } from "./registry"
+import { SUPPORT_SCOPE } from "./support-key"
 
-// One client per account for the app's lifetime: leaving the screen keeps the subscription
-// (messages keep arriving and are stored); an account switch gets its own client.
+// One client per device for the app's lifetime: leaving the screen keeps the subscription
+// (messages keep arriving and are stored). M19: independent of accounts and identities.
 
 /**
  * While the app is in front but the chat screen is not, a new message from support
@@ -39,27 +39,34 @@ const toastOnNewMessages = (client: SupportChatClient): void => {
   })
 }
 
-/** The account's client, created and initialised on first use. */
+/**
+ * The device's client (M19: one per device, on the device's own support key), created and
+ * initialised on first use. With an account at hand, that account's conversations from
+ * the Nostr-identity era are imported read-only once.
+ */
 export const ensureSupportChatClient = (
-  runtime: SignerRuntime,
-  accountKey: string,
+  legacyAccountKey?: string | null,
   onError?: (e: Error) => void,
 ): SupportChatClient => {
-  let e = clients.get(accountKey)
+  let e = clients.get(SUPPORT_SCOPE)
   if (!e) {
-    const client = new SupportChatClient(runtime, accountKey)
+    const client = new SupportChatClient()
     toastOnNewMessages(client)
     e = { client, ready: client.init() }
-    clients.set(accountKey, e)
+    clients.set(SUPPORT_SCOPE, e)
     e.ready.catch((err: Error) => {
-      clients.delete(accountKey)
+      clients.delete(SUPPORT_SCOPE)
       onError?.(err)
     })
+  }
+  if (legacyAccountKey) {
+    const { client } = e
+    e.ready.then(() => client.importLegacy(legacyAccountKey)).catch(() => undefined)
   }
   return e.client
 }
 
-/** The chat screen: creates the client if needed. */
+/** The chat screen: creates the client if needed. No account or Nostr identity required. */
 export const useSupportChat = (): {
   client: SupportChatClient | null
   error: string | null
@@ -68,19 +75,16 @@ export const useSupportChat = (): {
   const [, rerender] = useReducer((x: number) => x + 1, 0)
   const [error, setError] = useState<string | null>(null)
   const accountKey = nostr?.accountReady ? nostr.accountKey : null
-  const entry = accountKey ? clients.get(accountKey) : undefined
+  const entry = clients.get(SUPPORT_SCOPE)
 
   useEffect(() => {
-    if (!nostr || !accountKey) return
-    const client = ensureSupportChatClient(nostr.runtime, accountKey, (err) =>
-      setError(err.message),
-    )
+    const client = ensureSupportChatClient(accountKey, (err) => setError(err.message))
     const unsubscribe = client.subscribe(rerender)
     rerender()
     return () => {
       unsubscribe()
     }
-  }, [nostr, accountKey])
+  }, [accountKey])
 
   return { client: entry?.client ?? null, error }
 }

@@ -1,8 +1,8 @@
 /**
- * Support-chat conversation screen (P2). Copy is i18n; behavior asserted via
- * testIDs and a stubbed client: the policy default (an unverified member warns
- * AND blocks sending), the start button only without a conversation, and the
- * notice/warning/item rendering.
+ * Support-chat conversation screen (P2; M19 redesign). Copy is i18n; behavior asserted
+ * via testIDs and a stubbed client: the policy default (an unverified member warns
+ * AND blocks sending), the start button only without a conversation, the notice/
+ * warning/item rendering, and the header clock that opens Conversations (no top bar).
  */
 import React from "react"
 import { fireEvent, render } from "@testing-library/react-native"
@@ -17,8 +17,21 @@ jest.mock("@app/support-chat/push", () => ({
 jest.mock("@app/support-chat/use-support-chat", () => ({
   useSupportChat: () => ({ client: mockedClient, error: null }),
 }))
+const navigate = jest.fn()
+let headerOptions: any = null
+jest.mock("@react-navigation/native", () => ({
+  ...jest.requireActual("@react-navigation/native"),
+  useNavigation: () => ({
+    navigate,
+    goBack: jest.fn(),
+    setOptions: (o: any) => {
+      headerOptions = o
+    },
+  }),
+}))
 
 import { SupportChatScreen } from "@app/screens/support-chat/support-chat-screen"
+import { SupportConversationsScreen } from "@app/screens/support-chat/support-conversations-screen"
 import { loadLocale } from "@app/i18n/i18n-util.sync"
 
 import { ContextForScreen } from "../screens/helper"
@@ -62,12 +75,41 @@ const renderScreen = (client: any) => {
 }
 
 describe("support-chat screen", () => {
-  it("renders the handoff banner, status and composer when a conversation exists", async () => {
+  it("renders the composer, and no top bar, when a conversation exists", async () => {
     const { getByTestId, queryByTestId } = renderScreen({ ...baseClient })
     await flushEffects()
-    expect(getByTestId("support-chat-handoff")).toBeTruthy()
     expect(getByTestId("support-chat-input")).toBeTruthy()
     expect(queryByTestId("support-chat-start")).toBeNull()
+    // M19 (Andrej): the 🔒 line, the handoff pill and the ⋯ menu are gone
+    expect(queryByTestId("support-chat-handoff")).toBeNull()
+    expect(queryByTestId("support-chat-details-toggle")).toBeNull()
+    expect(queryByTestId("support-chat-menu")).toBeNull()
+  })
+
+  it("puts a clock in the header that opens Conversations", async () => {
+    headerOptions = null
+    renderScreen({ ...baseClient })
+    await flushEffects()
+    const clock = render(
+      <ContextForScreen>{headerOptions.headerRight()}</ContextForScreen>,
+    )
+    fireEvent.press(clock.getByTestId("support-chat-conversations"))
+    expect(navigate).toHaveBeenCalledWith("supportChatConversations")
+  })
+
+  it("no clock before the first conversation; the empty state offers Start chat", async () => {
+    headerOptions = null
+    const { getByTestId, getByText } = renderScreen({
+      ...baseClient,
+      groupId: null,
+      current: () => null,
+      conversations: () => [],
+    })
+    await flushEffects()
+    expect(headerOptions.headerRight).toBeUndefined()
+    expect(getByText("Chat with Blink Support")).toBeTruthy()
+    expect(getByTestId("support-chat-start")).toBeTruthy()
+    expect(getByText("Start chat")).toBeTruthy()
   })
 
   it("marks the client focused while the screen is in front (unread badge)", async () => {
@@ -105,7 +147,7 @@ describe("support-chat screen", () => {
     mockedClient = {
       ...baseClient,
       items: [
-        { id: "1", at: 1, type: "notice", text: "joined: Blink Support · pretyflaco" },
+        { id: "1", at: 1, type: "notice", text: "joined: Blink Support · pretyflaco" }, // pre-M19 case
         { id: "2", at: 2, type: "warning", text: "Blink Support roster changed" },
       ],
     }
@@ -115,7 +157,7 @@ describe("support-chat screen", () => {
       </ContextForScreen>,
     )
     await flushEffects()
-    expect(String(getByTestId("support-chat-notice").props.children)).toContain("joined:")
+    expect(String(getByTestId("support-chat-notice").props.children)).toContain("Joined:")
     expect(getByTestId("support-chat-warning")).toBeTruthy()
   })
 
@@ -167,22 +209,7 @@ describe("support-chat screen", () => {
     expect(getAllByText("pretyflaco · Blink Support")).toHaveLength(2)
   })
 
-  it("shows the agent handoff state when a verified agent is present", async () => {
-    const { getByTestId } = renderScreen({ ...baseClient, handoffState: () => "agent" })
-    await flushEffects()
-    expect(getByTestId("support-chat-handoff")).toBeTruthy()
-  })
-
   /** Option C (F-M16-1): conversations are sessions; an ended one is never a dead end. */
-  it("an active conversation offers 'New conversation' in the menu", async () => {
-    const { getByTestId, queryByTestId } = renderScreen({ ...baseClient })
-    await flushEffects()
-    expect(queryByTestId("support-chat-new-conversation")).toBeNull() // tucked away
-    fireEvent.press(getByTestId("support-chat-menu"))
-    expect(getByTestId("support-chat-new-conversation")).toBeTruthy()
-    expect(queryByTestId("support-chat-ended")).toBeNull()
-  })
-
   it("a stuck conversation is ENDED: readable, no composer, start-new offered", async () => {
     const { getByTestId, queryByTestId } = renderScreen({
       ...baseClient,
@@ -200,16 +227,23 @@ describe("support-chat screen", () => {
     expect(getByTestId("support-chat-message")).toBeTruthy() // history stays readable
   })
 
-  it("lists previous conversations and shows one read-only", async () => {
-    const past = { gid: "old1", startedAt: 1, status: "ended", reason: "stuck" }
-    const listed = renderScreen({
+  it("an imported Nostr-identity conversation is read-only with a way forward (M19)", async () => {
+    const { getByTestId } = renderScreen({
       ...baseClient,
-      conversations: () => [{ gid: "group1", startedAt: 2, status: "active" }, past],
+      current: () => ({
+        gid: "group1",
+        startedAt: 1,
+        status: "ended",
+        reason: "identity",
+      }),
     })
     await flushEffects()
-    fireEvent.press(listed.getByTestId("support-chat-menu"))
-    expect(listed.getByTestId("support-chat-previous-toggle")).toBeTruthy()
+    expect(getByTestId("support-chat-ended").props.children).toMatch(/its own key/)
+    expect(getByTestId("support-chat-start-new")).toBeTruthy()
+  })
 
+  it("shows a previous conversation read-only", async () => {
+    const past = { gid: "old1", startedAt: 1, status: "ended", reason: "stuck" }
     const viewing = renderScreen({
       ...baseClient,
       viewing: "old1",
@@ -223,5 +257,72 @@ describe("support-chat screen", () => {
     expect(String(viewing.getByTestId("support-chat-notice").props.children)).toContain(
       "an old notice",
     )
+  })
+
+  /** M19 (Andrej): the Conversations screen — titles, the current one checked, Start new. */
+  describe("conversations screen", () => {
+    const list = [
+      {
+        gid: "group1",
+        startedAt: 1760000000,
+        status: "active",
+        title: "need help with login",
+      },
+      { gid: "old1", startedAt: 1750000000, status: "ended", reason: "user" },
+    ]
+    const renderList = (client: any) => {
+      mockedClient = client
+      return render(
+        <ContextForScreen>
+          <SupportConversationsScreen />
+        </ContextForScreen>,
+      )
+    }
+
+    it("lists titles (first message), a fallback title, and checks the current one", async () => {
+      const { getByText, getAllByTestId } = renderList({
+        ...baseClient,
+        conversations: () => list,
+      })
+      await flushEffects()
+      expect(getByText("need help with login")).toBeTruthy()
+      expect(getByText("Conversation")).toBeTruthy() // no title yet
+      expect(getAllByTestId("support-conversation-current")).toHaveLength(1)
+    })
+
+    it("opens an old conversation read-only, the current one writable", async () => {
+      const client = { ...baseClient, conversations: () => list, view: jest.fn() }
+      const { getAllByTestId } = renderList(client)
+      await flushEffects()
+      fireEvent.press(getAllByTestId("support-conversation-row")[1])
+      expect(client.view).toHaveBeenCalledWith("old1")
+      fireEvent.press(getAllByTestId("support-conversation-row")[0])
+      expect(client.view).toHaveBeenCalledWith(null)
+    })
+
+    it("Start new ends the current conversation and starts a fresh one", async () => {
+      const client = { ...baseClient, conversations: () => list, startNew: jest.fn() }
+      const { getByTestId } = renderList(client)
+      await flushEffects()
+      fireEvent.press(getByTestId("support-conversations-start-new"))
+      await flushEffects()
+      expect(client.startNew).toHaveBeenCalled()
+    })
+
+    it("Start new without a current conversation just starts one", async () => {
+      const client = {
+        ...baseClient,
+        groupId: null,
+        conversations: () => [list[1]],
+        start: jest.fn(),
+        startNew: jest.fn(),
+      }
+      const { getByTestId } = renderList(client)
+      await flushEffects()
+      fireEvent.press(getByTestId("support-conversations-start-new"))
+      await flushEffects()
+      expect(client.start).toHaveBeenCalled()
+      expect(client.startNew).not.toHaveBeenCalled()
+    })
   })
 })

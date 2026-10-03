@@ -56,7 +56,8 @@ export const GetStartedScreen: React.FC = () => {
 
   const { LL } = useI18nContext()
 
-  const { deviceAccountEnabled, nonCustodialEnabled } = useFeatureFlags()
+  const { deviceAccountEnabled, nonCustodialEnabled, supportChatEnabled } =
+    useFeatureFlags()
   const { defaultSelected } = useAccountTypeOptions()
   const { checkBlockReason, isChecking, isFirstSignupRuleReady } = useCreationBlock()
   const isMounted = useIsMounted()
@@ -170,6 +171,18 @@ export const GetStartedScreen: React.FC = () => {
             onPress={handleLogin}
             containerStyle={styles.secondaryButtonContainer}
           />
+          {supportChatEnabled && (
+            <Pressable
+              onPress={() => navigation.navigate("supportChat")}
+              style={styles.contactSupport}
+              accessibilityRole="button"
+              {...testProps("get-started-contact-support")}
+            >
+              <Text type="p2" style={styles.contactSupportText}>
+                {LL.GetStartedScreen.contactSupport()}
+              </Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </Screen>
@@ -187,7 +200,18 @@ const useStyles = makeStyles(() => ({
   },
 
   secondaryButtonContainer: {
-    marginVertical: 15,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  // M19: support before an account exists (kngako) — the chat has its own device key
+  contactSupport: {
+    alignSelf: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginBottom: 5,
+  },
+  contactSupportText: {
+    textDecorationLine: "underline",
   },
   logoWrapper: {
     flex: 1,

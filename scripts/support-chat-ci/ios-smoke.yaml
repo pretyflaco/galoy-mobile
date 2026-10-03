@@ -112,6 +112,6 @@ appId: io.galoy.bitcoinbeach
     visible:
       id: "support-conversation-current"
     timeout: 15000
-- assertVisible:
-    text: "ci smoke roundtrip"
+- assertVisible: # the row is one accessibility element on iOS: "title, date"
+    text: ".*ci smoke roundtrip.*"
 - takeScreenshot: 08-conversations

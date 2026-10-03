@@ -16,5 +16,11 @@ umask 077
   cat .env.support-dogfood
 } > .env.alpha
 chmod 600 .env.alpha
+# react-native-config parses line by line: iOS (Ruby) FAILS the build on a line that is not
+# KEY=VALUE, Android (Gradle) silently DROPS it — a multi-line value (pretty-printed JSON)
+# left SUPPORT_ROSTER_SNAPSHOT as "{" on Android (F-M19-3). Every line must be a comment,
+# blank, or KEY=VALUE on one line.
+bad=$(grep -nvE '^\s*(#.*)?$|^(export\s+)?[A-Za-z0-9_]+\s*=' .env.alpha | cut -d: -f1 | tr '\n' ' ' || true)
+[ -z "$bad" ] || { echo "env lines that are not KEY=VALUE (multi-line value?): $bad" >&2; rm -f .env.alpha; exit 1; }
 # names only, for the build log
 echo "wrote .env.alpha: $(grep -oE '^[A-Z_]+=' .env.alpha | tr -d = | sort -u | tr '\n' ' ')"

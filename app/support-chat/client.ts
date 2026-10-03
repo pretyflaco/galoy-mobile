@@ -30,6 +30,7 @@ import {
   deserializeApplicationData,
   encodeMediaImetaTag,
   getGroupMembers,
+  getMediaAttachments,
 } from "@internet-privacy/marmot-ts"
 import RNFS from "react-native-fs"
 import { hermesCryptoProvider } from "@blink-support-chat/adapters/hermes-crypto-provider.js"
@@ -57,7 +58,13 @@ import type { BlinkEventSigner } from "./blink-signer"
 import { SUPPORT_SCOPE, createSupportSigner, loadOrCreateSupportKey } from "./support-key"
 import { EncryptedKeyValueStore } from "./encrypted-store"
 import { isDetailsMessage, requestOf, type RequestKind } from "./details"
-import { blobLike, uploadEncryptedBlob } from "./media"
+import {
+  MAX_DOWNLOAD_BYTES,
+  allowedBlobUrl,
+  blobLike,
+  imageExt,
+  uploadEncryptedBlob,
+} from "./media"
 
 import Config from "react-native-config"
 
@@ -809,6 +816,66 @@ export class SupportChatClient {
     })
   }
 
+  /**
+   * M19 phase 2: download a picture support sent (only from Blink's Blossom), decrypt it
+   * with this conversation's media key (marmot-ts checks both hashes), keep a private copy
+   * and attach it to its message.
+   */
+  private async receiveImage({
+    gid,
+    itemId,
+    group,
+    attachment,
+  }: {
+    gid: string
+    itemId: string
+    group: AnyGroup
+    attachment: ReturnType<typeof getMediaAttachments>[number]
+  }): Promise<void> {
+    const loc = attachment.locators.find(
+      (l) => l.kind === "blossom-v1" && allowedBlobUrl(l.value),
+    )
+    if (!loc) throw new Error("no allowed blob locator")
+    const tmp = `${RNFS.CachesDirectoryPath}/support-in-${attachment.ciphertextSha256}`
+    const dl = await RNFS.downloadFile({ fromUrl: loc.value, toFile: tmp }).promise
+    try {
+      if (dl.statusCode !== 200) throw new Error(`blob fetch HTTP ${dl.statusCode}`)
+      if (dl.bytesWritten > MAX_DOWNLOAD_BYTES) throw new Error("blob too large")
+      const encrypted = new Uint8Array(
+        Buffer.from(await RNFS.readFile(tmp, "base64"), "base64"),
+      )
+      const { data } = await group.decryptMedia(encrypted, attachment)
+      const ext = imageExt(data)
+      if (!ext) throw new Error("not a picture")
+      const dir = `${RNFS.DocumentDirectoryPath}/support-media`
+      await RNFS.mkdir(dir).catch(() => undefined)
+      const path = `${dir}/${attachment.plaintextSha256}.${ext}`
+      await RNFS.writeFile(path, Buffer.from(data).toString("base64"), "base64")
+      const [width, height] = (attachment.dim ?? "").split("x").map(Number)
+      await this.updateItem(gid, itemId, {
+        image: { path, ...(width && height ? { width, height } : {}) },
+      })
+      this.log(`image received ${data.length} bytes`)
+    } finally {
+      await RNFS.unlink(tmp).catch(() => undefined)
+    }
+  }
+
+  /** Merge fields into a stored chat item (current conversation or its history). */
+  private async updateItem(gid: string, id: string, patch: Partial<ChatItem>) {
+    if (gid === this.groupId) {
+      this.items = this.items.map((x) => (x.id === id ? { ...x, ...patch } : x))
+      this.emit()
+      await this.history.setItem(gid, this.items)
+      return
+    }
+    const old = (await this.history.getItem(gid)) ?? []
+    await this.history.setItem(
+      gid,
+      old.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+    )
+  }
+
   /** One group is "the" conversation (P1: a single active support conversation). */
   private attach(group: AnyGroup) {
     if (!group?.groupData || this.attached.has(group)) return
@@ -843,8 +910,9 @@ export class SupportChatClient {
         const asker = this.label(rumor.pubkey)
         const request =
           asker.verified && asker.role === "bot" ? requestOf(rumor.tags) : null
+        const itemId = `r-${rumor.id}`
         this.pushTo(gid, {
-          id: `r-${rumor.id}`,
+          id: itemId,
           at: now(),
           type: "msg",
           from: rumor.pubkey,
@@ -852,6 +920,14 @@ export class SupportChatClient {
           ...(request ? { request } : {}),
           ...(isDetailsMessage(rumor.tags) ? { details: true } : {}),
         })
+        // M19 phase 2: a picture from Blink Support — only from verified members
+        if (asker.verified) {
+          const attachment = getMediaAttachments(rumor.tags ?? [])[0]
+          if (attachment)
+            this.receiveImage({ gid, itemId, group, attachment }).catch((e) =>
+              this.log(`image not shown: ${(e as Error).message}`),
+            )
+        }
       } catch (e) {
         this.log(`applicationMessage dropped by strict decode: ${(e as Error).message}`)
       }

@@ -69,3 +69,36 @@ export const blobLike = (bytes: Uint8Array, type: string): Blob =>
     arrayBuffer: async () =>
       bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
   }) as unknown as Blob
+
+/** Images we display: JPEG / PNG / WebP by magic bytes (never the sender's claim). */
+export const imageExt = (b: Uint8Array): "jpg" | "png" | "webp" | null => {
+  if (b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "jpg"
+  if (b.length > 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47)
+    return "png"
+  if (
+    b.length > 12 &&
+    String.fromCharCode(...b.slice(0, 4)) === "RIFF" &&
+    String.fromCharCode(...b.slice(8, 12)) === "WEBP"
+  )
+    return "webp"
+  return null
+}
+
+/** Only https blob URLs on Blink's Blossom, path = /<sha256>[.ext]. */
+export const allowedBlobUrl = (value: string, server: string = BLOSSOM_URL): boolean => {
+  try {
+    const u = new URL(value)
+    const s = new URL(server)
+    return (
+      u.protocol === "https:" &&
+      u.host === s.host &&
+      /^\/[0-9a-f]{64}(\.[a-z0-9]+)?$/.test(u.pathname) &&
+      !u.search
+    )
+  } catch {
+    return false
+  }
+}
+
+/** Blobs larger than this are not downloaded (Blossom's own cap is 8 MB). */
+export const MAX_DOWNLOAD_BYTES = 8 * 1024 * 1024

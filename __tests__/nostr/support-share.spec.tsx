@@ -30,6 +30,7 @@ import {
   transactionFields,
 } from "@app/support-chat/details"
 import { SupportShareDetailsScreen } from "@app/screens/support-chat/support-share-details-screen"
+import { allowedBlobUrl, imageExt } from "@app/support-chat/media"
 import { loadLocale } from "@app/i18n/i18n-util.sync"
 
 import { ContextForScreen } from "../screens/helper"
@@ -108,6 +109,27 @@ describe("share details: format", () => {
       settlementVia: { __typename: "SettlementViaOnChain", transactionHash: "dead" },
     }
     expect(transactionFields(oc).find((x) => x.key === "txid")?.value).toBe("dead")
+  })
+})
+
+describe("pictures from support (M19 phase 2)", () => {
+  const sha = "b".repeat(64)
+  it("downloads only https blobs on Blink's Blossom", () => {
+    expect(allowedBlobUrl(`https://blossom.twentyone.ist/${sha}`)).toBe(true)
+    expect(allowedBlobUrl(`http://blossom.twentyone.ist/${sha}`)).toBe(false)
+    expect(allowedBlobUrl(`https://evil.example/${sha}`)).toBe(false)
+    expect(allowedBlobUrl(`https://blossom.twentyone.ist.evil.example/${sha}`)).toBe(
+      false,
+    )
+    expect(allowedBlobUrl(`https://blossom.twentyone.ist/${sha}?x=1`)).toBe(false)
+    expect(allowedBlobUrl("https://blossom.twentyone.ist/../x")).toBe(false)
+  })
+  it("shows only real JPEG / PNG / WebP", () => {
+    expect(imageExt(Uint8Array.from([0xff, 0xd8, 0xff, 0xe0]))).toBe("jpg")
+    expect(imageExt(Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10, 0]))).toBe(
+      "png",
+    )
+    expect(imageExt(new TextEncoder().encode("<svg onload=alert(1)>"))).toBeNull()
   })
 })
 

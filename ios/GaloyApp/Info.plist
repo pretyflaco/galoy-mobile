@@ -86,7 +86,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Find merchants who accept bitcoin near you</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Import a screenshot with a QR code</string>
+	<string>Choose a picture: a QR code to scan, or a screenshot to send to Blink Support</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>

@@ -344,20 +344,48 @@ describe("support-chat screen", () => {
     fireEvent.press(getByTestId("support-chat-image-open"))
     fireEvent.press(getByTestId("support-image-save"))
     await flushEffects()
-    expect(mockSaveAsset).toHaveBeenCalledWith("file:///docs/p.png", {
-      type: "photo",
-      album: "Blink Support",
-    })
+    expect(mockSaveAsset).toHaveBeenCalledWith(
+      "file:///mock/documents/support-media/p.png",
+      {
+        type: "photo",
+        album: "Blink Support",
+      },
+    )
     fireEvent.press(getByTestId("support-image-save")) // a second tap does not save a duplicate
     await flushEffects()
     expect(mockSaveAsset).toHaveBeenCalledTimes(1)
     fireEvent.press(getByTestId("support-image-share"))
     expect(mockShareOpen).toHaveBeenCalledWith(
-      expect.objectContaining({ url: "file:///docs/p.png", type: "image/png" }),
+      expect.objectContaining({
+        url: "file:///mock/documents/support-media/p.png",
+        type: "image/png",
+      }),
     )
     fireEvent.press(getByTestId("support-image-close"))
     await flushEffects()
     expect(queryByTestId("support-image-save")).toBeNull()
+  })
+
+  it("a picture whose file is gone shows a text instead of an empty bubble", async () => {
+    const { getByTestId, queryByTestId, getByText } = renderScreen({
+      ...baseClient,
+      items: [
+        {
+          id: "g",
+          at: 1,
+          type: "msg",
+          mine: true,
+          from: "a".repeat(64),
+          text: "📷 Screenshot",
+          image: { path: "/old/container/support-media/gone.jpg" },
+        },
+      ],
+    })
+    await flushEffects()
+    fireEvent(getByTestId("support-chat-image"), "error")
+    await flushEffects()
+    expect(queryByTestId("support-chat-image")).toBeNull()
+    expect(getByText(/not available on this device/)).toBeTruthy()
   })
 
   it("renders a sent screenshot as an image bubble", async () => {
@@ -377,7 +405,7 @@ describe("support-chat screen", () => {
     })
     await flushEffects()
     expect(getByTestId("support-chat-image").props.source).toEqual({
-      uri: "file:///docs/x.jpg",
+      uri: "file:///mock/documents/support-media/x.jpg", // resolved by file name (iOS container UUIDs change)
     })
   })
 

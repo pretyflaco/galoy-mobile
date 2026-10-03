@@ -25,6 +25,7 @@ import Toast from "react-native-toast-message"
 import { Text } from "@rn-vui/themed"
 
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
+import { mediaUri } from "@app/support-chat/media"
 import { useI18nContext } from "@app/i18n/i18n-react"
 
 export type ViewerImage = { path: string; width?: number; height?: number }
@@ -136,7 +137,7 @@ export const SupportImageViewer: React.FC<{
       return
     }
     try {
-      await CameraRoll.saveAsset(`file://${image.path}`, {
+      await CameraRoll.saveAsset(mediaUri(image.path), {
         type: "photo",
         album: "Blink Support",
       })
@@ -155,7 +156,7 @@ export const SupportImageViewer: React.FC<{
   const share = () => {
     if (!image) return
     Share.open({
-      url: `file://${image.path}`,
+      url: mediaUri(image.path),
       type: mimeOf(image.path),
       failOnCancel: false,
     }).catch(() => undefined)
@@ -174,7 +175,7 @@ export const SupportImageViewer: React.FC<{
           <GestureDetector gesture={gestures}>
             <Animated.View style={[styles.stage, animated]}>
               <Image
-                source={{ uri: `file://${image.path}` }}
+                source={{ uri: mediaUri(image.path) }}
                 style={styles.image}
                 resizeMode="contain"
               />

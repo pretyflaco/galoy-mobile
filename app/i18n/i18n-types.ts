@@ -14487,6 +14487,10 @@ type RootTranslation = {
 		 */
 		imageTooLarge: string
 		/**
+		 * P​i​c​t​u​r​e​ ​(​n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​ ​a​n​y​ ​m​o​r​e​)
+		 */
+		imageMissing: string
+		/**
 		 * C​l​o​s​e
 		 */
 		viewerClose: string
@@ -29535,6 +29539,10 @@ export type TranslationFunctions = {
 		 * This picture is too large to send.
 		 */
 		imageTooLarge: () => LocalizedString
+		/**
+		 * Picture (not available on this device any more)
+		 */
+		imageMissing: () => LocalizedString
 		/**
 		 * Close
 		 */

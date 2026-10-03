@@ -10,6 +10,7 @@
 import { sha256 } from "@noble/hashes/sha2.js"
 import { bytesToHex } from "@noble/hashes/utils.js"
 import Config from "react-native-config"
+import RNFS from "react-native-fs"
 
 import type { BlinkEventSigner } from "./blink-signer"
 
@@ -102,3 +103,12 @@ export const allowedBlobUrl = (value: string, server: string = BLOSSOM_URL): boo
 
 /** Blobs larger than this are not downloaded (Blossom's own cap is 8 MB). */
 export const MAX_DOWNLOAD_BYTES = 8 * 1024 * 1024
+
+/**
+ * The CURRENT file URI of a stored chat picture. iOS gives the app container a new UUID on
+ * every update/reinstall (…/Application/<UUID>/Documents), so an absolute path stored in
+ * the history goes stale while the file itself is carried over: resolve by file name
+ * against today's document directory (also repairs items stored before this fix).
+ */
+export const mediaUri = (storedPath: string): string =>
+  `file://${RNFS.DocumentDirectoryPath}/support-media/${storedPath.split("/").pop()}`

@@ -24,7 +24,7 @@ import { useI18nContext } from "@app/i18n/i18n-react"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 
 import { useSupportChat } from "@app/support-chat/use-support-chat"
-import { MAX_IMAGE_BYTES } from "@app/support-chat/media"
+import { MAX_IMAGE_BYTES, mediaUri } from "@app/support-chat/media"
 
 import { SupportImageViewer, type ViewerImage } from "./support-image-viewer"
 import { PUSH_SERVER_PUBKEY, askPermission } from "@app/support-chat/push"
@@ -110,6 +110,8 @@ export const SupportChatScreen: React.FC = () => {
   const [draft, setDraft] = useState("")
   const [shareOpen, setShareOpen] = useState(false)
   const [viewerImage, setViewerImage] = useState<ViewerImage | null>(null)
+  // pictures whose local file is gone: shown as text instead of an empty bubble
+  const [missing, setMissing] = useState<Set<string>>(new Set())
   // M19 screenshots: the picked (already resized) image, previewed before sending
   const [pickedImage, setPickedImage] = useState<{
     uri: string
@@ -320,14 +322,15 @@ export const SupportChatScreen: React.FC = () => {
           style={[styles.bubble, mine ? styles.mine : styles.theirs]}
           testID="support-chat-message"
         >
-          {item.image ? (
+          {item.image && !missing.has(item.id) ? (
             <Pressable
               onPress={() => setViewerImage(item.image ?? null)}
               accessibilityRole="imagebutton"
               testID="support-chat-image-open"
             >
               <Image
-                source={{ uri: `file://${item.image.path}` }}
+                source={{ uri: mediaUri(item.image.path) }}
+                onError={() => setMissing((prev) => new Set(prev).add(item.id))}
                 style={[
                   styles.image,
                   item.image.width && item.image.height
@@ -340,7 +343,9 @@ export const SupportChatScreen: React.FC = () => {
               />
             </Pressable>
           ) : (
-            <Text style={[styles.body, mine && styles.bodyMine]}>{row.body}</Text>
+            <Text style={[styles.body, mine && styles.bodyMine]}>
+              {item.image ? `🖼 ${TS.imageMissing()}` : row.body}
+            </Text>
           )}
         </View>
         {item.request && !viewingPast && (

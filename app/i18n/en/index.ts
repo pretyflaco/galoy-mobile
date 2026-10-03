@@ -4554,6 +4554,7 @@ const en: BaseTranslation = {
     sendImage: "Send picture",
     cancel: "Cancel",
     imageTooLarge: "This picture is too large to send.",
+    imageMissing: "Picture (not available on this device any more)",
     viewerClose: "Close",
     viewerSave: "Save to Photos",
     viewerSaved: "Saved to your Photos",

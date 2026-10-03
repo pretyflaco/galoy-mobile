@@ -2,6 +2,7 @@
 # Build "Blink Alpha DEV" for a real iPhone with a FREE personal team (M19 device test).
 #
 #   TEAM_ID=<10-char personal team id> scripts/support-chat-alpha/ios-dev-device.sh [--install <device-udid>]
+#   (<device-udid> = the HARDWARE udid, e.g. 00008101-…: `xcrun xctrace list devices`)
 #
 # Run on the Mac, inside `nix develop` (Xcode 26.5 selected), after `yarn install`.
 # The Apple ID must be signed in once in Xcode → Settings → Accounts (creates the team).
@@ -27,7 +28,12 @@ command -v xcodebuild >/dev/null || { echo "run inside nix develop (no xcodebuil
 [ -f .env.alpha ] || { echo ".env.alpha missing (copy it from muscle, mode 600)" >&2; exit 1; }
 
 INSTALL_UDID=""
-[ "${1:-}" = "--install" ] && INSTALL_UDID="${2:?--install needs a device UDID (xcrun devicectl list devices)}"
+[ "${1:-}" = "--install" ] && INSTALL_UDID="${2:?--install needs the hardware UDID of the device (xcrun xctrace list devices)}"
+# A free team gets a provisioning profile only for devices registered with it, and Xcode
+# registers the plugged-in device only when the build TARGETS it (F-M19-6) — a generic
+# destination fails with "Your team has no devices from which to generate a provisioning profile".
+DESTINATION="generic/platform=iOS"
+[ -n "$INSTALL_UDID" ] && DESTINATION="id=$INSTALL_UDID"
 
 BUNDLE_ID="com.blinkbtc.alpha.dev"
 PBX=ios/GaloyApp.xcodeproj/project.pbxproj
@@ -56,10 +62,10 @@ grep -q "GaloyAppAlphaDev.entitlements" "$PBX" || { echo "pbxproj patch failed (
 cp scripts/support-chat-ci/GoogleService-Info.ci.plist "$FIREBASE"
 
 mkdir -p smoke-artifacts
-echo "==> building $BUNDLE_ID for a device (team $TEAM_ID)"
+echo "==> building $BUNDLE_ID for $DESTINATION (team $TEAM_ID)"
 ENVFILE=.env.alpha-ios FORCE_BUNDLING=1 RCT_NO_LAUNCH_PACKAGER=1 \
   xcodebuild -workspace ios/GaloyApp.xcworkspace -scheme GaloyApp -configuration Debug \
-    -destination 'generic/platform=iOS' -derivedDataPath ios/build-dev \
+    -destination "$DESTINATION" -derivedDataPath ios/build-dev \
     -allowProvisioningUpdates build > smoke-artifacts/ios-dev-build.log 2>&1 \
   || { grep -nE "error:|BUILD FAILED" smoke-artifacts/ios-dev-build.log | head -40; tail -40 smoke-artifacts/ios-dev-build.log; exit 1; }
 APP=ios/build-dev/Build/Products/Debug-iphoneos/Blink.app

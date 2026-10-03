@@ -348,6 +348,9 @@ describe("support-chat screen", () => {
       type: "photo",
       album: "Blink Support",
     })
+    fireEvent.press(getByTestId("support-image-save")) // a second tap does not save a duplicate
+    await flushEffects()
+    expect(mockSaveAsset).toHaveBeenCalledTimes(1)
     fireEvent.press(getByTestId("support-image-share"))
     expect(mockShareOpen).toHaveBeenCalledWith(
       expect.objectContaining({ url: "file:///docs/p.png", type: "image/png" }),

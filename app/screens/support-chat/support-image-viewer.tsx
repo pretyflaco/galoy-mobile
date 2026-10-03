@@ -1,5 +1,13 @@
-import React from "react"
-import { Image, Modal, Pressable, StyleSheet, View } from "react-native"
+import React, { useState } from "react"
+import {
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  StatusBar,
+  StyleSheet,
+  View,
+} from "react-native"
 import {
   Gesture,
   GestureDetector,
@@ -44,6 +52,13 @@ export const SupportImageViewer: React.FC<{
   const { LL } = useI18nContext()
   const T = LL.SupportShareScreen
   const insets = useSafeAreaInsets()
+  // inside a (statusBarTranslucent) Modal the top inset can come back as 0 on Android
+  const top = Math.max(
+    insets.top,
+    Platform.OS === "android" ? StatusBar.currentHeight ?? 24 : 0,
+  )
+  // one save per picture while the viewer is open (repeated taps made duplicates)
+  const [savedPath, setSavedPath] = useState<string | null>(null)
 
   const scale = useSharedValue(1)
   const savedScale = useSharedValue(1)
@@ -110,16 +125,22 @@ export const SupportImageViewer: React.FC<{
     ty.value = 0
     savedTx.value = 0
     savedTy.value = 0
+    setSavedPath(null)
     onClose()
   }
 
   const save = async () => {
     if (!image) return
+    if (savedPath === image.path) {
+      Toast.show({ type: "success", text1: T.viewerSaved(), position: "bottom" })
+      return
+    }
     try {
       await CameraRoll.saveAsset(`file://${image.path}`, {
         type: "photo",
         album: "Blink Support",
       })
+      setSavedPath(image.path)
       Toast.show({ type: "success", text1: T.viewerSaved(), position: "bottom" })
     } catch (e) {
       Toast.show({
@@ -162,7 +183,7 @@ export const SupportImageViewer: React.FC<{
         )}
         <Pressable
           onPress={close}
-          style={[styles.close, { top: insets.top + 10 }]}
+          style={[styles.close, { top: top + 10 }]}
           accessibilityRole="button"
           accessibilityLabel={T.viewerClose()}
           testID="support-image-close"

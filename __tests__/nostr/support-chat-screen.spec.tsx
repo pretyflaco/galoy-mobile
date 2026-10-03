@@ -17,6 +17,23 @@ jest.mock("@app/support-chat/push", () => ({
 jest.mock("@app/support-chat/use-support-chat", () => ({
   useSupportChat: () => ({ client: mockedClient, error: null }),
 }))
+jest.mock("react-native-image-picker", () => ({
+  launchImageLibrary: jest.fn(async () => ({
+    assets: [
+      {
+        uri: "file:///tmp/shot.jpg",
+        type: "image/jpeg",
+        width: 800,
+        height: 1600,
+        fileSize: 1000,
+      },
+    ],
+  })),
+}))
+jest.mock("react-native-fs", () => ({
+  DocumentDirectoryPath: "/mock/documents",
+  readFile: jest.fn(async () => "AAEC"),
+}))
 const navigate = jest.fn()
 let headerOptions: any = null
 jest.mock("@react-navigation/native", () => ({
@@ -280,6 +297,44 @@ describe("support-chat screen", () => {
     fireEvent.press(getByTestId("support-chat-share"))
     fireEvent.press(getByTestId("support-chat-share-transaction"))
     expect(navigate).toHaveBeenCalledWith("supportChatShareTransaction")
+  })
+
+  it("a picked screenshot is previewed with the privacy check, then sent", async () => {
+    const client = { ...baseClient, sendImage: jest.fn(async () => undefined) }
+    const { getByTestId, queryByTestId } = renderScreen(client)
+    await flushEffects()
+    fireEvent.press(getByTestId("support-chat-share"))
+    fireEvent.press(getByTestId("support-chat-share-image"))
+    await flushEffects()
+    expect(getByTestId("support-chat-image-preview")).toBeTruthy()
+    fireEvent.press(getByTestId("support-chat-image-send"))
+    await flushEffects()
+    expect(client.sendImage).toHaveBeenCalledWith(
+      expect.any(Uint8Array),
+      expect.objectContaining({ mime: "image/jpeg", width: 800, height: 1600 }),
+    )
+    expect(queryByTestId("support-chat-image-preview")).toBeNull()
+  })
+
+  it("renders a sent screenshot as an image bubble", async () => {
+    const { getByTestId } = renderScreen({
+      ...baseClient,
+      items: [
+        {
+          id: "i",
+          at: 1,
+          type: "msg",
+          mine: true,
+          from: "a".repeat(64),
+          text: "📷 Screenshot",
+          image: { path: "/docs/x.jpg", width: 400, height: 800 },
+        },
+      ],
+    })
+    await flushEffects()
+    expect(getByTestId("support-chat-image").props.source).toEqual({
+      uri: "file:///docs/x.jpg",
+    })
   })
 
   it("a request from support shows 'Review & share' and opens the right screen", async () => {

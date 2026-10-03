@@ -4548,6 +4548,12 @@ const en: BaseTranslation = {
     reviewDetails: "Review & share details",
     reviewTransaction: "Choose a transaction to share",
     getHelp: "Get help with this payment",
+    menuImage: "Photo or screenshot",
+    imageCheck:
+      "Check the picture first: it must not show your backup phrase, keys or anything private you don't want support to see.",
+    sendImage: "Send picture",
+    cancel: "Cancel",
+    imageTooLarge: "This picture is too large to send.",
   },
   SupportConversationsScreen: {
     title: "Conversations",

@@ -14466,6 +14466,26 @@ type RootTranslation = {
 		 * G​e​t​ ​h​e​l​p​ ​w​i​t​h​ ​t​h​i​s​ ​p​a​y​m​e​n​t
 		 */
 		getHelp: string
+		/**
+		 * P​h​o​t​o​ ​o​r​ ​s​c​r​e​e​n​s​h​o​t
+		 */
+		menuImage: string
+		/**
+		 * C​h​e​c​k​ ​t​h​e​ ​p​i​c​t​u​r​e​ ​f​i​r​s​t​:​ ​i​t​ ​m​u​s​t​ ​n​o​t​ ​s​h​o​w​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​h​r​a​s​e​,​ ​k​e​y​s​ ​o​r​ ​a​n​y​t​h​i​n​g​ ​p​r​i​v​a​t​e​ ​y​o​u​ ​d​o​n​'​t​ ​w​a​n​t​ ​s​u​p​p​o​r​t​ ​t​o​ ​s​e​e​.
+		 */
+		imageCheck: string
+		/**
+		 * S​e​n​d​ ​p​i​c​t​u​r​e
+		 */
+		sendImage: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		cancel: string
+		/**
+		 * T​h​i​s​ ​p​i​c​t​u​r​e​ ​i​s​ ​t​o​o​ ​l​a​r​g​e​ ​t​o​ ​s​e​n​d​.
+		 */
+		imageTooLarge: string
 	}
 	SupportConversationsScreen: {
 		/**
@@ -29475,6 +29495,26 @@ export type TranslationFunctions = {
 		 * Get help with this payment
 		 */
 		getHelp: () => LocalizedString
+		/**
+		 * Photo or screenshot
+		 */
+		menuImage: () => LocalizedString
+		/**
+		 * Check the picture first: it must not show your backup phrase, keys or anything private you don't want support to see.
+		 */
+		imageCheck: () => LocalizedString
+		/**
+		 * Send picture
+		 */
+		sendImage: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		cancel: () => LocalizedString
+		/**
+		 * This picture is too large to send.
+		 */
+		imageTooLarge: () => LocalizedString
 	}
 	SupportConversationsScreen: {
 		/**

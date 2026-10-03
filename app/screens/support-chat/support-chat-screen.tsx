@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { launchImageLibrary } from "react-native-image-picker"
+import RNFS from "react-native-fs"
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   TextInput,
   TouchableOpacity,
@@ -21,6 +24,7 @@ import { useI18nContext } from "@app/i18n/i18n-react"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 
 import { useSupportChat } from "@app/support-chat/use-support-chat"
+import { MAX_IMAGE_BYTES } from "@app/support-chat/media"
 import { PUSH_SERVER_PUBKEY, askPermission } from "@app/support-chat/push"
 import type { ChatItem, EndReason, MemberLabel } from "@app/support-chat/client"
 
@@ -103,6 +107,14 @@ export const SupportChatScreen: React.FC = () => {
 
   const [draft, setDraft] = useState("")
   const [shareOpen, setShareOpen] = useState(false)
+  // M19 screenshots: the picked (already resized) image, previewed before sending
+  const [pickedImage, setPickedImage] = useState<{
+    uri: string
+    mime: string
+    width?: number
+    height?: number
+    size?: number
+  } | null>(null)
   const TS = LL.SupportShareScreen
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -158,6 +170,51 @@ export const SupportChatScreen: React.FC = () => {
     } finally {
       setBusy(false)
     }
+  }
+
+  const pickImage = async () => {
+    setShareOpen(false)
+    // resizing re-encodes the image, which also drops its location metadata
+    const pick = await launchImageLibrary({
+      mediaType: "photo",
+      maxWidth: 1600,
+      maxHeight: 1600,
+      quality: 0.8,
+      selectionLimit: 1,
+    })
+    const asset = pick.assets?.[0]
+    if (pick.didCancel || !asset?.uri) return
+    setActionError(null)
+    setPickedImage({
+      uri: asset.uri,
+      mime: asset.type === "image/png" ? "image/png" : "image/jpeg",
+      width: asset.width,
+      height: asset.height,
+      size: asset.fileSize,
+    })
+  }
+
+  const sendImage = () => {
+    const img = pickedImage
+    if (!client || !img) return
+    if (img.size && img.size > MAX_IMAGE_BYTES) {
+      setActionError(TS.imageTooLarge())
+      return
+    }
+    const caption = draft
+    run(async () => {
+      const base64 = await RNFS.readFile(img.uri, "base64")
+      const bytes = new Uint8Array(Buffer.from(base64, "base64"))
+      if (bytes.length > MAX_IMAGE_BYTES) throw new Error(TS.imageTooLarge())
+      await client.sendImage(bytes, {
+        mime: img.mime,
+        width: img.width,
+        height: img.height,
+        caption,
+      })
+      setPickedImage(null)
+      setDraft("")
+    })
   }
 
   const send = () => {
@@ -260,7 +317,22 @@ export const SupportChatScreen: React.FC = () => {
           style={[styles.bubble, mine ? styles.mine : styles.theirs]}
           testID="support-chat-message"
         >
-          <Text style={[styles.body, mine && styles.bodyMine]}>{row.body}</Text>
+          {item.image ? (
+            <Image
+              source={{ uri: `file://${item.image.path}` }}
+              style={[
+                styles.image,
+                item.image.width && item.image.height
+                  ? { aspectRatio: item.image.width / item.image.height }
+                  : null,
+              ]}
+              resizeMode="cover"
+              accessibilityLabel={row.body}
+              testID="support-chat-image"
+            />
+          ) : (
+            <Text style={[styles.body, mine && styles.bodyMine]}>{row.body}</Text>
+          )}
         </View>
         {item.request && !viewingPast && (
           <Pressable
@@ -381,8 +453,42 @@ export const SupportChatScreen: React.FC = () => {
             </View>
           )}
 
+          {canWrite && pickedImage && (
+            <View style={styles.imagePreview} testID="support-chat-image-preview">
+              <Image source={{ uri: pickedImage.uri }} style={styles.previewThumb} />
+              <View style={styles.previewText}>
+                <Text style={styles.previewHint}>{TS.imageCheck()}</Text>
+                <View style={styles.previewActions}>
+                  <Pressable
+                    onPress={() => setPickedImage(null)}
+                    disabled={busy}
+                    testID="support-chat-image-cancel"
+                  >
+                    <Text style={styles.link}>{TS.cancel()}</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={sendImage}
+                    disabled={busy}
+                    testID="support-chat-image-send"
+                  >
+                    <Text style={[styles.link, styles.previewSend]}>
+                      {busy ? T.starting() : TS.sendImage()}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          )}
+
           {canWrite && shareOpen && (
             <View style={styles.shareMenu} testID="support-chat-share-menu">
+              <Pressable
+                style={styles.shareItem}
+                onPress={pickImage}
+                testID="support-chat-share-image"
+              >
+                <Text style={styles.shareText}>{TS.menuImage()}</Text>
+              </Pressable>
               <Pressable
                 style={styles.shareItem}
                 onPress={() => {
@@ -579,6 +685,21 @@ const useStyles = makeStyles(({ colors }) => ({
     justifyContent: "center",
   },
   sendDisabled: { opacity: 0.5 },
+  image: { width: 220, minHeight: 120, borderRadius: 12 },
+  imagePreview: {
+    flexDirection: "row",
+    gap: 10,
+    marginHorizontal: 10,
+    marginBottom: 5,
+    padding: 10,
+    borderRadius: 16,
+    backgroundColor: colors.grey5,
+  },
+  previewThumb: { width: 64, height: 64, borderRadius: 8 },
+  previewText: { flex: 1, gap: 8 },
+  previewHint: { fontSize: 12, color: colors.grey1 },
+  previewActions: { flexDirection: "row", justifyContent: "flex-end", gap: 20 },
+  previewSend: { fontWeight: "bold" },
   attach: {
     width: 44,
     height: 44,

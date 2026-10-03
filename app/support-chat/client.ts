@@ -28,8 +28,10 @@ import {
   createChatRumor,
   createApplicationMessageIntent,
   deserializeApplicationData,
+  encodeMediaImetaTag,
   getGroupMembers,
 } from "@internet-privacy/marmot-ts"
+import RNFS from "react-native-fs"
 import { hermesCryptoProvider } from "@blink-support-chat/adapters/hermes-crypto-provider.js"
 import { SimplePoolNetwork } from "@blink-support-chat/adapters/network.js"
 import { RosterVerifier } from "@blink-support-chat/adapters/roster.js"
@@ -55,6 +57,7 @@ import type { BlinkEventSigner } from "./blink-signer"
 import { SUPPORT_SCOPE, createSupportSigner, loadOrCreateSupportKey } from "./support-key"
 import { EncryptedKeyValueStore } from "./encrypted-store"
 import { isDetailsMessage, requestOf, type RequestKind } from "./details"
+import { blobLike, uploadEncryptedBlob } from "./media"
 
 import Config from "react-native-config"
 
@@ -79,6 +82,8 @@ export type ChatItem = {
   details?: boolean
   /** M19: the verified support bot asks for details ("details" | "tx") */
   request?: RequestKind
+  /** M19: a screenshot this device sent — a private local copy (file path, size) */
+  image?: { path: string; width?: number; height?: number }
 }
 
 export type MemberLabel = {
@@ -745,6 +750,62 @@ export class SupportChatClient {
       mine: true,
       text: text.trim(),
       ...(isDetailsMessage(tags) ? { details: true } : {}),
+    })
+  }
+
+  /**
+   * M19 screenshots (Marmot encrypted-media v1): encrypt with a key from this
+   * conversation's MLS secret, upload only the ciphertext to Blossom, send a message with
+   * the `imeta` tag. A private copy of the (already resized) image stays in the app's
+   * document directory so the customer's own chat can show it.
+   */
+  async sendImage(
+    bytes: Uint8Array,
+    opts: { mime: string; width?: number; height?: number; caption?: string },
+  ): Promise<void> {
+    const group = this.group
+    const signer = this.signer
+    if (!group || !signer) throw new Error("no conversation")
+    if (this.isEnded()) throw new Error("this conversation has ended — start a new one")
+    const unverified = this.unverifiedMembers()
+    if (unverified.length)
+      throw new Error(`sending blocked: ${unverified.map((m) => m.text).join("; ")}`)
+    const ext = opts.mime === "image/png" ? "png" : "jpg"
+    const { encrypted, attachment } = await group.encryptMedia(
+      blobLike(bytes, opts.mime),
+      {
+        filename: `screenshot.${ext}`,
+        type: opts.mime,
+        ...(opts.width && opts.height ? { dim: `${opts.width}x${opts.height}` } : {}),
+      },
+    )
+    const url = await uploadEncryptedBlob(signer, encrypted)
+    attachment.locators.push({ kind: "blossom-v1", value: url })
+    const text = opts.caption?.trim() || "📷 Screenshot"
+    const t0 = Date.now()
+    await this.client.groups.send(
+      group.id,
+      createApplicationMessageIntent(
+        createChatRumor({
+          pubkey: this.pubkey,
+          content: text,
+          tags: [encodeMediaImetaTag(attachment)],
+        }),
+      ),
+    )
+    this.log(`sent image ${bytes.length} bytes (${Date.now() - t0}ms)`)
+    const dir = `${RNFS.DocumentDirectoryPath}/support-media`
+    await RNFS.mkdir(dir).catch(() => undefined)
+    const path = `${dir}/${attachment.plaintextSha256}.${ext}`
+    await RNFS.writeFile(path, Buffer.from(bytes).toString("base64"), "base64")
+    await this.push({
+      id: `m-${Date.now()}`,
+      at: now(),
+      type: "msg",
+      from: this.pubkey,
+      mine: true,
+      text,
+      image: { path, width: opts.width, height: opts.height },
     })
   }
 

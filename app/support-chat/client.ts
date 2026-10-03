@@ -54,6 +54,7 @@ import {
 import type { BlinkEventSigner } from "./blink-signer"
 import { SUPPORT_SCOPE, createSupportSigner, loadOrCreateSupportKey } from "./support-key"
 import { EncryptedKeyValueStore } from "./encrypted-store"
+import { isDetailsMessage, requestOf, type RequestKind } from "./details"
 
 import Config from "react-native-config"
 
@@ -74,6 +75,10 @@ export type ChatItem = {
   from?: string // authenticated sender (hex) for msg items — MLS-bound on v2 (F-M9-3)
   mine?: boolean
   text: string
+  /** M19 "Share details": this message is a details card the customer shared */
+  details?: boolean
+  /** M19: the verified support bot asks for details ("details" | "tx") */
+  request?: RequestKind
 }
 
 export type MemberLabel = {
@@ -277,6 +282,28 @@ export class SupportChatClient {
     this.viewing = gid && gid !== this.groupId ? gid : null
     this.viewItems = this.viewing ? (await this.history.getItem(this.viewing)) ?? [] : []
     this.emit()
+  }
+
+  /**
+   * M19 "Share details" from outside the chat (e.g. a transaction's detail screen): make
+   * sure there is a conversation the support bot has joined before sending into it —
+   * a message sent before the bot's join can be lost (F-M12-1). Starts one if needed and
+   * waits for the first message from support (the greeting).
+   */
+  async ensureConversation(timeoutMs = 45_000): Promise<void> {
+    if (this.viewing) await this.view(null)
+    if (!this.group || this.isEnded()) {
+      if (this.groupId) await this.startNew()
+      else await this.start()
+    }
+    const t0 = Date.now()
+    while (!this.items.some((i) => i.type === "msg" && !i.mine)) {
+      if (Date.now() - t0 > timeoutMs)
+        throw new Error("Support has not answered yet — please try again in a moment.")
+      await new Promise<void>((r) => {
+        setTimeout(r, 500)
+      })
+    }
   }
 
   /** Always available: end the current conversation (if any) and start a new one. */
@@ -689,7 +716,7 @@ export class SupportChatClient {
       )
   }
 
-  async send(text: string): Promise<void> {
+  async send(text: string, tags: string[][] = []): Promise<void> {
     const group = this.group
     if (!group || !text.trim()) return
     if (this.isEnded()) throw new Error("this conversation has ended — start a new one")
@@ -701,7 +728,7 @@ export class SupportChatClient {
     await this.client.groups.send(
       group.id,
       createApplicationMessageIntent(
-        createChatRumor({ pubkey: this.pubkey, content: text.trim() }),
+        createChatRumor({ pubkey: this.pubkey, content: text.trim(), tags }),
       ),
     )
     this.log(`sent (${Date.now() - t0}ms)`)
@@ -717,6 +744,7 @@ export class SupportChatClient {
       from: this.pubkey,
       mine: true,
       text: text.trim(),
+      ...(isDetailsMessage(tags) ? { details: true } : {}),
     })
   }
 
@@ -750,12 +778,18 @@ export class SupportChatClient {
         // only chat (kind 9) is shown; app payloads such as push token gossip
         // (447/448/449) from other members' clients are not messages (M18)
         if (rumor.kind !== 9) return
+        // a details request counts only from the verified roster bot (M19)
+        const asker = this.label(rumor.pubkey)
+        const request =
+          asker.verified && asker.role === "bot" ? requestOf(rumor.tags) : null
         this.pushTo(gid, {
           id: `r-${rumor.id}`,
           at: now(),
           type: "msg",
           from: rumor.pubkey,
           text: rumor.content,
+          ...(request ? { request } : {}),
+          ...(isDetailsMessage(rumor.tags) ? { details: true } : {}),
         })
       } catch (e) {
         this.log(`applicationMessage dropped by strict decode: ${(e as Error).message}`)

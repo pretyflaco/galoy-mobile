@@ -271,6 +271,38 @@ describe("support-chat screen", () => {
     )
   })
 
+  /** M19 "Share details": the composer's + menu and support's request button. */
+  it("the + menu offers sharing details and a transaction", async () => {
+    navigate.mockClear()
+    const { getByTestId, queryByTestId } = renderScreen({ ...baseClient })
+    await flushEffects()
+    expect(queryByTestId("support-chat-share-menu")).toBeNull()
+    fireEvent.press(getByTestId("support-chat-share"))
+    fireEvent.press(getByTestId("support-chat-share-transaction"))
+    expect(navigate).toHaveBeenCalledWith("supportChatShareTransaction")
+  })
+
+  it("a request from support shows 'Review & share' and opens the right screen", async () => {
+    navigate.mockClear()
+    const bot = "b".repeat(64)
+    const { getByTestId } = renderScreen({
+      ...baseClient,
+      items: [
+        {
+          id: "1",
+          at: 1,
+          type: "msg",
+          from: bot,
+          text: "Please share the payment",
+          request: "tx",
+        },
+      ],
+    })
+    await flushEffects()
+    fireEvent.press(getByTestId("support-chat-request"))
+    expect(navigate).toHaveBeenCalledWith("supportChatShareTransaction")
+  })
+
   /** M19 (Andrej): the Conversations screen — titles, the current one checked, Start new. */
   describe("conversations screen", () => {
     const list = [

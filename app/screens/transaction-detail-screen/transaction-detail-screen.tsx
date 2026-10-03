@@ -6,6 +6,9 @@ import { useFragment } from "@apollo/client"
 import { IconNamesType } from "@app/components/atomic/galoy-icon"
 import { GaloyIconButton } from "@app/components/atomic/galoy-icon-button"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
+import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
+import { useFeatureFlags } from "@app/config/feature-flags-context"
+import { testProps } from "@app/utils/testProps"
 import { GaloyInfo } from "@app/components/atomic/galoy-info"
 import { HiddenBalancePlaceholder } from "@app/components/hidden-balance-placeholder/hidden-balance-placeholder"
 import { TransactionDate } from "@app/components/transaction-date"
@@ -159,6 +162,7 @@ export const TransactionDetailScreen: React.FC<Props> = ({ route }) => {
   const [timer, setTimer] = React.useState<number>(0)
 
   const { LL, locale } = useI18nContext()
+  const { supportChatEnabled } = useFeatureFlags()
   const { isSelfCustodial } = useActiveWallet()
   const { allTransactions: selfCustodialAllTransactions } = useSelfCustodialWallet()
   const { copyToClipboard } = useClipboard()
@@ -599,6 +603,14 @@ export const TransactionDetailScreen: React.FC<Props> = ({ route }) => {
                 ]}
               />
             )}
+          {supportChatEnabled && (
+            <GaloySecondaryButton
+              title={LL.SupportShareScreen.getHelp()}
+              onPress={() => navigation.navigate("supportChatShareTransaction", { txid })}
+              containerStyle={styles.getHelp}
+              {...testProps("transaction-get-help")}
+            />
+          )}
           {id && !isSelfCustodial && (
             <Row
               entry="Blink Internal Id"
@@ -624,6 +636,8 @@ export const TransactionDetailScreen: React.FC<Props> = ({ route }) => {
 }
 
 const useStyles = makeStyles(({ colors }) => ({
+  // M19: "Get help with this payment" → Support → share this transaction
+  getHelp: { marginVertical: 14 },
   closeIconContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",

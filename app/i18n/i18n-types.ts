@@ -14389,6 +14389,84 @@ type RootTranslation = {
 		 */
 		yesterday: string
 	}
+	SupportShareScreen: {
+		/**
+		 * S​h​a​r​e​ ​d​e​t​a​i​l​s
+		 */
+		detailsTitle: string
+		/**
+		 * S​h​a​r​e​ ​a​ ​t​r​a​n​s​a​c​t​i​o​n
+		 */
+		transactionTitle: string
+		/**
+		 * S​h​a​r​e​ ​a​p​p​ ​&​ ​a​c​c​o​u​n​t​ ​d​e​t​a​i​l​s
+		 */
+		menuDetails: string
+		/**
+		 * S​h​a​r​e​ ​a​ ​t​r​a​n​s​a​c​t​i​o​n
+		 */
+		menuTransaction: string
+		/**
+		 * S​h​a​r​e
+		 */
+		attach: string
+		/**
+		 * S​u​p​p​o​r​t​ ​o​f​t​e​n​ ​n​e​e​d​s​ ​t​h​e​s​e​ ​t​o​ ​h​e​l​p​ ​y​o​u​.​ ​C​h​o​o​s​e​ ​w​h​a​t​ ​t​o​ ​s​h​a​r​e​ ​—​ ​o​n​l​y​ ​t​h​e​ ​s​e​l​e​c​t​e​d​ ​l​i​n​e​s​ ​a​r​e​ ​s​e​n​t​,​ ​a​n​d​ ​y​o​u​ ​c​a​n​ ​s​e​e​ ​t​h​e​m​ ​b​e​l​o​w​.
+		 */
+		detailsIntro: string
+		/**
+		 * C​h​o​o​s​e​ ​t​h​e​ ​p​a​y​m​e​n​t​ ​y​o​u​ ​n​e​e​d​ ​h​e​l​p​ ​w​i​t​h​.
+		 */
+		transactionIntro: string
+		/**
+		 * W​h​a​t​ ​w​i​l​l​ ​b​e​ ​s​e​n​t
+		 */
+		preview: string
+		/**
+		 * S​e​n​d​ ​t​o​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t
+		 */
+		send: string
+		/**
+		 * S​e​n​d​i​n​g​…
+		 */
+		sending: string
+		/**
+		 * B​l​i​n​k​ ​S​u​p​p​o​r​t​ ​n​e​v​e​r​ ​a​s​k​s​ ​f​o​r​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​h​r​a​s​e​ ​o​r​ ​k​e​y​s​.​ ​N​e​v​e​r​ ​s​h​a​r​e​ ​t​h​e​m​.
+		 */
+		never: string
+		/**
+		 * N​o​ ​t​r​a​n​s​a​c​t​i​o​n​s​ ​y​e​t​.
+		 */
+		noTransactions: string
+		/**
+		 * T​h​i​s​ ​t​r​a​n​s​a​c​t​i​o​n​ ​i​s​ ​n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​h​e​r​e​.
+		 */
+		notFound: string
+		/**
+		 * C​h​o​o​s​e​ ​a​n​o​t​h​e​r​ ​t​r​a​n​s​a​c​t​i​o​n
+		 */
+		chooseOther: string
+		/**
+		 * S​e​n​t
+		 */
+		sent: string
+		/**
+		 * R​e​c​e​i​v​e​d
+		 */
+		received: string
+		/**
+		 * R​e​v​i​e​w​ ​&​ ​s​h​a​r​e​ ​d​e​t​a​i​l​s
+		 */
+		reviewDetails: string
+		/**
+		 * C​h​o​o​s​e​ ​a​ ​t​r​a​n​s​a​c​t​i​o​n​ ​t​o​ ​s​h​a​r​e
+		 */
+		reviewTransaction: string
+		/**
+		 * G​e​t​ ​h​e​l​p​ ​w​i​t​h​ ​t​h​i​s​ ​p​a​y​m​e​n​t
+		 */
+		getHelp: string
+	}
 	SupportConversationsScreen: {
 		/**
 		 * C​o​n​v​e​r​s​a​t​i​o​n​s
@@ -29319,6 +29397,84 @@ export type TranslationFunctions = {
 		 * Yesterday
 		 */
 		yesterday: () => LocalizedString
+	}
+	SupportShareScreen: {
+		/**
+		 * Share details
+		 */
+		detailsTitle: () => LocalizedString
+		/**
+		 * Share a transaction
+		 */
+		transactionTitle: () => LocalizedString
+		/**
+		 * Share app & account details
+		 */
+		menuDetails: () => LocalizedString
+		/**
+		 * Share a transaction
+		 */
+		menuTransaction: () => LocalizedString
+		/**
+		 * Share
+		 */
+		attach: () => LocalizedString
+		/**
+		 * Support often needs these to help you. Choose what to share — only the selected lines are sent, and you can see them below.
+		 */
+		detailsIntro: () => LocalizedString
+		/**
+		 * Choose the payment you need help with.
+		 */
+		transactionIntro: () => LocalizedString
+		/**
+		 * What will be sent
+		 */
+		preview: () => LocalizedString
+		/**
+		 * Send to Blink Support
+		 */
+		send: () => LocalizedString
+		/**
+		 * Sending…
+		 */
+		sending: () => LocalizedString
+		/**
+		 * Blink Support never asks for your backup phrase or keys. Never share them.
+		 */
+		never: () => LocalizedString
+		/**
+		 * No transactions yet.
+		 */
+		noTransactions: () => LocalizedString
+		/**
+		 * This transaction is not available here.
+		 */
+		notFound: () => LocalizedString
+		/**
+		 * Choose another transaction
+		 */
+		chooseOther: () => LocalizedString
+		/**
+		 * Sent
+		 */
+		sent: () => LocalizedString
+		/**
+		 * Received
+		 */
+		received: () => LocalizedString
+		/**
+		 * Review & share details
+		 */
+		reviewDetails: () => LocalizedString
+		/**
+		 * Choose a transaction to share
+		 */
+		reviewTransaction: () => LocalizedString
+		/**
+		 * Get help with this payment
+		 */
+		getHelp: () => LocalizedString
 	}
 	SupportConversationsScreen: {
 		/**

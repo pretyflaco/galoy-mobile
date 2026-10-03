@@ -4291,6 +4291,27 @@
         "today": "Today",
         "yesterday": "Yesterday"
     },
+    "SupportShareScreen": {
+        "detailsTitle": "Share details",
+        "transactionTitle": "Share a transaction",
+        "menuDetails": "Share app & account details",
+        "menuTransaction": "Share a transaction",
+        "attach": "Share",
+        "detailsIntro": "Support often needs these to help you. Choose what to share — only the selected lines are sent, and you can see them below.",
+        "transactionIntro": "Choose the payment you need help with.",
+        "preview": "What will be sent",
+        "send": "Send to Blink Support",
+        "sending": "Sending…",
+        "never": "Blink Support never asks for your backup phrase or keys. Never share them.",
+        "noTransactions": "No transactions yet.",
+        "notFound": "This transaction is not available here.",
+        "chooseOther": "Choose another transaction",
+        "sent": "Sent",
+        "received": "Received",
+        "reviewDetails": "Review & share details",
+        "reviewTransaction": "Choose a transaction to share",
+        "getHelp": "Get help with this payment"
+    },
     "SupportConversationsScreen": {
         "title": "Conversations",
         "untitled": "Conversation",

@@ -68,6 +68,8 @@ import { Screen } from "@app/components/screen"
 import { RootStackParamList } from "./stack-param-lists"
 import { SupportChatScreen } from "@app/screens/support-chat/support-chat-screen"
 import { SupportConversationsScreen } from "@app/screens/support-chat/support-conversations-screen"
+import { SupportShareDetailsScreen } from "@app/screens/support-chat/support-share-details-screen"
+import { SupportShareTransactionScreen } from "@app/screens/support-chat/support-share-transaction-screen"
 
 type Nav = NativeStackNavigationProp<RootStackParamList>
 
@@ -135,6 +137,16 @@ export const NostrRootScreens = (
       name="supportChatConversations"
       component={SupportConversationsScreen}
       options={{ title: LL.SupportConversationsScreen.title() }}
+    />
+    <RootNavigator.Screen
+      name="supportChatShareDetails"
+      component={SupportShareDetailsScreen}
+      options={{ title: LL.SupportShareScreen.detailsTitle() }}
+    />
+    <RootNavigator.Screen
+      name="supportChatShareTransaction"
+      component={SupportShareTransactionScreen}
+      options={{ title: LL.SupportShareScreen.transactionTitle() }}
     />
     <RootNavigator.Screen
       name="delegatedGrants"

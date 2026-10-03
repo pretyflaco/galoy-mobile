@@ -77,6 +77,7 @@ jest.mock("@app/graphql/client-only-query", () => ({ markTxLastSeenId: jest.fn()
 
 jest.mock("@app/config/feature-flags-context", () => ({
   useRemoteConfig: () => ({ feeReimbursementMemo: "fee reimbursement" }),
+  useFeatureFlags: () => ({ supportChatEnabled: false }),
 }))
 
 /** The screen reads the seen state through the barrel; only that hook stays real here. */

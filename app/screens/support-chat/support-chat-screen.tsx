@@ -102,6 +102,8 @@ export const SupportChatScreen: React.FC = () => {
   }, [client, status])
 
   const [draft, setDraft] = useState("")
+  const [shareOpen, setShareOpen] = useState(false)
+  const TS = LL.SupportShareScreen
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -260,6 +262,24 @@ export const SupportChatScreen: React.FC = () => {
         >
           <Text style={[styles.body, mine && styles.bodyMine]}>{row.body}</Text>
         </View>
+        {item.request && !viewingPast && (
+          <Pressable
+            style={styles.requestButton}
+            onPress={() =>
+              navigation.navigate(
+                item.request === "tx"
+                  ? "supportChatShareTransaction"
+                  : "supportChatShareDetails",
+              )
+            }
+            accessibilityRole="button"
+            testID="support-chat-request"
+          >
+            <Text style={styles.requestText}>
+              {item.request === "tx" ? TS.reviewTransaction() : TS.reviewDetails()}
+            </Text>
+          </Pressable>
+        )}
         {row.lastOfRun && (
           <Text style={[styles.time, mine ? styles.timeMine : styles.timeTheirs]}>
             {timeOf(item.at)}
@@ -361,8 +381,46 @@ export const SupportChatScreen: React.FC = () => {
             </View>
           )}
 
+          {canWrite && shareOpen && (
+            <View style={styles.shareMenu} testID="support-chat-share-menu">
+              <Pressable
+                style={styles.shareItem}
+                onPress={() => {
+                  setShareOpen(false)
+                  navigation.navigate("supportChatShareDetails")
+                }}
+                testID="support-chat-share-details"
+              >
+                <Text style={styles.shareText}>{TS.menuDetails()}</Text>
+              </Pressable>
+              <Pressable
+                style={styles.shareItem}
+                onPress={() => {
+                  setShareOpen(false)
+                  navigation.navigate("supportChatShareTransaction")
+                }}
+                testID="support-chat-share-transaction"
+              >
+                <Text style={styles.shareText}>{TS.menuTransaction()}</Text>
+              </Pressable>
+            </View>
+          )}
+
           {canWrite && (
             <View style={styles.composer}>
+              <Pressable
+                onPress={() => setShareOpen(!shareOpen)}
+                style={styles.attach}
+                accessibilityRole="button"
+                accessibilityLabel={TS.attach()}
+                testID="support-chat-share"
+              >
+                <GaloyIcon
+                  name={shareOpen ? "close" : "plus"}
+                  size={20}
+                  color={colors.grey0}
+                />
+              </Pressable>
               <TextInput
                 style={styles.input}
                 placeholder={
@@ -521,4 +579,31 @@ const useStyles = makeStyles(({ colors }) => ({
     justifyContent: "center",
   },
   sendDisabled: { opacity: 0.5 },
+  attach: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: colors.grey5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shareMenu: {
+    marginHorizontal: 10,
+    marginBottom: 5,
+    borderRadius: 16,
+    backgroundColor: colors.grey5,
+    paddingVertical: 5,
+  },
+  shareItem: { paddingHorizontal: 14, paddingVertical: 10 },
+  shareText: { fontSize: 16, color: colors.grey0 },
+  requestButton: {
+    alignSelf: "flex-start",
+    marginTop: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  requestText: { fontSize: 14, color: colors.primary, fontWeight: "600" },
 }))

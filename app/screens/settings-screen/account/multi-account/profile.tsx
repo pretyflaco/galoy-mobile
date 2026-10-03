@@ -1,5 +1,10 @@
 import * as React from "react"
-import { ActivityIndicator, TouchableOpacity, View } from "react-native"
+import {
+  ActivityIndicator,
+  InteractionManager,
+  TouchableOpacity,
+  View,
+} from "react-native"
 
 import { ListItem, makeStyles, Overlay, useTheme, Text } from "@rn-vui/themed"
 import { useI18nContext } from "@app/i18n/i18n-react"
@@ -51,10 +56,15 @@ export const ProfileScreen: React.FC<ProfileProps> = ({
     setActiveAccountId(DefaultAccountId.Custodial)
 
     setSwitchLoading(false)
-    toastShow({
-      type: "success",
-      message: LL.ProfileScreen.switchAccount(),
-      LL,
+    /** Deferred past the switch's teardown: the toast mounts as a root sibling in the
+     *  same frame the provider tree tears down, and Fabric dispatches mount items for
+     *  views whose viewState is already gone ("Unable to find viewState for tag N"). */
+    InteractionManager.runAfterInteractions(() => {
+      toastShow({
+        type: "success",
+        message: LL.ProfileScreen.switchAccount(),
+        LL,
+      })
     })
     navigation.navigate("Primary")
   }
@@ -91,10 +101,12 @@ export const ProfileScreen: React.FC<ProfileProps> = ({
       case "switchToOtherCustodial":
         await logout({ stateToDefault: false, token })
         await handleProfileSwitch(strategy.nextToken)
-        toastShow({
-          type: "success",
-          message: LL.ProfileScreen.removedAccount({ identifier }),
-          LL,
+        InteractionManager.runAfterInteractions(() => {
+          toastShow({
+            type: "success",
+            message: LL.ProfileScreen.removedAccount({ identifier }),
+            LL,
+          })
         })
         return
       case "fallbackToSelfCustodial":

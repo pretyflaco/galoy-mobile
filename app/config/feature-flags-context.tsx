@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from "react"
 import remoteConfigInstance from "@react-native-firebase/remote-config"
+import Config from "react-native-config"
 
 import { useLevel } from "@app/graphql/level-context"
 import { useAppConfig } from "@app/hooks/use-app-config"
 import { useHasCustodialAccount } from "@app/hooks/use-has-custodial-account"
+import { SignerEnabledKey } from "@app/nostr/config"
 import { logSelfCustodialRolloutExposed } from "@app/self-custodial/analytics"
 import { logError } from "@app/utils/log-error"
 import {
@@ -38,20 +40,29 @@ const ReplaceCardDeliveryConfigKey = "replaceCardDeliveryConfig"
 const SparkCompatibleWalletsUrlKey = "sparkCompatibleWalletsUrl"
 const BackupNudgeBannerThresholdKey = "backupNudgeBannerThreshold"
 const BackupNudgeModalThresholdKey = "backupNudgeModalThreshold"
+const BackupNudgeModalCooldownMsKey = "backupNudgeModalCooldownMs"
 const NonCustodialEnabledKey = "nonCustodialEnabled"
+const DelegatedGrantsEnabledKey = "delegatedGrantsEnabled"
 const StableBalanceEnabledKey = "stableBalanceEnabled"
+const NostrNip05EnabledKey = "nostrNip05Enabled"
+/** Support chat (P1): E2EE support chat over Marmot v2. Off by default; requires nostrSignerEnabled. */
+const SupportChatEnabledKey = "supportChatEnabled"
+/**
+ * P7: support-chat builds opt in at BUILD time (ENVFILE `SUPPORT_CHAT_BUILD=on` — the CI
+ * smoke and the dogfood build). Without it the support chat is off and the
+ * self-custodial default is upstream's (off); remote config can still turn either on.
+ */
+const supportChatBuild = Config?.SUPPORT_CHAT_BUILD === "on"
 const DollarRestrictionCacheEnabledKey = "dollarRestrictionCacheEnabled"
+const BtcMapPlacesEnabledKey = "btcMapPlacesEnabled"
 const AutoConvertMaxAttemptsKey = "autoConvertMaxAttempts"
 const AutoConvertPollMaxAttemptsKey = "autoConvertPollMaxAttempts"
 const AutoConvertPollIntervalMsKey = "autoConvertPollIntervalMs"
 const AutoConvertAmountMatchToleranceBpsKey = "autoConvertAmountMatchToleranceBps"
 const CustodialFirstSignupBlockedCountriesKey = "custodialFirstSignupBlockedCountries"
-const CustodialDollarBalanceBlockedCountriesKey = "custodialDollarBalanceBlockedCountries"
 const SelfCustodialDollarBalanceBlockedCountriesKey =
   "selfCustodialDollarBalanceBlockedCountries"
 const SelfCustodialTransferBlockedCountriesKey = "selfCustodialTransferBlockedCountries"
-const CustodialTransferBlockedCountriesKey = "custodialTransferBlockedCountries"
-const CustodialCreationBlockedCountriesKey = "custodialCreationBlockedCountries"
 const SelfCustodialCreationBlockedCountriesKey = "selfCustodialCreationBlockedCountries"
 const OffboardOnlyCountriesKey = "offboardOnlyCountries"
 const SelfCustodialDepositClaimLeewayVbyteKey = "selfCustodialDepositClaimLeewayVbyte"
@@ -69,7 +80,6 @@ type ReplaceCardDeliveryConfig = Record<string, DeliveryOptionConfig>
 
 export type FeeRatesConfig = {
   lightningSendBps: number
-  lightningRoutingBps: number
   onchainPriorityBps: number
   onchainStandardBps: number
   onchainEconomyBps: number
@@ -80,6 +90,10 @@ type FeatureFlags = {
   deviceAccountEnabled: boolean
   nonCustodialEnabled: boolean
   stableBalanceEnabled: boolean
+  nostrSignerEnabled: boolean
+  nostrNip05Enabled: boolean
+  supportChatEnabled: boolean
+  delegatedGrantsEnabled: boolean
   remoteConfigReady: boolean
 }
 
@@ -108,19 +122,22 @@ type RemoteConfig = {
   [SparkCompatibleWalletsUrlKey]: string
   [BackupNudgeBannerThresholdKey]: number
   [BackupNudgeModalThresholdKey]: number
+  [BackupNudgeModalCooldownMsKey]: number
   [NonCustodialEnabledKey]: boolean
+  [DelegatedGrantsEnabledKey]: boolean
   [StableBalanceEnabledKey]: boolean
+  [NostrNip05EnabledKey]: boolean
+  [SupportChatEnabledKey]: boolean
+  [SignerEnabledKey]: boolean
   [DollarRestrictionCacheEnabledKey]: boolean
+  [BtcMapPlacesEnabledKey]: boolean
   [AutoConvertMaxAttemptsKey]: number
   [AutoConvertPollMaxAttemptsKey]: number
   [AutoConvertPollIntervalMsKey]: number
   [AutoConvertAmountMatchToleranceBpsKey]: number
   [CustodialFirstSignupBlockedCountriesKey]: string[]
-  [CustodialDollarBalanceBlockedCountriesKey]: string[]
   [SelfCustodialDollarBalanceBlockedCountriesKey]: string[]
   [SelfCustodialTransferBlockedCountriesKey]: string[]
-  [CustodialTransferBlockedCountriesKey]: string[]
-  [CustodialCreationBlockedCountriesKey]: string[]
   [SelfCustodialCreationBlockedCountriesKey]: string[]
   [OffboardOnlyCountriesKey]: string[]
   [SelfCustodialDepositClaimLeewayVbyteKey]: number
@@ -137,12 +154,18 @@ const defaultReplaceCardDeliveryConfig = {
 // Fee rates page contract: a negative rate hides its row (and the section when
 // no rows remain), 0 renders as "no fee", positive values render the rate — so
 // rows can be shown/hidden and repriced remotely without an app release.
+//
+// The three onchain rates are the payout speeds a custodial send actually
+// offers, priced apart because the queue you pick changes what you pay:
+// PAYOUT_SPEED_BY_FEE_TIER maps Fast/Medium/Slow onto the ~10m/~4h/~24h queues
+// the send screen's tier selector shows. All three ship visible — quoting only
+// Priority reads as one flat onchain rate and overstates what a Standard or
+// Economy send costs.
 export const defaultFeeRatesConfig: FeeRatesConfig = {
   lightningSendBps: 0,
-  lightningRoutingBps: 0,
   onchainPriorityBps: 90,
-  onchainStandardBps: -1,
-  onchainEconomyBps: -1,
+  onchainStandardBps: 60,
+  onchainEconomyBps: 40,
   transferBps: 50,
 }
 
@@ -212,19 +235,31 @@ export const defaultRemoteConfig: RemoteConfig = {
   sparkCompatibleWalletsUrl: "https://docs.spark.money/wallets/overview",
   backupNudgeBannerThreshold: 2100,
   backupNudgeModalThreshold: 21000,
-  nonCustodialEnabled: false,
+  /** How long the self-custodial backup modal stays dismissed after the user closes it.
+   *  The less intrusive home-screen nudge banner takes over in the meantime, so the
+   *  warning never disappears entirely (#4156). */
+  backupNudgeModalCooldownMs: 24 * 60 * 60 * 1000,
+  nonCustodialEnabled: supportChatBuild, // upstream default: false
+  delegatedGrantsEnabled: false,
   stableBalanceEnabled: false,
+  /** NIP-05 verified handles (POC): off until the lnurl-server routes are deployed. */
+  nostrNip05Enabled: false,
+  /** Support chat: off unless the build opts in (above). Own device key since M19. */
+  supportChatEnabled: supportChatBuild,
+  // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
+  nostrSignerEnabled: true,
   dollarRestrictionCacheEnabled: true,
+  /** Kill switch for the map's merchant data, which comes from BTC Map — a third
+   *  party we do not control. If the feed starts serving something harmful or
+   *  simply wrong, turning this off empties the map without an app release. */
+  btcMapPlacesEnabled: true,
   autoConvertMaxAttempts: 3,
   autoConvertPollMaxAttempts: 30,
   autoConvertPollIntervalMs: 500,
   autoConvertAmountMatchToleranceBps: 500,
   custodialFirstSignupBlockedCountries: custodialFirstSignupBlockedDefault,
-  custodialDollarBalanceBlockedCountries: ["HK"],
   selfCustodialDollarBalanceBlockedCountries: ["HK"],
   selfCustodialTransferBlockedCountries: transferBlockedDefault,
-  custodialTransferBlockedCountries: transferBlockedDefault,
-  custodialCreationBlockedCountries: creationBlockedDefault,
   selfCustodialCreationBlockedCountries: creationBlockedDefault,
   offboardOnlyCountries: offboardOnlyDefault,
   selfCustodialDepositClaimLeewayVbyte: 1,
@@ -241,8 +276,13 @@ export const defaultRemoteConfig: RemoteConfig = {
 
 const defaultFeatureFlags: FeatureFlags = {
   deviceAccountEnabled: false,
-  nonCustodialEnabled: false,
+  nonCustodialEnabled: supportChatBuild, // upstream default: false
+  delegatedGrantsEnabled: false,
   stableBalanceEnabled: false,
+  nostrNip05Enabled: false,
+  supportChatEnabled: supportChatBuild,
+  // DEMO-BUILD LOCAL OVERRIDE (uncommitted): nostr-signer POC. Production default is false.
+  nostrSignerEnabled: true,
   remoteConfigReady: false,
 }
 
@@ -254,20 +294,11 @@ remoteConfigInstance().setDefaults({
   custodialFirstSignupBlockedCountries: serializeRemoteConfigDefault(
     custodialFirstSignupBlockedDefault,
   ),
-  custodialDollarBalanceBlockedCountries: serializeRemoteConfigDefault(
-    defaultRemoteConfig.custodialDollarBalanceBlockedCountries,
-  ),
   selfCustodialDollarBalanceBlockedCountries: serializeRemoteConfigDefault(
     defaultRemoteConfig.selfCustodialDollarBalanceBlockedCountries,
   ),
   selfCustodialTransferBlockedCountries: serializeRemoteConfigDefault(
     defaultRemoteConfig.selfCustodialTransferBlockedCountries,
-  ),
-  custodialTransferBlockedCountries: serializeRemoteConfigDefault(
-    defaultRemoteConfig.custodialTransferBlockedCountries,
-  ),
-  custodialCreationBlockedCountries: serializeRemoteConfigDefault(
-    defaultRemoteConfig.custodialCreationBlockedCountries,
   ),
   selfCustodialCreationBlockedCountries: serializeRemoteConfigDefault(
     defaultRemoteConfig.selfCustodialCreationBlockedCountries,
@@ -395,16 +426,46 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           .getValue(BackupNudgeModalThresholdKey)
           .asNumber()
 
+        // asNumber() yields 0 for a malformed remote value, and a zero cooldown would
+        // make the modal undismissable again — fall back to the shipped default.
+        const remoteBackupNudgeModalCooldownMs = remoteConfigInstance()
+          .getValue(BackupNudgeModalCooldownMsKey)
+          .asNumber()
+        const backupNudgeModalCooldownMs =
+          remoteBackupNudgeModalCooldownMs > 0
+            ? remoteBackupNudgeModalCooldownMs
+            : defaultRemoteConfig.backupNudgeModalCooldownMs
+
         const nonCustodialEnabled = remoteConfigInstance()
           .getValue(NonCustodialEnabledKey)
+          .asBoolean()
+
+        const delegatedGrantsEnabled = remoteConfigInstance()
+          .getValue(DelegatedGrantsEnabledKey)
           .asBoolean()
 
         const stableBalanceEnabled = remoteConfigInstance()
           .getValue(StableBalanceEnabledKey)
           .asBoolean()
 
+        const nostrSignerEnabled = remoteConfigInstance()
+          .getValue(SignerEnabledKey)
+          .asBoolean()
+
+        const nostrNip05Enabled = remoteConfigInstance()
+          .getValue(NostrNip05EnabledKey)
+          .asBoolean()
+
+        const supportChatEnabled = remoteConfigInstance()
+          .getValue(SupportChatEnabledKey)
+          .asBoolean()
+
         const dollarRestrictionCacheEnabled = remoteConfigInstance()
           .getValue(DollarRestrictionCacheEnabledKey)
+          .asBoolean()
+
+        const btcMapPlacesEnabled = remoteConfigInstance()
+          .getValue(BtcMapPlacesEnabledKey)
           .asBoolean()
 
         const autoConvertMaxAttempts = remoteConfigInstance()
@@ -438,11 +499,6 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           custodialFirstSignupBlockedDefault,
         )
 
-        const custodialDollarBalanceBlockedCountries = getRemoteConfigStringList(
-          CustodialDollarBalanceBlockedCountriesKey,
-          defaultRemoteConfig.custodialDollarBalanceBlockedCountries,
-        )
-
         const selfCustodialDollarBalanceBlockedCountries = getRemoteConfigStringList(
           SelfCustodialDollarBalanceBlockedCountriesKey,
           defaultRemoteConfig.selfCustodialDollarBalanceBlockedCountries,
@@ -451,16 +507,6 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
         const selfCustodialTransferBlockedCountries = getRemoteConfigStringList(
           SelfCustodialTransferBlockedCountriesKey,
           defaultRemoteConfig.selfCustodialTransferBlockedCountries,
-        )
-
-        const custodialTransferBlockedCountries = getRemoteConfigStringList(
-          CustodialTransferBlockedCountriesKey,
-          defaultRemoteConfig.custodialTransferBlockedCountries,
-        )
-
-        const custodialCreationBlockedCountries = getRemoteConfigStringList(
-          CustodialCreationBlockedCountriesKey,
-          defaultRemoteConfig.custodialCreationBlockedCountries,
         )
 
         const selfCustodialCreationBlockedCountries = getRemoteConfigStringList(
@@ -516,19 +562,22 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           sparkCompatibleWalletsUrl,
           backupNudgeBannerThreshold,
           backupNudgeModalThreshold,
+          backupNudgeModalCooldownMs,
           nonCustodialEnabled,
+          delegatedGrantsEnabled,
           stableBalanceEnabled,
+          nostrSignerEnabled,
+          nostrNip05Enabled,
+          supportChatEnabled,
           dollarRestrictionCacheEnabled,
+          btcMapPlacesEnabled,
           autoConvertMaxAttempts,
           autoConvertPollMaxAttempts,
           autoConvertPollIntervalMs,
           autoConvertAmountMatchToleranceBps,
           custodialFirstSignupBlockedCountries,
-          custodialDollarBalanceBlockedCountries,
           selfCustodialDollarBalanceBlockedCountries,
           selfCustodialTransferBlockedCountries,
-          custodialTransferBlockedCountries,
-          custodialCreationBlockedCountries,
           selfCustodialCreationBlockedCountries,
           offboardOnlyCountries,
           selfCustodialDepositClaimLeewayVbyte,
@@ -555,6 +604,11 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
     nonCustodialEnabled: remoteConfig.nonCustodialEnabled,
     stableBalanceEnabled:
       remoteConfig.nonCustodialEnabled && remoteConfig.stableBalanceEnabled,
+    nostrSignerEnabled: remoteConfig.nostrSignerEnabled,
+    nostrNip05Enabled: remoteConfig.nostrSignerEnabled && remoteConfig.nostrNip05Enabled,
+    // M19: the chat runs on its own per-device key — no Nostr signer needed
+    supportChatEnabled: remoteConfig.supportChatEnabled,
+    delegatedGrantsEnabled: remoteConfig.delegatedGrantsEnabled,
     remoteConfigReady,
   }
 

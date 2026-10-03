@@ -72,6 +72,7 @@
   },
   "AuthenticationScreen": {
     "authenticationDescription": "Autentikasi untuk melanjutkan",
+    "authenticationRequired": "Autentikasi diperlukan. Anda dapat mengatur kode PIN atau biometrik di pengaturan keamanan.",
     "setUp": "Atur Autentikasi Biometrik",
     "setUpAuthenticationDescription": "Gunakan biometrik untuk mengautentikasi",
     "skip": "Lewati",
@@ -2097,17 +2098,70 @@
       "sendingLimit": "Batas pengiriman harian dikurangi",
       "noOnchain": "Tidak menerima bitcoin on-chain",
       "recoveryOption": "Pulihkan dana melalui SMS atau email",
-      "dailyLimit": "Batas transaksi harian USD 1,000",
+      "dailyLimit": "Batas transaksi harian USD {limit: string}",
       "onchainReceive": "Terima bitcoin onchain"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Izin lokasi",
     "navToSettingsText": "Jika Anda ingin memberikan izin lokasi Blink, silakan buka pengaturan Anda dan aktifkan di sana",
-    "payBusiness": "Bayar bisnis ini",
     "openSettings": "Buka pengaturan",
     "title": "Peta",
-    "error": "Ups. Terjadi kesalahan saat mendapatkan lokasi Anda."
+    "error": "Ups. Terjadi kesalahan saat mendapatkan lokasi Anda.",
+    "attribution": "Tempat dari BTC Map, © kontributor OpenStreetMap",
+    "unnamedPlace": "Tempat tanpa nama",
+    "loadingPlaces": "Memuat tempat dari BTC Map",
+    "placesError": "Gagal memuat tempat dari BTC Map",
+    "detailsError": "Gagal memuat tempat ini",
+    "cannotOpenLink": "Tidak ada aplikasi di ponsel ini yang bisa membuka tautan itu",
+    "openNow": "Buka sekarang",
+    "closedNow": "Tutup",
+    "navigate": "Rute",
+    "payMerchant": "Bayar pedagang ini",
+    "requiresApp": "Perlu aplikasi khusus untuk membayar",
+    "boosted": "Disorot",
+    "verifiedOn": "Diverifikasi {date: string}",
+    "lastVerifiedOn": "Terakhir diverifikasi {date: string}",
+    "needsSurvey": "Tempat ini perlu diverifikasi",
+    "searchError": "Tidak dapat mencari di area ini",
+    "clearSearch": "Hapus pencarian",
+    "nothingToShow": "Tidak ada yang ditampilkan",
+    "metersAway": "{distance: string} meter dari sini",
+    "kilometersAway": "{distance: string} km dari sini",
+    "filters": "Filter",
+    "categories": "Kategori",
+    "selectAll": "Pilih semua",
+    "clearAll": "Hapus semua",
+    "addPlace": "Tambahkan ke peta",
+    "addPlaceTitle": "Tambahkan tempat",
+    "placePinHint": "Geser peta agar penanda tepat di tempatnya",
+    "placeName": "Nama",
+    "placeNameHint": "Nama tempat ini",
+    "placeCategory": "Kategori",
+    "placeCategoryHint": "Pilih kategori",
+    "placeLocation": "Lokasi",
+    "changeLocation": "Ubah",
+    "placeReviewNote": "Tempat baru dikirim ke BTC Map. Komunitasnya meninjau dan memelihara semua yang ada di peta.",
+    "placeSubmitted": "Tempat dikirim ke BTC Map — terima kasih telah menambahkannya",
+    "placeSubmissionFailed": "Tempat tidak dapat dikirim. Periksa koneksi Anda dan coba lagi.",
+    "placeRefused": "BTC Map tidak dapat menerima tempat ini. Tidak ada yang ditambahkan ke peta.",
+    "category": {
+      "restaurants": "Restoran",
+      "cafes": "Kafe",
+      "bakeries": "Toko roti dan manisan",
+      "bars": "Bar dan hiburan malam",
+      "groceries": "Bahan makanan",
+      "shops": "Toko",
+      "money": "ATM dan penukaran",
+      "lodging": "Hotel dan penginapan",
+      "automotive": "Mobil dan bahan bakar",
+      "health": "Kesehatan",
+      "beauty": "Kecantikan dan kebugaran",
+      "services": "Layanan",
+      "sports": "Olahraga dan luar ruang",
+      "leisure": "Rekreasi dan budaya",
+      "other": "Lainnya"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} tertunda",
@@ -2122,11 +2176,15 @@
   },
   "PinScreen": {
     "attemptsRemaining": "PIN salah. {attemptsRemaining: number} percobaan tersisa.",
+    "enterPin": "Masukkan kode PIN Anda",
+    "lockoutUnavailable": "Tidak dapat mencatat percobaan gagal dengan aman. Keluar.",
     "oneAttemptRemaining": "PIN salah. 1 percobaan tersisa.",
+    "pinUnreadable": "Tidak dapat memeriksa PIN Anda. Silakan coba lagi.",
     "setPin": "Atur kode PIN Anda",
     "setPinFailedMatch": "PIN tidak cocok - Atur kode PIN Anda",
     "storePinFailed": "Tidak dapat menyimpan PIN Anda.",
     "tooManyAttempts": "Terlalu banyak percobaan gagal. Keluar.",
+    "tryAgainIn": "Coba lagi dalam {seconds: number} dtk.",
     "verifyPin": "Verifikasi kode PIN Anda"
   },
   "PriceHistoryScreen": {
@@ -2222,7 +2280,9 @@
   "ScanningQRCodeScreen": {
     "invalidContent": "Kami menemukan:\n\n{found: string}\n\nIni bukan alamat Bitcoin atau faktur Lightning yang valid",
     "expiredContent": "Kami menemukan:\n\n{found: string}\n\nFaktur ini telah kedaluwarsa",
+    "unresolvedContent": "Kami menemukan:\n\n{found: string}\n\nKami tidak dapat memproses kode ini. Kode mungkin sudah kedaluwarsa, atau layanan sedang tidak tersedia untuk sementara. Mintalah kode baru atau coba lagi nanti.",
     "invalidTitle": "Kode QR Tidak Valid",
+    "unresolvedTitle": "Kode tidak tersedia",
     "openLinkTitle": "Buka Tautan",
     "confirmOpenLink": "Apakah Anda yakin ingin membuka tautan ini?",
     "noQrCode": "Kami tidak dapat menemukan kode QR dalam gambar",
@@ -2297,6 +2357,7 @@
     "selfPaymentError": "{lnAddress: string} adalah alamat {bankName: string} Anda.",
     "selfPaymentAdvice": "Jika Anda ingin mengirim uang ke akun lain milik Anda, gunakan faktur, LN, atau alamat BTC.",
     "lnAddressError": "Kami tidak dapat mencapai alamat Lightning ini. Jika Anda yakin itu ada, coba lagi nanti.",
+    "lnurlServiceError": "Kami tidak dapat memproses kode ini. Kode mungkin sudah kedaluwarsa, atau layanan sedang tidak tersedia untuk sementara.",
     "lnAddressAdvice": "Pastikan ejaan benar atau minta penerima memberikan faktur atau alamat BTC.",
     "unknownLightning": "Kami tidak dapat mengurai alamat Lightning ini. Silakan coba lagi.",
     "unknownOnchain": "Kami tidak dapat mengurai alamat Bitcoin ini. Silakan coba lagi.",
@@ -2377,6 +2438,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Buat alamat",
+    "addressDisabled": "(nonaktif)",
     "donationButton": "Tombol donasi",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2448,7 @@
     "apiAcess": "Akses API",
     "apiDocumentation": "Dokumentasi API",
     "apiDashboard": "Akses API dan dasbor",
+    "mode": "Mode",
     "pos": "Tempat Penjualan",
     "posCopied": "Tautan tempat penjualan Anda telah disalin",
     "activated": "Diaktifkan",
@@ -2455,7 +2518,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Akun Anda memiliki lebih dari $5",
     "itsATrialAccount": "Akun percobaan memiliki batas transaksi yang lebih rendah dan tidak ada metode pemulihan. Jika Anda kehilangan ponsel atau menghapus aplikasi, dana Anda tidak dapat dipulihkan.",
-    "accountBeingDeleted": "Akun Anda sedang dihapus, harap tunggu...",
+    "accountBeingDeleted": "Akun Anda sedang ditutup, harap tunggu...",
     "dangerZone": "Zona Berbahaya",
     "phoneDeletedSuccessfully": "Nomor telepon berhasil dihapus",
     "phoneNumber": "Nomor Telepon",
@@ -2517,7 +2580,28 @@
     "removedAccount": "Anda menghapus akun {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "tidak tersedia di wilayah Anda"
+    "walletLabel": "tidak tersedia di wilayah Anda",
+    "anonModeWalletLabel": "tidak tersedia dalam mode Incognito"
+  },
+  "AnonModeConvertModal": {
+    "title": "Transfer saldo Dolar Anda terlebih dahulu",
+    "body": "Mode Incognito hanya mendukung saldo Bitcoin. Transfer saldo Dolar Anda ke saldo Bitcoin untuk beralih."
+  },
+  "EnhancedModePrompt": {
+    "title": "Fitur ini memerlukan mode Enhanced",
+    "body": "Anda dalam mode Incognito, Blink tidak mengetahui wilayah Anda, jadi beberapa fitur tidak tersedia. Beralih ke Enhanced untuk menjalankan pemeriksaan lokasi dan membuka semua fitur untuk wilayah Anda.",
+    "switchButton": "Beralih ke Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Beralih ke mode Enhanced\nnon-kustodian",
+    "anon": "Beralih ke mode Incognito\nnon-kustodian"
+  },
+  "RestrictedRegion": {
+    "title": "Wilayah terbatas terdeteksi",
+    "body": "Koneksi Anda tampaknya berasal dari wilayah terbatas. Blink tidak dapat menyediakan layanan dari lokasi ini. Saldo Anda tidak terpengaruh.",
+    "bodyReturn": "Setelah Anda meninggalkan wilayah ini, semua fungsi akan kembali normal.",
+    "learnMore": "Pelajari lebih lanjut",
+    "contactSupport": "Hubungi dukungan"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Saldo dolar tidak tersedia di wilayah Anda"
@@ -2597,17 +2681,17 @@
     "receive": "Terima",
     "transfer": "Transfer",
     "lightning": "Lightning",
+    "lightningBelowThreshold": "Lightning di bawah {threshold: string} SAT",
     "intraledger": "Intraledger",
-    "onchainPriority": "Onchain prioritas (secepatnya)",
+    "onchainPriority": "Onchain prioritas (~10 menit)",
     "onchainStandard": "Onchain standar (~4 jam)",
-    "onchainEconomy": "Onchain ekonomis",
+    "onchainEconomy": "Onchain ekonomis (~24 jam)",
     "lightningTransactions": "Transaksi Lightning",
     "onchainBelowThreshold": "Onchain di bawah {threshold: string} SAT",
     "onchainAboveThreshold": "Onchain di atas {threshold: string} SAT",
     "onchainBetweenThresholds": "Onchain between {lower: string} and {upper: string} SAT",
     "transferFee": "Biaya transfer",
     "noFee": "tanpa biaya",
-    "lightningSendFee": "{fee: string} + ~{routingFee: string} biaya routing",
     "fromApprox": "mulai ~{fee: string}",
     "satAmount": "{amount: string} SAT",
     "error": "Tidak dapat mengambil biaya saat ini"
@@ -2643,7 +2727,6 @@
     "letsGo": "Ayo mulai!",
     "stayInTrialMode": "Tetap di mode percobaan",
     "upgradeToLevel": "Tingkatkan ke Level {level: number}",
-    "notNow": "Tidak sekarang",
     "setUpLevelAccount": "Atur akun Level {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2782,7 @@
       "mainTitle": "Selamat Datang di Level 1",
       "title": "Fitur baru yang terbuka untuk akun Anda:",
       "receiveBitcoinDescription": "Terima Bitcoin menggunakan nomor telepon Anda",
-      "dailyLimitDescription": "Kirim hingga USD 1,000 per hari",
+      "dailyLimitDescription": "Kirim hingga USD {limit: string} per hari",
       "onchainDescription": "Terima pembayaran on-chain"
     },
     "emailBenefits": {
@@ -2821,6 +2904,7 @@
     "bitcoinPrice": "Harga Bitcoin",
     "btcAccount": "Akun Bitcoin",
     "cancel": "Batal",
+    "notNow": "Tidak sekarang",
     "card": "Kartu",
     "close": "Tutup",
     "confirm": "Konfirmasi",
@@ -2969,17 +3053,17 @@
     "defaultEmailSubject": "{bankName: string} - Dukungan",
     "defaultSupportMessage": "Halo! Saya membutuhkan bantuan dengan {bankName: string}, saya menggunakan versi {version: string} pada {os: string}.",
     "emailCopied": "email {email: string} disalin ke clipboard",
-    "deleteAccount": "Hapus akun",
+    "deleteAccount": "Tutup akun",
     "delete": "hapus",
-    "typeDelete": "Ketik \"{delete: string}\" untuk mengonfirmasi penghapusan akun",
+    "typeDelete": "Silakan ketik \"{delete: string}\" untuk mengonfirmasi penutupan akun",
     "finalConfirmationAccountDeletionTitle": "Konfirmasi Akhir Diperlukan",
-    "finalConfirmationAccountDeletionMessage": "Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan.",
-    "deleteAccountBalanceWarning": "Menghapus akun Anda akan menyebabkan Anda kehilangan akses ke saldo Anda saat ini. Apakah Anda yakin ingin melanjutkan?",
-    "deleteAccountConfirmation": "Akun Anda telah diatur untuk dihapus.\n\nSetelah masa percobaan terkait persyaratan regulasi selesai, data yang tersisa terkait akun Anda akan dihapus secara permanen.",
-    "deleteAccountFromPhone": "Hai! Silakan hapus akun saya. Nomor telepon saya adalah {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Setelah ditutup, Anda tidak akan dapat mengakses atau menggunakan akun Anda. Kami dapat menyimpan catatan tertentu sebagaimana diwajibkan oleh hukum dan kewajiban penyimpanan kami. Apakah Anda yakin ingin menutup akun Anda?",
+    "deleteAccountBalanceWarning": "Menutup akun Anda akan menyebabkan Anda kehilangan akses ke saldo Anda saat ini. Apakah Anda yakin ingin melanjutkan?",
+    "deleteAccountConfirmation": "Akun Anda telah ditutup.\n\nKami dapat menyimpan catatan tertentu sebagaimana diwajibkan oleh hukum dan kewajiban penyimpanan kami.",
+    "deleteAccountFromPhone": "Halo!, tolong tutup akun saya. Nomor telepon saya adalah {phoneNumber: string}.",
     "deleteAccountError": "Terjadi kesalahan. Hubungi {email: string} untuk bantuan lebih lanjut.",
     "bye": "Selamat tinggal!",
-    "deleteAccountWarning": "Perhatian: Penghapusan akun bersifat permanen!\nPastikan dompet tidak memiliki dana sebelum menghapus.\nAkun yang dihapus tidak dapat dipulihkan."
+    "deleteAccountWarning": "Perhatian: Penutupan akun bersifat permanen!\nPastikan dompet tidak memiliki dana sebelum menutup.\nAkun yang ditutup tidak dapat dipulihkan.\nKami dapat menyimpan catatan tertentu sebagaimana diwajibkan oleh hukum."
   },
   "lnurl": {
     "overLimit": "Anda tidak dapat mengirim lebih dari jumlah maksimum.",
@@ -3413,8 +3497,7 @@
         "pinChangedTitle": "PIN diubah",
         "pinChangedSubtitle": "PIN Anda telah berhasil diubah.",
         "pinChangedToast": "PIN berhasil diubah",
-        "biometricDescription": "Verifikasi identitas Anda untuk mengubah PIN",
-        "biometricRequired": "Autentikasi biometrik diperlukan untuk mengubah PIN Anda."
+        "biometricDescription": "Verifikasi identitas Anda untuk mengubah PIN"
       }
     },
     "ReplaceCard": {
@@ -3756,6 +3839,7 @@
     "reminderBulletin": {
       "title": "Penting",
       "body": "Beralihlah ke akun non-kustodial melalui migrasi terpandu, atau tarik dana Anda, sebelum {date}. Penerimaan berhenti pada {receiveStopsDate}.",
+      "bodyReceiveDisabled": "Penerimaan telah berhenti. Beralihlah ke akun non-kustodial melalui migrasi terpandu, atau tarik dana Anda, sebelum {date}.",
       "migrateCta": "Migrasi"
     },
     "offboardBulletin": {
@@ -3846,9 +3930,22 @@
     "createFailed": "Gagal membuat dompet. Silakan coba lagi.",
     "selfCustodialDisabled": "Non-kustodial sementara tidak tersedia."
   },
+  "ChooseExperienceScreen": {
+    "title": "Pilih mode non-kustodian",
+    "subtitle": "Pilihanmu menentukan fitur mana yang tersedia. Kamu bisa beralih kapan saja.",
+    "enhancedLabel": "Enhanced\nMode",
+    "enhancedDescription": "Kami menggunakan regionmu untuk membuka layanan berharga yang tersedia di tempatmu.",
+    "anonLabel": "Incognito\nMode",
+    "anonDescription": "Untuk privasi maksimal. Lebih sedikit fitur.",
+    "continueButton": "Lanjutkan"
+  },
   "UnsupportedRegionScreen": {
     "title": "Wilayah tidak didukung",
-    "description": "Sayangnya kami tidak dapat melayani pengguna dari wilayah Anda saat ini."
+    "description": "Sayangnya kami tidak dapat melayani pengguna dari wilayah Anda saat ini.",
+    "custodialSignupDescription": "Sayangnya kami tidak dapat membuat akun kustodian baru di wilayah Anda saat ini. Anda dapat menggunakan akun swakelola sebagai gantinya.",
+    "custodialSignupOnlyDescription": "Sayangnya kami tidak dapat membuat akun kustodian baru di wilayah Anda saat ini.",
+    "unknownRegionTitle": "Wilayah tidak diketahui",
+    "unknownRegionDescription": "Kami tidak dapat menentukan wilayah Anda. Periksa koneksi Anda dan coba lagi."
   },
   "RestoreScreen": {
     "title": "Pulihkan dompet",

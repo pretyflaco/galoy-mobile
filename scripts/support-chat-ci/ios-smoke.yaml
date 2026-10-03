@@ -1,0 +1,117 @@
+# iOS simulator smoke (Maestro) — the same loop as drive.mjs on Android. M19: the chat
+# has its own device key, so it STARTS before any account exists (Get started → Contact
+# support → start → the peer's live E2EE greeting), then onboards (self-custodial), finds
+# the SAME conversation under Settings → Support after a relaunch, sends, sees the peer's
+# reply ON SCREEN, and opens Conversations (header clock). Selectors are testIDs
+# (accessibilityIdentifier) or titles (testProps(title)).
+appId: io.galoy.bitcoinbeach
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+    permissions:
+      all: deny
+- extendedWaitUntil:
+    visible:
+      id: "Create new account"
+    timeout: 180000 # first launch: dev bundle from the .app, cold Hermes
+- takeScreenshot: 01-get-started
+
+# support before an account exists
+- tapOn:
+    id: "get-started-contact-support"
+- extendedWaitUntil:
+    visible:
+      id: "support-chat-start"
+    timeout: 60000
+- takeScreenshot: 02-pre-account-chat
+# start: roster gate → bot discovery → create + invite → peer Welcome → greeting
+- tapOn:
+    id: "support-chat-start"
+- extendedWaitUntil:
+    visible:
+      id: "support-chat-input"
+    timeout: 90000
+- extendedWaitUntil:
+    visible:
+      text: ".*CI Smoke Bot joined.*"
+    timeout: 90000
+- takeScreenshot: 03-greeting
+
+# back to Get started by relaunching (iOS has no hardware back); keychain + stores stay
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "Create new account"
+    timeout: 90000
+- tapOn:
+    id: "Create new account"
+- tapOn:
+    id: "self-custodial-option"
+- tapOn:
+    id: "continue-button"
+- extendedWaitUntil:
+    visible:
+      id: "mode-enhanced"
+    timeout: 30000
+- tapOn:
+    id: "mode-enhanced"
+- tapOn:
+    id: "choose-experience-continue"
+- extendedWaitUntil:
+    visible:
+      id: "Accept"
+    timeout: 60000
+- takeScreenshot: 04-terms
+- tapOn:
+    id: "Accept"
+- extendedWaitUntil:
+    visible:
+      id: "home-settings-button"
+    timeout: 90000
+- takeScreenshot: 05-home
+
+# the same conversation under Settings → Support (no Nostr identity was ever created)
+- tapOn:
+    id: "home-settings-button"
+- scrollUntilVisible:
+    element:
+      id: "Support"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: "Support"
+- extendedWaitUntil:
+    visible:
+      id: "support-chat-input"
+    timeout: 90000
+- extendedWaitUntil:
+    visible:
+      text: ".*CI Smoke Bot joined.*"
+    timeout: 60000
+- takeScreenshot: 06-same-conversation
+
+# send + the reply
+- tapOn:
+    id: "support-chat-input"
+- inputText: "ci smoke roundtrip"
+- hideKeyboard # the keyboard may cover the composer's Send (Android: ESC first, too)
+- tapOn:
+    id: "support-chat-send"
+- extendedWaitUntil:
+    visible:
+      text: '.*copy "ci smoke roundtrip".*'
+    timeout: 60000
+- takeScreenshot: 07-reply
+
+# Conversations (header clock): the current one checked, titled by the first message
+- tapOn:
+    id: "support-chat-conversations"
+- extendedWaitUntil:
+    visible:
+      id: "support-conversation-current"
+    timeout: 15000
+- assertVisible: # the row is one accessibility element on iOS: "title, date"
+    text: ".*ci smoke roundtrip.*"
+- takeScreenshot: 08-conversations

@@ -21,6 +21,7 @@ import {
 } from "@app/types/wallet"
 
 import { getLightningAddress } from "../bridge"
+import { type LnurlDomain } from "../config"
 import { useSdkLifecycle } from "../hooks/use-sdk-lifecycle"
 import { classifySdkError, SelfCustodialErrorCode } from "../sdk-error"
 import { setSelfCustodialLightningAddress } from "../storage/account-index"
@@ -48,6 +49,14 @@ type SelfCustodialWalletContextValue = ActiveWalletState & {
   allTransactions: NormalizedTransaction[]
   retry: () => void
   sdk: BreezSdkInterface | null
+  /** The account the connected `sdk` belongs to, which is not always the active one: the
+   *  provider's teardown runs after its descendants' effects, so on the commit where the
+   *  user switches accounts a consumer sees the new active id beside the old connection.
+   *  Anything that signs with the SDK and records the result elsewhere has to compare. */
+  connectedAccountId: string | null
+  /** The LNURL domain the connected `sdk` is configured against; null when not connected.
+   *  Registration must wait for this to equal the account's chosen domain. */
+  connectedLnurlDomain: LnurlDomain | null
   lightningAddress: string | null
   isStableBalanceActive?: boolean
   lastReceivedPaymentId: string | null
@@ -68,6 +77,8 @@ const defaultState: SelfCustodialWalletContextValue = {
   accountType: AccountType.SelfCustodial,
   retry: () => {},
   sdk: null,
+  connectedAccountId: null,
+  connectedLnurlDomain: null,
   lightningAddress: null,
   lastReceivedPaymentId: null,
   hasMoreTransactions: false,
@@ -84,9 +95,18 @@ const SelfCustodialWalletContext =
 export const SelfCustodialWalletProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
-  const { activeAccount, reloadSelfCustodialAccounts } = useAccountRegistry()
+  const { activeAccount, selfCustodialEntries, reloadSelfCustodialAccounts } =
+    useAccountRegistry()
   const activeSelfCustodialAccountId =
     activeAccount?.type === AccountType.SelfCustodial ? activeAccount.id : null
+
+  /** The active account's fixed LNURL domain (its Lightning Address server). Null until it
+   *  registers, or for accounts predating selection — both read as the production default.
+   *  Fed to useSdkLifecycle so a domain choice made before registration reconnects the SDK
+   *  against the chosen server. */
+  const activeLnurlDomain =
+    selfCustodialEntries.find((entry) => entry.id === activeSelfCustodialAccountId)
+      ?.lnurlDomain ?? null
 
   const [retryCount, setRetryCount] = useState(0)
   const { stableBalanceEnabled } = useFeatureFlags()
@@ -96,6 +116,7 @@ export const SelfCustodialWalletProvider: React.FC<React.PropsWithChildren> = ({
     status,
     sdk,
     connectedAccountId,
+    connectedLnurlDomain,
     sdkStableBalanceActive,
     lastReceivedPaymentId,
     hasMoreTransactions,
@@ -103,7 +124,7 @@ export const SelfCustodialWalletProvider: React.FC<React.PropsWithChildren> = ({
     loadMore,
     refreshWallets,
     refreshStableBalanceActive,
-  } = useSdkLifecycle(activeSelfCustodialAccountId, retryCount)
+  } = useSdkLifecycle(activeSelfCustodialAccountId, retryCount, activeLnurlDomain)
 
   const isStableBalanceActive = stableBalanceEnabled && sdkStableBalanceActive
 
@@ -166,6 +187,8 @@ export const SelfCustodialWalletProvider: React.FC<React.PropsWithChildren> = ({
       accountType: AccountType.SelfCustodial,
       retry,
       sdk,
+      connectedAccountId,
+      connectedLnurlDomain,
       lightningAddress,
       isStableBalanceActive,
       lastReceivedPaymentId,
@@ -182,6 +205,8 @@ export const SelfCustodialWalletProvider: React.FC<React.PropsWithChildren> = ({
       status,
       retry,
       sdk,
+      connectedAccountId,
+      connectedLnurlDomain,
       lightningAddress,
       isStableBalanceActive,
       lastReceivedPaymentId,

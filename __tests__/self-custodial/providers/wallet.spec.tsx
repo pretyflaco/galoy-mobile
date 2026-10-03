@@ -53,7 +53,9 @@ jest.mock("@breeztech/breez-sdk-spark-react-native", () => ({
     ClaimedDeposits: "ClaimedDeposits",
     UnclaimedDeposits: "UnclaimedDeposits",
     PaymentFailed: "PaymentFailed",
-    Optimization: "Optimization",
+    AutoOptimization: "AutoOptimization",
+    LightningAddressChanged: "LightningAddressChanged",
+    NewDeposits: "NewDeposits",
   },
   ServiceStatus: {
     Operational: 0,
@@ -381,6 +383,8 @@ describe("SelfCustodialWalletProvider", () => {
       storageDir: "/tmp/test-self-custodial-uuid",
       network: mockSparkNetwork.Regtest,
       leewaySatPerVbyte: 1,
+      // No stored choice in this fixture → null, read by the SDK config as the default.
+      lnurlDomain: null,
     })
   })
 

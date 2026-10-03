@@ -28,6 +28,16 @@ jest.mock("@app/self-custodial/providers/wallet", () => ({
   useSelfCustodialWallet: () => mockUseSelfCustodialWallet(),
 }))
 
+// AccountBtcpay routes to the BTCPay setup flow; no navigator is mounted here.
+const mockNavNavigate = jest.fn()
+jest.mock("@react-navigation/native", () => ({
+  ...jest.requireActual("@react-navigation/native"),
+  useNavigation: () => ({ navigate: mockNavNavigate }),
+}))
+
+/** The domain-matched resolved address the row displays (null until registered). */
+let mockScResolvedAddress: string | null = null
+
 jest.mock("@app/graphql/is-authed-context", () => ({ useIsAuthed: () => true }))
 const mockSettingsScreenQuery = jest.fn()
 jest.mock("@app/graphql/generated", () => ({
@@ -92,7 +102,33 @@ const asSelfCustodial = () => {
   mockUseSelfCustodialWallet.mockReturnValue({
     lightningAddress: "alice@staging.blink.sv",
   })
+  mockScResolvedAddress = "alice@staging.blink.sv"
 }
+
+// The address-resolution hook reaches the spark network → app config → persistent-state
+// chain, none of which this suite mounts. Mock it at the seam; the live-value preference
+// it implements is covered in use-self-custodial-lightning-address.spec.ts.
+jest.mock(
+  "@app/screens/settings-screen/settings/use-self-custodial-lightning-address",
+  () => ({
+    useSelfCustodialLightningAddress: () => mockScResolvedAddress,
+  }),
+)
+
+// usePayLinks reads addresses via the composed hook, which pulls the account-mode chain
+// this suite does not mount. Derive the same shape from the resolved address above.
+jest.mock("@app/self-custodial/hooks/use-account-lightning-addresses", () => ({
+  useAccountLightningAddresses: () => {
+    const domain = mockScResolvedAddress?.split("@")[1]?.toLowerCase()
+    return {
+      primary: mockScResolvedAddress,
+      alt: null,
+      blinkSvAddress: domain === "blink.sv" ? mockScResolvedAddress : null,
+      twentyoneIstAddress: domain === "twentyone.ist" ? mockScResolvedAddress : null,
+      effective: mockScResolvedAddress,
+    }
+  },
+}))
 
 describe("ways to get paid rows", () => {
   beforeEach(() => {
@@ -100,6 +136,7 @@ describe("ways to get paid rows", () => {
     jest.spyOn(Linking, "openURL").mockResolvedValue(true)
     mockSettingsScreenQuery.mockReturnValue({ data: undefined, loading: false })
     mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+    mockScResolvedAddress = null
     mockUseEffectiveDisplayCurrency.mockReturnValue({
       displayCurrency: "EUR",
       loading: false,
@@ -168,6 +205,7 @@ describe("ways to get paid rows", () => {
 
     it("does not fall back to the custodial username when no address is registered", () => {
       mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+      mockScResolvedAddress = null
       mockSettingsScreenQuery.mockReturnValue({
         data: { me: { username: "bob" } },
         loading: false,
@@ -219,11 +257,6 @@ describe("ways to get paid rows", () => {
   describe("plugin rows open a static page in both modes", () => {
     it.each([
       {
-        name: "BTCPay Server",
-        make: () => <AccountBtcpay />,
-        url: "https://www.blink.sv/en/btcpay-blink-plugin",
-      },
-      {
         name: "Woocommerce",
         make: () => <AccountWoocommerce />,
         url: "https://www.blink.sv/en/woocommerce",
@@ -241,6 +274,16 @@ describe("ways to get paid rows", () => {
       render(make())
       pressRow()
       expect(Linking.openURL).toHaveBeenCalledWith(url)
+    })
+
+    /** With the nostr signer flag on (this fork's committed default), the BTCPay row
+     *  routes to the one-tap setup screen instead of the informational blog post. */
+    it("BTCPay Server routes to the one-tap setup when the signer flag is on", () => {
+      asCustodial()
+      render(<AccountBtcpay />)
+      pressRow()
+      expect(mockNavNavigate).toHaveBeenCalledWith("btcpaySetup")
+      expect(Linking.openURL).not.toHaveBeenCalled()
     })
 
     it.each([

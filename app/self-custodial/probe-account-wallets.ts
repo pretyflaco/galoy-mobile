@@ -10,6 +10,7 @@ import KeyStoreWrapper from "@app/utils/storage/secureStorage"
 import { disconnectSdk, initSdk } from "./bridge"
 import { storageDirFor } from "./config"
 import { getSelfCustodialWalletSnapshot } from "./providers/wallet-snapshot"
+import { getSelfCustodialLnurlDomain } from "./storage/account-index"
 
 export const ProbeAccountWalletsStatus = {
   Ok: "ok",
@@ -43,6 +44,7 @@ export const probeSelfCustodialAccountWallets = async (
   const mnemonic = await KeyStoreWrapper.getMnemonicForAccount(accountId)
   if (!mnemonic) return { status: ProbeAccountWalletsStatus.NoMnemonic }
 
+  const lnurlDomain = await getSelfCustodialLnurlDomain(accountId)
   let sdk: BreezSdkInterface | undefined
   try {
     sdk = await initSdk({
@@ -50,6 +52,7 @@ export const probeSelfCustodialAccountWallets = async (
       storageDir: storageDirFor(accountId, network),
       network,
       leewaySatPerVbyte,
+      lnurlDomain,
     })
     const snapshot = await getSelfCustodialWalletSnapshot(sdk)
     return { status: ProbeAccountWalletsStatus.Ok, wallets: snapshot.wallets }

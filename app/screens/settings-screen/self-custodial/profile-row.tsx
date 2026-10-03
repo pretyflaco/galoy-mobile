@@ -1,5 +1,10 @@
 import React, { useState } from "react"
-import { ActivityIndicator, TouchableOpacity, View } from "react-native"
+import {
+  ActivityIndicator,
+  InteractionManager,
+  TouchableOpacity,
+  View,
+} from "react-native"
 
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -70,10 +75,15 @@ export const ProfileRow: React.FC<ProfileRowProps> = ({ entry, isFirstItem }) =>
   const handleSwitch = () => {
     if (isActive) return
     setActiveAccountId(accountId)
-    toastShow({
-      type: "success",
-      message: LL.ProfileScreen.switchAccount(),
-      LL,
+    /** Deferred past the switch's teardown: the toast mounts as a root sibling in the
+     *  same frame the provider tree tears down, and Fabric dispatches mount items for
+     *  views whose viewState is already gone ("Unable to find viewState for tag N"). */
+    InteractionManager.runAfterInteractions(() => {
+      toastShow({
+        type: "success",
+        message: LL.ProfileScreen.switchAccount(),
+        LL,
+      })
     })
     navigation.navigate("Primary")
   }

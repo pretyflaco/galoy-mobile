@@ -3,6 +3,9 @@ const { getDefaultConfig, mergeConfig } = require("@react-native/metro-config")
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require("path")
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const fs = require("fs")
+
 const defaultConfig = getDefaultConfig(__dirname)
 const { assetExts, sourceExts } = defaultConfig.resolver
 
@@ -38,6 +41,19 @@ const config = {
     },
 
     resolverMainFields: ["sbmodern", "react-native", "browser", "main"],
+
+    // Support chat (from poc/support-chat-demo M6): @hpke/* (ts-mls / marmot-ts HPKE)
+    // resolve to their UMD "script" build under the `require` condition; its require()
+    // is a factory parameter that Metro cannot see, so the release bundle throws
+    // "Requiring unknown module ./src/errors.js" (F-M6-2 — the bundle built fine and
+    // the APK failed at the first group creation). Use their ESM build instead.
+    resolveRequest: (context, moduleName, platform) => {
+      if (/^@hpke\/[^/]+$/.test(moduleName)) {
+        const esm = path.resolve(__dirname, "node_modules", moduleName, "esm/mod.js")
+        if (fs.existsSync(esm)) return { type: "sourceFile", filePath: esm }
+      }
+      return context.resolveRequest(context, moduleName, platform)
+    },
   },
 }
 

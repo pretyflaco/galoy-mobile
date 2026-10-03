@@ -12,6 +12,8 @@ type PasswordInputProps = {
   onBlur?: () => void
   placeholder?: string
   error?: string
+  /** Forwarded to the inner TextInput. */
+  testID?: string
 }
 
 export const PasswordInput: React.FC<PasswordInputProps> = ({
@@ -21,6 +23,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
   onBlur,
   placeholder,
   error,
+  testID,
 }) => {
   const [secure, setSecure] = useState(true)
   const styles = useStyles()
@@ -43,6 +46,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
           secureTextEntry={secure}
           autoCapitalize="none"
           autoCorrect={false}
+          testID={testID}
         />
         <Pressable onPress={() => setSecure((prev) => !prev)} style={styles.eyeButton}>
           <GaloyIcon

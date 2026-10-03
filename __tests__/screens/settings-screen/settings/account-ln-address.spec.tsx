@@ -8,11 +8,20 @@ jest.mock("@app/screens/settings-screen/row", () => ({
   SettingsRow: mockSettingsRow,
 }))
 
-const mockScModal = jest.fn((_props: Record<string, unknown>) => null)
+// Self-custodial registration is now a navigation flow (domain choice → username), so the
+// row navigates instead of opening a modal. Capture the navigate call.
+const mockNavigate = jest.fn()
+jest.mock("@react-navigation/native", () => ({
+  ...jest.requireActual("@react-navigation/native"),
+  useNavigation: () => ({ navigate: mockNavigate }),
+}))
+
+// The row reads the address through this hook, not the wallet provider directly.
+let mockScAddress: string | null = null
 jest.mock(
-  "@app/screens/settings-screen/self-custodial/set-lightning-address-modal",
+  "@app/screens/settings-screen/settings/use-self-custodial-lightning-address",
   () => ({
-    SetSelfCustodialLightningAddressModal: mockScModal,
+    useSelfCustodialLightningAddress: () => mockScAddress,
   }),
 )
 
@@ -30,6 +39,18 @@ let mockBackupStatus = "completed"
 jest.mock("@app/self-custodial/providers/backup-state", () => ({
   BackupStatus: { None: "none", Pending: "pending", Completed: "completed" },
   useBackupState: () => ({ backupState: { status: mockBackupStatus, method: null } }),
+}))
+
+let mockIsAnonMode = false
+jest.mock("@app/self-custodial/hooks/use-self-custodial-account-mode", () => ({
+  useSelfCustodialAccountMode: () => ({ isAnonMode: mockIsAnonMode }),
+}))
+
+// The gate is domain-aware now; it has its own spec. Mock it at the seam so these tests
+// pin the row's routing, not the gate's internals.
+let mockIsLightningAddressGated = false
+jest.mock("@app/self-custodial/hooks/use-lightning-address-gate", () => ({
+  useLightningAddressGated: () => mockIsLightningAddressGated,
 }))
 
 jest.mock("@app/components/atomic/galoy-icon", () => ({
@@ -69,6 +90,7 @@ jest.mock("@app/i18n/i18n-react", () => ({
     LL: {
       SettingsScreen: {
         createAddress: () => "Create address",
+        addressDisabled: () => "(disabled)",
       },
       GaloyAddressScreen: { copiedLightningAddressToClipboard: () => "Copied" },
     },
@@ -86,6 +108,9 @@ describe("AccountLNAddress (self-custodial)", () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockBackupStatus = "completed"
+    mockIsAnonMode = false
+    mockIsLightningAddressGated = false
+    mockScAddress = null
     mockSettingsScreenQuery.mockReturnValue({ data: undefined, loading: false })
     mockUseAccountRegistry.mockReturnValue({
       activeAccount: { id: "sc-1", type: AccountType.SelfCustodial },
@@ -93,23 +118,133 @@ describe("AccountLNAddress (self-custodial)", () => {
     })
   })
 
-  it("prompts to create an address and opens the modal when none is registered", () => {
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+  it("prompts to create an address and navigates to the domain choice when none is registered", () => {
+    mockScAddress = null
 
     render(<AccountLNAddress />)
 
     expect(lastRowProps().title).toBe("Create address")
     expect(lastRowProps().rightIcon).toBeUndefined()
-    expect(mockScModal.mock.calls.at(-1)?.[0]?.isVisible).toBe(false)
 
     act(() => (lastRowProps().action as () => void)())
 
-    expect(mockScModal.mock.calls.at(-1)?.[0]?.isVisible).toBe(true)
+    expect(mockNavigate).toHaveBeenCalledWith("selfCustodialChooseLnurlDomain")
     expect(mockCopyToClipboard).not.toHaveBeenCalled()
   })
 
+  /** Incognito cannot receive on blink.sv (dormant upstream), so the row says so beside
+   *  the address it still shows. */
+  it("marks the address disabled in Incognito", () => {
+    mockScAddress = SC_ADDRESS
+    mockIsAnonMode = true
+    mockIsLightningAddressGated = true
+
+    render(<AccountLNAddress />)
+
+    expect(lastRowProps().title).toBe(`${SC_ADDRESS} (disabled)`)
+  })
+
+  /** The suffix is a label, not part of the address: copying it would hand the user a
+   *  string no wallet can pay, so the disabled row offers no copy at all. */
+  it("never copies the disabled label in Incognito", () => {
+    mockScAddress = SC_ADDRESS
+    mockIsAnonMode = true
+    mockIsLightningAddressGated = true
+
+    render(<AccountLNAddress />)
+
+    expect(lastRowProps().rightIcon).toBeUndefined()
+
+    act(() => (lastRowProps().action as () => void)())
+
+    expect(mockCopyToClipboard).not.toHaveBeenCalled()
+  })
+
+  /** The disabled tap is the way out: Incognito with only a blink.sv address offers
+   *  registering the mode-usable twentyone.ist one (secondary flow — the SDK stays on
+   *  blink.sv), entered via the domain-choice screen. */
+  it("routes a tap on the Incognito-disabled address to the domain-choice flow", () => {
+    mockScAddress = SC_ADDRESS
+    mockIsAnonMode = true
+    mockIsLightningAddressGated = true
+
+    render(<AccountLNAddress />)
+
+    act(() => (lastRowProps().action as () => void)())
+
+    expect(mockNavigate).toHaveBeenCalledWith("selfCustodialChooseLnurlDomain")
+    expect(mockCopyToClipboard).not.toHaveBeenCalled()
+  })
+
+  /** Two-domain account: the mode-usable address is the copyable main line; the other
+   *  rides as the subtitle. */
+  it("shows both addresses when the account holds one on each domain", () => {
+    mockScAddress = "alice@blink.sv"
+    mockUseAccountRegistry.mockReturnValue({
+      activeAccount: { id: "sc-1", type: AccountType.SelfCustodial },
+      selfCustodialEntries: [
+        {
+          id: "sc-1",
+          lightningAddress: "alice@blink.sv",
+          altLightningAddress: "alice@twentyone.ist",
+        },
+      ],
+    })
+
+    render(<AccountLNAddress />)
+
+    expect(lastRowProps().title).toBe("alice@blink.sv")
+    expect(lastRowProps().subtitle).toBe("alice@twentyone.ist")
+  })
+
+  /** In Incognito the usable address is the twentyone.ist alt; the dormant blink.sv
+   *  primary rides as the labelled subtitle. */
+  it("shows the twentyone.ist alt as the main line in Incognito, with blink.sv labelled below", () => {
+    mockScAddress = "alice@blink.sv"
+    mockIsAnonMode = true
+    mockUseAccountRegistry.mockReturnValue({
+      activeAccount: { id: "sc-1", type: AccountType.SelfCustodial },
+      selfCustodialEntries: [
+        {
+          id: "sc-1",
+          lightningAddress: "alice@blink.sv",
+          altLightningAddress: "alice@twentyone.ist",
+        },
+      ],
+    })
+
+    render(<AccountLNAddress />)
+
+    expect(lastRowProps().title).toBe("alice@twentyone.ist")
+    expect(lastRowProps().subtitle).toBe("alice@blink.sv (disabled)")
+  })
+
+  /** Nothing to disable, so the suffix must not turn the create prompt into a lie. */
+  it("leaves the create prompt untouched in Incognito when no address exists", () => {
+    mockScAddress = null
+    mockIsAnonMode = true
+
+    render(<AccountLNAddress />)
+
+    expect(lastRowProps().title).toBe("Create address")
+  })
+
+  /** Incognito registration is allowed now — the anon-friendly twentyone.ist server
+   *  accepts it (fork `--allow-anon-addresses`) — so the row navigates into the
+   *  domain-choice flow, where blink.sv is greyed out. */
+  it("navigates to the domain choice in Incognito when no address exists", () => {
+    mockScAddress = null
+    mockIsAnonMode = true
+
+    render(<AccountLNAddress />)
+
+    act(() => (lastRowProps().action as () => void)())
+
+    expect(mockNavigate).toHaveBeenCalledWith("selfCustodialChooseLnurlDomain")
+  })
+
   it("shows the registered address and copies it on press", () => {
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: SC_ADDRESS })
+    mockScAddress = SC_ADDRESS
 
     render(<AccountLNAddress />)
 
@@ -121,12 +256,12 @@ describe("AccountLNAddress (self-custodial)", () => {
     expect(mockCopyToClipboard).toHaveBeenCalledWith(
       expect.objectContaining({ content: SC_ADDRESS }),
     )
-    expect(mockScModal.mock.calls.at(-1)?.[0]?.isVisible).toBe(false)
+    expect(mockNavigate).not.toHaveBeenCalled()
   })
 
-  it("opens the backup-required modal instead of the create modal when backup is not completed", () => {
+  it("opens the backup-required modal instead of navigating when backup is not completed", () => {
     mockBackupStatus = "none"
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+    mockScAddress = null
 
     render(<AccountLNAddress />)
 
@@ -136,25 +271,25 @@ describe("AccountLNAddress (self-custodial)", () => {
     act(() => (lastRowProps().action as () => void)())
 
     expect(mockBackupRequiredModal.mock.calls.at(-1)?.[0]?.isVisible).toBe(true)
-    expect(mockScModal).not.toHaveBeenCalled()
+    expect(mockNavigate).not.toHaveBeenCalled()
     expect(mockCopyToClipboard).not.toHaveBeenCalled()
   })
 
   it("also gates address creation while the backup is still pending", () => {
     mockBackupStatus = "pending"
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+    mockScAddress = null
 
     render(<AccountLNAddress />)
 
     act(() => (lastRowProps().action as () => void)())
 
     expect(mockBackupRequiredModal.mock.calls.at(-1)?.[0]?.isVisible).toBe(true)
-    expect(mockScModal).not.toHaveBeenCalled()
+    expect(mockNavigate).not.toHaveBeenCalled()
   })
 
   it("closes the backup-required modal through its onClose prop", () => {
     mockBackupStatus = "none"
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
+    mockScAddress = null
 
     render(<AccountLNAddress />)
 
@@ -168,7 +303,7 @@ describe("AccountLNAddress (self-custodial)", () => {
 
   it("still copies an existing address on press when backup is not completed", () => {
     mockBackupStatus = "none"
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: SC_ADDRESS })
+    mockScAddress = SC_ADDRESS
 
     render(<AccountLNAddress />)
 
@@ -181,11 +316,7 @@ describe("AccountLNAddress (self-custodial)", () => {
   })
 
   it("shows the persisted address (not the set prompt) while the live address is still resolving", () => {
-    mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
-    mockUseAccountRegistry.mockReturnValue({
-      activeAccount: { id: "sc-1", type: AccountType.SelfCustodial },
-      selfCustodialEntries: [{ id: "sc-1", lightningAddress: SC_ADDRESS }],
-    })
+    mockScAddress = SC_ADDRESS
 
     render(<AccountLNAddress />)
 
@@ -199,6 +330,7 @@ describe("AccountLNAddress (custodial)", () => {
     jest.clearAllMocks()
     // an incomplete backup must never gate the custodial flow
     mockBackupStatus = "none"
+    mockScAddress = null
     mockUseSelfCustodialWallet.mockReturnValue({ lightningAddress: null })
     mockUseAccountRegistry.mockReturnValue({
       activeAccount: { id: "cust-1", type: AccountType.Custodial },

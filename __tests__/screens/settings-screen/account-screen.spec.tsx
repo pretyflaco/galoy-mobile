@@ -128,6 +128,16 @@ jest.mock("@app/graphql/generated", () => ({
   useSettingsScreenQuery: () => ({ data: null, loading: false }),
 }))
 
+jest.mock("@app/self-custodial/hooks/use-self-custodial-account-mode", () => ({
+  useSelfCustodialAccountMode: () => ({ isAnonMode: false }),
+}))
+
+// The gate resolves the address through the spark-network chain, which this suite does
+// not mount; it has its own spec.
+jest.mock("@app/self-custodial/hooks/use-lightning-address-gate", () => ({
+  useLightningAddressGated: () => false,
+}))
+
 const mockRefreshSelfCustodialWallets = jest.fn().mockResolvedValue(undefined)
 const mockUpdateCurrentSelfCustodialAccount = jest.fn().mockResolvedValue(undefined)
 jest.mock("@app/self-custodial/providers/wallet", () => ({

@@ -72,6 +72,7 @@
   },
   "AuthenticationScreen": {
     "authenticationDescription": "Autentificirajte se za nastavak",
+    "authenticationRequired": "Potrebna je autentifikacija. PIN kod ili biometriju možete postaviti u sigurnosnim postavkama.",
     "setUp": "Postavite biometrijsku autentifikaciju",
     "setUpAuthenticationDescription": "Koristite biometriju za autentifikaciju",
     "skip": "Preskoči",
@@ -2097,17 +2098,70 @@
       "sendingLimit": "Smanjeno dnevno ograničenje slanja",
       "noOnchain": "Nema primanja bitcoina na lancu",
       "recoveryOption": "Oporavak sredstava putem SMS-a ili e-pošte",
-      "dailyLimit": "USD 1,000 dnevni limit transakcija",
+      "dailyLimit": "USD {limit: string} dnevni limit transakcija",
       "onchainReceive": "Primajte Bitcoin onchain"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Dozvole za lokaciju",
     "navToSettingsText": "Ako želite dati Blink dozvolu za lokaciju, idite u postavke i omogućite je tamo",
-    "payBusiness": "plati ovu radnju",
     "openSettings": "Otvori postavke",
     "title": "Karta",
-    "error": "Ups. Nešto je pošlo po zlu prilikom dohvaćanja vaše lokacije"
+    "error": "Ups. Nešto je pošlo po zlu prilikom dohvaćanja vaše lokacije",
+    "attribution": "Mjesta s BTC Map, © suradnici OpenStreetMapa",
+    "unnamedPlace": "Mjesto bez naziva",
+    "loadingPlaces": "Učitavanje mjesta s BTC Map",
+    "placesError": "Nije moguće učitati mjesta s BTC Map",
+    "detailsError": "Nije moguće učitati ovo mjesto",
+    "cannotOpenLink": "Ništa na ovom telefonu ne može otvoriti tu poveznicu",
+    "openNow": "Sada otvoreno",
+    "closedNow": "Zatvoreno",
+    "navigate": "Navigiraj",
+    "payMerchant": "Plati ovom trgovcu",
+    "requiresApp": "Za plaćanje je potrebna određena aplikacija",
+    "boosted": "Istaknuto",
+    "verifiedOn": "Provjereno {date: string}",
+    "lastVerifiedOn": "Posljednja provjera {date: string}",
+    "needsSurvey": "Ovo mjesto treba provjeriti",
+    "searchError": "Pretraživanje ovog područja nije uspjelo",
+    "clearSearch": "Očisti pretragu",
+    "nothingToShow": "Nema se što prikazati",
+    "metersAway": "{distance: string} metara odavde",
+    "kilometersAway": "{distance: string} km odavde",
+    "filters": "Filtri",
+    "categories": "Kategorije",
+    "selectAll": "Odaberi sve",
+    "clearAll": "Očisti sve",
+    "addPlace": "Dodaj na kartu",
+    "addPlaceTitle": "Dodaj mjesto",
+    "placePinHint": "Pomaknite kartu tako da pribadača bude na mjestu",
+    "placeName": "Naziv",
+    "placeNameHint": "Kako se mjesto zove",
+    "placeCategory": "Kategorija",
+    "placeCategoryHint": "Odaberite kategoriju",
+    "placeLocation": "Lokacija",
+    "changeLocation": "Promijeni",
+    "placeReviewNote": "Nova mjesta šalju se u BTC Map. Tamošnja zajednica pregledava i održava sve što je na karti.",
+    "placeSubmitted": "Mjesto je poslano u BTC Map — hvala što ste ga dodali",
+    "placeSubmissionFailed": "Mjesto nije moguće poslati. Provjerite svoju vezu i pokušajte ponovno.",
+    "placeRefused": "BTC Map nije mogao prihvatiti ovo mjesto. Na kartu nije dodano ništa.",
+    "category": {
+      "restaurants": "Restorani",
+      "cafes": "Kafići",
+      "bakeries": "Pekarnice i slastice",
+      "bars": "Barovi i noćni život",
+      "groceries": "Prehrana",
+      "shops": "Trgovine",
+      "money": "Bankomati i mjenjačnice",
+      "lodging": "Hoteli i smještaj",
+      "automotive": "Automobili i gorivo",
+      "health": "Zdravlje",
+      "beauty": "Ljepota i wellness",
+      "services": "Usluge",
+      "sports": "Sport i priroda",
+      "leisure": "Slobodno vrijeme i kultura",
+      "other": "Ostalo"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} u tijeku",
@@ -2122,11 +2176,15 @@
   },
   "PinScreen": {
     "attemptsRemaining": "Netočan PIN. {attemptsRemaining: number} preostalih pokušaja.",
+    "enterPin": "Unesite svoj PIN kod",
+    "lockoutUnavailable": "Neuspjeli pokušaj nije moguće sigurno zabilježiti. Odjava.",
     "oneAttemptRemaining": "Netočan PIN. Preostao je 1 pokušaj.",
+    "pinUnreadable": "Nije moguće provjeriti vaš PIN. Pokušajte ponovno.",
     "setPin": "Postavite svoj PIN kod",
     "setPinFailedMatch": "Pinovi se ne podudaraju - postavite svoj PIN kod",
     "storePinFailed": "Nije moguće pohraniti vaš PIN.",
     "tooManyAttempts": "Previše neuspjelih pokušaja. Odjava.",
+    "tryAgainIn": "Pokušajte ponovno za {seconds: number} s.",
     "verifyPin": "Potvrdite svoj PIN kod"
   },
   "PriceHistoryScreen": {
@@ -2222,7 +2280,9 @@
   "ScanningQRCodeScreen": {
     "invalidContent": "Našli smo:\n\n{found: string}\n\nOvo nije valjana Bitcoin adresa ili Lightning faktura",
     "expiredContent": "Našli smo:\n\n{found: string}\n\nOva faktura je istekla",
+    "unresolvedContent": "Pronašli smo:\n\n{found: string}\n\nNismo mogli obraditi ovaj kôd. Možda je istekao ili usluga privremeno nije dostupna. Zatražite novi kôd ili pokušajte ponovno kasnije.",
     "invalidTitle": "Nevažeći QR kod",
+    "unresolvedTitle": "Kôd nije dostupan",
     "openLinkTitle": "Otvori poveznicu",
     "confirmOpenLink": "Jeste li sigurni da želite otvoriti ovu poveznicu?",
     "noQrCode": "Nismo mogli pronaći QR kod na slici",
@@ -2297,6 +2357,7 @@
     "selfPaymentError": "{lnAddress: string} je vaša {bankName: string} adresa.",
     "selfPaymentAdvice": "Ako želite poslati novac na drugi račun koji posjedujete, umjesto toga možete koristiti fakturu, LN ili BTC adresu.",
     "lnAddressError": "Ne možemo doći do ove Lightning adrese. Ako ste sigurni da postoji, možete pokušati ponovno kasnije.",
+    "lnurlServiceError": "Nismo mogli obraditi ovaj kôd. Možda je istekao ili usluga privremeno nije dostupna.",
     "lnAddressAdvice": "Provjerite je li točno napisano ili umjesto toga tražite od primatelja fakturu ili BTC adresu.",
     "unknownLightning": "Ne možemo analizirati ovu Lightning adresu. Molimo pokušajte ponovno.",
     "unknownOnchain": "Ne možemo analizirati ovu Lightning adresu. Molimo pokušajte ponovno.",
@@ -2377,6 +2438,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Stvori adresu",
+    "addressDisabled": "(onemogućeno)",
     "donationButton": "Gumb za doniranje",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2448,7 @@
     "apiAcess": "API integracija",
     "apiDocumentation": "API dokumentacija",
     "apiDashboard": "API pristup i nadzorna ploča",
+    "mode": "Način",
     "pos": "Prodajno mjesto",
     "posCopied": "Vaša poveznica prodajnog mjesta je kopirana",
     "activated": "Aktivirano",
@@ -2455,7 +2518,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Vaš račun ima više od $5",
     "itsATrialAccount": "Probni računi imaju smanjene limite transakcija i nemaju metodu oporavka. Ako izgubite telefon ili deinstalirate aplikaciju, vaša sredstva neće biti moguće oporaviti.",
-    "accountBeingDeleted": "Vaš račun se briše, molimo pričekajte...",
+    "accountBeingDeleted": "Vaš račun se zatvara, molimo pričekajte...",
     "dangerZone": "Opasna zona",
     "phoneDeletedSuccessfully": "Telefonski broj uspješno izbrisan",
     "phoneNumber": "Telefonski broj",
@@ -2517,7 +2580,28 @@
     "removedAccount": "Uklonili ste račun {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "nije dostupan u vašoj regiji"
+    "walletLabel": "nije dostupan u vašoj regiji",
+    "anonModeWalletLabel": "nije dostupno u Incognito načinu"
+  },
+  "AnonModeConvertModal": {
+    "title": "Najprije prenesite svoj dolarski saldo",
+    "body": "Incognito način podržava samo Bitcoin saldo. Prenesite svoj dolarski saldo na Bitcoin saldo kako biste se prebacili."
+  },
+  "EnhancedModePrompt": {
+    "title": "Ova značajka zahtijeva Enhanced način",
+    "body": "U Incognito ste načinu, Blink ne zna vašu regiju, pa neke značajke nisu dostupne. Prebacite se na Enhanced kako bi se izvršila provjera lokacije i otključale sve značajke za vašu regiju.",
+    "switchButton": "Prebaci na Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Prebačeno na Enhanced način\nbez skrbništva",
+    "anon": "Prebačeno na Incognito način\nbez skrbništva"
+  },
+  "RestrictedRegion": {
+    "title": "Otkrivena je ograničena regija",
+    "body": "Čini se da vaša veza dolazi iz ograničene regije. Blink ne može pružati usluge s ove lokacije. Vaša stanja nisu pogođena.",
+    "bodyReturn": "Čim napustite ovu regiju, sve će funkcije ponovno raditi normalno.",
+    "learnMore": "Saznajte više",
+    "contactSupport": "Kontaktirajte podršku"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Dolarski saldo nije dostupan u vašoj regiji"
@@ -2597,17 +2681,17 @@
     "receive": "Primi",
     "transfer": "Prijenos",
     "lightning": "Lightning",
+    "lightningBelowThreshold": "Lightning ispod {threshold: string} SAT",
     "intraledger": "Intraledger",
-    "onchainPriority": "Onchain prioritetno (što prije)",
+    "onchainPriority": "Onchain prioritetno (~10 min)",
     "onchainStandard": "Onchain standardno (~4h)",
-    "onchainEconomy": "Onchain ekonomično",
+    "onchainEconomy": "Onchain ekonomično (~24h)",
     "lightningTransactions": "Lightning transakcije",
     "onchainBelowThreshold": "Onchain ispod {threshold: string} SAT",
     "onchainAboveThreshold": "Onchain iznad {threshold: string} SAT",
     "onchainBetweenThresholds": "Onchain between {lower: string} and {upper: string} SAT",
     "transferFee": "Naknada za prijenos",
     "noFee": "bez naknade",
-    "lightningSendFee": "{fee: string} + ~{routingFee: string} naknada za usmjeravanje",
     "fromApprox": "od ~{fee: string}",
     "satAmount": "{amount: string} SAT",
     "error": "Trenutačno nije moguće dohvatiti naknade"
@@ -2643,7 +2727,6 @@
     "letsGo": "Idemo!",
     "stayInTrialMode": "Ostani u probnom načinu rada",
     "upgradeToLevel": "Nadogradite na razinu {level: number}",
-    "notNow": "Ne sada",
     "setUpLevelAccount": "Postavite račun razine {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2782,7 @@
       "mainTitle": "Dobrodošli na razinu 1",
       "title": "Nove značajke otključane za vaš račun:",
       "receiveBitcoinDescription": "Primajte Bitcoin koristeći svoj telefonski broj",
-      "dailyLimitDescription": "Pošaljite do USD 1,000 dnevno",
+      "dailyLimitDescription": "Pošaljite do USD {limit: string} dnevno",
       "onchainDescription": "Primajte onchain plaćanja"
     },
     "emailBenefits": {
@@ -2821,6 +2904,7 @@
     "bitcoinPrice": "Cijena Bitcoina",
     "btcAccount": "Bitcoin račun",
     "cancel": "Poništi",
+    "notNow": "Ne sada",
     "card": "Kartica",
     "close": "Zatvori",
     "confirm": "Potvrdi",
@@ -2969,17 +3053,17 @@
     "defaultEmailSubject": "{bankName: string} - Podrška",
     "defaultSupportMessage": "Bok! Trebam pomoć s {bankName: string}, koristim verziju {version: string} na {os: string}.",
     "emailCopied": "e-pošta {email: string} kopirana u međuspremnik",
-    "deleteAccount": "Izbriši račun",
+    "deleteAccount": "Zatvori račun",
     "delete": "izbrisati",
-    "typeDelete": "Unesite \"{delete: string}\" za potvrdu brisanja računa",
+    "typeDelete": "Upišite \"{delete: string}\" za potvrdu zatvaranja računa",
     "finalConfirmationAccountDeletionTitle": "Potrebna konačna potvrda",
-    "finalConfirmationAccountDeletionMessage": "Jeste li sigurni da želite izbrisati svoj račun? Ova radnja je nepovratna.",
-    "deleteAccountBalanceWarning": "Brisanjem računa izgubit ćete pristup svom trenutnom stanju. Jeste li sigurni da želite nastaviti?",
-    "deleteAccountConfirmation": "Vaš račun je označen za brisanje.\n\nKada probno razdoblje povezano s regulatornim zahtjevima završi, preostali podaci povezani s vašim računom bit će trajno izbrisani.",
-    "deleteAccountFromPhone": "Bok!, molim vas izbrišite moj račun. Moj broj telefona je {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Nakon zatvaranja nećete moći pristupiti svom računu niti ga koristiti. Možemo zadržati određene zapise kako zahtijevaju zakon i naše obveze čuvanja podataka. Jeste li sigurni da želite zatvoriti svoj račun?",
+    "deleteAccountBalanceWarning": "Zatvaranjem računa izgubit ćete pristup trenutnom stanju. Jeste li sigurni da želite nastaviti?",
+    "deleteAccountConfirmation": "Vaš račun je zatvoren.\n\nMožemo zadržati određene zapise kako zahtijevaju zakon i naše obveze čuvanja podataka.",
+    "deleteAccountFromPhone": "Pozdrav!, molim vas zatvorite moj račun. Moj broj telefona je {phoneNumber: string}.",
     "deleteAccountError": "Nešto je pošlo po zlu. Kontaktirajte {email: string} za dodatnu pomoć.",
     "bye": "Pozdrav!",
-    "deleteAccountWarning": "Pažnja: Brisanje računa je trajno!\nProvjerite da novčanici nemaju sredstava prije brisanja.\nIzbrisani račun ne može biti vraćen."
+    "deleteAccountWarning": "Pažnja: Zatvaranje računa je trajno!\nPrije zatvaranja provjerite da novčanici nemaju sredstava.\nZatvoreni račun nije moguće vratiti.\nMožemo zadržati određene zapise kako zahtijeva zakon."
   },
   "lnurl": {
     "overLimit": "Ne možete poslati više od maksimalnog iznosa",
@@ -3413,8 +3497,7 @@
         "pinChangedTitle": "PIN promijenjen",
         "pinChangedSubtitle": "Vaš PIN je uspješno promijenjen.",
         "pinChangedToast": "PIN je uspješno promijenjen",
-        "biometricDescription": "Potvrdite svoj identitet za promjenu PIN-a",
-        "biometricRequired": "Biometrijska autentifikacija je potrebna za promjenu vašeg PIN-a."
+        "biometricDescription": "Potvrdite svoj identitet za promjenu PIN-a"
       }
     },
     "ReplaceCard": {
@@ -3756,6 +3839,7 @@
     "reminderBulletin": {
       "title": "Važno",
       "body": "Prijeđite na račun bez skrbništva putem vođene migracije ili podignite sredstva prije {date}. Primanje prestaje {receiveStopsDate}.",
+      "bodyReceiveDisabled": "Primanje je prestalo. Prijeđite na račun bez skrbništva putem vođene migracije ili podignite sredstva prije {date}.",
       "migrateCta": "Migriraj"
     },
     "offboardBulletin": {
@@ -3846,9 +3930,22 @@
     "createFailed": "Neuspjelo stvaranje novčanika. Molimo pokušajte ponovno.",
     "selfCustodialDisabled": "Nekustodijska opcija je privremeno nedostupna."
   },
+  "ChooseExperienceScreen": {
+    "title": "Odaberite način bez skrbništva",
+    "subtitle": "Vaš izbor određuje koje su značajke dostupne. Možete promijeniti kad god želite.",
+    "enhancedLabel": "Enhanced\nnačin",
+    "enhancedDescription": "Vašu regiju koristimo za otključavanje vrijednih usluga dostupnih ondje gdje jeste.",
+    "anonLabel": "Incognito\nnačin",
+    "anonDescription": "Za maksimalnu privatnost. Manje značajki.",
+    "continueButton": "Nastavi"
+  },
   "UnsupportedRegionScreen": {
     "title": "Nepodržana regija",
-    "description": "Nažalost ne možemo pružati uslugu korisnicima iz vaše trenutne regije."
+    "description": "Nažalost ne možemo pružati uslugu korisnicima iz vaše trenutne regije.",
+    "custodialSignupDescription": "Nažalost ne možemo otvoriti nove skrbničke račune u tvojoj trenutnoj regiji. Umjesto toga možeš koristiti račun u vlastitom skrbništvu.",
+    "custodialSignupOnlyDescription": "Nažalost ne možemo otvoriti nove skrbničke račune u tvojoj trenutnoj regiji.",
+    "unknownRegionTitle": "Regija nije utvrđena",
+    "unknownRegionDescription": "Nismo mogli utvrditi tvoju regiju. Provjeri vezu i pokušaj ponovno."
   },
   "RestoreScreen": {
     "title": "Vraćanje novčanika",

@@ -11,19 +11,23 @@ import {
 import { generateMnemonic, validateMnemonic } from "bip39"
 import Crypto from "react-native-quick-crypto"
 
+import { AccountMode } from "@app/types/account"
 import { reportError } from "@app/utils/error-logging"
 import { normalizeMnemonic } from "@app/utils/mnemonic"
 import KeyStoreWrapper from "@app/utils/storage/secureStorage"
 
 import {
   lnurlDomainFor,
+  lnurlServerUrlFor,
   MAX_SLIPPAGE_BPS,
   networkLabelFor,
   requireBreezApiKey,
   requireSparkTokenIdentifier,
   SparkToken,
   storageDirFor,
+  type LnurlDomain,
 } from "../config"
+import { recoverLnurlServerMode } from "../lnurl-server-mode"
 import { createSdkLogListener } from "../logging"
 import { addSelfCustodialAccountId } from "../storage/account-index"
 
@@ -40,10 +44,14 @@ const initializeLogging = (() => {
   }
 })()
 
-const createSdkConfig = (network: Network, leewaySatPerVbyte: number) => {
+const createSdkConfig = (
+  network: Network,
+  leewaySatPerVbyte: number,
+  lnurlDomain?: LnurlDomain | null,
+) => {
   const config = defaultConfig(network)
   config.apiKey = requireBreezApiKey()
-  config.lnurlDomain = lnurlDomainFor(network)
+  config.lnurlDomain = lnurlDomainFor(network, lnurlDomain)
 
   /**
    * The SDK default cap is 1 sat/vByte, which blocks almost every deposit claim.
@@ -72,6 +80,8 @@ type InitSdkParams = {
   network: Network
   /** Leeway (sat/vByte) over the network-recommended fee for auto-claiming deposits. */
   leewaySatPerVbyte: number
+  /** The account's chosen LNURL domain (fixed at registration). Null → production default. */
+  lnurlDomain?: LnurlDomain | null
 }
 
 export const initSdk = async ({
@@ -79,10 +89,11 @@ export const initSdk = async ({
   storageDir,
   network,
   leewaySatPerVbyte,
+  lnurlDomain,
 }: InitSdkParams): Promise<BreezSdkInterface> => {
   initializeLogging()
   const seed = new Seed.Mnemonic({ mnemonic, passphrase: undefined })
-  const config = createSdkConfig(network, leewaySatPerVbyte)
+  const config = createSdkConfig(network, leewaySatPerVbyte, lnurlDomain)
   return connect({ config, seed, storageDir })
 }
 
@@ -131,6 +142,18 @@ type RestoreWalletParams = {
   network: Network
   /** Leeway (sat/vByte) over the network-recommended fee for auto-claiming deposits. */
   leewaySatPerVbyte: number
+  /** The account's stored LNURL domain, when this restore already knows it. Null → default. */
+  lnurlDomain?: LnurlDomain | null
+}
+
+type RestoredWallet = {
+  /** The mode the LNURL server holds for this wallet, or null when it holds none. Read
+   *  here because this is the one moment the wallet is connected and able to sign. */
+  serverMode: AccountMode | null
+  /** False when the server could not be asked at all, which is not the same as it
+   *  answering "none": a stored Anon may be sitting behind an unanswered request, and
+   *  assuming Enhanced would push it away. */
+  isServerModeKnown: boolean
 }
 
 export const selfCustodialRestoreWallet = async ({
@@ -138,7 +161,8 @@ export const selfCustodialRestoreWallet = async ({
   mnemonic,
   network,
   leewaySatPerVbyte,
-}: RestoreWalletParams): Promise<void> => {
+  lnurlDomain,
+}: RestoreWalletParams): Promise<RestoredWallet> => {
   const normalized = normalizeMnemonic(mnemonic)
   if (!validateMnemonic(normalized)) {
     throw new Error("Invalid BIP39 mnemonic")
@@ -158,9 +182,21 @@ export const selfCustodialRestoreWallet = async ({
       storageDir: storageDirFor(accountId, network),
       network,
       leewaySatPerVbyte,
+      lnurlDomain,
     })
+    /** An unreachable server must not fail the restore: the wallet itself is whole. */
+    const recovered = await recoverLnurlServerMode({
+      sdk,
+      serverUrl: lnurlServerUrlFor(network, lnurlDomain),
+    })
+      .then((serverMode) => ({ serverMode, isServerModeKnown: true }))
+      .catch((err) => {
+        reportError("Wallet restore mode recovery", err)
+        return { serverMode: null, isServerModeKnown: false }
+      })
     await disconnectSdk(sdk)
     await addSelfCustodialAccountId(accountId)
+    return recovered
   } catch (err) {
     await KeyStoreWrapper.deleteMnemonicForAccount(accountId)
     reportError("Wallet restore", err)

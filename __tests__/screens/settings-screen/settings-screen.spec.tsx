@@ -1,9 +1,10 @@
-jest.mock("@app/hooks/use-backup-nudge-state", () => ({
+jest.mock("@app/self-custodial/hooks/use-backup-nudge-state", () => ({
   useBackupNudgeState: () => ({
     shouldShowBanner: false,
     shouldShowModal: false,
     shouldShowSettingsBanner: false,
     dismissBanner: jest.fn(),
+    dismissModal: jest.fn(),
   }),
 }))
 
@@ -196,11 +197,54 @@ jest.mock("@apollo/client", () => {
   }
 })
 
-/** Mocked wholesale: the real module warns at load time when no API key is configured. */
-jest.mock("@app/utils/ip-country-lookup", () => ({
-  DEFAULT_ADAPTERS: [],
-  resolveIpCountryCode: jest.fn(async () => undefined),
-  resolveIpCountryCodeCached: jest.fn(async () => undefined),
+jest.mock("@app/utils/ip-country-lookup")
+
+let mockIsAnonMode = false
+jest.mock("@app/self-custodial/hooks/use-self-custodial-account-mode", () => ({
+  useSelfCustodialAccountMode: () => ({ isAnonMode: mockIsAnonMode }),
+}))
+
+const mockPromptEnhancedMode = jest.fn()
+jest.mock("@app/components/enhanced-mode-prompt", () => ({
+  ...jest.requireActual("@app/components/enhanced-mode-prompt"),
+  useEnhancedModePrompt: () => ({
+    promptEnhancedMode: mockPromptEnhancedMode,
+    isEnhancedModePromptVisible: false,
+  }),
+}))
+
+const mockPromptRequiresBlinkAddress = jest.fn()
+jest.mock("@app/components/requires-blink-address-prompt", () => ({
+  ...jest.requireActual("@app/components/requires-blink-address-prompt"),
+  useRequiresBlinkAddressPrompt: () => ({
+    promptRequiresBlinkAddress: mockPromptRequiresBlinkAddress,
+    isRequiresBlinkAddressPromptVisible: false,
+  }),
+}))
+
+/** The section gate reads the account's blink.sv address via this composed hook; the
+ *  domain matrix itself is pinned in use-account-lightning-addresses.spec.ts. */
+let mockBlinkSvAddress: string | null = "satoshi@blink.sv"
+let mockEffectiveAddress: string | null = "satoshi@blink.sv"
+jest.mock("@app/self-custodial/hooks/use-account-lightning-addresses", () => ({
+  useAccountLightningAddresses: () => ({
+    primary: mockEffectiveAddress,
+    alt: null,
+    blinkSvAddress: mockBlinkSvAddress,
+    twentyoneIstAddress: null,
+    effective: mockEffectiveAddress,
+  }),
+}))
+
+let mockIsRestrictedRegion = false
+const mockPresentRestrictedRegionModal = jest.fn()
+jest.mock("@app/components/restricted-region", () => ({
+  ...jest.requireActual("@app/components/restricted-region"),
+  useRestrictedRegion: () => ({
+    isRestrictedRegion: mockIsRestrictedRegion,
+    isRestrictedRegionModalVisible: false,
+    presentRestrictedRegionModal: mockPresentRestrictedRegionModal,
+  }),
 }))
 
 /** The fake Apollo client above has no writeQuery, so the real updateCountryCode would throw and warn on every device-location render. */
@@ -319,6 +363,8 @@ describe("Settings Screen", () => {
     // clearAllMocks does not reset return values, so re-arm the default explicitly
     mockUseIsAuthed.mockReturnValue(true)
     mockAccountRegistryOverride.activeAccount = undefined
+    mockIsRestrictedRegion = false
+    mockIsAnonMode = false
     loadLocale("en")
     testState = createTestState()
   })
@@ -475,6 +521,53 @@ describe("Settings Screen", () => {
 
     const elements = await screen.findAllByText("test1@blink.sv")
     expect(elements.length).toBeGreaterThan(0)
+
+    await flushEffects()
+  })
+
+  it("shows the restricted-region banner while the region is restricted", async () => {
+    mockIsRestrictedRegion = true
+
+    render(
+      <ContextForScreen>
+        <LoggedInWithUsername mock={mocksWithUsername} />
+      </ContextForScreen>,
+    )
+
+    expect(await screen.findByTestId("restricted-region-banner")).toBeTruthy()
+
+    await flushEffects()
+  })
+
+  it("hides the restricted-region banner outside a restricted region", async () => {
+    render(
+      <ContextForScreen>
+        <LoggedInWithUsername mock={mocksWithUsername} />
+      </ContextForScreen>,
+    )
+
+    await flushEffects()
+
+    expect(screen.queryByTestId("restricted-region-banner")).toBeNull()
+  })
+
+  /** While sanctioned the group is gated behind DisabledFeature, which takes its
+   *  children out of the accessibility tree and stands in for them: the label only
+   *  resolves to a pressable while the gate is on. */
+  it("gates Ways to get paid behind the sanctions modal while restricted", async () => {
+    mockIsRestrictedRegion = true
+
+    render(
+      <ContextForScreen>
+        <LoggedInWithUsername mock={mocksWithUsername} />
+      </ContextForScreen>,
+    )
+
+    const gates = await screen.findAllByLabelText("Ways to get paid")
+    fireEvent.press(gates[0])
+
+    expect(mockPresentRestrictedRegionModal).toHaveBeenCalledTimes(1)
+    expect(mockPromptEnhancedMode).not.toHaveBeenCalled()
 
     await flushEffects()
   })
@@ -691,5 +784,145 @@ describe("Settings Screen", () => {
     )
 
     await flushEffects()
+  })
+})
+
+describe("Settings Screen Anon gating", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    loadLocale("en")
+    mockIsAnonMode = false
+    mockBlinkSvAddress = "satoshi@blink.sv"
+    mockEffectiveAddress = "satoshi@blink.sv"
+    mockUseIsAuthed.mockReturnValue(true)
+  })
+
+  it("leaves the Ways-to-get-paid group open outside Anon mode", async () => {
+    render(
+      <ContextForScreen>
+        <SettingsScreen />
+      </ContextForScreen>,
+    )
+    await flushEffects()
+
+    expect(screen.queryByLabelText("Ways to get paid")).toBeNull()
+  })
+
+  it("gates the Ways-to-get-paid group in Anon mode", async () => {
+    mockIsAnonMode = true
+
+    render(
+      <ContextForScreen>
+        <SettingsScreen />
+      </ContextForScreen>,
+    )
+    await flushEffects()
+
+    /** The gated rows leave the accessibility tree; a per-row gate stands in by name. */
+    expect(screen.getAllByLabelText("Ways to get paid").length).toBeGreaterThan(0)
+  })
+
+  it("routes a tap on a gated row to the Enhanced prompt", async () => {
+    mockIsAnonMode = true
+
+    render(
+      <ContextForScreen>
+        <SettingsScreen />
+      </ContextForScreen>,
+    )
+    await flushEffects()
+
+    fireEvent.press(screen.getAllByLabelText("Ways to get paid")[0])
+
+    expect(mockPromptEnhancedMode).toHaveBeenCalledTimes(1)
+  })
+
+  /** The Lightning Address row is exempt from the section gate: it stays reachable in
+   *  Incognito so an anon account can still create/use a twentyone.ist address. Unlike the
+   *  rest of the section it stays IN the accessibility tree (not hidden behind the gate). */
+  it("keeps the Lightning Address row reachable in Anon mode", async () => {
+    mockIsAnonMode = true
+
+    render(
+      <ContextForScreen>
+        <SettingsScreen />
+      </ContextForScreen>,
+    )
+    await flushEffects()
+
+    /** The globally-mocked settings query gives the row a username, so it renders the
+     *  address live rather than being hidden by the section gate. */
+    expect(screen.getByText("test1@blink.sv")).toBeTruthy()
+  })
+})
+
+describe("Settings Screen Ways-to-get-paid domain gating", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    loadLocale("en")
+    mockIsAnonMode = false
+    mockIsRestrictedRegion = false
+    /** The account's only address sits on twentyone.ist: pay-link rows render (they have
+     *  a username) but must be gated behind the blink-address prompt. */
+    mockBlinkSvAddress = null
+    mockEffectiveAddress = "satoshi@twentyone.ist"
+    mockUseIsAuthed.mockReturnValue(true)
+    mockAccountRegistryOverride.activeAccount = {
+      id: "sc-1",
+      type: AccountType.SelfCustodial,
+    }
+  })
+
+  it("gates the section for an enhanced self-custodial account with no blink.sv address", async () => {
+    render(
+      <ContextForScreen>
+        <SettingsScreen />
+      </ContextForScreen>,
+    )
+    await flushEffects()
+
+    expect(screen.getAllByLabelText("Ways to get paid").length).toBeGreaterThan(0)
+  })
+
+  it("routes a gated-row tap to the blink-address prompt, not the mode or region prompt", async () => {
+    render(
+      <ContextForScreen>
+        <SettingsScreen />
+      </ContextForScreen>,
+    )
+    await flushEffects()
+
+    fireEvent.press(screen.getAllByLabelText("Ways to get paid")[0])
+
+    expect(mockPromptRequiresBlinkAddress).toHaveBeenCalledTimes(1)
+    expect(mockPromptEnhancedMode).not.toHaveBeenCalled()
+    expect(mockPresentRestrictedRegionModal).not.toHaveBeenCalled()
+  })
+
+  it("leaves the section open once the account holds a blink.sv address (either slot)", async () => {
+    mockBlinkSvAddress = "satoshi@blink.sv"
+
+    render(
+      <ContextForScreen>
+        <SettingsScreen />
+      </ContextForScreen>,
+    )
+    await flushEffects()
+
+    expect(screen.queryByLabelText("Ways to get paid")).toBeNull()
+  })
+
+  it("leaves a custodial account's section alone regardless of address state", async () => {
+    mockAccountRegistryOverride.activeAccount = undefined
+    mockBlinkSvAddress = null
+
+    render(
+      <ContextForScreen>
+        <LoggedInWithUsername mock={mocksWithUsername} />
+      </ContextForScreen>,
+    )
+    await flushEffects()
+
+    expect(screen.queryByLabelText("Ways to get paid")).toBeNull()
   })
 })

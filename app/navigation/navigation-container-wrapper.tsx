@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef } from "react"
 import { Linking } from "react-native"
 import RNBootSplash from "react-native-bootsplash"
 
+import { bootSplashGate } from "./boot-splash-gate"
+
 import analytics from "@react-native-firebase/analytics"
 import {
   createNavigationContainerRef,
@@ -16,15 +18,32 @@ import { useTheme } from "@rn-vui/themed"
 
 import { Action, useActionsContext } from "@app/components/actions"
 import { PREFIX_LINKING, TELEGRAM_CALLBACK_PATH } from "@app/config"
+import {
+  handleNostrConnectLink,
+  isNostrConnectLink,
+} from "@app/nostr/connect-link-handler"
 import { useIsAuthed } from "@app/graphql/is-authed-context"
 import { useActiveWallet } from "@app/hooks/use-active-wallet"
 import { useMigrationBlocker } from "@app/screens/account-migration/hooks/use-migration-blocker"
 
+import { DEEP_LINK_SCREENS } from "./deep-link-screens"
 import { isMigrationRoute } from "./migration-routes"
 import { RootStackParamList } from "./stack-param-lists"
 import { isUnlockInProgress } from "./unlock-routes"
 
 const navigationRef = createNavigationContainerRef<RootStackParamList>()
+
+/** In-app route requests (support chat notification taps, M18): delivered through
+ *  navigationRef under the same unlock + auth gate as deferred links, never through a
+ *  Linking.openURL round-trip — with several Blink builds installed that pops Android's
+ *  app chooser (and lets another app claim the scheme). Latest-wins. */
+type InAppRoute = "supportChat"
+let pendingInAppRoute: InAppRoute | null = null
+const inAppRouteListeners = new Set<() => void>()
+export const requestInAppRoute = (route: InAppRoute): void => {
+  pendingInAppRoute = route
+  inAppRouteListeners.forEach((notify) => notify())
+}
 
 /** The one deeplink the account-closed gate still allows through: the migration entry. */
 const MIGRATION_DEEPLINK_PATH = "account-migration"
@@ -130,6 +149,15 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
   const [urlAfterUnlockAndAuth, setUrlAfterUnlockAndAuth] = React.useState<string | null>(
     null,
   )
+  /** A nostrconnect:// URI received while locked/unauthenticated (H1 fix): held here and
+   *  forwarded ONLY once the app is unlocked + authed. Approval surfaces are RN Modals
+   *  mounted outside RootStack, so without this deferral a warm deep link pops a full-screen
+   *  connection approval over the lock screen. Forwarding goes through
+   *  handleNostrConnectLink directly (no Linking.openURL round-trip, so no scheme-hijack or
+   *  chooser window between deferral and delivery). Latest-wins, like urlAfterUnlockAndAuth. */
+  const [nostrConnectAfterUnlock, setNostrConnectAfterUnlock] = React.useState<
+    string | null
+  >(null)
   const { setActiveAction } = useActionsContext()
 
   /** Keyed on the blocker's own visibility, not the raw armed status: when the kill-switch
@@ -234,6 +262,41 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
     }
   }, [canHandlePayments, isAppLocked, urlAfterUnlockAndAuth])
 
+  /** In-app route requests (see requestInAppRoute): re-check on every request, unlock,
+   *  auth change, and once the container is ready. */
+  const [inAppRouteTick, bumpInAppRoute] = React.useReducer((x: number) => x + 1, 0)
+  useEffect(() => {
+    inAppRouteListeners.add(bumpInAppRoute)
+    return () => {
+      inAppRouteListeners.delete(bumpInAppRoute)
+    }
+  }, [])
+  useEffect(() => {
+    if (!pendingInAppRoute || !canHandlePayments || isAppLocked) return
+    if (!navigationRef.isReady()) return
+    const route = pendingInAppRoute
+    pendingInAppRoute = null
+    if (isBlockerVisibleRef.current) return // the account-closed gate wins
+    navigationRef.navigate(route)
+  }, [canHandlePayments, isAppLocked, inAppRouteTick])
+
+  /** Deliver a nostrconnect:// URI that arrived while locked, once unlock + auth land
+   *  (same conditions as the generic deferred-URL effect above). */
+  useEffect(() => {
+    if (!nostrConnectAfterUnlock) return
+    if (!canHandlePayments || isAppLocked) return
+    handleNostrConnectLink(nostrConnectAfterUnlock).catch(() => undefined)
+    setNostrConnectAfterUnlock(null)
+  }, [canHandlePayments, isAppLocked, nostrConnectAfterUnlock])
+
+  /** Current "may a nostrconnect link be forwarded right now?" for the linking listener.
+   *  The listener closes over first-render values; this ref mirrors the live gate the same
+   *  way isAppLockedRef mirrors the lock. */
+  const canForwardNostrConnectRef = useRef(false)
+  useEffect(() => {
+    canForwardNostrConnectRef.current = canHandlePayments && !isAppLocked
+  }, [canHandlePayments, isAppLocked])
+
   const setAppUnlocked = React.useMemo(
     () => async () => {
       isAppLockedRef.current = false
@@ -283,59 +346,7 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
       "lnurl://",
     ],
     config: {
-      screens: {
-        Primary: {
-          screens: {
-            Home: "home",
-            People: {
-              path: "people",
-              initialRouteName: "peopleHome",
-              screens: {
-                circlesDashboard: "circles",
-              },
-            },
-            Earn: "earn",
-            Map: "map",
-          },
-        },
-        priceHistory: "price",
-        receiveBitcoin: "receive",
-        conversionDetails: "convert",
-        scanningQRCode: "scan-qr",
-        totpRegistrationInitiate: "settings/2fa",
-        currency: "settings/display-currency",
-        defaultWallet: "settings/default-account",
-        language: "settings/language",
-        theme: "settings/theme",
-        security: "settings/security",
-        accountScreen: "settings/account",
-        transactionLimitsScreen: "settings/tx-limits",
-        feeRatesScreen: "settings/fee-rates",
-        notificationSettingsScreen: "settings/notifications",
-        emailRegistrationInitiate: "settings/email",
-        settings: "settings",
-        cardDashboardScreen: "card",
-        cardDetailsScreen: "card/details",
-        cardLimitsScreen: "card/limits",
-        cardSettingsScreen: "card/settings",
-        cardStatementsScreen: "card/statements",
-        cardTransactionDetailsScreen: {
-          path: "card/transaction/:transactionId",
-        },
-        accountMigrationEntry: "account-migration",
-        cardOnboardingWelcomeScreen: "card/onboarding",
-        cardOnboardingSubscribeScreen: "card/onboarding/subscribe",
-        cardOnboardingLoadingScreen: "card/onboarding/loading",
-        cardOnboardingPersonalInfoScreen: "card/onboarding/personal-info",
-        cardOnboardingAcknowledgementScreen: "card/onboarding/acknowledgement",
-        cardOnboardingProcessingScreen: "card/onboarding/processing",
-        cardOnboardingPreapprovedScreen: "card/onboarding/preapproved",
-        cardOnboardingApprovedScreen: "card/onboarding/approved",
-        transactionDetail: {
-          path: "transaction/:txid",
-        },
-        sendBitcoinDestination: ":payment",
-      },
+      screens: DEEP_LINK_SCREENS,
     },
     getInitialURL: async () => {
       const url = await Linking.getInitialURL()
@@ -345,6 +356,24 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
     subscribe: (listener) => {
       const onReceiveURL = ({ url }: { url: string }) => {
         if (url.includes(TELEGRAM_CALLBACK_PATH)) return
+
+        // nostrconnect:// (Story A3 / AD-9): recognize the scheme and forward the RAW URI to
+        // ConnectFlow (via the runtime handler the provider registers while the signer is on).
+        // Never route it through the payment/nav listener. If the signer is off, no handler is
+        // registered and this is a no-op — the URL falls through unchanged.
+        //
+        // H1 fix: a warm nostrconnect link is DEFERRED behind unlock + auth like every other
+        // URL. Approval overlays are RN Modals mounted outside RootStack; forwarding while
+        // locked would pop a full-screen connection approval over the PIN/biometric screen
+        // and let a grant exist before first auth.
+        if (isNostrConnectLink(url)) {
+          if (canForwardNostrConnectRef.current) {
+            handleNostrConnectLink(url).catch(() => undefined)
+          } else {
+            setNostrConnectAfterUnlock(url)
+          }
+          return
+        }
 
         /** With the account-closed gate armed, only the migration deeplink is honoured; any
          *  other would open a working screen on top of the blocker, so it is dropped. */
@@ -377,8 +406,11 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
         {...(mode === "dark" ? { theme: DarkTheme } : {})}
         linking={linking}
         onReady={() => {
-          RNBootSplash.hide({ fade: true })
+          /** Cold-start gates (restricted-region verdict) may still be resolving; the
+           *  gate self-releases at its cap, so this can never defer the hide unbounded. */
+          bootSplashGate.whenReleased().then(() => RNBootSplash.hide({ fade: true }))
           console.log("NavigationContainer onReady")
+          bumpInAppRoute() // a route requested before the container was ready
           /** Cold-started already gated: reset now that the container is ready, since the
            *  effect above may have run before isReady() turned true. */
           if (isBlockerVisibleRef.current) resetToBlocker("gate-armed")

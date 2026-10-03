@@ -5,20 +5,30 @@
  * Later on, this will support switching between accounts
  */
 import React from "react"
-import { TouchableOpacity, View } from "react-native"
+import { Image, TouchableOpacity, View } from "react-native"
 import { TouchableWithoutFeedback } from "react-native-gesture-handler"
 
-import { GaloyIcon } from "@app/components/atomic/galoy-icon"
+import {
+  GaloyIcon,
+  circleDiameterThatContainsSquare,
+} from "@app/components/atomic/galoy-icon"
+import { useEnhancedModePrompt } from "@app/components/enhanced-mode-prompt"
+import { useRestrictedRegion } from "@app/components/restricted-region"
+import { useFeatureFlags } from "@app/config/feature-flags-context"
 import { useSettingsScreenQuery } from "@app/graphql/generated"
 import { useIsAuthed } from "@app/graphql/is-authed-context"
 import { AccountLevel, useLevel } from "@app/graphql/level-context"
 import { useAppConfig, useClipboard } from "@app/hooks"
 import { useAccountRegistry } from "@app/hooks/use-account-registry"
 import { useI18nContext } from "@app/i18n/i18n-react"
+import { testProps } from "@app/utils/testProps"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
-import { useSelfCustodialWallet } from "@app/self-custodial/providers/wallet"
+import { useNostrProfilePicture } from "@app/nostr/use-nostr-profile-picture"
+import { useNostrIdentity } from "@app/screens/nostr/identity-hub/use-nostr-identity"
+import { useAccountLightningAddresses } from "@app/self-custodial/hooks/use-account-lightning-addresses"
+import { useLightningAddressGated } from "@app/self-custodial/hooks/use-lightning-address-gate"
 import { AccountType } from "@app/types/wallet"
-import { useNavigation } from "@react-navigation/native"
+import { useNavigation, useIsFocused } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Text, makeStyles, useTheme, Skeleton } from "@rn-vui/themed"
 
@@ -70,7 +80,7 @@ const CustodialAccountBanner: React.FC = () => {
     >
       <View style={styles.outer}>
         <View style={styles.iconContainer}>
-          <AccountIcon size={25} />
+          <NostrAwareAccountIcon size={25} />
         </View>
         <Text type="p2">
           {isUserLoggedIn ? usernameTitle : LL.SettingsScreen.logInOrCreateAccount()}
@@ -86,31 +96,68 @@ const SelfCustodialAccountBanner: React.FC = () => {
     theme: { colors },
   } = useTheme()
   const { LL } = useI18nContext()
-  const { lightningAddress } = useSelfCustodialWallet()
+  /** All the account's addresses (primary + alt): the banner shows the mode-usable one
+   *  (Incognito answers on twentyone.ist, Enhanced prefers blink.sv), falling back to a
+   *  withheld address so Incognito still shows — and labels — a blink.sv-only account. */
+  const { primary, alt, effective } = useAccountLightningAddresses()
+  const lightningAddress = effective ?? primary ?? alt
   const { copyToClipboard } = useClipboard()
+  const isLightningAddressGated = useLightningAddressGated()
+  const { promptEnhancedMode } = useEnhancedModePrompt()
+  const { isRestrictedRegion, presentRestrictedRegionModal } = useRestrictedRegion()
 
   if (!lightningAddress) return null
 
-  const handleCopy = () =>
+  /** Incognito cannot receive at all, so the address is labelled disabled and loses the
+   *  copy affordance outright. A restricted region only dims it: that address stays valid
+   *  and pays again the moment the user leaves the region. */
+  const displayedAddress = isLightningAddressGated
+    ? `${lightningAddress} ${LL.SettingsScreen.addressDisabled()}`
+    : lightningAddress
+
+  /** The address is Blink-served, so copying is gated like every other served surface:
+   *  the tap explains the block instead of handing out an address that cannot receive.
+   *  Routed by the gate, not by the mode: a twentyone.ist address keeps working in
+   *  Incognito, so only a genuinely withheld address offers the way out. */
+  const handlePress = () => {
+    if (isLightningAddressGated) {
+      promptEnhancedMode()
+      return
+    }
+    if (isRestrictedRegion) {
+      presentRestrictedRegionModal()
+      return
+    }
     copyToClipboard({
       content: lightningAddress,
       message: LL.GaloyAddressScreen.copiedLightningAddressToClipboard(),
     })
+  }
 
+  /** Wrapped like every other gated surface rather than merely dropping `onPress`: the
+   *  wrapper is what swallows the touch, so the row stops playing a press animation it has
+   *  nothing to answer with, and the tap explains the gate instead of doing nothing. */
   return (
-    <TouchableOpacity onPress={handleCopy} style={styles.outer}>
+    <TouchableOpacity onPress={handlePress} style={styles.outer}>
       <View style={styles.iconContainer}>
-        <AccountIcon size={25} />
+        <NostrAwareAccountIcon size={25} />
       </View>
       <View style={styles.textContainer}>
         <Text type="p2" numberOfLines={1} ellipsizeMode="middle">
-          {lightningAddress}
+          {displayedAddress}
         </Text>
         <Text type="p3" style={styles.subtitle}>
           {LL.SettingsScreen.nonCustodialAccount()}
         </Text>
       </View>
-      <GaloyIcon name="copy-paste" size={20} color={colors.primary} />
+      {!isLightningAddressGated && (
+        <View
+          style={isRestrictedRegion && styles.gatedCopyIcon}
+          {...testProps("account-banner-copy")}
+        >
+          <GaloyIcon name="copy-paste" size={20} color={colors.primary} />
+        </View>
+      )}
     </TouchableOpacity>
   )
 }
@@ -121,6 +168,43 @@ export const AccountIcon: React.FC<{ size: number }> = ({ size }) => {
   } = useTheme()
   return <GaloyIcon name="user" size={size} backgroundColor={colors.grey4} />
 }
+
+/**
+ * Account icon with the ACTIVE account's nostr-identity profile photo when one exists
+ * (kind-0 `picture`, 2026-08-21) — falls back to the generic placeholder. Inert when the
+ * signer flag is off (upstream builds unchanged).
+ */
+const NostrAwareAccountIcon: React.FC<{ size: number }> = ({ size }) => {
+  const { nostrSignerEnabled } = useFeatureFlags()
+  const { pubkeyHex } = useNostrIdentity()
+  // Re-read when the containing screen regains focus (e.g. returning from the identity hub
+  // right after an avatar upload) instead of only on mount.
+  const isFocused = useIsFocused()
+  const [pictureUrl] = useNostrProfilePicture(
+    nostrSignerEnabled ? pubkeyHex : null,
+    isFocused,
+  )
+  const styles = useIconStyles()
+  if (!pictureUrl) return <AccountIcon size={size} />
+  // Match the fallback's rendered diameter exactly: a backgrounded GaloyIcon sizes its
+  // circle via circleDiameterThatContainsSquare — the photo must not shift the row.
+  const diameter = circleDiameterThatContainsSquare(size)
+  return (
+    <Image
+      source={{ uri: pictureUrl }}
+      style={[
+        styles.avatarImage,
+        { width: diameter, height: diameter, borderRadius: diameter / 2 },
+      ]}
+    />
+  )
+}
+
+const useIconStyles = makeStyles(({ colors }) => ({
+  avatarImage: {
+    backgroundColor: colors.grey4,
+  },
+}))
 
 const useStyles = makeStyles((theme) => ({
   outer: {
@@ -148,5 +232,8 @@ const useStyles = makeStyles((theme) => ({
   },
   subtitle: {
     color: theme.colors.grey2,
+  },
+  gatedCopyIcon: {
+    opacity: 0.5,
   },
 }))

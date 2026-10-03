@@ -9,8 +9,16 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { headerRightNoGlass } from "@app/components/header-no-glass"
+import { useEnhancedModePrompt } from "@app/components/enhanced-mode-prompt"
+import { useRequiresBlinkAddressPrompt } from "@app/components/requires-blink-address-prompt"
+import {
+  RestrictedRegionBanner,
+  useRestrictedRegion,
+} from "@app/components/restricted-region"
 import { BackupStatus, useBackupState } from "@app/self-custodial/providers/backup-state"
 import { useAccountRegistry } from "@app/hooks/use-account-registry"
+import { useAccountLightningAddresses } from "@app/self-custodial/hooks/use-account-lightning-addresses"
+import { useSelfCustodialAccountMode } from "@app/self-custodial/hooks/use-self-custodial-account-mode"
 import { Screen } from "@app/components/screen"
 import { SettingsCard } from "./settings-card"
 import { useI18nContext } from "@app/i18n/i18n-react"
@@ -27,6 +35,7 @@ import { PhoneSetting } from "./account/settings/phone"
 import { SettingsGroup } from "./group"
 import { DefaultWallet } from "./settings/account-default-wallet"
 import { AccountLevelSetting } from "./settings/account-level"
+import { AccountModeSetting } from "./self-custodial/account-mode"
 import { AccountLNAddress } from "./settings/account-ln-address"
 import { PhoneLnAddress } from "./settings/phone-ln-address"
 import { AccountPOS } from "./settings/account-pos"
@@ -38,6 +47,7 @@ import { FeeRatesSetting } from "./settings/fee-rates"
 import { ApiAccessSetting } from "./settings/advanced-api-access"
 import { ExportCsvSetting } from "./settings/advanced-export-csv"
 import { JoinCommunitySetting } from "./settings/community-join"
+import { SupportChatPocSetting } from "./settings/support-chat"
 import { NeedHelpSetting } from "./settings/community-need-help"
 import { CurrencySetting } from "./settings/preferences-currency"
 import { LanguageSetting } from "./settings/preferences-language"
@@ -51,6 +61,8 @@ import { SwitchAccountSetting } from "./settings/multi-account"
 import { StableBalanceSetting } from "./settings/stable-balance"
 import { ViewBackupPhraseSetting } from "./settings/view-backup-phrase"
 import { BackupWalletSetting } from "./settings/backup-wallet"
+import { NostrIdentitySetting } from "./settings/nostr-identity"
+import { DelegatedGrantsSetting } from "./settings/delegated-grants"
 
 // All queries in settings have to be set here so that the server is not hit with
 // multiple requests for each query
@@ -104,10 +116,28 @@ export const SettingsScreen: React.FC = () => {
   const isSelfCustodialMode = activeAccount?.type === AccountType.SelfCustodial
   const shouldShowSettingsBanner =
     isSelfCustodialMode && backupState.status !== BackupStatus.Completed
+  const { isAnonMode } = useSelfCustodialAccountMode()
+  const { promptEnhancedMode } = useEnhancedModePrompt()
+  const { promptRequiresBlinkAddress } = useRequiresBlinkAddressPrompt()
+  const { isRestrictedRegion, presentRestrictedRegionModal } = useRestrictedRegion()
+  const { blinkSvAddress } = useAccountLightningAddresses()
+
+  /** Ways-to-get-paid is served by Blink, so it needs a blink.sv address: Incognito
+   *  (no region, no upstream service) and a restricted region gate it outright, and an
+   *  enhanced account whose only address sits on another domain gets the claim flow.
+   *  Precedence matches the remedy: mode switch > region > claiming a blink.sv address. */
+  const isWaysToGetPaidDisabled =
+    isAnonMode || isRestrictedRegion || (isSelfCustodialMode && !blinkSvAddress)
+  const onWaysToGetPaidDisabledPress = isAnonMode
+    ? promptEnhancedMode
+    : isRestrictedRegion
+      ? presentRestrictedRegionModal
+      : promptRequiresBlinkAddress
 
   const items = {
     account: [
       AccountLevelSetting,
+      AccountModeSetting,
       TxLimits,
       FeeRatesSetting,
       SwitchAccountSetting,
@@ -137,8 +167,15 @@ export const SettingsScreen: React.FC = () => {
       ViewBackupPhraseSetting,
       BackupWalletSetting,
     ],
-    advanced: [ExportCsvSetting, ApiAccessSetting],
-    community: [NeedHelpSetting, JoinCommunitySetting],
+    // Advanced hosts the Nostr identity (and delegated grants) rows per the redesign
+    // (Figma 23233:51908); the rows self-gate on their feature flags.
+    advanced: [
+      NostrIdentitySetting,
+      DelegatedGrantsSetting,
+      ExportCsvSetting,
+      ApiAccessSetting,
+    ],
+    community: [SupportChatPocSetting, NeedHelpSetting, JoinCommunitySetting],
   }
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
@@ -166,6 +203,7 @@ export const SettingsScreen: React.FC = () => {
   return (
     <Screen keyboardShouldPersistTaps="handled">
       <ScrollView contentContainerStyle={styles.outer}>
+        {isRestrictedRegion && <RestrictedRegionBanner />}
         <AccountBanner />
         {shouldShowSettingsBanner && (
           <SettingsCard
@@ -180,6 +218,12 @@ export const SettingsScreen: React.FC = () => {
         <SettingsGroup
           name={LL.SettingsScreen.addressScreen()}
           items={items.waysToGetPaid}
+          disabled={isWaysToGetPaidDisabled}
+          onDisabledPress={onWaysToGetPaidDisabledPress}
+          /** The Lightning Address row governs itself (domain-aware gate): in Incognito it
+           *  still offers a twentyone.ist address, which the fork server serves for anon
+           *  accounts. The rest of the section stays gated. */
+          exemptFromDisabled={[AccountLNAddress]}
         />
         {isAtLeastLevelOne && !isSelfCustodialMode && (
           <SettingsGroup

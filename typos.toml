@@ -5,6 +5,11 @@ hace = "hace"
 "FO" = "FO"
 "Thier" = "Thier"
 
+[default.extend-words]
+# support chat: the staging relay's TLD (relay.twentyone.ist) and a reviewer's handle
+ist = "ist"
+patternn = "patternn"
+
 [files]
 extend-exclude = [
   "*.svg",

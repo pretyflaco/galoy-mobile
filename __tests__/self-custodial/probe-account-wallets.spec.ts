@@ -33,6 +33,11 @@ jest.mock("@app/self-custodial/providers/wallet-snapshot", () => ({
   getSelfCustodialWalletSnapshot: (...args: unknown[]) => mockGetSnapshot(...args),
 }))
 
+const mockGetLnurlDomain = jest.fn()
+jest.mock("@app/self-custodial/storage/account-index", () => ({
+  getSelfCustodialLnurlDomain: (...args: unknown[]) => mockGetLnurlDomain(...args),
+}))
+
 const mockRecordError = jest.fn()
 jest.mock("@react-native-firebase/crashlytics", () => () => ({
   recordError: (...args: unknown[]) => mockRecordError(...args),
@@ -62,6 +67,8 @@ const sampleWallets = [
 describe("probeSelfCustodialAccountWallets", () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    // Default: the account has no stored domain choice → SDK connects on the default host.
+    mockGetLnurlDomain.mockResolvedValue(null)
   })
 
   it("returns no-mnemonic without initializing the SDK when no mnemonic is stored", async () => {
@@ -98,6 +105,8 @@ describe("probeSelfCustodialAccountWallets", () => {
       storageDir: `/storage/spark/${TEST_ACCOUNT_ID}`,
       network: Network.Regtest,
       leewaySatPerVbyte: TEST_LEEWAY,
+      // No stored choice in this fixture → null, which the SDK config reads as the default.
+      lnurlDomain: null,
     })
     expect(mockGetSnapshot).toHaveBeenCalledWith(FAKE_SDK)
     expect(result).toEqual({

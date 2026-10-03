@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- CI-ONLY synthetic Firebase config (iOS twin of google-services.ci.json): well-formed
+     dummy values, no real project. The simulator smoke must never talk to Blink's
+     production Firebase project; Firebase calls fail at runtime, which the smoke does
+     not need (push is blink-wip#1498). -->
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>100000000001-cidummy.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.100000000001-cidummy</string>
+	<key>API_KEY</key>
+	<string>AIzaCIDUMMY-not-a-real-key-000000000000</string>
+	<key>GCM_SENDER_ID</key>
+	<string>100000000001</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>io.galoy.bitcoinbeach</string>
+	<key>PROJECT_ID</key>
+	<string>ci-dummy-not-a-real-firebase-project</string>
+	<key>STORAGE_BUCKET</key>
+	<string>ci-dummy-not-a-real-firebase-project.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false/>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false/>
+	<key>IS_APPINVITE_ENABLED</key>
+	<false/>
+	<key>IS_GCM_ENABLED</key>
+	<false/>
+	<key>IS_SIGNIN_ENABLED</key>
+	<false/>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:100000000001:ios:0000000000000000</string>
+</dict>
+</plist>

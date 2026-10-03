@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Blink Alpha DEV (support-chat device tests on a free personal team, M19).
+  A free team cannot sign push (aps-environment), associated domains, iCloud or NFC, so
+  this build carries none of them: no push, no universal links, no iCloud backup.
+  Used only by scripts/support-chat-alpha/ios-dev-device.sh — never by the shipping configs.
+-->
+<plist version="1.0">
+<dict/>
+</plist>

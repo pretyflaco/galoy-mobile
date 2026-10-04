@@ -20,6 +20,11 @@ export const KIND_TOKEN_REMOVAL = 449
 export const KIND_OWNER_PROOF = 451
 export const MAX_ENTRIES = 32
 export const MAX_FUTURE_MS = 3_600_000
+/** M20 (Hermes #10): a fresh receiver (relay after a state wipe) accepted ANY old
+ *  member-signed record — replay bound. 90 days: FCM tokens rotate long before, and a
+ *  device whose only record is older loses push until its next announcement (its app
+ *  re-announces per conversation/token refresh) — never the chat itself. */
+export const MAX_RECORD_AGE_MS = 90 * 24 * 3_600_000
 
 const PLATFORM_BYTE = { apns: 0x01, fcm: 0x02 }
 const PLAINTEXT_SIZE = 1024
@@ -193,6 +198,7 @@ export function checkEntry(entry, groupIdHex, { removal = false, now = Date.now(
   if (!FINGERPRINT.test(entry.token_fingerprint ?? "")) return "bad fingerprint"
   if (!Number.isSafeInteger(entry.owner_ts) || entry.owner_ts < 0) return "bad owner_ts"
   if (entry.owner_ts > now + MAX_FUTURE_MS) return "owner_ts too far in the future"
+  if (now - entry.owner_ts > MAX_RECORD_AGE_MS) return "owner_ts too old (replay bound, M20)"
   if (!HEX64B.test(entry.owner_sig ?? "")) return "bad owner_sig"
   if (entry.relay_hint !== undefined && typeof entry.relay_hint !== "string") return "bad relay_hint"
   if (!removal) {

@@ -12,6 +12,13 @@ jest.mock("@app/nostr/core/keystore", () => ({
   writeSecret: jest.fn(async (service: string, hex: string) => {
     keychain.set(service, hex)
   }),
+  // M20 device-only variants share the in-memory map
+  readSecretThisDeviceOnly: jest.fn(
+    async (service: string) => keychain.get(service) ?? null,
+  ),
+  writeSecretThisDeviceOnly: jest.fn(async (service: string, hex: string) => {
+    keychain.set(service, hex)
+  }),
 }))
 let counter = 0
 jest.mock("@app/nostr/core/keygen", () => ({

@@ -15,20 +15,25 @@ import { gcm } from "@noble/ciphers/aes.js"
 import { bytesToHex, hexToBytes } from "@noble/ciphers/utils.js"
 import { encodeValue, decodeValue } from "@blink-support-chat/adapters/encoding.js"
 
-import { readSecret, writeSecret } from "@app/nostr/core/keystore"
+import {
+  readSecretThisDeviceOnly,
+  writeSecretThisDeviceOnly,
+} from "@app/nostr/core/keystore"
 import { secureRandomBytes } from "@app/nostr/core/keygen"
 
 const keyService = (accountKey: string) => `supportchat.storeKey.${accountKey}`
 const keyCache = new Map<string, Promise<Uint8Array>>()
 
+// M20 (Hermes #3): the store key is this-device-only — a restored iCloud backup then
+// holds only ciphertext (history, MLS state, sealed pictures) with no key to open it.
 const storeKey = (accountKey: string): Promise<Uint8Array> => {
   let p = keyCache.get(accountKey)
   if (!p) {
     p = (async () => {
-      const existing = await readSecret(keyService(accountKey))
+      const existing = await readSecretThisDeviceOnly(keyService(accountKey))
       if (existing) return hexToBytes(existing)
       const fresh = secureRandomBytes(32)
-      await writeSecret(keyService(accountKey), bytesToHex(fresh))
+      await writeSecretThisDeviceOnly(keyService(accountKey), bytesToHex(fresh))
       return fresh
     })()
     p.catch(() => keyCache.delete(accountKey))

@@ -6,8 +6,9 @@
  *  - support cannot link the chat to the user's public npub;
  *  - trade-off: a new device is a new support key (the history was device-local anyway).
  *
- * The secret lives in the keychain (`supportchat.key.device`, AFTER_FIRST_UNLOCK — the same
- * keystore as the nsec and the chat's store key) and never leaves this module: the signer
+ * The secret lives in the keychain (`supportchat.key.device`,
+ * AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY — never in an iCloud/iTunes backup, M20/Hermes
+ * #3) and never leaves this module: the signer
  * below is the only thing that uses it. Every random value is drawn explicitly from the
  * native CSPRNG (AD-6): Schnorr auxRand and the NIP-44 nonce, never a library default.
  */
@@ -17,7 +18,10 @@ import { getEventHash } from "nostr-tools/pure"
 
 import { nip44Decrypt, nip44Encrypt } from "@app/nostr/core/capability-crypto"
 import { isValidSecpScalar, secureRandomBytes } from "@app/nostr/core/keygen"
-import { readSecret, writeSecret } from "@app/nostr/core/keystore"
+import {
+  readSecretThisDeviceOnly,
+  writeSecretThisDeviceOnly,
+} from "@app/nostr/core/keystore"
 import type { EventTemplate, SignedEvent } from "@app/nostr/core/signer"
 
 import type { BlinkEventSigner } from "./blink-signer"
@@ -32,7 +36,7 @@ let loading: Promise<Uint8Array> | null = null
 export const loadOrCreateSupportKey = (): Promise<Uint8Array> => {
   if (!loading) {
     loading = (async () => {
-      const existing = await readSecret(KEY_SERVICE)
+      const existing = await readSecretThisDeviceOnly(KEY_SERVICE)
       if (existing) {
         const sk = hexToBytes(existing)
         if (isValidSecpScalar(sk)) return sk
@@ -40,7 +44,7 @@ export const loadOrCreateSupportKey = (): Promise<Uint8Array> => {
       }
       let sk = secureRandomBytes(32)
       while (!isValidSecpScalar(sk)) sk = secureRandomBytes(32) // p ≈ 2^-128
-      await writeSecret(KEY_SERVICE, bytesToHex(sk))
+      await writeSecretThisDeviceOnly(KEY_SERVICE, bytesToHex(sk))
       return sk
     })()
     loading.catch(() => {

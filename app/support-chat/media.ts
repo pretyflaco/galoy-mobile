@@ -188,7 +188,9 @@ const LEGACY_DIR = () => `${RNFS.DocumentDirectoryPath}/support-media`
 
 const mediaAad = (scope: string, name: string) => `supportchat.media.${scope}.${name}`
 
-/** Write the ENCRYPTED canonical copy; returns the file name (`<sha256>.<ext>`). */
+/** Write the ENCRYPTED canonical copy; returns the file name (`<sha256>.<ext>`).
+ *  Written to a temp name and renamed into place (Hermes #7): a crash mid-write can
+ *  never leave a truncated `.enc` that later fails openBytes. */
 export const storeSealedImage = async (
   scope: string,
   name: string,
@@ -196,11 +198,9 @@ export const storeSealedImage = async (
 ): Promise<void> => {
   await RNFS.mkdir(SEALED_DIR()).catch(() => undefined)
   const sealed = await sealBytes(scope, mediaAad(scope, name), data)
-  await RNFS.writeFile(
-    `${SEALED_DIR()}/${name}.enc`,
-    Buffer.from(sealed).toString("base64"),
-    "base64",
-  )
+  const tmp = `${SEALED_DIR()}/${name}.enc.tmp`
+  await RNFS.writeFile(tmp, Buffer.from(sealed).toString("base64"), "base64")
+  await RNFS.moveFile(tmp, `${SEALED_DIR()}/${name}.enc`)
 }
 
 /** The plaintext shadow for display: decrypt the sealed copy if the shadow is gone. */

@@ -9,6 +9,13 @@ jest.mock("@app/nostr/core/keystore", () => ({
   writeSecret: jest.fn(async (service: string, hex: string) => {
     keychain.set(service, hex)
   }),
+  // M20 device-only variants share the in-memory map
+  readSecretThisDeviceOnly: jest.fn(
+    async (service: string) => keychain.get(service) ?? null,
+  ),
+  writeSecretThisDeviceOnly: jest.fn(async (service: string, hex: string) => {
+    keychain.set(service, hex)
+  }),
 }))
 let counter = 0
 jest.mock("@app/nostr/core/keygen", () => ({
@@ -32,6 +39,12 @@ jest.mock("react-native-fs", () => ({
   mkdir: jest.fn(async () => {}),
   writeFile: jest.fn(async (path: string, base64: string) => {
     files.set(path, base64)
+  }),
+  moveFile: jest.fn(async (from: string, to: string) => {
+    const c = files.get(from)
+    if (c === undefined) throw new Error(`no such file: ${from}`)
+    files.set(to, c)
+    files.delete(from)
   }),
   readFile: jest.fn(async (path: string) => {
     const c = files.get(path)

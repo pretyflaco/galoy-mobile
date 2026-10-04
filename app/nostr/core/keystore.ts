@@ -58,3 +58,34 @@ export const readSecret = async (
 export const clearSecret = async (service: NostrKeychainService): Promise<void> => {
   await Keychain.resetGenericPassword({ service })
 }
+
+/**
+ * M20 (Hermes re-review #3): secrets that must NEVER leave this device — not even via
+ * an encrypted iCloud/iTunes backup. `AFTER_FIRST_UNLOCK` items are INCLUDED in such
+ * backups, so a restore onto another phone carried the support chat's keys and (via
+ * the also-backed-up AsyncStorage) its whole history. `…_THIS_DEVICE_ONLY` items are
+ * excluded from backups; the ciphertext in a restored backup is then useless.
+ */
+export const writeSecretThisDeviceOnly = async (
+  service: NostrKeychainService,
+  hexValue: string,
+): Promise<void> => {
+  await Keychain.setGenericPassword(ACCOUNT, hexValue, {
+    service,
+    accessible: Keychain.ACCESSIBLE.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+  })
+}
+
+/**
+ * Read a this-device-only secret. An item written before M20 with the backup-able
+ * class is migrated in place on first read (same value, new accessibility class) —
+ * the key itself does not change, so conversations survive.
+ */
+export const readSecretThisDeviceOnly = async (
+  service: NostrKeychainService,
+): Promise<string | null> => {
+  const result = await Keychain.getGenericPassword({ service })
+  if (!result) return null
+  await writeSecretThisDeviceOnly(service, result.password)
+  return result.password
+}

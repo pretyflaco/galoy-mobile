@@ -1206,10 +1206,17 @@ export class SupportChatClient {
 
   private async pushTo(gid: string, item: ChatItem) {
     if (gid !== this.groupId) {
-      // an older (ended) conversation still receiving: keep its history complete
+      // an older (ended) or PARKED conversation still receiving: keep its history
+      // complete, and (M20, Hermes #2) count its support messages as unread too —
+      // a support-initiated ticket must not go unseen.
       const old = (await this.history.getItem(gid)) ?? []
       if (old.some((x) => x.id === item.id)) return
       await this.history.setItem(gid, [...old, item].slice(-MAX_ITEMS))
+      if (item.type === "msg" && item.from !== this.pubkey && !this.screenFocused) {
+        this.meta.unread = (this.meta.unread ?? 0) + 1
+        this.saveMeta()
+      }
+      this.emit()
       return
     }
     if (this.items.some((x) => x.id === item.id)) return

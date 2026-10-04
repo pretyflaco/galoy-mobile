@@ -149,11 +149,9 @@ const M20_5_V1 = `            // ${PATCH_MARKER} (F-M20-5): bounded unread entri
                 });
             }`
 
-// F-M20-5 current (Hermes N1/N2): allowlisted authors (the roster bot, published by
-// the app in globalThis.__blinkInviteAllowlist) always store; with an allowlist set,
-// everyone else never stores; without one, the plain caps apply. The count is
-// store.keys()-based — no per-entry decrypt.
-const M20_5 = `            // ${PATCH_MARKER} (F-M20-5): bounded unread entries — see scripts/patch-marmot-ts-v2.mjs.
+// F-M20-5 V2 (batch 4, Hermes N1/N2: allowlist + keys()-based count) — verbatim for
+// in-place upgrades to V3.
+const M20_5_V2 = `            // ${PATCH_MARKER} (F-M20-5): bounded unread entries — see scripts/patch-marmot-ts-v2.mjs.
             const allowlist = globalThis.__blinkInviteAllowlist;
             const allowlisted = Array.isArray(allowlist) && allowlist.includes(rumor.pubkey);
             if (Array.isArray(allowlist) && !allowlisted) {
@@ -164,6 +162,31 @@ const M20_5 = `            // ${PATCH_MARKER} (F-M20-5): bounded unread entries 
                 const unreadCount = (await this.store.keys()).filter((k) => k.startsWith(UNREAD_PREFIX)).length;
                 if (!allowlisted && (rumorSize > 16384 || unreadCount >= 256)) {
                     this.#log("dropping oversized/excess unread invite %s (%d bytes, %d unread)", rumor.id, rumorSize, unreadCount);
+                }
+                else {
+                    // Move to unread state
+                    await this.store.setItem(\`\${UNREAD_PREFIX}\${rumor.id}\`, {
+                        type: "unread",
+                        rumor,
+                    });
+                }
+            }`
+
+// F-M20-5 current (Hermes R1): like V2, plus a drop HOOK — without it the library's
+// drop was silent, so the app's log (and the CI smoke counting it) saw nothing.
+const M20_5 = `            // ${PATCH_MARKER} (F-M20-5): bounded unread entries — see scripts/patch-marmot-ts-v2.mjs.
+            const allowlist = globalThis.__blinkInviteAllowlist;
+            const allowlisted = Array.isArray(allowlist) && allowlist.includes(rumor.pubkey);
+            if (Array.isArray(allowlist) && !allowlisted) {
+                this.#log("dropping invite from a non-allowlisted author %s", rumor.pubkey?.slice(0, 8));
+                globalThis.__blinkInviteDropped?.(rumor.pubkey, "not allowlisted");
+            }
+            else {
+                const rumorSize = (rumor.content?.length ?? 0) + JSON.stringify(rumor.tags ?? []).length;
+                const unreadCount = (await this.store.keys()).filter((k) => k.startsWith(UNREAD_PREFIX)).length;
+                if (!allowlisted && (rumorSize > 16384 || unreadCount >= 256)) {
+                    this.#log("dropping oversized/excess unread invite %s (%d bytes, %d unread)", rumor.id, rumorSize, unreadCount);
+                    globalThis.__blinkInviteDropped?.(rumor.pubkey, "oversized/excess");
                 }
                 else {
                     // Move to unread state
@@ -302,7 +325,7 @@ const edits = [
                 type: "unread",
                 rumor,
             });`,
-    upgradeFrom: [M20_5_V1],
+    upgradeFrom: [M20_5_V2, M20_5_V1],
     replace: M20_5,
   },
   // --- F-M16-1 (marmot-ts#78): the processMessage guard (A′) ----------------------

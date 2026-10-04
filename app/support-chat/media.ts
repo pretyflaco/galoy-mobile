@@ -222,6 +222,7 @@ export const storeSealedImage = async (
   data: Uint8Array,
 ): Promise<void> => {
   const dest = `${SEALED_DIR()}/${name}.enc`
+  let reseal = false
   if (await RNFS.exists(dest)) {
     try {
       const sealed = new Uint8Array(
@@ -230,14 +231,16 @@ export const storeSealedImage = async (
       await openBytes(scope, mediaAad(scope, name), sealed)
       return // decrypts under the current key — same content, keep it
     } catch {
-      await RNFS.unlink(dest).catch(() => undefined) // stale key — re-seal below
+      reseal = true // a stale key's file — re-seal below (NOT deleted yet, Hermes R5)
     }
   }
   await RNFS.mkdir(SEALED_DIR()).catch(() => undefined)
+  // seal BEFORE touching the existing file: a store key that is unreadable right
+  // now throws here and the good .enc stays put (R5)
   const sealed = await sealBytes(scope, mediaAad(scope, name), data)
   const tmp = `${SEALED_DIR()}/${name}.enc.tmp`
   await RNFS.writeFile(tmp, Buffer.from(sealed).toString("base64"), "base64")
-  await RNFS.unlink(dest).catch(() => undefined) // belt and braces for the rename
+  if (reseal) await RNFS.unlink(dest).catch(() => undefined)
   await RNFS.moveFile(tmp, dest)
 }
 

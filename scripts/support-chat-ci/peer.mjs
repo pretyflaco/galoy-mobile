@@ -72,6 +72,8 @@ const phase0Loop = (async () => {
         phase0Attacked.add(kp.pubkey)
         await attack(kp.pubkey)
         console.log(`[${ts()}] attack sent (phase 0, pre-conversation) for ${kp.pubkey.slice(0, 12)}…`)
+        await attackViaBot(kp.pubkey)
+        console.log(`[${ts()}] attack sent (phase 2, bot invite into attacker-admined group) for ${kp.pubkey.slice(0, 12)}…`)
       }
     } catch (e) {
       console.log(`[${ts()}] phase-0 poll: ${e.message}`)
@@ -123,8 +125,35 @@ async function attack(devicePk) {
   )
 }
 
-async function join(welcome) {
-  const { group } = await client.joinGroupFromWelcome({ welcomeRumor: welcome })
+/**
+ * M20 (Hermes R1): PHASE 2 — the bot ITSELF invites the device into a group where an
+ * ephemeral key is the only admin (the confused-deputy case). The library's allowlist
+ * lets this THROUGH (the inviter IS the roster bot): only the APP's inviteAcceptable
+ * gate can refuse it ("the roster bot is not a group admin"). This is the phase that
+ * proves the gate itself works — phases 0/1 are dropped by the library before it.
+ */
+async function attackViaBot(devicePk) {
+  const deputy = new TestEventSigner() // NOT the bot — the group "admin"
+  const g = await client.groups.create("Blink support", {
+    relays: [RELAY],
+    adminPubkeys: [deputy.publicKey], // the bot is NOT an admin here
+  })
+  const kp = await fetchKeyPackageEvent(network, [RELAY], devicePk)
+  if (!kp) throw new Error("no key package for the device")
+  await client.groups.invite(g.id, kp)
+  await sleep(2000)
+  await client.groups.send(
+    g.id,
+    createApplicationMessageIntent(
+      createChatRumor({
+        pubkey: signer.publicKey,
+        content: `Support (${NAME}): ${PHISH} phase-2`,
+      }),
+    ),
+  )
+}
+
+async function join(welcome) {  const { group } = await client.joinGroupFromWelcome({ welcomeRumor: welcome })
   await client.invites.markAsRead(welcome.id)
   const gid = Buffer.from(group.groupData.nostrGroupId).toString("hex")
   if (joined.has(gid)) return

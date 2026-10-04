@@ -215,9 +215,15 @@ adb("shell input keyevent 4")
 // diagnostics only (P7 removes the TEMP recv logs — the UI is the assertion)
 const log = logcat()
 console.log(`logcat: created=${/group .* created/.test(log)} sent=${/support-chat\] sent/.test(log)}`)
+// M20 (Hermes R1): phases 0+1 are dropped by the LIBRARY (hook line), phase 2 is the
+// attack only the APP's gate can stop — both kinds of proof, or the gate is untested.
 ok(
-  "logcat: BOTH attacks refused (phase 0 + phase 1)",
-  (log.match(/invite from \S+ refused/g) ?? []).length >= 2,
+  "logcat: phases 0+1 dropped (not allowlisted)",
+  (log.match(/invite from \S+ dropped \(not allowlisted\)/g) ?? []).length >= 2,
+)
+ok(
+  "logcat: phase 2 refused by the APP GATE (bot invite, attacker admin)",
+  (log.match(/invite from \S+ refused/g) ?? []).length >= 1,
 )
 console.log(failed === 0 ? "\nSUPPORT-CHAT SMOKE PASS" : `\nSUPPORT-CHAT SMOKE FAIL (${failed})`)
 process.exit(failed === 0 ? 0 : 1)

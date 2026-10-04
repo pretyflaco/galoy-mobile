@@ -328,6 +328,10 @@ export class SupportChatClient {
     if (!group) return false
     if (this.groupId === gid) return true
     if (this.viewing) await this.view(null)
+    // Hermes R3: let in-flight writes for this conversation land before reading its
+    // history and flipping groupId (a write still on the parked branch would
+    // otherwise be lost by the next save of this.items)
+    await (this.historyChains.get(gid) ?? Promise.resolve()).catch(() => undefined)
     this.group = group
     this.groupId = gid
     this.items = (await this.history.getItem(gid)) ?? []
@@ -520,6 +524,7 @@ export class SupportChatClient {
         this.log(
           `roster ${prev ? "replaced" : "loaded"} ${short(r.id)}: ${r.members.size} members`,
         )
+        this.publishInvitePolicy() // R2: keep the allowlist in step with the roster
         // Revocation relabeling (03 §5: "as of now" default): warn when a current
         // member's verification changed with the new roster.
         if (prev && this.group) {
@@ -560,14 +565,7 @@ export class SupportChatClient {
     this.log(
       `identity ${short(this.pubkey)}; roster ${short(SUPPORT_ROSTER_PUBKEY)}: ${rosterStatus}`,
     )
-    // M20 (Hermes N2): the patched InviteManager (F-M20-5) stores invites ONLY from
-    // the roster bot — a junk-filled store can never make a real bot invite the one
-    // dropped. The bot's pubkey is roster-pinned (constant across weekly re-signs).
-    const rosterBot = [...(this.roster.current?.members ?? [])].find(
-      ([, m]: [string, { role?: string }]) => m.role === "bot",
-    )
-    ;(globalThis as { __blinkInviteAllowlist?: string[] }).__blinkInviteAllowlist =
-      rosterBot ? [rosterBot[0] as string] : []
+    this.publishInvitePolicy()
 
     // Be invitable: 30443 (ensurePublished, rotates) + 10051/10050/10002 (F-M9-12)
     await ensureDiscoverable(this.client, this.network, {
@@ -781,30 +779,17 @@ export class SupportChatClient {
       // Hermes #6: previewWelcome swallows errors. "No group info" is NOT the same as
       // "the bot is not an admin" — a transient read failure must not delete a
       // legitimate support invite. Retry hourly, but only for a day (A(ii)/N1).
-      if (!preview?.group) {
-        if (!this.meta.inviteFirstSeen) this.meta.inviteFirstSeen = {}
-        const firstSeen = this.meta.inviteFirstSeen
-        if (Object.keys(firstSeen).length >= 500) {
-          const oldest = Object.entries(firstSeen)
-            .map(([id, v]) => [id, typeof v === "number" ? v : v.first] as const)
-            .sort((a, b) => a[1] - b[1])
-          for (const [id] of oldest.slice(0, 100)) delete firstSeen[id]
-        }
-        firstSeen[invite.id] = { first: first ?? now(), last: now() }
-        if (first !== undefined && now() - first > 24 * 3600) {
-          delete firstSeen[invite.id]
-          await this.client.invites.markAsRead(invite.id)
-          this.log(
-            `invite ${short(invite.id)} dropped: group info unreadable for over a day`,
-          )
-        } else {
-          this.log(`invite ${short(invite.id)}: group info unreadable — kept for retry`)
-        }
-        return true
-      }
+      if (!preview?.group)
+        return this.trackInviteForRetry(invite, first, "group info unreadable")
       if (this.meta.inviteFirstSeen && invite.id in this.meta.inviteFirstSeen) {
         delete this.meta.inviteFirstSeen[invite.id]
       }
+      // R2: with no VALID roster (offline first start, or an expired one pending the
+      // weekly re-sign) the gate cannot verify anyone — a refusal here would DELETE
+      // a real support invite. Keep it unread under the same TTL as null-preview;
+      // the next hourly re-gate after the roster recovers accepts it.
+      if (this.roster?.status() !== "valid")
+        return this.trackInviteForRetry(invite, first, "roster not valid")
       if (
         inviteAcceptable(invite.pubkey, preview.group.adminPubkeys ?? [], (pk) =>
           this.label(pk),
@@ -822,6 +807,32 @@ export class SupportChatClient {
       this.log(`invite ${short(invite.id)} failed to join: ${(e as Error).message}`)
       return false
     }
+  }
+
+  /** Hermes A(ii)/N1/R2: keep an invite unread — hourly re-gate, 24 h TTL (then it's
+   *  marked read and dropped). Returns true (meta changed). */
+  private async trackInviteForRetry(
+    invite: { id: string },
+    first: number | undefined,
+    reason: string,
+  ): Promise<boolean> {
+    if (!this.meta.inviteFirstSeen) this.meta.inviteFirstSeen = {}
+    const firstSeen = this.meta.inviteFirstSeen
+    if (Object.keys(firstSeen).length >= 500) {
+      const oldest = Object.entries(firstSeen)
+        .map(([id, v]) => [id, typeof v === "number" ? v : v.first] as const)
+        .sort((a, b) => a[1] - b[1])
+      for (const [id] of oldest.slice(0, 100)) delete firstSeen[id]
+    }
+    firstSeen[invite.id] = { first: first ?? now(), last: now() }
+    if (first !== undefined && now() - first > 24 * 3600) {
+      delete firstSeen[invite.id]
+      await this.client.invites.markAsRead(invite.id)
+      this.log(`invite ${short(invite.id)} dropped: ${reason} for over a day`)
+    } else {
+      this.log(`invite ${short(invite.id)}: ${reason} — kept for retry`)
+    }
+    return true
   }
 
   /**
@@ -861,6 +872,32 @@ export class SupportChatClient {
     const s = this.roster?.status() ?? "none"
     const r = this.roster?.current
     return r ? `${s} · ${r.members.size} members · ${short(r.id)}` : s
+  }
+
+  /**
+   * M20 (Hermes N2/R1/R2): wire the invite policy into the patched InviteManager
+   * (F-M20-5 v3). With a VALID roster the allowlist is the roster bot (junk never
+   * stores; the bot's key is roster-pinned across re-signs). With NO valid roster
+   * the allowlist stays UNSET (plain caps) — an [] would drop a real bot invite
+   * after seen-marking it (R2). The drop hook makes the library's drop visible in
+   * the app's log (R1: the CI smoke counts it). Called at init and re-called from
+   * the roster's onChange.
+   */
+  private publishInvitePolicy(): void {
+    const g = globalThis as {
+      __blinkInviteAllowlist?: string[]
+      __blinkInviteDropped?: (pk: string, reason?: string) => void
+    }
+    g.__blinkInviteDropped = (pk, reason) =>
+      this.log(`invite from ${short(pk)} dropped (${reason ?? "not allowlisted"})`)
+    const rosterBot =
+      this.roster?.status() === "valid"
+        ? [...(this.roster.current?.members ?? [])].find(
+            ([, m]: [string, { role?: string }]) => m.role === "bot",
+          )
+        : undefined
+    if (rosterBot) g.__blinkInviteAllowlist = [rosterBot[0] as string]
+    else delete g.__blinkInviteAllowlist
   }
 
   label(pubkey: string): MemberLabel {
@@ -1017,20 +1054,32 @@ export class SupportChatClient {
       ),
     )
     this.log(`sent image ${bytes.length} bytes (${Date.now() - t0}ms)`)
-    // M20 (finding 3): sealed canonical copy in Caches; a short-lived plaintext shadow
-    // for display — never a plaintext file in (iCloud-backed-up) Documents.
-    const name = `${attachment.plaintextSha256}.${ext}`
-    await storeSealedImage(this.scope, name, bytes)
-    await ensureLiveImage(this.scope, name)
+    // Hermes R4: the message is OUT — push the item first, then store the picture
+    // best-effort. A local storage failure must not throw (the user would resend
+    // and support would get a duplicate; the text bubble alone is correct).
+    const itemId = `m-${Date.now()}`
     await this.push({
-      id: `m-${Date.now()}`,
+      id: itemId,
       at: now(),
       type: "msg",
       from: this.pubkey,
       mine: true,
       text,
-      image: { path: name, width: opts.width, height: opts.height },
     })
+    try {
+      // M20 (finding 3): sealed canonical copy in Caches; a short-lived plaintext
+      // shadow for display — never a plaintext file in (iCloud-backed-up) Documents.
+      const name = `${attachment.plaintextSha256}.${ext}`
+      await storeSealedImage(this.scope, name, bytes)
+      await ensureLiveImage(this.scope, name)
+      await this.updateItem(this.groupId as string, itemId, {
+        image: { path: name, width: opts.width, height: opts.height },
+      })
+    } catch (e) {
+      this.log(
+        `image stored locally: failed (${(e as Error).message}) — the message was sent`,
+      )
+    }
   }
 
   /**
@@ -1080,8 +1129,19 @@ export class SupportChatClient {
     }
   }
 
-  /** Merge fields into a stored chat item (current conversation or its history). */
-  private async updateItem(gid: string, id: string, patch: Partial<ChatItem>) {
+  /** Merge fields into a stored chat item (current conversation or its history).
+   *  Hermes R3: on the per-gid write chain, like pushTo — an image patch and a new
+   *  message to a parked conversation can no longer overwrite each other. */
+  private updateItem(gid: string, id: string, patch: Partial<ChatItem>): Promise<void> {
+    const prev = this.historyChains.get(gid) ?? Promise.resolve()
+    const next = prev
+      .then(() => this.updateItemChained(gid, id, patch))
+      .catch((e) => this.log(`updateItem ${short(gid)}: ${(e as Error).message}`))
+    this.historyChains.set(gid, next)
+    return next
+  }
+
+  private async updateItemChained(gid: string, id: string, patch: Partial<ChatItem>) {
     if (gid === this.groupId) {
       this.items = this.items.map((x) => (x.id === id ? { ...x, ...patch } : x))
       this.emit()

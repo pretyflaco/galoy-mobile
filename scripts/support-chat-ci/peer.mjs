@@ -8,6 +8,7 @@ import {
   createChatRumor,
   createApplicationMessageIntent,
   deserializeApplicationData,
+  getGroupMembers,
 } from "@internet-privacy/marmot-ts"
 import { TestEventSigner } from "../../vendor/blink-support-chat-adapters/signer.js"
 import { SimplePoolNetwork } from "../../vendor/blink-support-chat-adapters/network.js"
@@ -51,6 +52,53 @@ console.log(`[${ts()}] discovery published (30443 + 10051/10050/10002)`)
 const joined = new Set()
 const replies = new Set()
 
+// M20: unsolicited-invite ATTACK (default on; ATTACK=0 disables). Right after joining
+// the app's group, an EPHEMERAL attacker key (NOT the roster bot) fetches the device's
+// PUBLIC key package (kind 30443), invites it into an attacker-admined group and sends
+// phishing text under the "Support (<name>):" prefix — Hermes review 2026-10-04,
+// findings 1+5. The fixed app refuses the invite (logcat: "invite from … refused") and
+// never renders the phish; a vulnerable app would join, END the real conversation and
+// show the phish under the trusted label — failing the smoke either way.
+const ATTACK = process.env.ATTACK !== "0"
+const PHISH = "ci-smoke-phish"
+
+async function attack(devicePk) {
+  const atkSigner = new TestEventSigner()
+  const atkNetwork = new SimplePoolNetwork({ signer: atkSigner, relays: [RELAY] })
+  const atk = new MarmotClient({
+    signer: atkSigner, network: atkNetwork, clientId: "ci-smoke-attacker",
+    groupStateStore: inMemoryStore(),
+    keyPackageStore: inMemoryStore(),
+    inviteStore: inMemoryStore(),
+    ingestStateStore: inMemoryStore(),
+    removedMarkerStore: inMemoryStore(),
+  })
+  atk.groups.connectAll({ fallbackRelays: [RELAY] })
+  const kp = await fetchKeyPackageEvent(atkNetwork, [RELAY], devicePk)
+  if (!kp) {
+    console.log(`[${ts()}] attack: no key package for the device`)
+    return
+  }
+  const g = await atk.groups.create("Blink support", {
+    relays: [RELAY],
+    adminPubkeys: [atkSigner.publicKey], // the ATTACKER is the only admin
+  })
+  await atk.groups.invite(g.id, kp)
+  await sleep(3000)
+  await atk.groups.send(
+    g.id,
+    createApplicationMessageIntent(
+      createChatRumor({
+        pubkey: atkSigner.publicKey,
+        content: `Support (${NAME}): ${PHISH} visit https://evil.example`,
+      }),
+    ),
+  )
+  console.log(
+    `[${ts()}] attack sent: unsolicited invite + phish, attacker ${atkSigner.publicKey.slice(0, 12)}…`,
+  )
+}
+
 async function join(welcome) {
   const { group } = await client.joinGroupFromWelcome({ welcomeRumor: welcome })
   await client.invites.markAsRead(welcome.id)
@@ -75,6 +123,12 @@ async function join(welcome) {
   })
   await client.groups.connect(group.id)
   await send(`${NAME} joined`)
+  // the M20 attack: while the app's conversation is ACTIVE, an unsolicited invite arrives
+  if (ATTACK) {
+    const devicePk = getGroupMembers(group.state).find((pk) => pk !== signer.publicKey)
+    if (devicePk)
+      attack(devicePk).catch((e) => console.log(`[${ts()}] attack failed: ${e.message}`))
+  }
 }
 
 for (;;) {

@@ -105,6 +105,13 @@ appId: io.galoy.bitcoinbeach
     timeout: 60000
 - takeScreenshot: 07-reply
 
+# M20: the CI peer also ran an unsolicited-invite ATTACK (ephemeral attacker key,
+# attacker-admined group, "Support (CI Smoke Bot): ci-smoke-phish …") while this
+# conversation was active. The fixed app refuses the invite: the phish never renders
+# and the round-trip above already proved the ticket was not replaced.
+- assertNotVisible:
+    text: ".*ci-smoke-phish.*"
+
 # Conversations (header clock): the current one checked, titled by the first message
 - tapOn:
     id: "support-chat-conversations"

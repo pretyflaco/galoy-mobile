@@ -58,6 +58,7 @@ import type { BlinkEventSigner } from "./blink-signer"
 import { SUPPORT_SCOPE, createSupportSigner, loadOrCreateSupportKey } from "./support-key"
 import { EncryptedKeyValueStore } from "./encrypted-store"
 import { isDetailsMessage, requestOf, type RequestKind } from "./details"
+import { groupAdminsIncludeBot, inviteAcceptable } from "./invite-policy"
 import {
   MAX_DOWNLOAD_BYTES,
   allowedBlobUrl,
@@ -297,6 +298,30 @@ export class SupportChatClient {
   }
 
   /**
+   * M20 (D2): make a parked support-initiated conversation the current one. The
+   * previous conversation is NOT ended — it stays active and keeps receiving into its
+   * history. Returns false when there is no live group for gid (ended/unrestorable —
+   * the caller falls back to the read-only view()).
+   */
+  async switchTo(gid: string): Promise<boolean> {
+    if (this.meta.conversations?.[gid]?.status === "ended") return false
+    const group = [...this.attached].find(
+      (g: AnyGroup) => g.groupData && hex(g.groupData.nostrGroupId) === gid,
+    )
+    if (!group) return false
+    if (this.groupId === gid) return true
+    if (this.viewing) await this.view(null)
+    this.group = group
+    this.groupId = gid
+    this.items = (await this.history.getItem(gid)) ?? []
+    this.meta.activeGroup = gid
+    await this.saveMeta()
+    this.emit()
+    this.announcePush()
+    return true
+  }
+
+  /**
    * M19 "Share details" from outside the chat (e.g. a transaction's detail screen): make
    * sure there is a conversation the support bot has joined before sending into it —
    * a message sent before the bot's join can be lost (F-M12-1). Starts one if needed and
@@ -502,7 +527,9 @@ export class SupportChatClient {
     // Library inbound loop: backfill + live + dedupe + ingest for every group,
     // auto-connecting groups created/joined later (F-M9-5).
     this.client.groups.on("created", (g: AnyGroup) => this.attach(g))
-    this.client.groups.on("joined", (g: AnyGroup) => this.attach(g))
+    // M20 (D2): a group joined from an invite is PARKED first — watchForInvites()
+    // alone decides (after its roster-bot gate) whether it becomes the current one.
+    this.client.groups.on("joined", (g: AnyGroup) => this.attach(g, { activate: false }))
     this.client.groups.on("removed", (gid: Uint8Array) => {
       this.noteEngineActivity()
       this.pushTo(hex(gid), {
@@ -567,6 +594,17 @@ export class SupportChatClient {
       }
       await this.endConversation(old, "unrestorable")
     }
+    // M20 (D2): parked support-initiated conversations (joined, never made current)
+    // get their listeners back so their history stays complete across restarts.
+    for (const g of groups) {
+      const gid = g.groupData ? hex(g.groupData.nostrGroupId) : null
+      if (
+        gid &&
+        gid !== this.groupId &&
+        this.meta.conversations?.[gid]?.status === "active"
+      )
+        this.attach(g, { activate: false })
+    }
     this.watchForInvites()
     this.startStallWatcher()
     this.status = "ready"
@@ -585,6 +623,14 @@ export class SupportChatClient {
     const group = this.group
     const gid = this.groupId
     if (!PUSH_SERVER_PUBKEY || !group || !gid || !this.signer || this.isEnded()) return
+    // M20 (finding 2): never announce into a group the verified roster bot does not
+    // admin — a member holding the token record can make Transponder wake this device.
+    if (
+      !groupAdminsIncludeBot(group.groupData?.adminPubkeys ?? [], (pk) => this.label(pk))
+    ) {
+      this.log(`push: not announced in ${short(gid)}: the roster bot is not an admin`)
+      return
+    }
     try {
       const token = await getPushToken()
       if (!token) return
@@ -608,7 +654,16 @@ export class SupportChatClient {
     }
   }
 
-  /** Support-initiated conversations: the library's invite watch loop (live + backfill). */
+  /**
+   * Support-initiated conversations: the library's invite watch loop (live + backfill).
+   * M20 (D1/D2): an invite is accepted ONLY from the verified roster bot (its pubkey
+   * is authenticated by the NIP-59 gift-wrap seal — PoC C6, findings/M20-security.md)
+   * and ONLY into a group the roster bot admins (checked pre-join via previewWelcome).
+   * Anything else is marked read, logged (pubkey prefix only) and never joined. An
+   * accepted invite NEVER ends the active conversation: with none/ended it becomes
+   * current; with one active it is parked as a second, inactive conversation (the
+   * Conversations screen switches to it via switchTo()).
+   */
   private async watchForInvites(): Promise<void> {
     if (this.destroyed) return
     this.inviteWatch = new AbortController()
@@ -618,19 +673,16 @@ export class SupportChatClient {
           (i: { joinable: boolean }) => i.joinable,
         )) {
           try {
-            // UnreadInvite extends Rumor — the invite IS the welcome rumor.
-            const { group } = await this.client.joinGroupFromWelcome({
-              welcomeRumor: invite,
-            })
-            await this.client.invites.markAsRead(invite.id)
-            this.attach(group)
-            this.announcePush()
-            this.push({
-              id: `joined-${invite.id}`,
-              at: now(),
-              type: "notice",
-              text: `Joined a conversation started by support (${this.members().length + 1} members)`,
-            })
+            const preview = await this.client.previewWelcome(invite)
+            const admins: string[] = preview?.group?.adminPubkeys ?? []
+            if (inviteAcceptable(invite.pubkey, admins, (pk) => this.label(pk))) {
+              await this.joinInvitedGroup(invite)
+            } else {
+              await this.client.invites.markAsRead(invite.id)
+              this.log(
+                `invite from ${short(invite.pubkey)} refused: not a roster-bot, bot-admined group`,
+              )
+            }
           } catch (e) {
             this.log(`invite ${short(invite.id)} failed to join: ${(e as Error).message}`)
           }
@@ -638,6 +690,39 @@ export class SupportChatClient {
       }
     } catch (e) {
       if (!this.destroyed) this.log(`invite watch ended: ${(e as Error).message}`)
+    }
+  }
+
+  /**
+   * Join a roster-bot invite that passed the gate. D2: it NEVER ends the active
+   * conversation — with none/ended it becomes current (notice + push announcement),
+   * with one active it is parked and the notice lands in its own history.
+   */
+  private async joinInvitedGroup(invite: { id: string; pubkey: string }): Promise<void> {
+    // UnreadInvite extends Rumor — the invite IS the welcome rumor.
+    const { group } = await this.client.joinGroupFromWelcome({
+      welcomeRumor: invite,
+    })
+    await this.client.invites.markAsRead(invite.id)
+    const gid = hex(group.groupData.nostrGroupId)
+    const hasActive = Boolean(this.groupId) && !this.isEnded()
+    this.attach(group, { activate: !hasActive })
+    const notice: ChatItem = {
+      id: `joined-${invite.id}`,
+      at: now(),
+      type: "notice",
+      text: `Joined a conversation started by support (${
+        getGroupMembers(group.state).length
+      } members)`,
+    }
+    if (hasActive) {
+      // parked: the active ticket is untouched
+      this.log(`support-initiated conversation ${short(gid)} parked (one is active)`)
+      await this.pushTo(gid, notice)
+    } else {
+      this.items = (await this.history.getItem(gid)) ?? []
+      this.announcePush()
+      await this.push(notice)
     }
   }
 
@@ -876,62 +961,76 @@ export class SupportChatClient {
     )
   }
 
-  /** One group is "the" conversation (P1: a single active support conversation). */
-  private attach(group: AnyGroup) {
-    if (!group?.groupData || this.attached.has(group)) return
-    this.attached.add(group)
+  /**
+   * One group is "the" conversation (P1: a single active support conversation).
+   * `activate: false` (M20, D2) wires the listeners and registers the conversation
+   * but leaves the CURRENT one untouched — a support-initiated invite is parked as a
+   * second, inactive conversation and never ends the active ticket. An already
+   * attached group can still be activated later (the "joined" event parks first,
+   * watchForInvites() then decides).
+   */
+  private attach(group: AnyGroup, opts?: { activate?: boolean }) {
+    if (!group?.groupData) return
     const gid = hex(group.groupData.nostrGroupId)
-    // Option C: a newly attached conversation (created, or support-initiated) replaces
-    // the current one, which ends; its record is created on first attach.
+    const activate = opts?.activate ?? true
+    if (!this.attached.has(group)) {
+      this.attached.add(group)
+      this.meta.conversations ??= {}
+      this.meta.conversations[gid] ??= { gid, startedAt: now(), status: "active" }
+      // Membership notices (req 5): baseline = who is here at attach time.
+      this.knownMembers.set(gid, new Set<string>(getGroupMembers(group.state)))
+      group.on("stateChanged", (state: { groupContext: { epoch: bigint } }) => {
+        this.noteEngineActivity()
+        this.membershipNotices(gid, state)
+      })
+      group.on("applicationMessage", (data: Uint8Array) => {
+        this.noteEngineActivity()
+        // v2: the engine already bound the rumor's author to the MLS sender leaf
+        // (F-M9-3) — anything delivered here is authenticated to its sender.
+        try {
+          const rumor = deserializeApplicationData(data)
+          if (rumor.pubkey === this.pubkey) return
+          // only chat (kind 9) is shown; app payloads such as push token gossip
+          // (447/448/449) from other members' clients are not messages (M18)
+          if (rumor.kind !== 9) return
+          // a details request counts only from the verified roster bot (M19)
+          const asker = this.label(rumor.pubkey)
+          const request =
+            asker.verified && asker.role === "bot" ? requestOf(rumor.tags) : null
+          const itemId = `r-${rumor.id}`
+          this.pushTo(gid, {
+            id: itemId,
+            at: now(),
+            type: "msg",
+            from: rumor.pubkey,
+            text: rumor.content,
+            ...(request ? { request } : {}),
+            ...(isDetailsMessage(rumor.tags) ? { details: true } : {}),
+          })
+          // M19 phase 2: a picture from Blink Support — only from verified members
+          if (asker.verified) {
+            const attachment = getMediaAttachments(rumor.tags ?? [])[0]
+            if (attachment)
+              this.receiveImage({ gid, itemId, group, attachment }).catch((e) =>
+                this.log(`image not shown: ${(e as Error).message}`),
+              )
+          }
+        } catch (e) {
+          this.log(`applicationMessage dropped by strict decode: ${(e as Error).message}`)
+        }
+      })
+    }
+    if (!activate) {
+      this.saveMeta()
+      this.emit()
+      return
+    }
+    // Option C: a newly activated conversation (created, or support-initiated with no
+    // active one) replaces the current one, which ends.
     if (this.groupId && this.groupId !== gid)
       this.endConversation(this.groupId, "replaced")
-    this.meta.conversations ??= {}
-    const conversations = this.meta.conversations
-    conversations[gid] ??= { gid, startedAt: now(), status: "active" }
     this.group = group
     this.groupId = gid
-    // Membership notices (req 5): baseline = who is here at attach time.
-    this.knownMembers.set(gid, new Set<string>(getGroupMembers(group.state)))
-    group.on("stateChanged", (state: { groupContext: { epoch: bigint } }) => {
-      this.noteEngineActivity()
-      this.membershipNotices(gid, state)
-    })
-    group.on("applicationMessage", (data: Uint8Array) => {
-      this.noteEngineActivity()
-      // v2: the engine already bound the rumor's author to the MLS sender leaf
-      // (F-M9-3) — anything delivered here is authenticated to its sender.
-      try {
-        const rumor = deserializeApplicationData(data)
-        if (rumor.pubkey === this.pubkey) return
-        // only chat (kind 9) is shown; app payloads such as push token gossip
-        // (447/448/449) from other members' clients are not messages (M18)
-        if (rumor.kind !== 9) return
-        // a details request counts only from the verified roster bot (M19)
-        const asker = this.label(rumor.pubkey)
-        const request =
-          asker.verified && asker.role === "bot" ? requestOf(rumor.tags) : null
-        const itemId = `r-${rumor.id}`
-        this.pushTo(gid, {
-          id: itemId,
-          at: now(),
-          type: "msg",
-          from: rumor.pubkey,
-          text: rumor.content,
-          ...(request ? { request } : {}),
-          ...(isDetailsMessage(rumor.tags) ? { details: true } : {}),
-        })
-        // M19 phase 2: a picture from Blink Support — only from verified members
-        if (asker.verified) {
-          const attachment = getMediaAttachments(rumor.tags ?? [])[0]
-          if (attachment)
-            this.receiveImage({ gid, itemId, group, attachment }).catch((e) =>
-              this.log(`image not shown: ${(e as Error).message}`),
-            )
-        }
-      } catch (e) {
-        this.log(`applicationMessage dropped by strict decode: ${(e as Error).message}`)
-      }
-    })
     this.meta.activeGroup = gid
     this.saveMeta()
     this.emit()

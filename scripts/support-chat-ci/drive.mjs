@@ -162,6 +162,12 @@ ok(
 )
 evidence("final")
 
+// M20: the CI peer also ran an unsolicited-invite ATTACK (ephemeral attacker key,
+// attacker-admined group, "Support (CI Smoke Bot): ci-smoke-phish …" phishing text)
+// while this conversation was active. The fixed app refuses the invite — the phish
+// never renders, and the round-trip above already proved the ticket was not replaced.
+ok("attack never rendered (M20 invite gate)", !/ci-smoke-phish/.test(dump()))
+
 // M19 (Andrej): header clock → Conversations (the current one checked) → back
 ok("conversations (header clock)", await tapId("support-chat-conversations", { waitMs: 2500 }))
 ok("conversations screen", await waitFor("support-conversations-screen", 15000))
@@ -173,5 +179,6 @@ adb("shell input keyevent 4")
 // diagnostics only (P7 removes the TEMP recv logs — the UI is the assertion)
 const log = logcat()
 console.log(`logcat: created=${/group .* created/.test(log)} sent=${/support-chat\] sent/.test(log)}`)
+ok("logcat: the attacker's invite was refused", /invite from \S+ refused/.test(log))
 console.log(failed === 0 ? "\nSUPPORT-CHAT SMOKE PASS" : `\nSUPPORT-CHAT SMOKE FAIL (${failed})`)
 process.exit(failed === 0 ? 0 : 1)

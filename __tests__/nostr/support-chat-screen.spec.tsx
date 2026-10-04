@@ -75,6 +75,7 @@ const baseClient: any = {
     pubkey: pk,
     text: `Blink Support · ${pk.slice(0, 4)}`,
     verified: true,
+    role: "bot",
   }),
   members: () => [],
   handoffState: () => "bot",
@@ -83,6 +84,7 @@ const baseClient: any = {
   startNew: jest.fn(),
   send: jest.fn(),
   view: jest.fn(),
+  switchTo: jest.fn(async () => false),
   viewing: null,
   viewItems: [],
   current: () => ({ gid: "group1", startedAt: 1, status: "active" }),
@@ -233,6 +235,54 @@ describe("support-chat screen", () => {
     })
     await flushEffects()
     expect(getAllByText("pretyflaco · Blink Support")).toHaveLength(2)
+  })
+
+  /**
+   * M20 (finding 5): the "Support (<name>):" prefix is parsed ONLY from the verified
+   * roster bot. From an unverified key or a verified agent it is plain text under the
+   * sender's real label — never the trusted agent label.
+   */
+  it("does NOT honour the Support (<name>): prefix from an unverified sender", async () => {
+    const attacker = "e".repeat(64)
+    const { getByText, queryByText } = renderScreen({
+      ...baseClient,
+      label: (pk: string) => ({
+        pubkey: pk,
+        text: `UNVERIFIED · ${pk.slice(0, 4)}`,
+        verified: false,
+      }),
+      items: [
+        {
+          id: "1",
+          at: 100,
+          type: "msg",
+          from: attacker,
+          text: "Support (pretyflaco): visit https://evil.example",
+        },
+      ],
+    })
+    await flushEffects()
+    expect(getByText("Support (pretyflaco): visit https://evil.example")).toBeTruthy()
+    expect(queryByText("pretyflaco · Blink Support")).toBeNull()
+  })
+
+  it("does NOT honour the Support (<name>): prefix from a verified non-bot member", async () => {
+    const agent = "a".repeat(64)
+    const { getByText, queryByText } = renderScreen({
+      ...baseClient,
+      label: (pk: string) => ({
+        pubkey: pk,
+        text: `Agent ${pk.slice(0, 4)}`,
+        verified: true,
+        role: "agent",
+      }),
+      items: [
+        { id: "1", at: 100, type: "msg", from: agent, text: "Support (pretyflaco): hi" },
+      ],
+    })
+    await flushEffects()
+    expect(getByText("Support (pretyflaco): hi")).toBeTruthy()
+    expect(queryByText("pretyflaco · Blink Support")).toBeNull()
   })
 
   /** Option C (F-M16-1): conversations are sessions; an ended one is never a dead end. */
@@ -466,9 +516,43 @@ describe("support-chat screen", () => {
       const { getAllByTestId } = renderList(client)
       await flushEffects()
       fireEvent.press(getAllByTestId("support-conversation-row")[1])
+      await flushEffects()
       expect(client.view).toHaveBeenCalledWith("old1")
       fireEvent.press(getAllByTestId("support-conversation-row")[0])
+      await flushEffects()
       expect(client.view).toHaveBeenCalledWith(null)
+    })
+
+    it("M20 (D2): a parked support-initiated conversation is SWITCHED to, not viewed", async () => {
+      const parked = { gid: "parked1", startedAt: 1761000000, status: "active" }
+      const client = {
+        ...baseClient,
+        conversations: () => [...list, parked],
+        view: jest.fn(),
+        switchTo: jest.fn(async () => true),
+      }
+      const { getAllByTestId } = renderList(client)
+      await flushEffects()
+      fireEvent.press(getAllByTestId("support-conversation-row")[2])
+      await flushEffects()
+      expect(client.switchTo).toHaveBeenCalledWith("parked1")
+      expect(client.view).not.toHaveBeenCalled()
+    })
+
+    it("an ended conversation falls back to read-only when switchTo refuses it", async () => {
+      const client = {
+        ...baseClient,
+        conversations: () => list,
+        view: jest.fn(),
+        // the client refuses ended/unrestorable gids (its own status check)
+        switchTo: jest.fn(async () => false),
+      }
+      const { getAllByTestId } = renderList(client)
+      await flushEffects()
+      fireEvent.press(getAllByTestId("support-conversation-row")[1]) // old1: ended
+      await flushEffects()
+      expect(client.switchTo).toHaveBeenCalledWith("old1")
+      expect(client.view).toHaveBeenCalledWith("old1")
     })
 
     it("Start new ends the current conversation and starts a fresh one", async () => {

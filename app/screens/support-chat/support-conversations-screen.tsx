@@ -33,9 +33,12 @@ export const SupportConversationsScreen: React.FC = () => {
   const isCurrent = (c: Conversation) =>
     c.gid === client?.groupId && c.status === "active"
 
-  const open = (c: Conversation) => {
+  const open = async (c: Conversation) => {
     if (!client) return
-    client.view(c.gid === client.groupId ? null : c.gid)
+    // M20 (D2): a parked support-initiated conversation becomes the current one
+    // (writable); ended/unrestorable ones open read-only.
+    const switched = c.gid !== client.groupId && (await client.switchTo(c.gid))
+    if (!switched) client.view(c.gid === client.groupId ? null : c.gid)
     navigation.goBack()
   }
 

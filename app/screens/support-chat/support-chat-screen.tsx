@@ -40,6 +40,18 @@ const relayedAuthor = (text: string): { name: string | null; body: string } => {
   return m ? { name: m[1], body: text.slice(m[0].length) } : { name: null, body: text }
 }
 
+/**
+ * M20 (finding 5): the "Support (<name>):" prefix is meaningful ONLY from the
+ * verified roster bot (the relay posts human replies under the bot's key). From any
+ * other sender it is plain text — otherwise an attacker's "Support (pretyflaco): …"
+ * would render under the trusted "pretyflaco · Blink Support" label.
+ */
+const relayedAuthorFor = (
+  who: MemberLabel,
+  text: string,
+): { name: string | null; body: string } =>
+  who.verified && who.role === "bot" ? relayedAuthor(text) : { name: null, body: text }
+
 /** A pause longer than this starts a new run (its own time label), like messengers do. */
 const RUN_GAP_S = 5 * 60
 const dayOf = (at: number) => new Date(at * 1000).toDateString()
@@ -243,7 +255,7 @@ export const SupportChatScreen: React.FC = () => {
       let body = item.text
       if (item.type === "msg" && !item.mine && client && item.from) {
         const who: MemberLabel = client.label(item.from)
-        const relayed = relayedAuthor(item.text)
+        const relayed = relayedAuthorFor(who, item.text)
         body = relayed.body
         verified = who.verified
         if (relayed.name === null) author = who.text

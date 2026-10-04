@@ -214,6 +214,33 @@ const edits = [
     find: `const keyPackageRef = await calculateKeyPackageRef(keyPackage);`,
     replace: `const keyPackageRef = await calculateKeyPackageRef(keyPackage, options.cryptoProvider); // ${PATCH_MARKER} (F-M9-1)`,
   },
+  // --- F-M20-4 (Hermes re-review #4): rolling window for the invite "seen" set ------
+  // The InviteManager's seen set is ONE JSON value ({type:"seen", ids:[…]}) that is
+  // re-serialized — and in the app additionally AES-GCM re-encrypted — on EVERY gift
+  // wrap, so N wraps cost O(N²) and grow the store without bound (≈250 k wraps fill
+  // a 16 MB AsyncStorage db; every later write, incl. MLS group saves, then fails).
+  // Anyone can send wraps to a device's public inbox relays (kind 10050), and wok has
+  // no per-kind/author write policy (per-pubkey rates only, beaten by key rotation).
+  // Keep the last 4096 ids: dedupe still covers redelivery/reconnect windows; older
+  // wraps may be re-ingested once (and fail decrypt again — bounded, harmless).
+  {
+    file: `${root}client/invite-manager.js`,
+    find: `    async persistSeen() {
+        const seen = await this.getSeenSet();
+        await this.store.setItem(SEEN_KEY, { type: "seen", ids: [...seen] });
+    }`,
+    replace: `    async persistSeen() {
+        const seen = await this.getSeenSet();
+        // ${PATCH_MARKER} (F-M20-4): rolling seen window — see scripts/patch-marmot-ts-v2.mjs.
+        if (seen.size > 8192) {
+            const keep = [...seen].slice(-4096);
+            seen.clear();
+            for (const id of keep)
+                seen.add(id);
+        }
+        await this.store.setItem(SEEN_KEY, { type: "seen", ids: [...seen] });
+    }`,
+  },
   // --- F-M16-1 (marmot-ts#78): the processMessage guard (A′) ----------------------
   // On Hermes, `await processMessage(...)` inside ingest's Babel-lowered async
   // generator has resolved to the literal number 0 (findings/M12, M14, M16). The stock

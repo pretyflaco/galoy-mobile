@@ -192,4 +192,11 @@ describe("M20 decompression-bomb cap (decoded dimensions from the header)", () =
     expect(imageWithinPixelCap(png(0, 0))).toBe(false)
     expect(imageWithinPixelCap(png(1, 1).slice(0, 12))).toBe(false) // truncated header
   })
+
+  it("reads JPEGs with 0xFF fill bytes before a marker (Hermes' parser bug)", () => {
+    const b = new Uint8Array(64)
+    b.set([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10], 0)
+    b.set([0xff, 0xff, 0xff, 0xc0, 0x00, 0x11, 8, ...be16(3000), ...be16(4000)], 20)
+    expect(imageDim(b)).toEqual({ width: 4000, height: 3000 })
+  })
 })

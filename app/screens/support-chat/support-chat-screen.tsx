@@ -227,6 +227,8 @@ export const SupportChatScreen: React.FC = () => {
         height: img.height,
         caption,
       })
+      // M20 (Hermes #5): the picker's resized temp copy is plaintext — delete it
+      RNFS.unlink(img.uri.replace(/^file:\/\//, "")).catch(() => undefined)
       setPickedImage(null)
       setDraft("")
     })

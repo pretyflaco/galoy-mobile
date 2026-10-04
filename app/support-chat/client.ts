@@ -312,6 +312,8 @@ export class SupportChatClient {
    * the caller falls back to the read-only view()).
    */
   async switchTo(gid: string): Promise<boolean> {
+    // Hermes #2: never switch mid-ensureConversation (the greeting wait watches items)
+    if (this.ensurePromise) await this.ensurePromise.catch(() => undefined)
     if (this.meta.conversations?.[gid]?.status === "ended") return false
     const group = [...this.attached].find(
       (g: AnyGroup) => g.groupData && hex(g.groupData.nostrGroupId) === gid,
@@ -549,6 +551,8 @@ export class SupportChatClient {
     // delete the plaintext; shadows of the current conversation are (re)made below.
     const sealed = await migratePlaintextMedia(this.scope).catch(() => -1)
     if (sealed > 0) this.log(`sealed ${sealed} plaintext picture(s), originals deleted`)
+    // Hermes #5: shadows from a previous run (crash/kill while in front) never survive start
+    wipeLiveImages()
 
     // Library inbound loop: backfill + live + dedupe + ingest for every group,
     // auto-connecting groups created/joined later (F-M9-5).
@@ -702,8 +706,18 @@ export class SupportChatClient {
         )) {
           try {
             const preview = await this.client.previewWelcome(invite)
-            const admins: string[] = preview?.group?.adminPubkeys ?? []
-            if (inviteAcceptable(invite.pubkey, admins, (pk) => this.label(pk))) {
+            // Hermes #6: previewWelcome swallows errors. "No group info" is NOT the
+            // same as "the bot is not an admin" — a transient read failure must not
+            // delete a legitimate support invite. Leave it unread; the watch retries.
+            if (!preview?.group) {
+              this.log(
+                `invite ${short(invite.id)}: group info unreadable — kept for retry`,
+              )
+            } else if (
+              inviteAcceptable(invite.pubkey, preview.group.adminPubkeys ?? [], (pk) =>
+                this.label(pk),
+              )
+            ) {
               await this.joinInvitedGroup(invite)
             } else {
               await this.client.invites.markAsRead(invite.id)

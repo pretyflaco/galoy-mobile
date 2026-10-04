@@ -134,8 +134,10 @@ export const imageDim = (b: Uint8Array): { width: number; height: number } | nul
   if (imageExt(b) === "jpg") {
     let o = 2
     while (o + 9 < b.length && b[o] === 0xff) {
-      const marker = b[o + 1]
-      const len = u16(o + 2)
+      let m = o + 1
+      while (m + 2 < b.length && b[m] === 0xff) m += 1 // 0xFF fill bytes precede the marker
+      const marker = b[m]
+      const len = u16(m + 1)
       if (len < 2) return null
       if (
         (marker >= 0xc0 && marker <= 0xc3) ||
@@ -143,8 +145,8 @@ export const imageDim = (b: Uint8Array): { width: number; height: number } | nul
         (marker >= 0xc9 && marker <= 0xcb) ||
         (marker >= 0xcd && marker <= 0xcf)
       )
-        return { height: u16(o + 5), width: u16(o + 7) }
-      o += 2 + len
+        return { height: u16(m + 4), width: u16(m + 6) }
+      o = m + 1 + len
     }
     return null
   }

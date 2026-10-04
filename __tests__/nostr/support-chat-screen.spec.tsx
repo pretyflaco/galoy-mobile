@@ -34,6 +34,7 @@ jest.mock("react-native-fs", () => ({
   DocumentDirectoryPath: "/mock/documents",
   CachesDirectoryPath: "/mock/caches",
   readFile: jest.fn(async () => "AAEC"),
+  unlink: jest.fn(async () => {}),
 }))
 const mockSaveAsset = jest.fn(async () => ({}))
 jest.mock("@react-native-camera-roll/camera-roll", () => ({

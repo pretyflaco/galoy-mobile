@@ -22,8 +22,14 @@ export class SimplePoolNetwork {
     this.activity445At = 0
     this.onSubClosed = null
     this.destroyed = false
+    // M20 (Hermes M1): AUTH only for the relays this client was configured with
+    const allowedAuthRelays = new Set(relays.map((r) => r.replace(/\/+$/, "")))
     this.pool = new SimplePool({
-      automaticallyAuth: () => (event) => Promise.resolve(this.signer.signEvent(event)),
+      automaticallyAuth: () => (event) => {
+        const tag = event.tags?.find((t) => t[0] === "relay")?.[1]?.replace(/\/+$/, "")
+        if (tag && allowedAuthRelays.has(tag)) return Promise.resolve(this.signer.signEvent(event))
+        return Promise.reject(new Error(`refusing NIP-42 AUTH for unconfigured relay ${tag ?? "?"}`))
+      },
     })
   }
 

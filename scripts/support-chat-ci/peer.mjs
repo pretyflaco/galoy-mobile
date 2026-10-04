@@ -5,6 +5,7 @@
 import { readFileSync } from "node:fs"
 import {
   MarmotClient,
+  Proposals,
   createChatRumor,
   createApplicationMessageIntent,
   deserializeApplicationData,
@@ -69,11 +70,13 @@ const phase0Loop = (async () => {
       const kps = ATTACK ? await network.request([RELAY], { kinds: [30443] }) : []
       for (const kp of kps) {
         if (kp.pubkey === signer.publicKey || phase0Attacked.has(kp.pubkey)) continue
-        phase0Attacked.add(kp.pubkey)
+        // Hermes round 6: mark attacked only AFTER both attacks ran — a failed
+        // phase 2 must be retried on the next poll
         await attack(kp.pubkey)
         console.log(`[${ts()}] attack sent (phase 0, pre-conversation) for ${kp.pubkey.slice(0, 12)}…`)
         await attackViaBot(kp.pubkey)
         console.log(`[${ts()}] attack sent (phase 2, bot invite into attacker-admined group) for ${kp.pubkey.slice(0, 12)}…`)
+        phase0Attacked.add(kp.pubkey)
       }
     } catch (e) {
       console.log(`[${ts()}] phase-0 poll: ${e.message}`)
@@ -126,21 +129,53 @@ async function attack(devicePk) {
 }
 
 /**
- * M20 (Hermes R1): PHASE 2 — the bot ITSELF invites the device into a group where an
- * ephemeral key is the only admin (the confused-deputy case). The library's allowlist
- * lets this THROUGH (the inviter IS the roster bot): only the APP's inviteAcceptable
- * gate can refuse it ("the roster bot is not a group admin"). This is the phase that
- * proves the gate itself works — phases 0/1 are dropped by the library before it.
+ * M20 (Hermes R1): PHASE 2 — the bot ITSELF invites the device into a group the bot
+ * no longer admins (the confused-deputy case). The library's allowlist lets the
+ * bot-authored Welcome THROUGH; only the app's inviteAcceptable gate can refuse it
+ * ("the roster bot is not a group admin"). Mechanics: ONE commit that ADDS the
+ * device AND drops the bot from the admin set (the bot is still admin AT commit
+ * time, the Welcome's GroupInfo already shows the new admin set — batch-5's version
+ * created the group with a non-member admin and died at the integrity check).
  */
 async function attackViaBot(devicePk) {
-  const deputy = new TestEventSigner() // NOT the bot — the group "admin"
+  // the deputy must be a MEMBER to be adminable (the integrity check runs against
+  // the RESULTING epoch) — publish its key package and add it in the same commit
+  const deputySigner = new TestEventSigner()
+  const deputyNetwork = new SimplePoolNetwork({ signer: deputySigner, relays: [RELAY] })
+  const deputyClient = new MarmotClient({
+    signer: deputySigner, network: deputyNetwork, clientId: "ci-smoke-deputy",
+    groupStateStore: inMemoryStore(),
+    keyPackageStore: inMemoryStore(),
+    inviteStore: inMemoryStore(),
+    ingestStateStore: inMemoryStore(),
+    removedMarkerStore: inMemoryStore(),
+  })
+  await ensureDiscoverable(deputyClient, deputyNetwork, { relays: [RELAY], signer: deputySigner })
+  const deputyKp = await fetchKeyPackageEvent(network, [RELAY], deputySigner.publicKey)
   const g = await client.groups.create("Blink support", {
     relays: [RELAY],
-    adminPubkeys: [deputy.publicKey], // the bot is NOT an admin here
+    adminPubkeys: [signer.publicKey],
   })
   const kp = await fetchKeyPackageEvent(network, [RELAY], devicePk)
   if (!kp) throw new Error("no key package for the device")
-  await client.groups.invite(g.id, kp)
+  // ONE commit: add the deputy AND the device AND drop the bot from the admin set
+  // (the bot is still admin AT commit time; the Welcome's GroupInfo already shows
+  // [deputy] as the admin set — batch-5's version died at the integrity check
+  // because the admin-to-be had no member leaf).
+  const adminProposals = await Proposals.proposeUpdateMetadata({
+    adminPubkeys: [deputySigner.publicKey],
+  })({ groupData: g.groupData })
+  await client.groups.commit(g.id, {
+    extraProposals: [
+      Proposals.proposeInviteUser(deputyKp),
+      Proposals.proposeInviteUser(kp),
+      ...adminProposals,
+    ],
+    welcomeRecipients: [
+      { pubkey: devicePk, keyPackageEventId: kp.id, keyPackageEvent: kp },
+      { pubkey: deputySigner.publicKey, keyPackageEventId: deputyKp.id, keyPackageEvent: deputyKp },
+    ],
+  })
   await sleep(2000)
   await client.groups.send(
     g.id,

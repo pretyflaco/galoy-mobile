@@ -1057,6 +1057,9 @@ export class SupportChatClient {
     // Hermes R4: the message is OUT — push the item first, then store the picture
     // best-effort. A local storage failure must not throw (the user would resend
     // and support would get a duplicate; the text bubble alone is correct).
+    // Hermes round 6 (LOW): the gid is captured BEFORE the awaits — a mid-store
+    // conversation switch must not patch the wrong conversation.
+    const gid = this.groupId as string
     const itemId = `m-${Date.now()}`
     await this.push({
       id: itemId,
@@ -1072,7 +1075,7 @@ export class SupportChatClient {
       const name = `${attachment.plaintextSha256}.${ext}`
       await storeSealedImage(this.scope, name, bytes)
       await ensureLiveImage(this.scope, name)
-      await this.updateItem(this.groupId as string, itemId, {
+      await this.updateItem(gid, itemId, {
         image: { path: name, width: opts.width, height: opts.height },
       })
     } catch (e) {

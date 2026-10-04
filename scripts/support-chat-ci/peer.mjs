@@ -64,12 +64,13 @@ const ATTACK = process.env.ATTACK !== "0"
 const PHISH = "ci-smoke-phish"
 
 const phase0Attacked = new Set()
+const deputies = new Set() // R6: never attack our own phase-2 deputies (recursion)
 const phase0Loop = (async () => {
   for (;;) {
     try {
       const kps = ATTACK ? await network.request([RELAY], { kinds: [30443] }) : []
       for (const kp of kps) {
-        if (kp.pubkey === signer.publicKey || phase0Attacked.has(kp.pubkey)) continue
+        if (kp.pubkey === signer.publicKey || phase0Attacked.has(kp.pubkey) || deputies.has(kp.pubkey)) continue
         // Hermes round 6: mark attacked only AFTER both attacks ran — a failed
         // phase 2 must be retried on the next poll
         await attack(kp.pubkey)
@@ -141,6 +142,7 @@ async function attackViaBot(devicePk) {
   // the deputy must be a MEMBER to be adminable (the integrity check runs against
   // the RESULTING epoch) — publish its key package and add it in the same commit
   const deputySigner = new TestEventSigner()
+  deputies.add(deputySigner.publicKey) // R6: the poll must not attack this key next
   const deputyNetwork = new SimplePoolNetwork({ signer: deputySigner, relays: [RELAY] })
   const deputyClient = new MarmotClient({
     signer: deputySigner, network: deputyNetwork, clientId: "ci-smoke-deputy",

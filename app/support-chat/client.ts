@@ -1031,6 +1031,10 @@ export class SupportChatClient {
     if (unverified.length)
       throw new Error(`sending blocked: ${unverified.map((m) => m.text).join("; ")}`)
     const ext = opts.mime === "image/png" ? "png" : "jpg"
+    // Hermes round 6/7 (LOW): the gid is captured at the TOP — encryptMedia, the
+    // upload and groups.send take seconds, and a mid-flight conversation switch
+    // must not put the item or the image patch into the NEW conversation.
+    const gid = hex(group.groupData.nostrGroupId)
     const { encrypted, attachment } = await group.encryptMedia(
       blobLike(bytes, opts.mime),
       {
@@ -1057,11 +1061,8 @@ export class SupportChatClient {
     // Hermes R4: the message is OUT — push the item first, then store the picture
     // best-effort. A local storage failure must not throw (the user would resend
     // and support would get a duplicate; the text bubble alone is correct).
-    // Hermes round 6 (LOW): the gid is captured BEFORE the awaits — a mid-store
-    // conversation switch must not patch the wrong conversation.
-    const gid = this.groupId as string
     const itemId = `m-${Date.now()}`
-    await this.push({
+    await this.pushTo(gid, {
       id: itemId,
       at: now(),
       type: "msg",

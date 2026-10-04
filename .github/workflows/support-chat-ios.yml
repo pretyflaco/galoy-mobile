@@ -175,8 +175,9 @@ jobs:
       # M20 (Hermes N6/R1): the Maestro flow alone can't prove the attacks ran — check
       # the peer sent all three (phase 0 pre-conversation, phase 1 active, phase 2 the
       # bot-invite-into-attacker-admined-group that only the app gate can stop), and
-      # that the app logged the library drops AND the gate refusal (--info: RN's
-      # console.log is info-level, otherwise log show omits it — Hermes R1).
+      # that the app logged the library drops AND the gate refusal. The app writes
+      # Caches/support-chat.log (SUPPORT_CHAT_DEBUG=on in the smoke env): iOS's
+      # `log show` does not reliably surface RN's console.log (batch-6 saw 0 lines).
       - name: "M20: all attacks were sent, dropped, and gate-refused"
         run: |
           for ph in 0 1 2; do
@@ -184,8 +185,9 @@ jobs:
             echo "attacks sent — phase $ph: $P"
             [ "$P" -ge 1 ] || { echo "phase $ph never ran:"; tail -20 /tmp/smoke-peer.log; exit 1; }
           done
-          APPLOG=$(xcrun simctl spawn "$SIM_UDID" log show --last 60m --info \
-            --predicate 'eventMessage CONTAINS "support-chat"' 2>/dev/null || true)
+          CONT=$(xcrun simctl get_app_container "$SIM_UDID" io.galoy.bitcoinbeach data)
+          APPLOG=$(cat "$CONT/Library/Caches/support-chat.log" 2>/dev/null || true)
+          [ -n "$APPLOG" ] || { echo "no support-chat.log in the app container:"; ls -la "$CONT/Library/Caches/" 2>&1 | head; exit 1; }
           DROPPED=$(echo "$APPLOG" | grep -c "dropped (not allowlisted)" || true)
           REFUSED=$(echo "$APPLOG" | grep -c "invite from .* refused" || true)
           echo "library drops: $DROPPED · gate refusals: $REFUSED"

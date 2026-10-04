@@ -158,6 +158,11 @@ jobs:
           max_attempts: 2
           command: nix develop -c node scripts/support-chat-ci/drive.mjs "$APK_PATH"
 
+      # M20 (Hermes R8): the support-chat unit specs ran nowhere (the "Test" job queues
+      # forever on the fork) — run the security-relevant ones here, where they gate.
+      - name: "M20: support-chat unit specs"
+        run: nix develop -c yarn jest __tests__/nostr/support-invite-policy.spec.ts __tests__/nostr/support-media-store.spec.ts __tests__/nostr/support-key.spec.ts __tests__/nostr/support-chat-push.spec.ts --ci
+
       - name: Artifacts
         if: always()
         run: |

@@ -32,6 +32,9 @@ describe("M20 invite policy", () => {
 
   it("refuses a roster AGENT as inviter (D1: the bot only)", () => {
     expect(inviteAcceptable(AGENT, [AGENT], label)).toBe(false)
+    // S7: the agent must be refused even into a BOT-admined group (D1 is about the
+    // inviter, not the admin set — the admin check must not mask it)
+    expect(inviteAcceptable(AGENT, [BOT], label)).toBe(false)
   })
 
   it("refuses a bot invite into a group the bot does not admin", () => {

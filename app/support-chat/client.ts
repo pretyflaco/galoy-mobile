@@ -67,6 +67,7 @@ import {
   ensureLiveImage,
   ensureLiveImages,
   imageExt,
+  imageWithinPixelCap,
   migratePlaintextMedia,
   storeSealedImage,
   uploadEncryptedBlob,
@@ -334,8 +335,20 @@ export class SupportChatClient {
    * sure there is a conversation the support bot has joined before sending into it —
    * a message sent before the bot's join can be lost (F-M12-1). Starts one if needed and
    * waits for the first message from support (the greeting).
+   * M20: serialized — two concurrent calls (a tap + a share) must not race past
+   * `start()`'s `if (this.group) return` and create TWO conversations (the suspected
+   * M19 A56 duplicate, 6ad3fd43).
    */
   async ensureConversation(timeoutMs = 45_000): Promise<void> {
+    this.ensurePromise ??= this.ensureConversationOnce(timeoutMs).finally(() => {
+      this.ensurePromise = null
+    })
+    return this.ensurePromise
+  }
+
+  private ensurePromise: Promise<void> | null = null
+
+  private async ensureConversationOnce(timeoutMs: number): Promise<void> {
     if (this.viewing) await this.view(null)
     if (!this.group || this.isEnded()) {
       if (this.groupId) await this.startNew()
@@ -948,6 +961,8 @@ export class SupportChatClient {
       const { data } = await group.decryptMedia(encrypted, attachment)
       const ext = imageExt(data)
       if (!ext) throw new Error("not a picture")
+      // M20: refuse decompression bombs (decoded dimensions from the header)
+      if (!imageWithinPixelCap(data)) throw new Error("picture dimensions not accepted")
       // M20: sealed at rest (Caches), plaintext shadow only for display
       const name = `${attachment.plaintextSha256}.${ext}`
       await storeSealedImage(this.scope, name, data)

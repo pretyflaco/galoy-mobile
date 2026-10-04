@@ -115,6 +115,64 @@ export const allowedBlobUrl = (value: string, server: string = BLOSSOM_URL): boo
 /** Blobs larger than this are not downloaded (Blossom's own cap is 8 MB). */
 export const MAX_DOWNLOAD_BYTES = 8 * 1024 * 1024
 
+/**
+ * M20: a small file can decode to a gigantic bitmap (decompression bomb) and OOM the
+ * native image decoder. Decoded dimensions come from the image HEADER (never the
+ * sender-claimed imeta dim); pictures beyond this many pixels are refused.
+ */
+export const MAX_IMAGE_PIXELS = 25_000_000 // ~ a 12 MP photo, twice over
+
+/** Width/height from the image header (PNG IHDR, JPEG SOFn, WebP VP8/VP8L/VP8X).
+ *  (No bitwise operators — the repo lints against them; DataView reads are big-endian.) */
+export const imageDim = (b: Uint8Array): { width: number; height: number } | null => {
+  const view = (o: number) => new DataView(b.buffer, b.byteOffset + o)
+  const u32 = (o: number) => view(o).getUint32(0)
+  const u16 = (o: number) => view(o).getUint16(0)
+  const le16 = (o: number) => b[o] + b[o + 1] * 256
+  const le24 = (o: number) => b[o] + b[o + 1] * 256 + b[o + 2] * 65536
+  if (imageExt(b) === "png" && b.length > 24) return { width: u32(16), height: u32(20) }
+  if (imageExt(b) === "jpg") {
+    let o = 2
+    while (o + 9 < b.length && b[o] === 0xff) {
+      const marker = b[o + 1]
+      const len = u16(o + 2)
+      if (len < 2) return null
+      if (
+        (marker >= 0xc0 && marker <= 0xc3) ||
+        (marker >= 0xc5 && marker <= 0xc7) ||
+        (marker >= 0xc9 && marker <= 0xcb) ||
+        (marker >= 0xcd && marker <= 0xcf)
+      )
+        return { height: u16(o + 5), width: u16(o + 7) }
+      o += 2 + len
+    }
+    return null
+  }
+  if (imageExt(b) === "webp" && b.length > 30) {
+    const kind = String.fromCharCode(...b.slice(12, 16))
+    if (kind === "VP8X") return { width: 1 + le24(24), height: 1 + le24(27) }
+    if (kind === "VP8 ") return { width: le16(26) % 16384, height: le16(28) % 16384 }
+    if (kind === "VP8L" && b[20] === 0x2f) {
+      const bits = le24(21) + b[24] * 16777216
+      return {
+        width: (bits % 16384) + 1,
+        height: (Math.floor(bits / 16384) % 16384) + 1,
+      }
+    }
+  }
+  return null
+}
+
+/** Refuse decompression bombs: decoded pixels beyond the cap (header-checked). */
+export const imageWithinPixelCap = (
+  b: Uint8Array,
+  maxPixels: number = MAX_IMAGE_PIXELS,
+): boolean => {
+  const dim = imageDim(b)
+  if (!dim) return false // unreadable header dimensions — do not render
+  return dim.width > 0 && dim.height > 0 && dim.width * dim.height <= maxPixels
+}
+
 /** The CURRENT file URI of a stored chat picture's decrypted shadow (see the header).
  *  iOS gives the app container a new UUID on every update/reinstall, so an absolute path
  *  stored in the history goes stale: resolve by file name against today's live dir

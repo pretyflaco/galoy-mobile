@@ -63,6 +63,8 @@ jest.mock("react-native-fs", () => ({
 
 import {
   ensureLiveImage,
+  imageDim,
+  imageWithinPixelCap,
   mediaUri,
   migratePlaintextMedia,
   storeSealedImage,
@@ -137,5 +139,57 @@ describe("M20 sealed picture storage", () => {
       "file:///mock/caches/support-media-live/x.jpg",
     )
     expect(mediaUri("x.jpg")).toBe("file:///mock/caches/support-media-live/x.jpg")
+  })
+})
+
+describe("M20 decompression-bomb cap (decoded dimensions from the header)", () => {
+  // big-endian byte writers without bitwise operators (the repo lints against them)
+  const be32 = (v: number) => [
+    Math.floor(v / 16777216) % 256,
+    Math.floor(v / 65536) % 256,
+    Math.floor(v / 256) % 256,
+    v % 256,
+  ]
+  const be16 = (v: number) => [Math.floor(v / 256) % 256, v % 256]
+  const le24 = (v: number) => [
+    v % 256,
+    Math.floor(v / 256) % 256,
+    Math.floor(v / 65536) % 256,
+  ]
+  const png = (w: number, h: number) => {
+    const b = new Uint8Array(33)
+    b.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+    b.set([0, 0, 0, 0x0d, 0x49, 0x48, 0x44, 0x52], 8) // len + "IHDR"
+    b.set(be32(w), 16)
+    b.set(be32(h), 20)
+    return b
+  }
+  const jpeg = (w: number, h: number) => {
+    const b = new Uint8Array(64)
+    b.set([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10], 0) // SOI + APP0 (len 16 → next at 20)
+    b.set([0xff, 0xc0, 0x00, 0x11, 8, ...be16(h), ...be16(w)], 20)
+    return b
+  }
+  const webp = (w: number, h: number) => {
+    const b = new Uint8Array(31)
+    b.set([0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]) // RIFF….WEBP
+    b.set([0x56, 0x50, 0x38, 0x58], 12) // "VP8X"
+    b.set(le24(w - 1), 24)
+    b.set(le24(h - 1), 27)
+    return b
+  }
+
+  it("reads PNG, JPEG and WebP header dimensions", () => {
+    expect(imageDim(png(1600, 900))).toEqual({ width: 1600, height: 900 })
+    expect(imageDim(jpeg(4000, 3000))).toEqual({ width: 4000, height: 3000 })
+    expect(imageDim(webp(800, 600))).toEqual({ width: 800, height: 600 })
+  })
+
+  it("accepts ordinary pictures, refuses bombs and unreadable headers", () => {
+    expect(imageWithinPixelCap(png(1600, 900))).toBe(true)
+    expect(imageWithinPixelCap(jpeg(4000, 3000))).toBe(true) // 12 MP
+    expect(imageWithinPixelCap(png(50000, 50000))).toBe(false) // 2.5 Gpx bomb
+    expect(imageWithinPixelCap(png(0, 0))).toBe(false)
+    expect(imageWithinPixelCap(png(1, 1).slice(0, 12))).toBe(false) // truncated header
   })
 })

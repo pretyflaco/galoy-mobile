@@ -40,6 +40,35 @@ const storeKey = (accountKey: string): Promise<Uint8Array> => {
 const utf8 = new TextEncoder()
 const utf8d = new TextDecoder()
 
+/**
+ * M20 (finding 3): the same store key also seals chat PICTURES at rest (AES-256-GCM,
+ * random 96-bit nonce per write, AAD binds the ciphertext to its file name). The sealed
+ * file layout is `nonce (12 B) ‖ ciphertext`, so pictures are never written in the
+ * clear — same rule as the chat history above.
+ */
+export const sealBytes = async (
+  accountKey: string,
+  aad: string,
+  data: Uint8Array,
+): Promise<Uint8Array> => {
+  const k = await storeKey(accountKey)
+  const n = secureRandomBytes(12)
+  const c = gcm(k, n, utf8.encode(aad)).encrypt(data)
+  const out = new Uint8Array(n.length + c.length)
+  out.set(n, 0)
+  out.set(c, n.length)
+  return out
+}
+
+export const openBytes = async (
+  accountKey: string,
+  aad: string,
+  sealed: Uint8Array,
+): Promise<Uint8Array> => {
+  const k = await storeKey(accountKey)
+  return gcm(k, sealed.slice(0, 12), utf8.encode(aad)).decrypt(sealed.slice(12))
+}
+
 export class EncryptedKeyValueStore<T = unknown> {
   private readonly base: string
 

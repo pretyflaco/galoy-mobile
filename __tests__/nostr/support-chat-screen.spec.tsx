@@ -32,6 +32,7 @@ jest.mock("react-native-image-picker", () => ({
 }))
 jest.mock("react-native-fs", () => ({
   DocumentDirectoryPath: "/mock/documents",
+  CachesDirectoryPath: "/mock/caches",
   readFile: jest.fn(async () => "AAEC"),
 }))
 const mockSaveAsset = jest.fn(async () => ({}))
@@ -395,7 +396,7 @@ describe("support-chat screen", () => {
     fireEvent.press(getByTestId("support-image-save"))
     await flushEffects()
     expect(mockSaveAsset).toHaveBeenCalledWith(
-      "file:///mock/documents/support-media/p.png",
+      "file:///mock/caches/support-media-live/p.png",
       {
         type: "photo",
         album: "Blink Support",
@@ -407,7 +408,7 @@ describe("support-chat screen", () => {
     fireEvent.press(getByTestId("support-image-share"))
     expect(mockShareOpen).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "file:///mock/documents/support-media/p.png",
+        url: "file:///mock/caches/support-media-live/p.png",
         type: "image/png",
       }),
     )
@@ -455,7 +456,7 @@ describe("support-chat screen", () => {
     })
     await flushEffects()
     expect(getByTestId("support-chat-image").props.source).toEqual({
-      uri: "file:///mock/documents/support-media/x.jpg", // resolved by file name (iOS container UUIDs change)
+      uri: "file:///mock/caches/support-media-live/x.jpg", // resolved by file name (iOS container UUIDs change)
     })
   })
 

@@ -63,8 +63,13 @@ import {
   MAX_DOWNLOAD_BYTES,
   allowedBlobUrl,
   blobLike,
+  ensureLiveImage,
+  ensureLiveImages,
   imageExt,
+  migratePlaintextMedia,
+  storeSealedImage,
   uploadEncryptedBlob,
+  wipeLiveImages,
 } from "./media"
 
 import Config from "react-native-config"
@@ -294,6 +299,7 @@ export class SupportChatClient {
   async view(gid: string | null): Promise<void> {
     this.viewing = gid && gid !== this.groupId ? gid : null
     this.viewItems = this.viewing ? (await this.history.getItem(this.viewing)) ?? [] : []
+    await ensureLiveImages(this.scope, this.viewItems)
     this.emit()
   }
 
@@ -314,6 +320,7 @@ export class SupportChatClient {
     this.group = group
     this.groupId = gid
     this.items = (await this.history.getItem(gid)) ?? []
+    await ensureLiveImages(this.scope, this.items)
     this.meta.activeGroup = gid
     await this.saveMeta()
     this.emit()
@@ -524,6 +531,11 @@ export class SupportChatClient {
     })
     this.log("key package + relay lists published (30443/10051/10050/10002)")
 
+    // M20 (finding 3): seal the plaintext pictures earlier versions wrote to Documents,
+    // delete the plaintext; shadows of the current conversation are (re)made below.
+    const sealed = await migratePlaintextMedia(this.scope).catch(() => -1)
+    if (sealed > 0) this.log(`sealed ${sealed} plaintext picture(s), originals deleted`)
+
     // Library inbound loop: backfill + live + dedupe + ingest for every group,
     // auto-connecting groups created/joined later (F-M9-5).
     this.client.groups.on("created", (g: AnyGroup) => this.attach(g))
@@ -577,6 +589,7 @@ export class SupportChatClient {
     if (active) {
       this.attach(active)
       this.items = (await this.history.getItem(this.meta.activeGroup as string)) ?? []
+      await ensureLiveImages(this.scope, this.items)
       this.log(
         `reloaded group ${short(this.groupId ?? "")} at epoch ${active.state.groupContext.epoch}, ${this.items.length} items (${Date.now() - t0}ms)`,
       )
@@ -586,6 +599,7 @@ export class SupportChatClient {
       const old = this.meta.activeGroup
       this.groupId = old
       this.items = (await this.history.getItem(old)) ?? []
+      await ensureLiveImages(this.scope, this.items)
       this.log(`active group ${short(old)} not restorable`)
       ;(this.meta.conversations ??= {})[old] ??= {
         gid: old,
@@ -886,10 +900,11 @@ export class SupportChatClient {
       ),
     )
     this.log(`sent image ${bytes.length} bytes (${Date.now() - t0}ms)`)
-    const dir = `${RNFS.DocumentDirectoryPath}/support-media`
-    await RNFS.mkdir(dir).catch(() => undefined)
-    const path = `${dir}/${attachment.plaintextSha256}.${ext}`
-    await RNFS.writeFile(path, Buffer.from(bytes).toString("base64"), "base64")
+    // M20 (finding 3): sealed canonical copy in Caches; a short-lived plaintext shadow
+    // for display — never a plaintext file in (iCloud-backed-up) Documents.
+    const name = `${attachment.plaintextSha256}.${ext}`
+    await storeSealedImage(this.scope, name, bytes)
+    await ensureLiveImage(this.scope, name)
     await this.push({
       id: `m-${Date.now()}`,
       at: now(),
@@ -897,7 +912,7 @@ export class SupportChatClient {
       from: this.pubkey,
       mine: true,
       text,
-      image: { path, width: opts.width, height: opts.height },
+      image: { path: name, width: opts.width, height: opts.height },
     })
   }
 
@@ -932,13 +947,13 @@ export class SupportChatClient {
       const { data } = await group.decryptMedia(encrypted, attachment)
       const ext = imageExt(data)
       if (!ext) throw new Error("not a picture")
-      const dir = `${RNFS.DocumentDirectoryPath}/support-media`
-      await RNFS.mkdir(dir).catch(() => undefined)
-      const path = `${dir}/${attachment.plaintextSha256}.${ext}`
-      await RNFS.writeFile(path, Buffer.from(data).toString("base64"), "base64")
+      // M20: sealed at rest (Caches), plaintext shadow only for display
+      const name = `${attachment.plaintextSha256}.${ext}`
+      await storeSealedImage(this.scope, name, data)
+      await ensureLiveImage(this.scope, name)
       const [width, height] = (attachment.dim ?? "").split("x").map(Number)
       await this.updateItem(gid, itemId, {
-        image: { path, ...(width && height ? { width, height } : {}) },
+        image: { path: name, ...(width && height ? { width, height } : {}) },
       })
       this.log(`image received ${data.length} bytes`)
     } finally {
@@ -1185,11 +1200,15 @@ export class SupportChatClient {
   private onAppState(state: AppStateStatus) {
     if (state !== "active") {
       this.backgroundSince ??= Date.now()
+      // M20: plaintext picture shadows live only while the app is in front
+      wipeLiveImages()
       return
     }
     const away = this.backgroundSince === null ? 0 : Date.now() - this.backgroundSince
     this.backgroundSince = null
     if (this.destroyed || this.status === "starting" || !this.client) return
+    // M20: the shadows wiped on background are (re)decrypted for the on-screen items
+    ensureLiveImages(this.scope, this.viewing ? this.viewItems : this.items)
     if (this.closedInBackground || away > 20_000) {
       this.closedInBackground = false
       this.reInit(`foreground after ${Math.round(away / 1000)}s in background`, {
@@ -1209,6 +1228,7 @@ export class SupportChatClient {
     this.inviteListen?.unsubscribe()
     this.rosterSub?.unsubscribe()
     this.tokenRefreshSub?.()
+    wipeLiveImages()
     if (this.group) await this.group.save(true).catch(() => undefined)
     await this.network?.destroy()
   }

@@ -7,11 +7,22 @@
  *   shows it to the support team in the encrypted Matrix room.
  * Upload auth: a BUD-11 kind-24242 event signed by the device's support key.
  */
+/**
+ * M20 (finding 3): pictures at rest are ENCRYPTED. The canonical copy lives AES-GCM
+ * sealed (the per-scope store key, encrypted-store.ts) under
+ * `Caches/support-media/<name>.enc` — Caches, not Documents: no iCloud backup on iOS,
+ * and a purge only costs a re-decrypt/re-download. For display a short-lived PLAINTEXT
+ * shadow is written to `Caches/support-media-live/<name>` and wiped on background /
+ * client destroy. "Save to Photos"/"Share" stay explicit user exports of the shadow.
+ * iOS gives the app container a new UUID on every update/reinstall, so only file NAMES
+ * are ever stored — every path is resolved against today's directories (mediaUri).
+ */
 import { sha256 } from "@noble/hashes/sha2.js"
 import { bytesToHex } from "@noble/hashes/utils.js"
 import Config from "react-native-config"
 import RNFS from "react-native-fs"
 
+import { openBytes, sealBytes } from "./encrypted-store"
 import type { BlinkEventSigner } from "./blink-signer"
 
 const configured = Config?.SUPPORT_BLOSSOM_URL
@@ -104,11 +115,87 @@ export const allowedBlobUrl = (value: string, server: string = BLOSSOM_URL): boo
 /** Blobs larger than this are not downloaded (Blossom's own cap is 8 MB). */
 export const MAX_DOWNLOAD_BYTES = 8 * 1024 * 1024
 
-/**
- * The CURRENT file URI of a stored chat picture. iOS gives the app container a new UUID on
- * every update/reinstall (…/Application/<UUID>/Documents), so an absolute path stored in
- * the history goes stale while the file itself is carried over: resolve by file name
- * against today's document directory (also repairs items stored before this fix).
- */
+/** The CURRENT file URI of a stored chat picture's decrypted shadow (see the header).
+ *  iOS gives the app container a new UUID on every update/reinstall, so an absolute path
+ *  stored in the history goes stale: resolve by file name against today's live dir
+ *  (also repairs items stored before this fix). */
 export const mediaUri = (storedPath: string): string =>
-  `file://${RNFS.DocumentDirectoryPath}/support-media/${storedPath.split("/").pop()}`
+  `file://${RNFS.CachesDirectoryPath}/support-media-live/${storedPath.split("/").pop()}`
+
+const SEALED_DIR = () => `${RNFS.CachesDirectoryPath}/support-media`
+const LIVE_DIR = () => `${RNFS.CachesDirectoryPath}/support-media-live`
+const LEGACY_DIR = () => `${RNFS.DocumentDirectoryPath}/support-media`
+
+const mediaAad = (scope: string, name: string) => `supportchat.media.${scope}.${name}`
+
+/** Write the ENCRYPTED canonical copy; returns the file name (`<sha256>.<ext>`). */
+export const storeSealedImage = async (
+  scope: string,
+  name: string,
+  data: Uint8Array,
+): Promise<void> => {
+  await RNFS.mkdir(SEALED_DIR()).catch(() => undefined)
+  const sealed = await sealBytes(scope, mediaAad(scope, name), data)
+  await RNFS.writeFile(
+    `${SEALED_DIR()}/${name}.enc`,
+    Buffer.from(sealed).toString("base64"),
+    "base64",
+  )
+}
+
+/** The plaintext shadow for display: decrypt the sealed copy if the shadow is gone. */
+export const ensureLiveImage = async (scope: string, name: string): Promise<void> => {
+  const live = `${LIVE_DIR()}/${name}`
+  if (await RNFS.exists(live)) return
+  const sealedPath = `${SEALED_DIR()}/${name}.enc`
+  if (!(await RNFS.exists(sealedPath))) return // the "not available any more" fallback
+  const sealed = new Uint8Array(
+    Buffer.from(await RNFS.readFile(sealedPath, "base64"), "base64"),
+  )
+  const data = await openBytes(scope, mediaAad(scope, name), sealed)
+  await RNFS.mkdir(LIVE_DIR()).catch(() => undefined)
+  await RNFS.writeFile(live, Buffer.from(data).toString("base64"), "base64")
+}
+
+/** Decrypt the shadows of every picture in a loaded item list (display invariant). */
+export const ensureLiveImages = async (
+  scope: string,
+  items: { image?: { path: string } }[],
+): Promise<void> => {
+  for (const i of items) {
+    if (i.image?.path) {
+      const name = i.image.path.split("/").pop() as string
+      await ensureLiveImage(scope, name).catch(() => undefined)
+    }
+  }
+}
+
+/** Wipe every plaintext shadow (app background / client destroy). */
+export const wipeLiveImages = async (): Promise<void> => {
+  await RNFS.unlink(LIVE_DIR()).catch(() => undefined)
+}
+
+/**
+ * One-time migration (M20): plaintext pictures written by earlier versions under
+ * Documents/support-media are sealed into Caches and the plaintext is deleted.
+ */
+export const migratePlaintextMedia = async (scope: string): Promise<number> => {
+  const dir = LEGACY_DIR()
+  if (!(await RNFS.exists(dir))) return 0
+  const files = await RNFS.readDir(dir).catch(() => [])
+  let moved = 0
+  for (const f of files.filter((x) => x.isFile() && !x.name.endsWith(".enc"))) {
+    try {
+      const data = new Uint8Array(
+        Buffer.from(await RNFS.readFile(f.path, "base64"), "base64"),
+      )
+      await storeSealedImage(scope, f.name, data)
+      await RNFS.unlink(f.path)
+      moved += 1
+    } catch {
+      // a file that fails to seal stays put; the next start retries
+    }
+  }
+  await RNFS.unlink(dir).catch(() => undefined) // only succeeds when empty
+  return moved
+}

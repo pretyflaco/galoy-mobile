@@ -80,6 +80,13 @@ export const SupportConversationsScreen: React.FC = () => {
                     <GaloyIcon name="check" size={12} color={colors.white} />
                   </View>
                 )}
+                {!isCurrent(c) && (client?.unreadFor(c.gid) ?? 0) > 0 && (
+                  <View
+                    style={styles.unreadDot}
+                    accessibilityLabel={T.current()}
+                    testID="support-conversation-unread"
+                  />
+                )}
               </View>
               <View style={styles.rowText}>
                 <Text style={styles.title} numberOfLines={1}>
@@ -126,6 +133,12 @@ const useStyles = makeStyles(({ colors }) => ({
     backgroundColor: colors._green,
     alignItems: "center",
     justifyContent: "center",
+  },
+  unreadDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: colors._blue,
   },
   rowText: { flex: 1, gap: 3 },
   title: { fontSize: 16, color: colors.grey0 },

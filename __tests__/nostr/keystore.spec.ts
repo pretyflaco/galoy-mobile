@@ -67,35 +67,66 @@ describe("nostr keystore — keychain confinement (AC-2/AC-3)", () => {
     expect(resetGeneric).toHaveBeenCalledWith({ service: NOSTR_NSEC_SERVICE })
   })
 
-  it("M20 (Hermes #3): device-only writes use AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY", async () => {
-    setGeneric.mockResolvedValue({ service: "supportchat.key.device" })
+  it("M20 (Hermes #3): device-only writes use the .tdo name and the THIS_DEVICE_ONLY class", async () => {
+    setGeneric.mockResolvedValue({ service: "supportchat.key.device.tdo" })
     await writeSecretThisDeviceOnly("supportchat.key.device", "deadbeef")
     const [, value, opts] = setGeneric.mock.calls[0]
     expect(value).toBe("deadbeef")
     expect(opts).toMatchObject({
-      service: "supportchat.key.device",
+      service: "supportchat.key.device.tdo",
       accessible: Keychain.ACCESSIBLE.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
     })
   })
 
-  it("M20 (Hermes #3): a device-only read migrates a legacy item in place (same value)", async () => {
+  it("M20 (Hermes B): a device-only read of an already-migrated item is a PURE read", async () => {
     getGeneric.mockResolvedValue({
       password: "deadbeef",
-      service: "supportchat.key.device",
+      service: "supportchat.key.device.tdo",
     })
-    setGeneric.mockResolvedValue({ service: "supportchat.key.device" })
+    const value = await readSecretThisDeviceOnly("supportchat.key.device")
+    expect(value).toBe("deadbeef")
+    expect(setGeneric).not.toHaveBeenCalled() // no delete-then-insert on every launch
+  })
+
+  it("M20 (Hermes B): a legacy item is migrated copy → verify → delete (same value)", async () => {
+    const store = new Map<string, string>([["supportchat.key.device", "deadbeef"]])
+    getGeneric.mockImplementation(async ({ service }: { service: string }) =>
+      store.has(service) ? { password: store.get(service), service } : false,
+    )
+    setGeneric.mockImplementation(
+      async (_a: string, v: string, opts: { service: string }) => {
+        store.set(opts.service, v)
+        return { service: opts.service }
+      },
+    )
+    resetGeneric.mockImplementation(async ({ service }: { service: string }) => {
+      store.delete(service)
+      return true
+    })
     const value = await readSecretThisDeviceOnly("supportchat.key.device")
     expect(value).toBe("deadbeef")
     expect(setGeneric).toHaveBeenCalledTimes(1)
     const [, rewritten, opts] = setGeneric.mock.calls[0]
-    expect(rewritten).toBe("deadbeef") // the key does not change
-    expect(opts.accessible).toBe(Keychain.ACCESSIBLE.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY)
+    expect(rewritten).toBe("deadbeef")
+    expect(opts.service).toBe("supportchat.key.device.tdo")
+    expect(resetGeneric).toHaveBeenCalledWith({ service: "supportchat.key.device" })
   })
 
-  it("M20 (Hermes #3): a missing device-only item reads null and writes nothing", async () => {
+  it("M20 (Hermes B): a missing item reads null and writes nothing", async () => {
     getGeneric.mockResolvedValue(false)
     const value = await readSecretThisDeviceOnly("supportchat.key.device")
     expect(value).toBeNull()
     expect(setGeneric).not.toHaveBeenCalled()
+  })
+
+  it("M20 (Hermes B): a failed migration throws (the legacy item is kept)", async () => {
+    getGeneric.mockImplementation(async ({ service }: { service: string }) =>
+      service === "supportchat.key.device" ? { password: "deadbeef", service } : false,
+    )
+    setGeneric.mockResolvedValue({ service: "supportchat.key.device.tdo" })
+    await expect(readSecretThisDeviceOnly("supportchat.key.device")).rejects.toThrow(
+      "migration failed",
+    )
+    expect(resetGeneric).not.toHaveBeenCalled()
   })
 })

@@ -217,21 +217,47 @@ export const SupportChatScreen: React.FC = () => {
       return
     }
     const caption = draft
+    // M20 (Hermes G): the picker's resized temp copy is plaintext — always delete it,
+    // success or failure, but ONLY ever inside the app's own cache/tmp (never a
+    // gallery original the picker might hand back unmodified)
+    const dropTemp = () => {
+      const p = img.uri.replace(/^file:\/\//, "")
+      if (
+        p.startsWith(`${RNFS.CachesDirectoryPath}/`) ||
+        p.startsWith(`${RNFS.TemporaryDirectoryPath}/`)
+      )
+        RNFS.unlink(p).catch(() => undefined)
+    }
     run(async () => {
-      const base64 = await RNFS.readFile(img.uri, "base64")
-      const bytes = new Uint8Array(Buffer.from(base64, "base64"))
-      if (bytes.length > MAX_IMAGE_BYTES) throw new Error(TS.imageTooLarge())
-      await client.sendImage(bytes, {
-        mime: img.mime,
-        width: img.width,
-        height: img.height,
-        caption,
-      })
-      // M20 (Hermes #5): the picker's resized temp copy is plaintext — delete it
-      RNFS.unlink(img.uri.replace(/^file:\/\//, "")).catch(() => undefined)
-      setPickedImage(null)
-      setDraft("")
+      try {
+        const base64 = await RNFS.readFile(img.uri, "base64")
+        const bytes = new Uint8Array(Buffer.from(base64, "base64"))
+        if (bytes.length > MAX_IMAGE_BYTES) throw new Error(TS.imageTooLarge())
+        await client.sendImage(bytes, {
+          mime: img.mime,
+          width: img.width,
+          height: img.height,
+          caption,
+        })
+        setPickedImage(null)
+        setDraft("")
+      } finally {
+        dropTemp()
+      }
     })
+  }
+
+  const cancelImage = () => {
+    const img = pickedImage
+    if (img) {
+      const p = img.uri.replace(/^file:\/\//, "")
+      if (
+        p.startsWith(`${RNFS.CachesDirectoryPath}/`) ||
+        p.startsWith(`${RNFS.TemporaryDirectoryPath}/`)
+      )
+        RNFS.unlink(p).catch(() => undefined)
+    }
+    setPickedImage(null)
   }
 
   const send = () => {
@@ -487,7 +513,7 @@ export const SupportChatScreen: React.FC = () => {
                 <Text style={styles.previewHint}>{TS.imageCheck()}</Text>
                 <View style={styles.previewActions}>
                   <Pressable
-                    onPress={() => setPickedImage(null)}
+                    onPress={cancelImage}
                     disabled={busy}
                     testID="support-chat-image-cancel"
                   >

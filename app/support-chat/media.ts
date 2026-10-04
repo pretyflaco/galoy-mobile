@@ -133,22 +133,35 @@ export const imageDim = (b: Uint8Array): { width: number; height: number } | nul
   if (imageExt(b) === "png" && b.length > 24) return { width: u32(16), height: u32(20) }
   if (imageExt(b) === "jpg") {
     let o = 2
-    while (o + 9 < b.length && b[o] === 0xff) {
+    let best: { width: number; height: number } | null = null
+    while (o + 1 < b.length && b[o] === 0xff) {
       let m = o + 1
-      while (m + 2 < b.length && b[m] === 0xff) m += 1 // 0xFF fill bytes precede the marker
+      while (m < b.length && b[m] === 0xff) m += 1 // 0xFF fill bytes precede the marker
+      if (m >= b.length) return null
       const marker = b[m]
-      const len = u16(m + 1)
-      if (len < 2) return null
-      if (
-        (marker >= 0xc0 && marker <= 0xc3) ||
-        (marker >= 0xc5 && marker <= 0xc7) ||
-        (marker >= 0xc9 && marker <= 0xcb) ||
-        (marker >= 0xcd && marker <= 0xcf)
-      )
-        return { height: u16(m + 4), width: u16(m + 6) }
-      o = m + 1 + len
+      // standalone markers WITHOUT a length field (Hermes E): TEM 01, RSTn D0–D7,
+      // SOI D8, EOI D9 — reading a length here derails the walk into a fake SOF
+      if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9)) {
+        o = m + 1
+      } else {
+        if (m + 3 > b.length) return null
+        const len = u16(m + 1)
+        if (len < 2) return null
+        const isSof =
+          (marker >= 0xc0 && marker <= 0xc3) ||
+          (marker >= 0xc5 && marker <= 0xc7) ||
+          (marker >= 0xc9 && marker <= 0xcb) ||
+          (marker >= 0xcd && marker <= 0xcf)
+        if (isSof) {
+          if (m + 9 > b.length) return null
+          const dim = { height: u16(m + 4), width: u16(m + 6) }
+          // every SOF in the file counts: a fake small SOF can never shrink the real one
+          if (!best || dim.width * dim.height > best.width * best.height) best = dim
+        }
+        o = m + 1 + len
+      }
     }
-    return null
+    return best
   }
   if (imageExt(b) === "webp" && b.length > 30) {
     const kind = String.fromCharCode(...b.slice(12, 16))
@@ -190,17 +203,22 @@ const mediaAad = (scope: string, name: string) => `supportchat.media.${scope}.${
 
 /** Write the ENCRYPTED canonical copy; returns the file name (`<sha256>.<ext>`).
  *  Written to a temp name and renamed into place (Hermes #7): a crash mid-write can
- *  never leave a truncated `.enc` that later fails openBytes. */
+ *  never leave a truncated `.enc` that later fails openBytes. An existing `.enc` is
+ *  the SAME content (names are content hashes) — kept, never rewritten (Hermes D:
+ *  iOS's moveItemAtPath fails when the destination exists). */
 export const storeSealedImage = async (
   scope: string,
   name: string,
   data: Uint8Array,
 ): Promise<void> => {
+  const dest = `${SEALED_DIR()}/${name}.enc`
+  if (await RNFS.exists(dest)) return
   await RNFS.mkdir(SEALED_DIR()).catch(() => undefined)
   const sealed = await sealBytes(scope, mediaAad(scope, name), data)
   const tmp = `${SEALED_DIR()}/${name}.enc.tmp`
   await RNFS.writeFile(tmp, Buffer.from(sealed).toString("base64"), "base64")
-  await RNFS.moveFile(tmp, `${SEALED_DIR()}/${name}.enc`)
+  await RNFS.unlink(dest).catch(() => undefined) // belt and braces for the rename
+  await RNFS.moveFile(tmp, dest)
 }
 
 /** The plaintext shadow for display: decrypt the sealed copy if the shadow is gone. */
@@ -246,10 +264,14 @@ export const migratePlaintextMedia = async (scope: string): Promise<number> => {
   let moved = 0
   for (const f of files.filter((x) => x.isFile() && !x.name.endsWith(".enc"))) {
     try {
-      const data = new Uint8Array(
-        Buffer.from(await RNFS.readFile(f.path, "base64"), "base64"),
-      )
-      await storeSealedImage(scope, f.name, data)
+      // Hermes D: once a .enc exists (this run or a crashed earlier one), the
+      // plaintext must go regardless — never strand it in iCloud-backed Documents.
+      if (!(await RNFS.exists(`${SEALED_DIR()}/${f.name}.enc`))) {
+        const data = new Uint8Array(
+          Buffer.from(await RNFS.readFile(f.path, "base64"), "base64"),
+        )
+        await storeSealedImage(scope, f.name, data)
+      }
       await RNFS.unlink(f.path)
       moved += 1
     } catch {

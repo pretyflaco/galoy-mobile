@@ -47,6 +47,31 @@ const client = new MarmotClient({
 await ensureDiscoverable(client, network, { relays: [RELAY], signer })
 console.log(`[${ts()}] discovery published (30443 + 10051/10050/10002)`)
 
+// M20 (Hermes F): PHASE-0 attack — as soon as the device's key package appears on the
+// relay (the app opened the chat screen, BEFORE any conversation exists), attack it:
+// an app without the invite gate would make the phish group THE conversation, and the
+// smoke's "start chat" + greeting assertions would fail (the old assertNotVisible on
+// the phish could NOT catch that — with D2 a broken app would just park the attack).
+// Phase 1 (below) attacks while a conversation is active.
+let phase0 = !ATTACK
+const phase0Loop = (async () => {
+  while (!phase0) {
+    try {
+      const kps = await network.request([RELAY], { kinds: [30443] })
+      const foreign = kps.find((e) => e.pubkey !== signer.publicKey)
+      if (foreign) {
+        phase0 = true
+        await attack(foreign.pubkey)
+        console.log(`[${ts()}] attack sent (phase 0, pre-conversation) for ${foreign.pubkey.slice(0, 12)}…`)
+      }
+    } catch (e) {
+      console.log(`[${ts()}] phase-0 poll: ${e.message}`)
+    }
+    if (!phase0) await sleep(2000)
+  }
+})()
+phase0Loop.catch((e) => console.log(`[${ts()}] phase-0 loop ended: ${e.message}`))
+
 // Every Welcome is joined (a retried drive starts a NEW conversation on a fresh app
 // identity — the single-group peer ignored it, run 36837196029 attempt 2).
 const joined = new Set()
@@ -123,11 +148,14 @@ async function join(welcome) {
   })
   await client.groups.connect(group.id)
   await send(`${NAME} joined`)
-  // the M20 attack: while the app's conversation is ACTIVE, an unsolicited invite arrives
+  // the M20 phase-1 attack: while the app's conversation is ACTIVE
   if (ATTACK) {
     const devicePk = getGroupMembers(group.state).find((pk) => pk !== signer.publicKey)
     if (devicePk)
-      attack(devicePk).catch((e) => console.log(`[${ts()}] attack failed: ${e.message}`))
+      attack(devicePk).then(
+        () => console.log(`[${ts()}] attack sent (phase 1, active conversation) for ${devicePk.slice(0, 12)}…`),
+        (e) => console.log(`[${ts()}] attack failed: ${e.message}`),
+      )
   }
 }
 

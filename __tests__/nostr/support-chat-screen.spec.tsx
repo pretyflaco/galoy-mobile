@@ -21,7 +21,7 @@ jest.mock("react-native-image-picker", () => ({
   launchImageLibrary: jest.fn(async () => ({
     assets: [
       {
-        uri: "file:///tmp/shot.jpg",
+        uri: "file:///mock/caches/shot.jpg",
         type: "image/jpeg",
         width: 800,
         height: 1600,
@@ -33,6 +33,7 @@ jest.mock("react-native-image-picker", () => ({
 jest.mock("react-native-fs", () => ({
   DocumentDirectoryPath: "/mock/documents",
   CachesDirectoryPath: "/mock/caches",
+  TemporaryDirectoryPath: "/mock/tmp",
   readFile: jest.fn(async () => "AAEC"),
   unlink: jest.fn(async () => {}),
 }))
@@ -87,6 +88,7 @@ const baseClient: any = {
   send: jest.fn(),
   view: jest.fn(),
   switchTo: jest.fn(async () => false),
+  unreadFor: jest.fn(() => 0),
   viewing: null,
   viewItems: [],
   current: () => ({ gid: "group1", startedAt: 1, status: "active" }),
@@ -375,6 +377,51 @@ describe("support-chat screen", () => {
       expect.objectContaining({ mime: "image/jpeg", width: 800, height: 1600 }),
     )
     expect(queryByTestId("support-chat-image-preview")).toBeNull()
+    // Hermes G: the picker's plaintext temp copy is deleted after a successful send
+    const RNFS = jest.requireMock("react-native-fs")
+    expect(RNFS.unlink).toHaveBeenCalledWith("/mock/caches/shot.jpg")
+  })
+
+  it("Hermes G: cancelling the preview deletes the picker's temp copy too", async () => {
+    const client = { ...baseClient, sendImage: jest.fn(async () => undefined) }
+    const RNFS = jest.requireMock("react-native-fs")
+    RNFS.unlink.mockClear()
+    const { getByTestId, queryByTestId } = renderScreen(client)
+    await flushEffects()
+    fireEvent.press(getByTestId("support-chat-share"))
+    fireEvent.press(getByTestId("support-chat-share-image"))
+    await flushEffects()
+    fireEvent.press(getByTestId("support-chat-image-cancel"))
+    await flushEffects()
+    expect(queryByTestId("support-chat-image-preview")).toBeNull()
+    expect(client.sendImage).not.toHaveBeenCalled()
+    expect(RNFS.unlink).toHaveBeenCalledWith("/mock/caches/shot.jpg")
+  })
+
+  it("Hermes G: the temp guard never touches a path outside the app's cache/tmp", async () => {
+    const picker = jest.requireMock("react-native-image-picker")
+    picker.launchImageLibrary.mockResolvedValueOnce({
+      assets: [
+        {
+          uri: "file:///mock/documents/private-gallery.jpg",
+          type: "image/jpeg",
+          width: 800,
+          height: 1600,
+          fileSize: 1000,
+        },
+      ],
+    })
+    const client = { ...baseClient, sendImage: jest.fn(async () => undefined) }
+    const RNFS = jest.requireMock("react-native-fs")
+    RNFS.unlink.mockClear()
+    const { getByTestId } = renderScreen(client)
+    await flushEffects()
+    fireEvent.press(getByTestId("support-chat-share"))
+    fireEvent.press(getByTestId("support-chat-share-image"))
+    await flushEffects()
+    fireEvent.press(getByTestId("support-chat-image-cancel"))
+    await flushEffects()
+    expect(RNFS.unlink).not.toHaveBeenCalled()
   })
 
   it("tapping a picture opens it full screen with Save to Photos and Share", async () => {
@@ -555,6 +602,25 @@ describe("support-chat screen", () => {
       await flushEffects()
       expect(client.switchTo).toHaveBeenCalledWith("old1")
       expect(client.view).toHaveBeenCalledWith("old1")
+    })
+
+    it("M20 (Hermes #4): a parked conversation with unread support messages shows a dot", async () => {
+      const parked = { gid: "parked1", startedAt: 1761000000, status: "active" }
+      const client = {
+        ...baseClient,
+        conversations: () => [...list, parked],
+        unreadFor: (gid: string) => (gid === "parked1" ? 2 : 0),
+      }
+      const { getAllByTestId } = renderList(client)
+      await flushEffects()
+      expect(getAllByTestId("support-conversation-unread")).toHaveLength(1)
+    })
+
+    it("M20 (Hermes #4): a parked conversation without unread shows no dot", async () => {
+      const client = { ...baseClient, conversations: () => list }
+      const { queryByTestId } = renderList(client)
+      await flushEffects()
+      expect(queryByTestId("support-conversation-unread")).toBeNull()
     })
 
     it("Start new ends the current conversation and starts a fresh one", async () => {

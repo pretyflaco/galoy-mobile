@@ -65,27 +65,40 @@ export const clearSecret = async (service: NostrKeychainService): Promise<void> 
  * backups, so a restore onto another phone carried the support chat's keys and (via
  * the also-backed-up AsyncStorage) its whole history. `…_THIS_DEVICE_ONLY` items are
  * excluded from backups; the ciphertext in a restored backup is then useless.
+ *
+ * Hermes B: on iOS setGenericPassword is delete-then-insert, so re-writing the SAME
+ * service on every read risks losing the key to a mid-rewrite kill. Device-only
+ * secrets therefore live under a dedicated service name (`<service>.tdo`) that is
+ * written exactly once; a legacy item under the plain name is migrated by
+ * copy → verify → delete, never delete-then-insert.
  */
+const tdoService = (service: NostrKeychainService): string => `${service}.tdo`
+
 export const writeSecretThisDeviceOnly = async (
   service: NostrKeychainService,
   hexValue: string,
 ): Promise<void> => {
   await Keychain.setGenericPassword(ACCOUNT, hexValue, {
-    service,
+    service: tdoService(service),
     accessible: Keychain.ACCESSIBLE.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
   })
 }
 
 /**
- * Read a this-device-only secret. An item written before M20 with the backup-able
- * class is migrated in place on first read (same value, new accessibility class) —
- * the key itself does not change, so conversations survive.
+ * Read a this-device-only secret. First the dedicated name; a legacy (backup-able)
+ * item under the plain name is migrated in place (same value — conversations survive).
  */
 export const readSecretThisDeviceOnly = async (
   service: NostrKeychainService,
 ): Promise<string | null> => {
-  const result = await Keychain.getGenericPassword({ service })
-  if (!result) return null
-  await writeSecretThisDeviceOnly(service, result.password)
-  return result.password
+  const fresh = await Keychain.getGenericPassword({ service: tdoService(service) })
+  if (fresh) return fresh.password
+  const legacy = await Keychain.getGenericPassword({ service })
+  if (!legacy) return null
+  await writeSecretThisDeviceOnly(service, legacy.password)
+  const check = await Keychain.getGenericPassword({ service: tdoService(service) })
+  if (!check || check.password !== legacy.password)
+    throw new Error(`keychain migration failed for ${service}`)
+  await Keychain.resetGenericPassword({ service })
+  return legacy.password
 }

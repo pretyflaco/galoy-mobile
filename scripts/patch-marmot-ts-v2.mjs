@@ -241,6 +241,33 @@ const edits = [
         await this.store.setItem(SEEN_KEY, { type: "seen", ids: [...seen] });
     }`,
   },
+  // --- F-M20-5 (Hermes re-review A): cap stored UNREAD invite entries ---------------
+  // A gift wrap whose inner rumor parses as a Welcome is stored as `unread:<id>` and
+  // never bounded: an attacker pads encrypted_group_info (up to the relay's 1 MB
+  // event cap) — ~160 such entries fill a 16 MB AsyncStorage db, after which EVERY
+  // store write fails (MLS group saves included). Cap the entry size (a real Welcome
+  // is a few KB) and the entry count (a real backlog is single digits).
+  {
+    file: `${root}client/invite-manager.js`,
+    find: `            // Move to unread state
+            await this.store.setItem(\`\${UNREAD_PREFIX}\${rumor.id}\`, {
+                type: "unread",
+                rumor,
+            });`,
+    replace: `            // ${PATCH_MARKER} (F-M20-5): bounded unread entries — see scripts/patch-marmot-ts-v2.mjs.
+            const rumorSize = (rumor.content?.length ?? 0) + JSON.stringify(rumor.tags ?? []).length;
+            const unreadCount = (await this.getUnread()).length;
+            if (rumorSize > 16384 || unreadCount >= 256) {
+                this.#log("dropping oversized/excess unread invite %s (%d bytes, %d unread)", rumor.id, rumorSize, unreadCount);
+            }
+            else {
+                // Move to unread state
+                await this.store.setItem(\`\${UNREAD_PREFIX}\${rumor.id}\`, {
+                    type: "unread",
+                    rumor,
+                });
+            }`,
+  },
   // --- F-M16-1 (marmot-ts#78): the processMessage guard (A′) ----------------------
   // On Hermes, `await processMessage(...)` inside ingest's Babel-lowered async
   // generator has resolved to the literal number 0 (findings/M12, M14, M16). The stock

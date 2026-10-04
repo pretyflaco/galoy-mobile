@@ -212,4 +212,28 @@ describe("M20 decompression-bomb cap (decoded dimensions from the header)", () =
     b.set([0xff, 0xff, 0xff, 0xc0, 0x00, 0x11, 8, ...be16(3000), ...be16(4000)], 20)
     expect(imageDim(b)).toEqual({ width: 4000, height: 3000 })
   })
+
+  it("Hermes E: standalone markers (TEM/RSTn) are not read as having a length", () => {
+    // a well-formed file with a TEM marker between segments still parses
+    const ok1 = new Uint8Array(64)
+    ok1.set([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10], 0)
+    ok1.set([0xff, 0x01, 0xff, 0xc0, 0x00, 0x11, 8, ...be16(3000), ...be16(4000)], 20)
+    expect(imageDim(ok1)).toEqual({ width: 4000, height: 3000 })
+    // garbage after an RST ends the walk (fail closed) instead of jumping N bytes
+    // into an attacker-placed fake SOF (his FFD8 FFD0 <N> <real SOF> <fake SOF> case)
+    const evil = new Uint8Array(64)
+    evil.set([0xff, 0xd8, 0xff, 0xd0, 0xaa, 0xbb], 0)
+    evil.set([0xff, 0xc0, 0x00, 0x11, 8, ...be16(60000), ...be16(60000)], 6)
+    expect(imageDim(evil)).toBeNull()
+    expect(imageWithinPixelCap(evil)).toBe(false)
+  })
+
+  it("Hermes E: with two SOFs the LARGER one counts (a fake small SOF can't hide a bomb)", () => {
+    const b = new Uint8Array(64)
+    b.set([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10], 0)
+    b.set([0xff, 0xc0, 0x00, 0x11, 8, ...be16(1), ...be16(1)], 20) // fake small SOF first
+    b.set([0xff, 0xc0, 0x00, 0x11, 8, ...be16(60000), ...be16(60000)], 39) // the real bomb
+    expect(imageDim(b)).toEqual({ width: 60000, height: 60000 })
+    expect(imageWithinPixelCap(b)).toBe(false)
+  })
 })

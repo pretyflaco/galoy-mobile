@@ -20,9 +20,19 @@ import {
   writeSecretThisDeviceOnly,
 } from "@app/nostr/core/keystore"
 import { secureRandomBytes } from "@app/nostr/core/keygen"
+import { supportChatLog } from "./log"
 
 const keyService = (accountKey: string) => `supportchat.storeKey.${accountKey}`
 const keyCache = new Map<string, Promise<Uint8Array>>()
+
+/** Hermes C: remove every `supportchat.<accountKey>.*` value (a fresh store key can
+ *  never decrypt them — they belong to another device). */
+const wipeScopeCiphertext = async (accountKey: string): Promise<number> => {
+  const base = `supportchat.${accountKey}.`
+  const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith(base))
+  if (keys.length) await AsyncStorage.multiRemove(keys)
+  return keys.length
+}
 
 // M20 (Hermes #3): the store key is this-device-only — a restored iCloud backup then
 // holds only ciphertext (history, MLS state, sealed pictures) with no key to open it.
@@ -34,6 +44,14 @@ const storeKey = (accountKey: string): Promise<Uint8Array> => {
       if (existing) return hexToBytes(existing)
       const fresh = secureRandomBytes(32)
       await writeSecretThisDeviceOnly(keyService(accountKey), bytesToHex(fresh))
+      // Hermes C: a fresh key means any existing ciphertext belongs to ANOTHER device
+      // (restored backup / device migration / a lost keychain) and can never be read
+      // — wipe it so the client starts clean instead of throwing on every launch.
+      const wiped = await wipeScopeCiphertext(accountKey).catch(() => -1)
+      if (wiped > 0)
+        supportChatLog(
+          `fresh store key: wiped ${wiped} value(s) from another device (clean start)`,
+        )
       return fresh
     })()
     p.catch(() => keyCache.delete(accountKey))

@@ -9,7 +9,7 @@
 // FAIL the screen + UI tree land in smoke-artifacts/ for the workflow artifact.
 // Usage: node drive.mjs [apk-path]
 import { execSync } from "node:child_process"
-import { mkdirSync, writeFileSync } from "node:fs"
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 
 const APK = process.argv[2] ?? "android/app/build/outputs/apk/debug/app-x86_64-debug.apk"
 const PKG = "com.blinkbtc.alpha"
@@ -108,6 +108,21 @@ async function openSettings() {
   return tapId("home-settings-button", { waitMs: 2000 })
 }
 const logcat = () => { try { return adb("logcat -d -s ReactNativeJS") } catch { return "" } }
+const peerLog = () => {
+  try {
+    return readFileSync(process.env.PEER_LOG ?? "/tmp/smoke-peer.log", "utf8")
+  } catch {
+    return ""
+  }
+}
+const waitForPeer = async (marker, timeoutMs) => {
+  const t0 = Date.now()
+  while (Date.now() - t0 < timeoutMs) {
+    if (peerLog().includes(marker)) return true
+    await sleep(2000)
+  }
+  return false
+}
 
 console.log(`screen ${W}x${H}, apk ${APK}`)
 adb(`install -r ${APK}`, { timeout: 180000 })
@@ -120,8 +135,12 @@ ok("app started (get-started screen)", await waitFor('text="Create new account"'
 ok("get started: contact support", await tapId("get-started-contact-support", { waitMs: 3000 }))
 if (!ok("chat screen open without an account", await waitFor("support-chat-start", 30000))) process.exit(1)
 evidence("pre-account-chat")
+// M20 (Hermes F): the peer's PHASE-0 attack lands here — before any conversation.
+// A broken gate would make the phish group THE chat: "start chat" and the greeting
+// below would fail. The marker proves the attack actually ran (no vacuous pass).
+ok("phase-0 attack sent (pre-conversation)", await waitForPeer("attack sent (phase 0", 90000))
 // start the conversation (roster gate → bot discovery → create + invite → peer Welcome)
-ok("start chat", await tapId("support-chat-start", { waitMs: 3000, tries: 10 }))
+ok("start chat (phase-0 attack was refused)", await tapId("support-chat-start", { waitMs: 3000, tries: 10 }))
 ok("composer shown (group created)", await waitFor('"support-chat-input"', 60000))
 ok("peer joined + greeting shown (live E2EE)", await waitFor("CI Smoke Bot joined", 60000))
 adb("shell input keyevent 4") // back to Get started
@@ -173,12 +192,21 @@ ok("conversations (header clock)", await tapId("support-chat-conversations", { w
 ok("conversations screen", await waitFor("support-conversations-screen", 15000))
 ok("current conversation checked", await waitFor("support-conversation-current", 5000))
 ok("title = the first message", await waitFor("ci smoke roundtrip", 5000))
+// M20 (Hermes F): exactly ONE conversation — a broken gate would have parked the
+// phase-1 attacker's group as a second row.
+ok(
+  "exactly one conversation (phase-1 attack not parked either)",
+  (dump().match(/support-conversation-row/g) ?? []).length === 1,
+)
 evidence("conversations")
 adb("shell input keyevent 4")
 
 // diagnostics only (P7 removes the TEMP recv logs — the UI is the assertion)
 const log = logcat()
 console.log(`logcat: created=${/group .* created/.test(log)} sent=${/support-chat\] sent/.test(log)}`)
-ok("logcat: the attacker's invite was refused", /invite from \S+ refused/.test(log))
+ok(
+  "logcat: BOTH attacks refused (phase 0 + phase 1)",
+  (log.match(/invite from \S+ refused/g) ?? []).length >= 2,
+)
 console.log(failed === 0 ? "\nSUPPORT-CHAT SMOKE PASS" : `\nSUPPORT-CHAT SMOKE FAIL (${failed})`)
 process.exit(failed === 0 ? 0 : 1)

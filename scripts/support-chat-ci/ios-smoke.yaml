@@ -105,10 +105,9 @@ appId: io.galoy.bitcoinbeach
     timeout: 60000
 - takeScreenshot: 07-reply
 
-# M20: the CI peer also ran an unsolicited-invite ATTACK (ephemeral attacker key,
-# attacker-admined group, "Support (CI Smoke Bot): ci-smoke-phish …") while this
-# conversation was active. The fixed app refuses the invite: the phish never renders
-# and the round-trip above already proved the ticket was not replaced.
+# M20: the CI peer also ran TWO unsolicited-invite ATTACKs (phase 0 pre-conversation —
+# a broken gate would have made the phish group THE chat, failing "start chat" and the
+# greeting above; phase 1 while active — a broken park would add a second row below).
 - assertNotVisible:
     text: ".*ci-smoke-phish.*"
 
@@ -121,4 +120,8 @@ appId: io.galoy.bitcoinbeach
     timeout: 15000
 - assertVisible: # the row is one accessibility element on iOS: "title, date"
     text: ".*ci smoke roundtrip.*"
+# M20 (Hermes F): exactly ONE conversation — index 1 (the second row) must not exist
+- assertNotVisible:
+    id: "support-conversation-row"
+    index: 1
 - takeScreenshot: 08-conversations

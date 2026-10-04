@@ -59,6 +59,7 @@ import { SUPPORT_SCOPE, createSupportSigner, loadOrCreateSupportKey } from "./su
 import { EncryptedKeyValueStore } from "./encrypted-store"
 import { isDetailsMessage, requestOf, type RequestKind } from "./details"
 import { groupAdminsIncludeBot, inviteAcceptable } from "./invite-policy"
+import { supportChatLog } from "./log"
 import {
   MAX_DOWNLOAD_BYTES,
   allowedBlobUrl,
@@ -372,7 +373,7 @@ export class SupportChatClient {
   }
 
   private log(msg: string) {
-    console.log(`[support-chat] ${msg}`) // no secrets: pubkeys, ids, statuses only
+    supportChatLog(msg) // no secrets: pubkeys, ids, statuses only
   }
 
   /** F-M12-2: any engine-visible signal counts as liveness. */

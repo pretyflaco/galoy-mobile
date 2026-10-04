@@ -456,9 +456,11 @@ export const FeatureFlagContextProvider: React.FC<React.PropsWithChildren> = ({
           .getValue(NostrNip05EnabledKey)
           .asBoolean()
 
-        const supportChatEnabled = remoteConfigInstance()
-          .getValue(SupportChatEnabledKey)
-          .asBoolean()
+        // M20 (4a): the BUILD-time switch is authoritative — remote config can turn an
+        // opted-in build OFF (kill switch) but can never turn a production build ON.
+        const supportChatEnabled =
+          supportChatBuild &&
+          remoteConfigInstance().getValue(SupportChatEnabledKey).asBoolean()
 
         const dollarRestrictionCacheEnabled = remoteConfigInstance()
           .getValue(DollarRestrictionCacheEnabledKey)

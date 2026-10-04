@@ -28,6 +28,7 @@ import { MAX_IMAGE_BYTES, mediaUri } from "@app/support-chat/media"
 
 import { SupportImageViewer, type ViewerImage } from "./support-image-viewer"
 import { PUSH_SERVER_PUBKEY, askPermission } from "@app/support-chat/push"
+import { supportChatLog } from "@app/support-chat/log"
 import type { ChatItem, EndReason, MemberLabel } from "@app/support-chat/client"
 
 /** Brand black — the label colour on the primary fill (blink-brand: white on primary fails contrast). */
@@ -179,10 +180,7 @@ export const SupportChatScreen: React.FC = () => {
     try {
       await fn()
     } catch (e) {
-      console.log(
-        "[support-chat] action failed:",
-        e instanceof Error ? e.stack : String(e),
-      )
+      supportChatLog("action failed:", e instanceof Error ? e.stack : String(e))
       setActionError(e instanceof Error ? e.message : String(e))
     } finally {
       setBusy(false)

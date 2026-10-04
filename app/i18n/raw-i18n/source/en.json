@@ -4285,7 +4285,7 @@
         "backToCurrent": "Back to the current conversation",
         "conversations": "Conversations",
         "emptyTitle": "Chat with Blink Support",
-        "emptyBody": "Ask us anything. This chat is end-to-end encrypted. Only you and the Blink Support team can read it.",
+        "emptyBody": "Ask us anything. Messages are encrypted on this device and decrypted only by Blink's own support system, where our team reads and answers them.",
         "assistantName": "Blink assistant",
         "agentLabel": "{name:string} · Blink Support",
         "today": "Today",

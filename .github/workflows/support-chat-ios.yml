@@ -175,7 +175,7 @@ jobs:
       # M20 (Hermes N6): the Maestro flow alone can't prove the attacks ran — check the
       # peer sent both (phase 0 fires when the flow opens the chat screen, phase 1
       # after the greeting), and that the app refused both in its log.
-      - name: M20: both attacks were sent and refused
+      - name: "M20: both attacks were sent and refused"
         run: |
           P0=$(grep -c "attack sent (phase 0" /tmp/smoke-peer.log || true)
           P1=$(grep -c "attack sent (phase 1" /tmp/smoke-peer.log || true)

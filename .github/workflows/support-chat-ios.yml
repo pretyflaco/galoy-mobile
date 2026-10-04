@@ -172,6 +172,21 @@ jobs:
             --debug-output smoke-artifacts/maestro-debug \
             --test-output-dir smoke-artifacts/maestro-out
 
+      # M20 (Hermes N6): the Maestro flow alone can't prove the attacks ran — check the
+      # peer sent both (phase 0 fires when the flow opens the chat screen, phase 1
+      # after the greeting), and that the app refused both in its log.
+      - name: M20: both attacks were sent and refused
+        run: |
+          P0=$(grep -c "attack sent (phase 0" /tmp/smoke-peer.log || true)
+          P1=$(grep -c "attack sent (phase 1" /tmp/smoke-peer.log || true)
+          echo "attacks sent — phase 0: $P0 · phase 1: $P1"
+          { [ "$P0" -ge 1 ] && [ "$P1" -ge 1 ]; } || { echo "an attack never ran:"; tail -20 /tmp/smoke-peer.log; exit 1; }
+          REFUSED=$(xcrun simctl spawn "$SIM_UDID" log show --last 60m \
+            --predicate 'eventMessage CONTAINS "support-chat"' 2>/dev/null \
+            | grep -c "invite from .* refused" || true)
+          echo "invite refusals in the app log: $REFUSED"
+          [ "$REFUSED" -ge 2 ] || { echo "expected >= 2 invite refusals"; exit 1; }
+
       - name: Artifacts
         if: always()
         run: |

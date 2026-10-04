@@ -47,27 +47,36 @@ const client = new MarmotClient({
 await ensureDiscoverable(client, network, { relays: [RELAY], signer })
 console.log(`[${ts()}] discovery published (30443 + 10051/10050/10002)`)
 
-// M20 (Hermes F): PHASE-0 attack — as soon as the device's key package appears on the
-// relay (the app opened the chat screen, BEFORE any conversation exists), attack it:
-// an app without the invite gate would make the phish group THE conversation, and the
-// smoke's "start chat" + greeting assertions would fail (the old assertNotVisible on
-// the phish could NOT catch that — with D2 a broken app would just park the attack).
+// M20 (Hermes F/N6): PHASE-0 attack — EVERY new device key package seen on the relay
+// gets attacked the moment it appears (the app opened the chat screen, BEFORE any
+// conversation exists). An app without the invite gate would make the phish group
+// THE conversation, and the smoke's "start chat" + greeting assertions would fail.
+// "Every new kp" (not one-shot): a drive retry gets a FRESH app key → a fresh
+// attack, and the drive waits for the marker naming ITS key (no stale-marker pass).
 // Phase 1 (below) attacks while a conversation is active.
-let phase0 = !ATTACK
+// M20: unsolicited-invite ATTACK (default on; ATTACK=0 disables). An EPHEMERAL
+// attacker key (NOT the roster bot) fetches the device's PUBLIC key package (kind
+// 30443), invites it into an attacker-admined group and sends phishing text under
+// the "Support (<name>):" prefix — Hermes review findings 1+5. The fixed app
+// refuses the invite (logcat: "invite from … refused") and never renders the phish.
+const ATTACK = process.env.ATTACK !== "0"
+const PHISH = "ci-smoke-phish"
+
+const phase0Attacked = new Set()
 const phase0Loop = (async () => {
-  while (!phase0) {
+  for (;;) {
     try {
-      const kps = await network.request([RELAY], { kinds: [30443] })
-      const foreign = kps.find((e) => e.pubkey !== signer.publicKey)
-      if (foreign) {
-        phase0 = true
-        await attack(foreign.pubkey)
-        console.log(`[${ts()}] attack sent (phase 0, pre-conversation) for ${foreign.pubkey.slice(0, 12)}…`)
+      const kps = ATTACK ? await network.request([RELAY], { kinds: [30443] }) : []
+      for (const kp of kps) {
+        if (kp.pubkey === signer.publicKey || phase0Attacked.has(kp.pubkey)) continue
+        phase0Attacked.add(kp.pubkey)
+        await attack(kp.pubkey)
+        console.log(`[${ts()}] attack sent (phase 0, pre-conversation) for ${kp.pubkey.slice(0, 12)}…`)
       }
     } catch (e) {
       console.log(`[${ts()}] phase-0 poll: ${e.message}`)
     }
-    if (!phase0) await sleep(2000)
+    await sleep(2000)
   }
 })()
 phase0Loop.catch((e) => console.log(`[${ts()}] phase-0 loop ended: ${e.message}`))
@@ -76,16 +85,6 @@ phase0Loop.catch((e) => console.log(`[${ts()}] phase-0 loop ended: ${e.message}`
 // identity — the single-group peer ignored it, run 36837196029 attempt 2).
 const joined = new Set()
 const replies = new Set()
-
-// M20: unsolicited-invite ATTACK (default on; ATTACK=0 disables). Right after joining
-// the app's group, an EPHEMERAL attacker key (NOT the roster bot) fetches the device's
-// PUBLIC key package (kind 30443), invites it into an attacker-admined group and sends
-// phishing text under the "Support (<name>):" prefix — Hermes review 2026-10-04,
-// findings 1+5. The fixed app refuses the invite (logcat: "invite from … refused") and
-// never renders the phish; a vulnerable app would join, END the real conversation and
-// show the phish under the trusted label — failing the smoke either way.
-const ATTACK = process.env.ATTACK !== "0"
-const PHISH = "ci-smoke-phish"
 
 async function attack(devicePk) {
   const atkSigner = new TestEventSigner()

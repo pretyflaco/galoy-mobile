@@ -14368,7 +14368,7 @@ type RootTranslation = {
 		 */
 		emptyTitle: string
 		/**
-		 * A​s​k​ ​u​s​ ​a​n​y​t​h​i​n​g​.​ ​T​h​i​s​ ​c​h​a​t​ ​i​s​ ​e​n​d​-​t​o​-​e​n​d​ ​e​n​c​r​y​p​t​e​d​.​ ​O​n​l​y​ ​y​o​u​ ​a​n​d​ ​t​h​e​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t​ ​t​e​a​m​ ​c​a​n​ ​r​e​a​d​ ​i​t​.
+		 * A​s​k​ ​u​s​ ​a​n​y​t​h​i​n​g​.​ ​M​e​s​s​a​g​e​s​ ​a​r​e​ ​e​n​c​r​y​p​t​e​d​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​ ​a​n​d​ ​d​e​c​r​y​p​t​e​d​ ​o​n​l​y​ ​b​y​ ​B​l​i​n​k​'​s​ ​o​w​n​ ​s​u​p​p​o​r​t​ ​s​y​s​t​e​m​,​ ​w​h​e​r​e​ ​o​u​r​ ​t​e​a​m​ ​r​e​a​d​s​ ​a​n​d​ ​a​n​s​w​e​r​s​ ​t​h​e​m​.
 		 */
 		emptyBody: string
 		/**
@@ -14524,6 +14524,10 @@ type RootTranslation = {
 		 * C​u​r​r​e​n​t​ ​c​o​n​v​e​r​s​a​t​i​o​n
 		 */
 		current: string
+		/**
+		 * U​n​r​e​a​d​ ​m​e​s​s​a​g​e​s
+		 */
+		unread: string
 		/**
 		 * N​o​ ​c​o​n​v​e​r​s​a​t​i​o​n​s​ ​y​e​t​.
 		 */
@@ -29422,7 +29426,7 @@ export type TranslationFunctions = {
 		 */
 		emptyTitle: () => LocalizedString
 		/**
-		 * Ask us anything. This chat is end-to-end encrypted. Only you and the Blink Support team can read it.
+		 * Ask us anything. Messages are encrypted on this device and decrypted only by Blink's own support system, where our team reads and answers them.
 		 */
 		emptyBody: () => LocalizedString
 		/**
@@ -29577,6 +29581,10 @@ export type TranslationFunctions = {
 		 * Current conversation
 		 */
 		current: () => LocalizedString
+		/**
+		 * Unread messages
+		 */
+		unread: () => LocalizedString
 		/**
 		 * No conversations yet.
 		 */

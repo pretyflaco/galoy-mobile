@@ -135,10 +135,21 @@ ok("app started (get-started screen)", await waitFor('text="Create new account"'
 ok("get started: contact support", await tapId("get-started-contact-support", { waitMs: 3000 }))
 if (!ok("chat screen open without an account", await waitFor("support-chat-start", 30000))) process.exit(1)
 evidence("pre-account-chat")
-// M20 (Hermes F): the peer's PHASE-0 attack lands here — before any conversation.
-// A broken gate would make the phish group THE chat: "start chat" and the greeting
-// below would fail. The marker proves the attack actually ran (no vacuous pass).
-ok("phase-0 attack sent (pre-conversation)", await waitForPeer("attack sent (phase 0", 90000))
+// M20 (Hermes F/N6): the peer's PHASE-0 attack lands here — before any conversation.
+// The marker must name THIS attempt's device key (a retry gets a fresh one): read the
+// app's identity from logcat, then wait for the peer's attack naming it — no
+// stale-marker pass, and a broken gate would make the phish group THE chat ("start
+// chat" and the greeting below would fail).
+let identity = ""
+for (let i = 0; i < 30 && !identity; i++) {
+  identity = (logcat().match(/identity ([0-9a-f]{8})/) ?? [])[1] ?? ""
+  if (!identity) await sleep(2000)
+}
+ok("device identity in logcat", Boolean(identity))
+ok(
+  "phase-0 attack sent for THIS device",
+  Boolean(identity) && (await waitForPeer(`attack sent (phase 0, pre-conversation) for ${identity}`, 90000)),
+)
 // start the conversation (roster gate → bot discovery → create + invite → peer Welcome)
 ok("start chat (phase-0 attack was refused)", await tapId("support-chat-start", { waitMs: 3000, tries: 10 }))
 ok("composer shown (group created)", await waitFor('"support-chat-input"', 60000))

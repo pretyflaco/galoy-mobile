@@ -143,8 +143,9 @@ type Meta = {
   unreadByGid?: Record<string, number>
   /** legacy whole-chat unread counter (pre-batch-3); migrated into unreadByGid */
   unread?: number
-  /** M20 (Hermes A): first-seen timestamps of null-preview invites (TTL-bounded retry) */
-  inviteFirstSeen?: Record<string, number>
+  /** M20 (Hermes A/N1): null-preview invites — first-seen and last-gated timestamps
+   *  (hourly re-gate, 24 h TTL). Legacy entries are bare numbers (first = last). */
+  inviteFirstSeen?: Record<string, number | { first: number; last: number }>
   /** M19: accounts whose Nostr-identity conversations were imported read-only */
   importedAccounts?: string[]
 }
@@ -307,6 +308,7 @@ export class SupportChatClient {
     this.viewing = gid && gid !== this.groupId ? gid : null
     this.viewItems = this.viewing ? (await this.history.getItem(this.viewing)) ?? [] : []
     await ensureLiveImages(this.scope, this.viewItems)
+    this.clearUnreadOnScreen()
     this.emit()
   }
 
@@ -332,6 +334,7 @@ export class SupportChatClient {
     await ensureLiveImages(this.scope, this.items)
     this.meta.activeGroup = gid
     await this.saveMeta()
+    this.clearUnreadOnScreen()
     this.emit()
     this.announcePush()
     return true
@@ -557,6 +560,14 @@ export class SupportChatClient {
     this.log(
       `identity ${short(this.pubkey)}; roster ${short(SUPPORT_ROSTER_PUBKEY)}: ${rosterStatus}`,
     )
+    // M20 (Hermes N2): the patched InviteManager (F-M20-5) stores invites ONLY from
+    // the roster bot — a junk-filled store can never make a real bot invite the one
+    // dropped. The bot's pubkey is roster-pinned (constant across weekly re-signs).
+    const rosterBot = [...(this.roster.current?.members ?? [])].find(
+      ([, m]: [string, { role?: string }]) => m.role === "bot",
+    )
+    ;(globalThis as { __blinkInviteAllowlist?: string[] }).__blinkInviteAllowlist =
+      rosterBot ? [rosterBot[0] as string] : []
 
     // Be invitable: 30443 (ensurePublished, rotates) + 10051/10050/10002 (F-M9-12)
     await ensureDiscoverable(this.client, this.network, {
@@ -719,6 +730,9 @@ export class SupportChatClient {
     this.inviteWatch = new AbortController()
     try {
       for await (const invites of this.client.watchInvites()) {
+        // Hermes N1: one pass saves meta ONCE, and only when it changed — a single
+        // wrap must not re-encrypt the meta per stored invite.
+        let dirty = false
         for (const { invite, joinable } of invites as {
           invite: { id: string; pubkey: string }
           joinable: boolean
@@ -727,36 +741,57 @@ export class SupportChatClient {
           // longer hold, or rot) is never useful — mark it read immediately or the
           // unread store fills with garbage.
           if (joinable) {
-            await this.gateInvite(invite)
+            const changed = await this.gateInvite(invite)
+            dirty = dirty || changed
           } else {
             await this.client.invites.markAsRead(invite.id).catch(() => undefined)
           }
         }
+        if (dirty) await this.saveMeta()
       }
     } catch (e) {
       if (!this.destroyed) this.log(`invite watch ended: ${(e as Error).message}`)
     }
   }
 
-  /** M20 gate for one joinable invite (Hermes A(ii): the null-preview retry is
-   *  TTL-bounded — an attacker can force preview.group to null with a well-formed
-   *  wrapper and garbage group info, so "kept for retry" must not mean "kept forever"). */
-  private async gateInvite(invite: { id: string; pubkey: string }): Promise<void> {
+  /**
+   * M20 gate for one joinable invite; returns whether meta changed.
+   * Hermes N1: an invite is FULLY gated (previewWelcome = key-package decrypt
+   * attempts) only when NEW or once an hour — a junk-filled store must not cost
+   * O(junk) HPKE work per incoming wrap. Hermes A(ii): the null-preview retry is
+   * TTL-bounded (24 h) — an attacker can force preview.group to null with a
+   * well-formed wrapper and garbage group info.
+   */
+  private async gateInvite(invite: { id: string; pubkey: string }): Promise<boolean> {
     try {
+      const tracked = this.meta.inviteFirstSeen?.[invite.id]
+      const first = typeof tracked === "number" ? tracked : tracked?.first
+      const last = typeof tracked === "number" ? tracked : tracked?.last
+      if (first !== undefined && last !== undefined && now() - last < 3600) {
+        // already gated recently: only the TTL matters (cheap — no previewWelcome)
+        if (now() - first <= 24 * 3600) return false
+        delete this.meta.inviteFirstSeen?.[invite.id]
+        await this.client.invites.markAsRead(invite.id)
+        this.log(
+          `invite ${short(invite.id)} dropped: group info unreadable for over a day`,
+        )
+        return true
+      }
       const preview = await this.client.previewWelcome(invite)
       // Hermes #6: previewWelcome swallows errors. "No group info" is NOT the same as
       // "the bot is not an admin" — a transient read failure must not delete a
-      // legitimate support invite. Retry, but only for a day (A(ii)).
+      // legitimate support invite. Retry hourly, but only for a day (A(ii)/N1).
       if (!preview?.group) {
         if (!this.meta.inviteFirstSeen) this.meta.inviteFirstSeen = {}
         const firstSeen = this.meta.inviteFirstSeen
-        if (!firstSeen[invite.id]) firstSeen[invite.id] = now()
-        const first = firstSeen[invite.id]
-        if (Object.keys(firstSeen).length > 500) {
-          const oldest = Object.entries(firstSeen).sort((a, b) => a[1] - b[1])
+        if (Object.keys(firstSeen).length >= 500) {
+          const oldest = Object.entries(firstSeen)
+            .map(([id, v]) => [id, typeof v === "number" ? v : v.first] as const)
+            .sort((a, b) => a[1] - b[1])
           for (const [id] of oldest.slice(0, 100)) delete firstSeen[id]
         }
-        if (now() - first > 24 * 3600) {
+        firstSeen[invite.id] = { first: first ?? now(), last: now() }
+        if (first !== undefined && now() - first > 24 * 3600) {
           delete firstSeen[invite.id]
           await this.client.invites.markAsRead(invite.id)
           this.log(
@@ -765,10 +800,11 @@ export class SupportChatClient {
         } else {
           this.log(`invite ${short(invite.id)}: group info unreadable — kept for retry`)
         }
-        await this.saveMeta()
-        return
+        return true
       }
-      delete this.meta.inviteFirstSeen?.[invite.id]
+      if (this.meta.inviteFirstSeen && invite.id in this.meta.inviteFirstSeen) {
+        delete this.meta.inviteFirstSeen[invite.id]
+      }
       if (
         inviteAcceptable(invite.pubkey, preview.group.adminPubkeys ?? [], (pk) =>
           this.label(pk),
@@ -781,8 +817,10 @@ export class SupportChatClient {
           `invite from ${short(invite.pubkey)} refused: not a roster-bot, bot-admined group`,
         )
       }
+      return true
     } catch (e) {
       this.log(`invite ${short(invite.id)} failed to join: ${(e as Error).message}`)
+      return false
     }
   }
 
@@ -1180,8 +1218,13 @@ export class SupportChatClient {
   /** The chat screen is (not) in front: the on-screen conversation's count clears. */
   setScreenFocused(focused: boolean): void {
     this.screenFocused = focused
+    this.clearUnreadOnScreen()
+  }
+
+  /** Hermes N4: clear the on-screen conversation's unread (also from view/switchTo). */
+  private clearUnreadOnScreen(): void {
     const onScreen = this.viewing ?? this.groupId
-    if (focused && onScreen && this.unreadFor(onScreen)) {
+    if (this.screenFocused && onScreen && this.unreadFor(onScreen)) {
       delete this.meta.unreadByGid?.[onScreen]
       this.saveMeta()
       this.emit()
@@ -1255,7 +1298,21 @@ export class SupportChatClient {
     return Boolean(meta?.activeGroup)
   }
 
-  private async pushTo(gid: string, item: ChatItem) {
+  /** Hermes N4: writes per conversation are CHAINED — two messages landing close
+   *  together (bot greeting + agent reply) can no longer read-modify-write over
+   *  each other (the second write used to drop the first message). */
+  private historyChains = new Map<string, Promise<void>>()
+
+  private pushTo(gid: string, item: ChatItem): Promise<void> {
+    const prev = this.historyChains.get(gid) ?? Promise.resolve()
+    const next = prev
+      .then(() => this.pushToChained(gid, item))
+      .catch((e) => this.log(`pushTo ${short(gid)}: ${(e as Error).message}`))
+    this.historyChains.set(gid, next)
+    return next
+  }
+
+  private async pushToChained(gid: string, item: ChatItem) {
     if (gid !== this.groupId) {
       // an older (ended) or PARKED conversation still receiving: keep its history
       // complete, and (M20, Hermes #2/#4) count its support messages as unread too —
@@ -1263,25 +1320,25 @@ export class SupportChatClient {
       const old = (await this.history.getItem(gid)) ?? []
       if (old.some((x) => x.id === item.id)) return
       await this.history.setItem(gid, [...old, item].slice(-MAX_ITEMS))
-      this.noteUnread(gid, item)
+      await this.noteUnread(gid, item)
       this.emit()
       return
     }
     if (this.items.some((x) => x.id === item.id)) return
     this.items = [...this.items, item].slice(-MAX_ITEMS)
-    this.noteUnread(gid, item)
+    await this.noteUnread(gid, item)
     this.emit()
     await this.history.setItem(gid, this.items)
   }
 
   /** M20 batch 3 (Hermes #4): per-conversation unread. A message counts unless its
    *  conversation is the one on screen right now. */
-  private noteUnread(gid: string, item: ChatItem) {
+  private async noteUnread(gid: string, item: ChatItem): Promise<void> {
     if (item.type !== "msg" || item.from === this.pubkey) return
     if (this.screenFocused && gid === (this.viewing ?? this.groupId)) return
     this.meta.unreadByGid ??= {}
     this.meta.unreadByGid[gid] = (this.meta.unreadByGid[gid] ?? 0) + 1
-    this.saveMeta()
+    await this.saveMeta()
   }
 
   /** Per-conversation unread count (the Conversations list's dot). */

@@ -59,6 +59,23 @@ const dayOf = (at: number) => new Date(at * 1000).toDateString()
 const timeOf = (at: number) =>
   new Date(at * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 
+/**
+ * M20 (Hermes G/N5): delete the picker's plaintext temp copy — ONLY inside the app's
+ * own cache/tmp. iOS mismatches normalized: NSTemporaryDirectory() ends in "/" and
+ * the picker standardizes /private/var/… → /var/… while RNFS keeps /private.
+ */
+const appFilePath = (uri: string): string | null => {
+  const norm = (p: string) => p.replace(/^\/private/, "").replace(/\/+$/, "")
+  const p = norm(uri.replace(/^file:\/\//, ""))
+  if (p.split("/").includes("..")) return null
+  const roots = [RNFS.CachesDirectoryPath, RNFS.TemporaryDirectoryPath].map(norm)
+  return roots.some((r) => p.startsWith(`${r}/`)) ? p : null
+}
+const dropPickerTemp = (uri: string): void => {
+  const p = appFilePath(uri)
+  if (p) RNFS.unlink(p).catch(() => undefined)
+}
+
 type Row = {
   item: ChatItem
   author: string | null // shown above the first bubble of a run
@@ -220,14 +237,7 @@ export const SupportChatScreen: React.FC = () => {
     // M20 (Hermes G): the picker's resized temp copy is plaintext — always delete it,
     // success or failure, but ONLY ever inside the app's own cache/tmp (never a
     // gallery original the picker might hand back unmodified)
-    const dropTemp = () => {
-      const p = img.uri.replace(/^file:\/\//, "")
-      if (
-        p.startsWith(`${RNFS.CachesDirectoryPath}/`) ||
-        p.startsWith(`${RNFS.TemporaryDirectoryPath}/`)
-      )
-        RNFS.unlink(p).catch(() => undefined)
-    }
+    const dropTemp = () => dropPickerTemp(img.uri)
     run(async () => {
       try {
         const base64 = await RNFS.readFile(img.uri, "base64")
@@ -248,15 +258,7 @@ export const SupportChatScreen: React.FC = () => {
   }
 
   const cancelImage = () => {
-    const img = pickedImage
-    if (img) {
-      const p = img.uri.replace(/^file:\/\//, "")
-      if (
-        p.startsWith(`${RNFS.CachesDirectoryPath}/`) ||
-        p.startsWith(`${RNFS.TemporaryDirectoryPath}/`)
-      )
-        RNFS.unlink(p).catch(() => undefined)
-    }
+    if (pickedImage) dropPickerTemp(pickedImage.uri)
     setPickedImage(null)
   }
 

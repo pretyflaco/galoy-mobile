@@ -181,6 +181,7 @@ describe("M20 decompression-bomb cap (decoded dimensions from the header)", () =
     const b = new Uint8Array(64)
     b.set([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10], 0) // SOI + APP0 (len 16 → next at 20)
     b.set([0xff, 0xc0, 0x00, 0x11, 8, ...be16(h), ...be16(w)], 20)
+    b.set([0xff, 0xda], 39) // SOS — the header ends cleanly
     return b
   }
   const webp = (w: number, h: number) => {
@@ -210,6 +211,7 @@ describe("M20 decompression-bomb cap (decoded dimensions from the header)", () =
     const b = new Uint8Array(64)
     b.set([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10], 0)
     b.set([0xff, 0xff, 0xff, 0xc0, 0x00, 0x11, 8, ...be16(3000), ...be16(4000)], 20)
+    b.set([0xff, 0xda], 41) // SOS
     expect(imageDim(b)).toEqual({ width: 4000, height: 3000 })
   })
 
@@ -218,6 +220,7 @@ describe("M20 decompression-bomb cap (decoded dimensions from the header)", () =
     const ok1 = new Uint8Array(64)
     ok1.set([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10], 0)
     ok1.set([0xff, 0x01, 0xff, 0xc0, 0x00, 0x11, 8, ...be16(3000), ...be16(4000)], 20)
+    ok1.set([0xff, 0xda], 41) // SOS
     expect(imageDim(ok1)).toEqual({ width: 4000, height: 3000 })
     // garbage after an RST ends the walk (fail closed) instead of jumping N bytes
     // into an attacker-placed fake SOF (his FFD8 FFD0 <N> <real SOF> <fake SOF> case)
@@ -228,12 +231,22 @@ describe("M20 decompression-bomb cap (decoded dimensions from the header)", () =
     expect(imageWithinPixelCap(evil)).toBe(false)
   })
 
-  it("Hermes E: with two SOFs the LARGER one counts (a fake small SOF can't hide a bomb)", () => {
+  it("Hermes N3: a file with two SOFs is refused (one is valid, two is crafted)", () => {
     const b = new Uint8Array(64)
     b.set([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10], 0)
     b.set([0xff, 0xc0, 0x00, 0x11, 8, ...be16(1), ...be16(1)], 20) // fake small SOF first
     b.set([0xff, 0xc0, 0x00, 0x11, 8, ...be16(60000), ...be16(60000)], 39) // the real bomb
-    expect(imageDim(b)).toEqual({ width: 60000, height: 60000 })
+    expect(imageDim(b)).toBeNull()
+    expect(imageWithinPixelCap(b)).toBe(false)
+  })
+
+  it("Hermes N3: 0x00 (byte stuffing) in the marker position refuses — his reproduced bypass", () => {
+    // SOI · FF 00 <len> · APP15[ … fake 1×1 SOF … ] · real 2000×1500 SOF
+    const b = new Uint8Array(64)
+    b.set([0xff, 0xd8, 0xff, 0x00, 0x00, 0x10], 0)
+    b.set([0xff, 0xef, 0x00, 0x11, 8, ...be16(1), ...be16(1)], 6) // APP15 with a fake SOF inside
+    b.set([0xff, 0xc0, 0x00, 0x11, 8, ...be16(1500), ...be16(2000)], 25) // the real SOF
+    expect(imageDim(b)).toBeNull()
     expect(imageWithinPixelCap(b)).toBe(false)
   })
 })

@@ -83,7 +83,7 @@ export const SupportConversationsScreen: React.FC = () => {
                 {!isCurrent(c) && (client?.unreadFor(c.gid) ?? 0) > 0 && (
                   <View
                     style={styles.unreadDot}
-                    accessibilityLabel={T.current()}
+                    accessibilityLabel={T.unread()}
                     testID="support-conversation-unread"
                   />
                 )}

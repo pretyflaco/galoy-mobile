@@ -133,6 +133,47 @@ async function processMessageGuarded(makeCapture, makeParams, log, label) {
 }
 function isPermanentDecryptFailure(error) {`
 
+// F-M20-5 V1 (2026-10-04, batch 3: plain size/count caps, getUnread per wrap) — kept
+// verbatim so installed trees upgrade in place to the N1/N2 version below.
+const M20_5_V1 = `            // ${PATCH_MARKER} (F-M20-5): bounded unread entries — see scripts/patch-marmot-ts-v2.mjs.
+            const rumorSize = (rumor.content?.length ?? 0) + JSON.stringify(rumor.tags ?? []).length;
+            const unreadCount = (await this.getUnread()).length;
+            if (rumorSize > 16384 || unreadCount >= 256) {
+                this.#log("dropping oversized/excess unread invite %s (%d bytes, %d unread)", rumor.id, rumorSize, unreadCount);
+            }
+            else {
+                // Move to unread state
+                await this.store.setItem(\`\${UNREAD_PREFIX}\${rumor.id}\`, {
+                    type: "unread",
+                    rumor,
+                });
+            }`
+
+// F-M20-5 current (Hermes N1/N2): allowlisted authors (the roster bot, published by
+// the app in globalThis.__blinkInviteAllowlist) always store; with an allowlist set,
+// everyone else never stores; without one, the plain caps apply. The count is
+// store.keys()-based — no per-entry decrypt.
+const M20_5 = `            // ${PATCH_MARKER} (F-M20-5): bounded unread entries — see scripts/patch-marmot-ts-v2.mjs.
+            const allowlist = globalThis.__blinkInviteAllowlist;
+            const allowlisted = Array.isArray(allowlist) && allowlist.includes(rumor.pubkey);
+            if (Array.isArray(allowlist) && !allowlisted) {
+                this.#log("dropping invite from a non-allowlisted author %s", rumor.pubkey?.slice(0, 8));
+            }
+            else {
+                const rumorSize = (rumor.content?.length ?? 0) + JSON.stringify(rumor.tags ?? []).length;
+                const unreadCount = (await this.store.keys()).filter((k) => k.startsWith(UNREAD_PREFIX)).length;
+                if (!allowlisted && (rumorSize > 16384 || unreadCount >= 256)) {
+                    this.#log("dropping oversized/excess unread invite %s (%d bytes, %d unread)", rumor.id, rumorSize, unreadCount);
+                }
+                else {
+                    // Move to unread state
+                    await this.store.setItem(\`\${UNREAD_PREFIX}\${rumor.id}\`, {
+                        type: "unread",
+                        rumor,
+                    });
+                }
+            }`
+
 const edits = [
   {
     file: `${root}client/marmot-client.js`,
@@ -241,12 +282,19 @@ const edits = [
         await this.store.setItem(SEEN_KEY, { type: "seen", ids: [...seen] });
     }`,
   },
-  // --- F-M20-5 (Hermes re-review A): cap stored UNREAD invite entries ---------------
+  // --- F-M20-5 (Hermes re-review A + N1/N2): bounded + allowlisted UNREAD entries ---
   // A gift wrap whose inner rumor parses as a Welcome is stored as `unread:<id>` and
   // never bounded: an attacker pads encrypted_group_info (up to the relay's 1 MB
   // event cap) — ~160 such entries fill a 16 MB AsyncStorage db, after which EVERY
-  // store write fails (MLS group saves included). Cap the entry size (a real Welcome
-  // is a few KB) and the entry count (a real backlog is single digits).
+  // store write fails (MLS group saves included).
+  // N2: a plain count cap fails OPEN — 256 junk entries would make a REAL roster-bot
+  // invite the one dropped (already seen-marked, never retried). The app therefore
+  // publishes the roster bot(s) in globalThis.__blinkInviteAllowlist: allowlisted
+  // rumors always store, non-allowlisted ones never do (the app's gate would refuse
+  // them anyway — dropping them pre-storage kills the whole fill attack at the root;
+  // filtering before DECRYPT is impossible: NIP-59 wraps are signed by ephemeral
+  // keys). Allowlist unset (interop, tests) → the plain caps below apply.
+  // N1: the count uses store.keys() (no per-entry decrypt) instead of getUnread().
   {
     file: `${root}client/invite-manager.js`,
     find: `            // Move to unread state
@@ -254,19 +302,8 @@ const edits = [
                 type: "unread",
                 rumor,
             });`,
-    replace: `            // ${PATCH_MARKER} (F-M20-5): bounded unread entries — see scripts/patch-marmot-ts-v2.mjs.
-            const rumorSize = (rumor.content?.length ?? 0) + JSON.stringify(rumor.tags ?? []).length;
-            const unreadCount = (await this.getUnread()).length;
-            if (rumorSize > 16384 || unreadCount >= 256) {
-                this.#log("dropping oversized/excess unread invite %s (%d bytes, %d unread)", rumor.id, rumorSize, unreadCount);
-            }
-            else {
-                // Move to unread state
-                await this.store.setItem(\`\${UNREAD_PREFIX}\${rumor.id}\`, {
-                    type: "unread",
-                    rumor,
-                });
-            }`,
+    upgradeFrom: [M20_5_V1],
+    replace: M20_5,
   },
   // --- F-M16-1 (marmot-ts#78): the processMessage guard (A′) ----------------------
   // On Hermes, `await processMessage(...)` inside ingest's Babel-lowered async

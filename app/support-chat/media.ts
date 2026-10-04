@@ -133,12 +133,19 @@ export const imageDim = (b: Uint8Array): { width: number; height: number } | nul
   if (imageExt(b) === "png" && b.length > 24) return { width: u32(16), height: u32(20) }
   if (imageExt(b) === "jpg") {
     let o = 2
-    let best: { width: number; height: number } | null = null
-    while (o + 1 < b.length && b[o] === 0xff) {
+    let sof: { width: number; height: number } | null = null
+    let sofCount = 0
+    while (o + 1 < b.length) {
+      if (b[o] !== 0xff) return null // desync (entropy data / garbage) — fail closed
       let m = o + 1
       while (m < b.length && b[m] === 0xff) m += 1 // 0xFF fill bytes precede the marker
       if (m >= b.length) return null
       const marker = b[m]
+      // Hermes N3: 0x00 is byte stuffing (we ARE in entropy data — desync), and
+      // 0x02–0xBF are not valid markers — refuse rather than trusting a "length"
+      if (marker === 0x00 || (marker >= 0x02 && marker <= 0xbf)) return null
+      // SOS: the frame header ends here — SOFs beyond it are not ours
+      if (marker === 0xda) break
       // standalone markers WITHOUT a length field (Hermes E): TEM 01, RSTn D0–D7,
       // SOI D8, EOI D9 — reading a length here derails the walk into a fake SOF
       if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9)) {
@@ -154,14 +161,15 @@ export const imageDim = (b: Uint8Array): { width: number; height: number } | nul
           (marker >= 0xcd && marker <= 0xcf)
         if (isSof) {
           if (m + 9 > b.length) return null
-          const dim = { height: u16(m + 4), width: u16(m + 6) }
-          // every SOF in the file counts: a fake small SOF can never shrink the real one
-          if (!best || dim.width * dim.height > best.width * best.height) best = dim
+          sofCount += 1
+          // N3: a valid JPEG has exactly one SOF — two means a crafted file
+          if (sofCount > 1) return null
+          sof = { height: u16(m + 4), width: u16(m + 6) }
         }
         o = m + 1 + len
       }
     }
-    return best
+    return sof
   }
   if (imageExt(b) === "webp" && b.length > 30) {
     const kind = String.fromCharCode(...b.slice(12, 16))
@@ -204,15 +212,27 @@ const mediaAad = (scope: string, name: string) => `supportchat.media.${scope}.${
 /** Write the ENCRYPTED canonical copy; returns the file name (`<sha256>.<ext>`).
  *  Written to a temp name and renamed into place (Hermes #7): a crash mid-write can
  *  never leave a truncated `.enc` that later fails openBytes. An existing `.enc` is
- *  the SAME content (names are content hashes) — kept, never rewritten (Hermes D:
- *  iOS's moveItemAtPath fails when the destination exists). */
+ *  kept when it DECRYPTS under the current store key (same content — names are
+ *  content hashes; iOS's moveItemAtPath also fails on existing destinations, Hermes
+ *  D). One that doesn't (it was sealed with a PREVIOUS key — the C-wipe/downgrade
+ *  case, Hermes N7) is re-sealed, or the picture would never display again. */
 export const storeSealedImage = async (
   scope: string,
   name: string,
   data: Uint8Array,
 ): Promise<void> => {
   const dest = `${SEALED_DIR()}/${name}.enc`
-  if (await RNFS.exists(dest)) return
+  if (await RNFS.exists(dest)) {
+    try {
+      const sealed = new Uint8Array(
+        Buffer.from(await RNFS.readFile(dest, "base64"), "base64"),
+      )
+      await openBytes(scope, mediaAad(scope, name), sealed)
+      return // decrypts under the current key — same content, keep it
+    } catch {
+      await RNFS.unlink(dest).catch(() => undefined) // stale key — re-seal below
+    }
+  }
   await RNFS.mkdir(SEALED_DIR()).catch(() => undefined)
   const sealed = await sealBytes(scope, mediaAad(scope, name), data)
   const tmp = `${SEALED_DIR()}/${name}.enc.tmp`
@@ -264,14 +284,13 @@ export const migratePlaintextMedia = async (scope: string): Promise<number> => {
   let moved = 0
   for (const f of files.filter((x) => x.isFile() && !x.name.endsWith(".enc"))) {
     try {
-      // Hermes D: once a .enc exists (this run or a crashed earlier one), the
-      // plaintext must go regardless — never strand it in iCloud-backed Documents.
-      if (!(await RNFS.exists(`${SEALED_DIR()}/${f.name}.enc`))) {
-        const data = new Uint8Array(
-          Buffer.from(await RNFS.readFile(f.path, "base64"), "base64"),
-        )
-        await storeSealedImage(scope, f.name, data)
-      }
+      // Hermes D/N7: storeSealedImage keeps a GOOD .enc and re-seals a stale-key one;
+      // the plaintext goes once a readable .enc exists — never strand it in
+      // iCloud-backed Documents.
+      const data = new Uint8Array(
+        Buffer.from(await RNFS.readFile(f.path, "base64"), "base64"),
+      )
+      await storeSealedImage(scope, f.name, data)
       await RNFS.unlink(f.path)
       moved += 1
     } catch {

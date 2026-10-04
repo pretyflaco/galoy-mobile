@@ -424,6 +424,32 @@ describe("support-chat screen", () => {
     expect(RNFS.unlink).not.toHaveBeenCalled()
   })
 
+  it("Hermes N5: iOS paths are normalized (/private stripped) before the guard", async () => {
+    const picker = jest.requireMock("react-native-image-picker")
+    picker.launchImageLibrary.mockResolvedValueOnce({
+      assets: [
+        {
+          uri: "file:///private/mock/caches/shot.jpg",
+          type: "image/jpeg",
+          width: 800,
+          height: 1600,
+          fileSize: 1000,
+        },
+      ],
+    })
+    const client = { ...baseClient, sendImage: jest.fn(async () => undefined) }
+    const RNFS = jest.requireMock("react-native-fs")
+    RNFS.unlink.mockClear()
+    const { getByTestId } = renderScreen(client)
+    await flushEffects()
+    fireEvent.press(getByTestId("support-chat-share"))
+    fireEvent.press(getByTestId("support-chat-share-image"))
+    await flushEffects()
+    fireEvent.press(getByTestId("support-chat-image-cancel"))
+    await flushEffects()
+    expect(RNFS.unlink).toHaveBeenCalledWith("/mock/caches/shot.jpg")
+  })
+
   it("tapping a picture opens it full screen with Save to Photos and Share", async () => {
     const { getByTestId, queryByTestId } = renderScreen({
       ...baseClient,

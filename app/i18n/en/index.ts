@@ -4565,6 +4565,7 @@ const en: BaseTranslation = {
     title: "Conversations",
     untitled: "Conversation",
     current: "Current conversation",
+    unread: "Unread messages",
     empty: "No conversations yet.",
     startNew: "Start new",
     starting: "Starting…",

@@ -46,6 +46,10 @@ jest.mock("react-native-share", () => ({
   __esModule: true,
   default: { open: (...args: unknown[]) => mockShareOpen(...(args as [])) },
 }))
+const mockOpenExternalUrl = jest.fn()
+jest.mock("@app/utils/external", () => ({
+  openExternalUrl: (...a: unknown[]) => mockOpenExternalUrl(...(a as [])),
+}))
 const navigate = jest.fn()
 let headerOptions: any = null
 jest.mock("@react-navigation/native", () => ({
@@ -672,6 +676,83 @@ describe("support-chat screen", () => {
       await flushEffects()
       expect(client.start).toHaveBeenCalled()
       expect(client.startNew).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("links in support messages (M20)", () => {
+    const bot = "b".repeat(64)
+    const text =
+      "Support (Blink assistant): See https://faq.blink.sv/using-blink/what-are-blinks-account-limits. Or open blink://settings/tx-limits"
+
+    it("a verified support message: web link opens the in-app browser, app link navigates", async () => {
+      mockOpenExternalUrl.mockClear()
+      navigate.mockClear()
+      const { getByTestId, getByText } = renderScreen({
+        ...baseClient,
+        items: [{ id: "1", at: 100, type: "msg", from: bot, text }],
+      })
+      await flushEffects()
+      fireEvent.press(getByTestId("support-chat-web-link"))
+      expect(mockOpenExternalUrl).toHaveBeenCalledWith(
+        "https://faq.blink.sv/using-blink/what-are-blinks-account-limits",
+      )
+      expect(getByText("Open in the app: Transaction limits")).toBeTruthy()
+      fireEvent.press(getByTestId("support-chat-app-link"))
+      expect(navigate).toHaveBeenCalledWith("transactionLimitsScreen", undefined)
+    })
+
+    it("the customer's own message never gets links", async () => {
+      const { queryByTestId } = renderScreen({
+        ...baseClient,
+        items: [
+          {
+            id: "1",
+            at: 100,
+            type: "msg",
+            from: "a".repeat(64),
+            mine: true,
+            text: "https://faq.blink.sv/x blink://settings",
+          },
+        ],
+      })
+      await flushEffects()
+      expect(queryByTestId("support-chat-web-link")).toBeNull()
+      expect(queryByTestId("support-chat-app-link")).toBeNull()
+    })
+
+    it("an UNVERIFIED member's message never gets links", async () => {
+      const { queryByTestId } = renderScreen({
+        ...baseClient,
+        label: (pk: string) => ({
+          pubkey: pk,
+          text: `Unknown · ${pk.slice(0, 4)}`,
+          verified: false,
+          role: "member",
+        }),
+        unverifiedMembers: () => [],
+        items: [{ id: "1", at: 100, type: "msg", from: bot, text }],
+      })
+      await flushEffects()
+      expect(queryByTestId("support-chat-web-link")).toBeNull()
+      expect(queryByTestId("support-chat-app-link")).toBeNull()
+    })
+
+    it("a non-allowlisted link stays plain text", async () => {
+      const { queryByTestId, getByText } = renderScreen({
+        ...baseClient,
+        items: [
+          {
+            id: "1",
+            at: 100,
+            type: "msg",
+            from: bot,
+            text: "Support (Blink assistant): go to https://claim-blink.example/verify",
+          },
+        ],
+      })
+      await flushEffects()
+      expect(queryByTestId("support-chat-web-link")).toBeNull()
+      expect(getByText("go to https://claim-blink.example/verify")).toBeTruthy()
     })
   })
 })

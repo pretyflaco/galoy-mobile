@@ -24,6 +24,8 @@ import { useI18nContext } from "@app/i18n/i18n-react"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 
 import { useSupportChat } from "@app/support-chat/use-support-chat"
+import { splitLinks, type AppLinkTarget } from "@app/support-chat/links"
+import { openExternalUrl } from "@app/utils/external"
 import { MAX_IMAGE_BYTES, mediaUri } from "@app/support-chat/media"
 
 import { SupportImageViewer, type ViewerImage } from "./support-image-viewer"
@@ -326,6 +328,43 @@ export const SupportChatScreen: React.FC = () => {
     return new Date(day).toLocaleDateString()
   }
 
+  const openAppLink = (target: AppLinkTarget) => {
+    supportChatLog(`app link → ${target.screen}`)
+    // in-app navigation (not Linking.openURL: no app chooser with several Blink builds)
+    ;(navigation.navigate as (screen: string, params?: object) => void)(
+      target.screen,
+      target.params,
+    )
+  }
+  const renderLinked = (body: string) =>
+    splitLinks(body).map((seg, i) => {
+      if (seg.kind === "web")
+        return (
+          <Text
+            key={i}
+            style={styles.inlineLink}
+            accessibilityRole="link"
+            onPress={() => openExternalUrl(seg.url)}
+            testID="support-chat-web-link"
+          >
+            {seg.text}
+          </Text>
+        )
+      if (seg.kind === "app")
+        return (
+          <Text
+            key={i}
+            style={styles.inlineLink}
+            accessibilityRole="link"
+            onPress={() => openAppLink(seg.target)}
+            testID="support-chat-app-link"
+          >
+            {T.appLink({ screen: T.appScreens[seg.target.label]() })}
+          </Text>
+        )
+      return seg.text
+    })
+
   const renderRow = ({ item: row }: { item: Row }) => {
     const { item } = row
     const separator = row.day ? (
@@ -383,8 +422,14 @@ export const SupportChatScreen: React.FC = () => {
               />
             </Pressable>
           ) : (
-            <Text style={[styles.body, mine && styles.bodyMine]}>
-              {item.image ? `🖼 ${TS.imageMissing()}` : row.body}
+            <Text style={[styles.body, mine && styles.bodyMine]} selectable>
+              {item.image
+                ? `🖼 ${TS.imageMissing()}`
+                : // links only from VERIFIED support members (never the customer's own
+                  // text, never an unverified member) — app/support-chat/links.ts
+                  !mine && row.verified && item.type === "msg"
+                  ? renderLinked(row.body)
+                  : row.body}
             </Text>
           )}
         </View>
@@ -683,6 +728,7 @@ const useStyles = makeStyles(({ colors }) => ({
   mine: { alignSelf: "flex-end", backgroundColor: colors.primary },
   theirs: { alignSelf: "flex-start", backgroundColor: colors.grey5 },
   body: { fontSize: 16, color: colors.grey0 },
+  inlineLink: { color: colors.primary, textDecorationLine: "underline" },
   bodyMine: { color: ON_PRIMARY },
   time: { fontSize: 12, color: colors.grey2, marginTop: 3 },
   timeMine: { alignSelf: "flex-end", marginRight: 5 },

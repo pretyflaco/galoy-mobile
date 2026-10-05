@@ -14388,6 +14388,97 @@ type RootTranslation = {
 		 * Y​e​s​t​e​r​d​a​y
 		 */
 		yesterday: string
+		/**
+		 * O​p​e​n​ ​i​n​ ​t​h​e​ ​a​p​p​:​ ​{​s​c​r​e​e​n​}
+		 * @param {string} screen
+		 */
+		appLink: RequiredParams<'screen'>
+		appScreens: {
+			/**
+			 * H​o​m​e
+			 */
+			home: string
+			/**
+			 * S​e​t​t​i​n​g​s
+			 */
+			settings: string
+			/**
+			 * S​e​c​u​r​i​t​y
+			 */
+			security: string
+			/**
+			 * T​w​o​-​f​a​c​t​o​r​ ​a​u​t​h​e​n​t​i​c​a​t​i​o​n
+			 */
+			twoFactor: string
+			/**
+			 * E​m​a​i​l
+			 */
+			email: string
+			/**
+			 * A​c​c​o​u​n​t
+			 */
+			account: string
+			/**
+			 * T​r​a​n​s​a​c​t​i​o​n​ ​l​i​m​i​t​s
+			 */
+			limits: string
+			/**
+			 * F​e​e​ ​r​a​t​e​s
+			 */
+			feeRates: string
+			/**
+			 * N​o​t​i​f​i​c​a​t​i​o​n​s
+			 */
+			notifications: string
+			/**
+			 * L​a​n​g​u​a​g​e
+			 */
+			language: string
+			/**
+			 * D​i​s​p​l​a​y​ ​c​u​r​r​e​n​c​y
+			 */
+			displayCurrency: string
+			/**
+			 * D​e​f​a​u​l​t​ ​a​c​c​o​u​n​t
+			 */
+			defaultAccount: string
+			/**
+			 * R​e​c​e​i​v​e
+			 */
+			receive: string
+			/**
+			 * C​i​r​c​l​e​s
+			 */
+			circles: string
+			/**
+			 * E​a​r​n
+			 */
+			earn: string
+			/**
+			 * M​a​p
+			 */
+			map: string
+			/**
+			 * P​r​i​c​e​ ​h​i​s​t​o​r​y
+			 */
+			price: string
+			/**
+			 * C​a​r​d
+			 */
+			card: string
+			/**
+			 * C​a​r​d​ ​l​i​m​i​t​s
+			 */
+			cardLimits: string
+			/**
+			 * C​a​r​d​ ​s​e​t​t​i​n​g​s
+			 */
+			cardSettings: string
+			/**
+			 * C​a​r​d​ ​s​t​a​t​e​m​e​n​t​s
+			 */
+			cardStatements: string
+		}
 	}
 	SupportShareScreen: {
 		/**
@@ -29445,6 +29536,96 @@ export type TranslationFunctions = {
 		 * Yesterday
 		 */
 		yesterday: () => LocalizedString
+		/**
+		 * Open in the app: {screen}
+		 */
+		appLink: (arg: { screen: string }) => LocalizedString
+		appScreens: {
+			/**
+			 * Home
+			 */
+			home: () => LocalizedString
+			/**
+			 * Settings
+			 */
+			settings: () => LocalizedString
+			/**
+			 * Security
+			 */
+			security: () => LocalizedString
+			/**
+			 * Two-factor authentication
+			 */
+			twoFactor: () => LocalizedString
+			/**
+			 * Email
+			 */
+			email: () => LocalizedString
+			/**
+			 * Account
+			 */
+			account: () => LocalizedString
+			/**
+			 * Transaction limits
+			 */
+			limits: () => LocalizedString
+			/**
+			 * Fee rates
+			 */
+			feeRates: () => LocalizedString
+			/**
+			 * Notifications
+			 */
+			notifications: () => LocalizedString
+			/**
+			 * Language
+			 */
+			language: () => LocalizedString
+			/**
+			 * Display currency
+			 */
+			displayCurrency: () => LocalizedString
+			/**
+			 * Default account
+			 */
+			defaultAccount: () => LocalizedString
+			/**
+			 * Receive
+			 */
+			receive: () => LocalizedString
+			/**
+			 * Circles
+			 */
+			circles: () => LocalizedString
+			/**
+			 * Earn
+			 */
+			earn: () => LocalizedString
+			/**
+			 * Map
+			 */
+			map: () => LocalizedString
+			/**
+			 * Price history
+			 */
+			price: () => LocalizedString
+			/**
+			 * Card
+			 */
+			card: () => LocalizedString
+			/**
+			 * Card limits
+			 */
+			cardLimits: () => LocalizedString
+			/**
+			 * Card settings
+			 */
+			cardSettings: () => LocalizedString
+			/**
+			 * Card statements
+			 */
+			cardStatements: () => LocalizedString
+		}
 	}
 	SupportShareScreen: {
 		/**

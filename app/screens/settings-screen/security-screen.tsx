@@ -46,7 +46,11 @@ const BIOMETRICS_UNAVAILABLE_MESSAGE: Record<
 export const SecurityScreen: React.FC<Props> = ({ route, navigation }) => {
   const styles = useStyles()
 
-  const { mIsBiometricsEnabled, mIsPinEnabled } = route.params
+  // Deep links (blink://settings/security, support-chat app links) arrive WITHOUT params;
+  // destructuring undefined crashed the screen (M20, 2026-10-06). Start from false — the
+  // focus effect below re-reads both values from the keystore right away.
+  const { mIsBiometricsEnabled = false, mIsPinEnabled = false } =
+    (route.params as Partial<RootStackParamList["security"]> | undefined) ?? {}
   const { alwaysHideBalance, setAlwaysHideBalance } = useHideBalanceSetting()
   const { LL } = useI18nContext()
   const [isBiometricsEnabled, setIsBiometricsEnabled] = useState(mIsBiometricsEnabled)

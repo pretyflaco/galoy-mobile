@@ -21,6 +21,7 @@ import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { headerRightNoGlass, noHeaderRight } from "@app/components/header-no-glass"
 import { useI18nContext } from "@app/i18n/i18n-react"
+import { useIsAuthed } from "@app/graphql/is-authed-context"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 
 import { useSupportChat } from "@app/support-chat/use-support-chat"
@@ -328,6 +329,7 @@ export const SupportChatScreen: React.FC = () => {
     return new Date(day).toLocaleDateString()
   }
 
+  const isAuthed = useIsAuthed()
   const openAppLink = (target: AppLinkTarget) => {
     supportChatLog(`app link → ${target.screen}`)
     // in-app navigation (not Linking.openURL: no app chooser with several Blink builds)
@@ -338,6 +340,9 @@ export const SupportChatScreen: React.FC = () => {
   }
   const renderLinked = (body: string) =>
     splitLinks(body).map((seg, i) => {
+      // app screens need a logged-in account; before onboarding (support chat works
+      // without one) an app link stays plain text
+      if (seg.kind === "app" && !isAuthed) return seg.text
       if (seg.kind === "web")
         return (
           <Text

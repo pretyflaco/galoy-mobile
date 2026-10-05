@@ -169,7 +169,10 @@ const baseState: PersistentState = {
 
 /** Declared at module scope so `rerender(screenElement())` re-renders the same
  *  component type and keeps the state the screen has already written. */
-const Harness: React.FC<{ initialState: PersistentState }> = ({ initialState }) => {
+const Harness: React.FC<{ initialState: PersistentState; noParams?: boolean }> = ({
+  initialState,
+  noParams = false,
+}) => {
   const [persistentState, setPersistentState] = React.useState(initialState)
 
   return (
@@ -188,7 +191,11 @@ const Harness: React.FC<{ initialState: PersistentState }> = ({ initialState }) 
       <ThemeProvider theme={theme}>
         <SecurityScreen
           navigation={{ navigate: mockNavigate } as any}
-          route={{ params: { mIsBiometricsEnabled: false, mIsPinEnabled: false } } as any}
+          route={
+            (noParams
+              ? {}
+              : { params: { mIsBiometricsEnabled: false, mIsPinEnabled: false } }) as any
+          }
         />
       </ThemeProvider>
       {/* eslint-enable @typescript-eslint/no-explicit-any */}
@@ -244,6 +251,10 @@ const applyDefaultMocks = () => {
 
 describe("SecurityScreen security score card", () => {
   beforeEach(applyDefaultMocks)
+
+  it("renders without route params (deep link / support-chat app link, M20)", () => {
+    expect(() => render(<Harness initialState={baseState} noParams />)).not.toThrow()
+  })
 
   it("shows the card for a self-custodial account", () => {
     const { getByTestId } = renderScreen()

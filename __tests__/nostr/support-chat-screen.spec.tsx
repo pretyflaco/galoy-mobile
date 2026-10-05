@@ -46,6 +46,11 @@ jest.mock("react-native-share", () => ({
   __esModule: true,
   default: { open: (...args: unknown[]) => mockShareOpen(...(args as [])) },
 }))
+let mockIsAuthed = true
+jest.mock("@app/graphql/is-authed-context", () => ({
+  ...jest.requireActual("@app/graphql/is-authed-context"),
+  useIsAuthed: () => mockIsAuthed,
+}))
 const mockOpenExternalUrl = jest.fn()
 jest.mock("@app/utils/external", () => ({
   openExternalUrl: (...a: unknown[]) => mockOpenExternalUrl(...(a as [])),
@@ -699,6 +704,18 @@ describe("support-chat screen", () => {
       expect(getByText("Open in the app: Transaction limits")).toBeTruthy()
       fireEvent.press(getByTestId("support-chat-app-link"))
       expect(navigate).toHaveBeenCalledWith("transactionLimitsScreen", undefined)
+    })
+
+    it("before an account exists (not authed) an app link stays plain text", async () => {
+      mockIsAuthed = false
+      const { queryByTestId, getByTestId } = renderScreen({
+        ...baseClient,
+        items: [{ id: "1", at: 100, type: "msg", from: bot, text }],
+      })
+      await flushEffects()
+      expect(queryByTestId("support-chat-app-link")).toBeNull()
+      expect(getByTestId("support-chat-web-link")).toBeTruthy() // web links still work
+      mockIsAuthed = true
     })
 
     it("the customer's own message never gets links", async () => {

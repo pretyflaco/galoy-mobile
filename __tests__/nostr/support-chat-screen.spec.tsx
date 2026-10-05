@@ -47,6 +47,24 @@ jest.mock("react-native-share", () => ({
   default: { open: (...args: unknown[]) => mockShareOpen(...(args as [])) },
 }))
 let mockIsAuthed = true
+let mockActiveAccountId: string | undefined = undefined
+jest.mock("@app/store/persistent-state", () => {
+  const actual = jest.requireActual("@app/store/persistent-state")
+  return {
+    ...actual,
+    usePersistentStateContext: () => ({
+      persistentState: {
+        schemaVersion: 21,
+        galoyInstance: { id: "Main" },
+        galoyAuthToken: "",
+        activeAccountId: mockActiveAccountId,
+      },
+      updateState: () => {},
+      resetState: () => {},
+      clearToken: async () => {},
+    }),
+  }
+})
 jest.mock("@app/graphql/is-authed-context", () => ({
   ...jest.requireActual("@app/graphql/is-authed-context"),
   useIsAuthed: () => mockIsAuthed,
@@ -716,6 +734,19 @@ describe("support-chat screen", () => {
       expect(queryByTestId("support-chat-app-link")).toBeNull()
       expect(getByTestId("support-chat-web-link")).toBeTruthy() // web links still work
       mockIsAuthed = true
+    })
+
+    it("a non-custodial account (not authed, active account) gets app links", async () => {
+      mockIsAuthed = false
+      mockActiveAccountId = "sc-account-1"
+      const { getByTestId } = renderScreen({
+        ...baseClient,
+        items: [{ id: "1", at: 100, type: "msg", from: bot, text }],
+      })
+      await flushEffects()
+      expect(getByTestId("support-chat-app-link")).toBeTruthy()
+      mockIsAuthed = true
+      mockActiveAccountId = undefined
     })
 
     it("the customer's own message never gets links", async () => {

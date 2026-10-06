@@ -46,6 +46,17 @@ jest.mock("react-native-share", () => ({
   __esModule: true,
   default: { open: (...args: unknown[]) => mockShareOpen(...(args as [])) },
 }))
+jest.mock("react-native-modal", () =>
+  jest.requireActual("@mocks/react-native-modal-mock"),
+)
+const mockSetString = jest.fn()
+jest.mock("@react-native-clipboard/clipboard", () => ({
+  __esModule: true,
+  default: {
+    setString: (...a: unknown[]) => mockSetString(...(a as [])),
+    getString: jest.fn(),
+  },
+}))
 let mockIsAuthed = true
 let mockActiveAccountId: string | undefined = undefined
 jest.mock("@app/store/persistent-state", () => {
@@ -715,7 +726,13 @@ describe("support-chat screen", () => {
         items: [{ id: "1", at: 100, type: "msg", from: bot, text }],
       })
       await flushEffects()
+      // R10-S10: the first tap only shows the full address; Open opens it
       fireEvent.press(getByTestId("support-chat-web-link"))
+      expect(mockOpenExternalUrl).not.toHaveBeenCalled()
+      expect(getByTestId("support-chat-link-sheet-domain").props.children).toBe(
+        "faq.blink.sv",
+      )
+      fireEvent.press(getByTestId("support-chat-link-open"))
       expect(mockOpenExternalUrl).toHaveBeenCalledWith(
         "https://faq.blink.sv/using-blink/what-are-blinks-account-limits",
       )
@@ -747,6 +764,33 @@ describe("support-chat screen", () => {
       expect(getByTestId("support-chat-app-link")).toBeTruthy()
       mockIsAuthed = true
       mockActiveAccountId = undefined
+    })
+
+    it("a markdown label cannot hide the destination: the sheet shows the real domain; Copy and Cancel work", async () => {
+      mockOpenExternalUrl.mockClear()
+      mockSetString.mockClear()
+      const { getByTestId, getByText, queryByTestId } = renderScreen({
+        ...baseClient,
+        items: [
+          {
+            id: "1",
+            at: 100,
+            type: "msg",
+            from: bot,
+            text: "Support (Blink assistant): see [faq.blink.sv](https://mempool.space/tx/abc)",
+          },
+        ],
+      })
+      await flushEffects()
+      fireEvent.press(getByText("faq.blink.sv"))
+      expect(getByTestId("support-chat-link-sheet-domain").props.children).toBe(
+        "mempool.space",
+      )
+      fireEvent.press(getByTestId("support-chat-link-copy"))
+      expect(mockSetString).toHaveBeenCalledWith("https://mempool.space/tx/abc")
+      fireEvent.press(getByTestId("support-chat-link-cancel"))
+      expect(mockOpenExternalUrl).not.toHaveBeenCalled()
+      expect(queryByTestId("support-chat-link-sheet-domain")).toBeNull()
     })
 
     it("the customer's own message never gets links", async () => {

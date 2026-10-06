@@ -4527,6 +4527,12 @@ const en: BaseTranslation = {
     today: "Today",
     yesterday: "Yesterday",
     appLink: "Open in the app: {screen:string}",
+    linkSheetTitle: "Open this link?",
+    linkSheetHint: "Check the address before you open it. Blink Support never asks for your recovery phrase.",
+    linkSheetOpen: "Open",
+    linkSheetCopy: "Copy link",
+    linkSheetCopied: "Copied",
+    linkSheetCancel: "Cancel",
     appScreens: {
       home: "Home",
       settings: "Settings",

@@ -27,10 +27,10 @@ import { RootStackParamList } from "@app/navigation/stack-param-lists"
 
 import { useSupportChat } from "@app/support-chat/use-support-chat"
 import { splitLinks, type AppLinkTarget } from "@app/support-chat/links"
-import { openExternalUrl } from "@app/utils/external"
 import { MAX_IMAGE_BYTES, mediaUri } from "@app/support-chat/media"
 
 import { SupportImageViewer, type ViewerImage } from "./support-image-viewer"
+import { SupportLinkSheet } from "./support-link-sheet"
 import { PUSH_SERVER_PUBKEY, askPermission } from "@app/support-chat/push"
 import { supportChatLog } from "@app/support-chat/log"
 import type { ChatItem, EndReason, MemberLabel } from "@app/support-chat/client"
@@ -332,6 +332,8 @@ export const SupportChatScreen: React.FC = () => {
 
   // the root navigator's own test (root-navigator.tsx): custodial login OR an active
   // (e.g. non-custodial) account — useIsAuthed alone is false for non-custodial accounts
+  // R10-S10: every web link from support opens a sheet with the full address first
+  const [linkSheetUrl, setLinkSheetUrl] = useState<string | null>(null)
   const isAuthed = useIsAuthed()
   const { persistentState } = usePersistentStateContext()
   const hasAccount = isAuthed || Boolean(persistentState.activeAccountId)
@@ -354,7 +356,7 @@ export const SupportChatScreen: React.FC = () => {
             key={i}
             style={styles.inlineLink}
             accessibilityRole="link"
-            onPress={() => openExternalUrl(seg.url)}
+            onPress={() => setLinkSheetUrl(seg.url)}
             testID="support-chat-web-link"
           >
             {seg.text}
@@ -482,6 +484,7 @@ export const SupportChatScreen: React.FC = () => {
   return (
     <Screen preset="fixed" keyboardShouldPersistTaps="handled" avoidKeyboard={false}>
       <SupportImageViewer image={viewerImage} onClose={() => setViewerImage(null)} />
+      <SupportLinkSheet url={linkSheetUrl} onClose={() => setLinkSheetUrl(null)} />
       <Animated.View style={[styles.flex, keyboardLift]}>
         <View style={styles.root} testID="support-chat-screen">
           {statusLine && (

@@ -14393,6 +14393,30 @@ type RootTranslation = {
 		 * @param {string} screen
 		 */
 		appLink: RequiredParams<'screen'>
+		/**
+		 * O​p​e​n​ ​t​h​i​s​ ​l​i​n​k​?
+		 */
+		linkSheetTitle: string
+		/**
+		 * C​h​e​c​k​ ​t​h​e​ ​a​d​d​r​e​s​s​ ​b​e​f​o​r​e​ ​y​o​u​ ​o​p​e​n​ ​i​t​.​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t​ ​n​e​v​e​r​ ​a​s​k​s​ ​f​o​r​ ​y​o​u​r​ ​r​e​c​o​v​e​r​y​ ​p​h​r​a​s​e​.
+		 */
+		linkSheetHint: string
+		/**
+		 * O​p​e​n
+		 */
+		linkSheetOpen: string
+		/**
+		 * C​o​p​y​ ​l​i​n​k
+		 */
+		linkSheetCopy: string
+		/**
+		 * C​o​p​i​e​d
+		 */
+		linkSheetCopied: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		linkSheetCancel: string
 		appScreens: {
 			/**
 			 * H​o​m​e
@@ -29540,6 +29564,30 @@ export type TranslationFunctions = {
 		 * Open in the app: {screen}
 		 */
 		appLink: (arg: { screen: string }) => LocalizedString
+		/**
+		 * Open this link?
+		 */
+		linkSheetTitle: () => LocalizedString
+		/**
+		 * Check the address before you open it. Blink Support never asks for your recovery phrase.
+		 */
+		linkSheetHint: () => LocalizedString
+		/**
+		 * Open
+		 */
+		linkSheetOpen: () => LocalizedString
+		/**
+		 * Copy link
+		 */
+		linkSheetCopy: () => LocalizedString
+		/**
+		 * Copied
+		 */
+		linkSheetCopied: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		linkSheetCancel: () => LocalizedString
 		appScreens: {
 			/**
 			 * Home

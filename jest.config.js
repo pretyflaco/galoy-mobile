@@ -76,6 +76,16 @@ module.exports = {
       "|uuid" +
       "|@formatjs" +
       "|react-native-inappbrowser-reborn" +
+      // nostr-signer crypto stack ships ESM and must be transpiled for Jest (AD-5).
+      "|@noble" +
+      "|@scure" +
+      "|nostr-tools" +
+      // the vendored support-chat adapters (plain ESM, vendor/blink-support-chat-adapters)
+      "|@blink-support-chat" +
+      // supercluster (and its kdbush dependency) ship ESM only; Metro handles
+      // that, Jest needs them transformed.
+      "|supercluster" +
+      "|kdbush" +
       ")/)",
   ],
 }

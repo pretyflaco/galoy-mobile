@@ -72,6 +72,7 @@
   },
   "AuthenticationScreen": {
     "authenticationDescription": "Նույնականացնել՝ շարունակելու համար",
+    "authenticationRequired": "Պահանջվում է նույնականացում: Կարող եք սահմանել PIN ծածկագիր կամ կենսաչափական տվյալներ անվտանգության կարգավորումներում:",
     "setUp": "Սահմանել բիոմետրիկ նույնականացում",
     "setUpAuthenticationDescription": "Օգտագործել բիոմետրիկ համակարգ՝ նույնականացնելու համար",
     "skip": "Բաց թողնել",
@@ -2097,17 +2098,70 @@
       "sendingLimit": "Օրական բիթքոյն ուղարկելու նվազեցված սահմանաչափ",
       "noOnchain": "Չկա բիթքոյնների ստացում բլոկչեյնում",
       "recoveryOption": "Վերականգնել միջոցները SMS-ով կամ էլ.փոստով",
-      "dailyLimit": "USD 1,000 daily transaction limit",
+      "dailyLimit": "USD {limit: string} օրական գործարքային սահմանաչափ",
       "onchainReceive": "Ստանալ Bitcoin onchain"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Տեղադրության թույլտվություններ",
     "navToSettingsText": "Եթե ցանկանում եք Blink-ին տեղադրության թույլտվություններ տալ՝ խնդրում ենք անցնել կարգավորումներ և միացնել այնտեղից",
-    "payBusiness": "վճարել այս բիզնեսը",
     "openSettings": "Բացել կարգավորումները",
     "title": "Քարտեզ",
-    "error": "Վայ։ Ինչ-որ բան այնպես չգնաց ձեր տեղադրությունը ստանալիս"
+    "error": "Վայ։ Ինչ-որ բան այնպես չգնաց ձեր տեղադրությունը ստանալիս",
+    "attribution": "Վայրերը BTC Map-ից, © OpenStreetMap-ի ներդրողներ",
+    "unnamedPlace": "Անանուն վայր",
+    "loadingPlaces": "Վայրերը բեռնվում են BTC Map-ից",
+    "placesError": "BTC Map-ից վայրերը չհաջողվեց բեռնել",
+    "detailsError": "Այս վայրը չհաջողվեց բեռնել",
+    "cannotOpenLink": "Այս հեռախոսում ոչինչ չի կարող բացել այդ հղումը",
+    "openNow": "Բաց է հիմա",
+    "closedNow": "Փակ է",
+    "navigate": "Ուղղություն",
+    "payMerchant": "Վճարել այս վաճառողին",
+    "requiresApp": "Վճարելու համար անհրաժեշտ է հատուկ հավելված",
+    "boosted": "Առաջխաղացված",
+    "verifiedOn": "Հաստատված է՝ {date: string}",
+    "lastVerifiedOn": "Վերջին հաստատումը՝ {date: string}",
+    "needsSurvey": "Այս վայրը պետք է ստուգվի",
+    "searchError": "Չհաջողվեց որոնել այս տարածքում",
+    "clearSearch": "Մաքրել որոնումը",
+    "nothingToShow": "Ցուցադրելու բան չկա",
+    "metersAway": "{distance: string} մետր հեռու",
+    "kilometersAway": "{distance: string} կմ հեռու",
+    "filters": "Զտիչներ",
+    "categories": "Կատեգորիաներ",
+    "selectAll": "Ընտրել բոլորը",
+    "clearAll": "Մաքրել բոլորը",
+    "addPlace": "Ավելացնել քարտեզին",
+    "addPlaceTitle": "Ավելացնել վայր",
+    "placePinHint": "Տեղաշարժեք քարտեզը, որպեսզի նշիչը լինի վայրի վրա",
+    "placeName": "Անվանում",
+    "placeNameHint": "Ինչպես է կոչվում վայրը",
+    "placeCategory": "Կատեգորիա",
+    "placeCategoryHint": "Ընտրեք կատեգորիա",
+    "placeLocation": "Տեղադրություն",
+    "changeLocation": "Փոխել",
+    "placeReviewNote": "Նոր վայրերն ուղարկվում են BTC Map: Նրա համայնքը ստուգում և պահպանում է քարտեզի վրա եղած ամեն ինչ:",
+    "placeSubmitted": "Վայրն ուղարկվեց BTC Map: Շնորհակալություն ավելացնելու համար",
+    "placeSubmissionFailed": "Վայրը չհաջողվեց ուղարկել: Ստուգեք Ձեր կապը և փորձեք նորից:",
+    "placeRefused": "BTC Map-ը չկարողացավ ընդունել այս վայրը: Քարտեզին ոչինչ չի ավելացվել:",
+    "category": {
+      "restaurants": "Ռեստորաններ",
+      "cafes": "Սրճարաններ",
+      "bakeries": "Հացաբուլկեղեն և քաղցրավենիք",
+      "bars": "Բարեր և գիշերային կյանք",
+      "groceries": "Մթերք",
+      "shops": "Խանութներ",
+      "money": "Բանկոմատներ և փոխանակում",
+      "lodging": "Հյուրանոցներ և կացարան",
+      "automotive": "Ավտոմեքենաներ և վառելիք",
+      "health": "Առողջություն",
+      "beauty": "Գեղեցկություն և խնամք",
+      "services": "Ծառայություններ",
+      "sports": "Սպորտ և բացօթյա",
+      "leisure": "Ժամանց և մշակույթ",
+      "other": "Այլ"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} ընթացքի մեջ",
@@ -2122,11 +2176,15 @@
   },
   "PinScreen": {
     "attemptsRemaining": "Սխալ PIN: {attemptsRemaining: number} փորձեր են մնացել։ ",
+    "enterPin": "Մուտքագրեք Ձեր PIN ծածկագիրը",
+    "lockoutUnavailable": "Չհաջողվեց ապահով կերպով գրանցել ձախողված փորձը։ Ելք համակարգից։",
     "oneAttemptRemaining": "Սխալ PIN: 1 փորձ է մնացել։ ",
+    "pinUnreadable": "Չհաջողվեց ստուգել Ձեր PIN-ը։ Խնդրում ենք կրկին փորձել։",
     "setPin": "Սահմանել PIN ծածկագիր",
     "setPinFailedMatch": "Pin ծածկագրերը չեն համընկնում - Կարգավորել PIN ծածկագիրը",
     "storePinFailed": "Չհաջողվեց պահպանել Ձեր pin-ը։ ",
     "tooManyAttempts": "Չափից շատ անհաջող փորձեր։ Ելք համակարգից։ ",
+    "tryAgainIn": "Կրկին փորձեք {seconds: number} վ-ից:",
     "verifyPin": "Հաստատեք Ձեր PIN ծածկագիրը"
   },
   "PriceHistoryScreen": {
@@ -2222,7 +2280,9 @@
   "ScanningQRCodeScreen": {
     "invalidContent": "Գտնվել է․ \n\n{found: string}\n\nՍա Բիթքոյնի վավեր հասցե կամ Lightning վաճարման հարցումը չէ։ ",
     "expiredContent": "Գտնվել է․\n\n{found: string}\n\nԱյս վճարման հարցումն անվավեր է։ ",
+    "unresolvedContent": "Մենք գտանք՝\n\n{found: string}\n\nՉկարողացանք մշակել այս ծածկագիրը։ Հնարավոր է՝ այն ժամկետանց է, կամ ծառայությունը ժամանակավորապես անհասանելի է։ Խնդրեք նոր ծածկագիր կամ փորձեք ավելի ուշ։",
     "invalidTitle": "Անվավեր QR ծածկագիր",
+    "unresolvedTitle": "Ծածկագիրը հասանելի չէ",
     "openLinkTitle": "Բացել հղումը",
     "confirmOpenLink": "Վստահ՞ եք՝ որ ցանկանում եք բացել այս հղումը։",
     "noQrCode": "Չհաջողվեց գտնել QR ծածկագիր նկարում",
@@ -2297,6 +2357,7 @@
     "selfPaymentError": "{lnAddress: string}ը Ձեր {bankName: string} հասցեն է։ ",
     "selfPaymentAdvice": "Եթե Դուք ցանկանում եք գումար ուղարկել Ձեր մեկ այլ հաշվի, ապա փոխարենը Դուք կարող եք օգտագործել վճարման հարցում, Lightning ցանց կամ BTC հարսցե։ ",
     "lnAddressError": "Մենք չենք կարողանում կապ հաստատել այս Lightning հասցեի հետ։ Եթե Դուք վստահ եք, որ այն գոյություն ունի, մի փոքր ուշ կարող եք կրկին փորձել։",
+    "lnurlServiceError": "Չկարողացանք մշակել այս ծածկագիրը։ Հնարավոր է՝ այն ժամկետանց է, կամ ծառայությունը ժամանակավորապես անհասանելի է։",
     "lnAddressAdvice": "Կամ համոզվեք, որ ուղղագրությունը ճիշտ է, կամ փոխարենը ստացողից խնդրեք Ձեզ տրամադրել վճարման հարցում կամ BTC հասցե:",
     "unknownLightning": "Չի հաջողվում ստուգել այս Lightning հասցեն։ Խնդրում ենք փորձել կրկին։ ",
     "unknownOnchain": "Չի հաջողվում ստուգել այս Բիթքոյն հասցեն։ Խնդրում ենք փորձել կրկին։ ",
@@ -2377,6 +2438,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Ստեղծել հասցե",
+    "addressDisabled": "(անջատված)",
     "donationButton": "Նվիրատվության կոճակ",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2448,7 @@
     "apiAcess": "API ինտեգրացիա",
     "apiDocumentation": "API փաստաթղթեր",
     "apiDashboard": "API հասանելիություն և վահանակ",
+    "mode": "Ռեժիմ",
     "pos": "Վաճառքի կետ",
     "posCopied": "Վաճառքի կետի հղումը պատծենվել է",
     "activated": "Ակտիվացված է",
@@ -2455,7 +2518,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "Ձեր հաշվին $5-ից ավելի միջոցներ կան",
     "itsATrialAccount": "Փորձարկային հաշիվներն ունեն սահմանափակված գործարքի սահմանաչափեր և վերականգնման մեթոդ չունեն։ Եթե կորցնեք ձեր հեռախոսը կամ ջնջեք հավելվածը՝ ձեր միջոցները անվերականգնելի կլինեն։",
-    "accountBeingDeleted": "Ձեր հաշիվը ջնջվում է՝ խնդրում ենք սպասել...",
+    "accountBeingDeleted": "Ձեր հաշիվը փակվում է՝ խնդրում ենք սպասել...",
     "dangerZone": "Վտանգավոր գոտի",
     "phoneDeletedSuccessfully": "Հեռախոսահամարը հաջողությամբ ջնջվել է",
     "phoneNumber": "Հեռախոսահամար",
@@ -2517,7 +2580,28 @@
     "removedAccount": "Դուք հեռացրել եք {identifier: string} հաշիվը։"
   },
   "StablesatsRestriction": {
-    "walletLabel": "հասանելի չէ ձեր տարածաշրջանում"
+    "walletLabel": "հասանելի չէ ձեր տարածաշրջանում",
+    "anonModeWalletLabel": "հասանելի չէ Incognito ռեժիմում"
+  },
+  "AnonModeConvertModal": {
+    "title": "Նախ փոխանցեք ձեր դոլարային մնացորդը",
+    "body": "Incognito ռեժիմն աջակցում է միայն Bitcoin մնացորդին։ Փոխանցեք ձեր դոլարային մնացորդը Bitcoin մնացորդին՝ անցնելու համար։"
+  },
+  "EnhancedModePrompt": {
+    "title": "Այս գործառույթը պահանջում է Enhanced ռեժիմ",
+    "body": "Դուք Incognito ռեժիմում եք, Blink-ը չգիտի ձեր տարածաշրջանը, ուստի որոշ գործառույթներ հասանելի չեն։ Անցեք Enhanced-ի՝ գտնվելու վայրի ստուգում կատարելու և ձեր տարածաշրջանի բոլոր գործառույթները բացելու համար։",
+    "switchButton": "Անցնել Enhanced-ի"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Անցաք ինքնապահառությամբ\nEnhanced ռեժիմի",
+    "anon": "Անցաք ինքնապահառությամբ\nIncognito ռեժիմի"
+  },
+  "RestrictedRegion": {
+    "title": "Հայտնաբերվել է սահմանափակ տարածաշրջան",
+    "body": "Ձեր կապը, կարծես, սահմանափակ տարածաշրջանից է։ Blink-ը չի կարող ծառայություններ մատուցել այս վայրից։ Ձեր մնացորդները չեն տուժում։",
+    "bodyReturn": "Հենց դուրս գաք այս տարածաշրջանից, ամբողջ ֆունկցիոնալությունը կվերադառնա նորմալ։",
+    "learnMore": "Իմանալ ավելին",
+    "contactSupport": "Կապվել աջակցության հետ"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "Դոլարային մնացորդը հասանելի չէ ձեր տարածաշրջանում"
@@ -2597,17 +2681,17 @@
     "receive": "Ստանալ",
     "transfer": "Փոխանցում",
     "lightning": "Lightning",
+    "lightningBelowThreshold": "Lightning {threshold: string} SAT-ից ցածր",
     "intraledger": "Intraledger",
-    "onchainPriority": "Onchain առաջնահերթ (հնարավորինս շուտ)",
+    "onchainPriority": "Onchain առաջնահերթ (~10ր)",
     "onchainStandard": "Onchain ստանդարտ (~4ժ)",
-    "onchainEconomy": "Onchain խնայողական",
+    "onchainEconomy": "Onchain խնայողական (~24ժ)",
     "lightningTransactions": "Lightning գործարքներ",
     "onchainBelowThreshold": "Onchain {threshold: string} SAT-ից ցածր",
     "onchainAboveThreshold": "Onchain {threshold: string} SAT-ից բարձր",
     "onchainBetweenThresholds": "Onchain between {lower: string} and {upper: string} SAT",
     "transferFee": "Փոխանցման վճար",
     "noFee": "առանց վճարի",
-    "lightningSendFee": "{fee: string} + ~{routingFee: string} երթուղավորման վճար",
     "fromApprox": "սկսած ~{fee: string}-ից",
     "satAmount": "{amount: string} SAT",
     "error": "Չհաջողվեց ստանալ վճարներն այս պահին"
@@ -2643,7 +2727,6 @@
     "letsGo": "Գնացի՛նք։",
     "stayInTrialMode": "Մնալ փորձնական ռեժիմում",
     "upgradeToLevel": "Թարմացնել Մակարդակ {level: number}",
-    "notNow": "Ոչ հիմա",
     "setUpLevelAccount": "Կարգավորել Մակարդակ {level: number} հաշիվը"
   },
   "SetAddressModal": {
@@ -2699,7 +2782,7 @@
       "mainTitle": "Բարի գալուստ Մակարդակ 1",
       "title": "Ձեր հաշվի համար բացվեցին նոր հնարավորություններ՝",
       "receiveBitcoinDescription": "Ստանալ Bitcoin՝ օգտագործելով ձեր հեռախոսահամարը",
-      "dailyLimitDescription": "Send up to USD 1,000 per day",
+      "dailyLimitDescription": "Ուղարկեք օրական մինչև USD {limit: string}",
       "onchainDescription": "Ստանալ շղթային (onchain) վճարումներ"
     },
     "emailBenefits": {
@@ -2821,6 +2904,7 @@
     "bitcoinPrice": "Բիթքոյնի գինը",
     "btcAccount": "Բիթքոյն հաշիվ",
     "cancel": "Չեղարկել ",
+    "notNow": "Ոչ հիմա",
     "card": "Քարտ",
     "close": "Փակել",
     "confirm": "Հաստատել",
@@ -2969,17 +3053,17 @@
     "defaultEmailSubject": "{bankName: string} - Աջակցություն",
     "defaultSupportMessage": "Ողջու՛յն։ Օգնություն է հարկավոր {bankName: string}ի առիթով, ես պգտագործում եմ {version: string} տարբերակը {os: string}ով։ ",
     "emailCopied": "էլ․ հասցե {email: string} պատճենվեց ժամանակավոր շտեմարանում ",
-    "deleteAccount": "Ջնջել հաշիվը",
+    "deleteAccount": "Փակել հաշիվը",
     "delete": "ջնջել",
-    "typeDelete": "Խնդրում ենք տպել  \"{delete: string}\"՝ հաշվի ջնջումը հաստատելու համար",
+    "typeDelete": "Մուտքագրեք «{delete: string}»՝ հաշվի փակումը հաստատելու համար",
     "finalConfirmationAccountDeletionTitle": "Հարկավոր է վերջնական հաստատում",
-    "finalConfirmationAccountDeletionMessage": "Դուք համոզվա՞ծ եք, որ ցանկանում եք ջնջեկ Ձեր հածիվը։ Այս գործողությունն անշրջելի է։ ",
-    "deleteAccountBalanceWarning": "Ձեր հաշվի ջնջումը կբերի Ձեր ընթացիկ հավեկշռի կորստի։ Դուք համոզվա՞ծ եք, որ ցանկանում եք շարունակել։ ",
-    "deleteAccountConfirmation": "Ձեր հաշիվը ուղարկվել է ջնջման։\n\nԵրբ կարգավորող պահանջների հետ կապված փորձաշրջանն ավարտվի, Ձեր հաշվի հետ կապված մնացած տվյալները ընդմիշտ կջնջվեն:",
-    "deleteAccountFromPhone": "Ողջու՛յն, խնդրում եմ ջնջել իմ հաշիվը։ Իմ հեռախոսահամարն է {phoneNumber: string}։ ",
+    "finalConfirmationAccountDeletionMessage": "Փակելուց հետո Դուք չեք կարող մուտք գործել Ձեր հաշիվ կամ օգտվել դրանից: Մենք կարող ենք պահպանել որոշ գրառումներ, ինչպես պահանջվում է օրենքով և մեր պահպանման պարտավորություններով: Վստա՞ծ եք, որ ցանկանում եք փակել Ձեր հաշիվը:",
+    "deleteAccountBalanceWarning": "Ձեր հաշվի փակումը կբերի Ձեր ընթացիկ մնացորդի մուտքի կորստի: Վստա՞ծ եք, որ ցանկանում եք շարունակել:",
+    "deleteAccountConfirmation": "Ձեր հաշիվը փակված է:\n\nՄենք կարող ենք պահպանել որոշ գրառումներ, ինչպես պահանջվում է օրենքով և մեր պահպանման պարտավորություններով:",
+    "deleteAccountFromPhone": "Ողջույն: Խնդրում եմ փակեք իմ հաշիվը: Իմ հեռախոսահամարն է {phoneNumber: string}:",
     "deleteAccountError": "Սխալ։ Կապ հաստատեք {email: string} հետագա աջակցության համար։ ",
     "bye": "Հաջողությու՛ն։ ",
-    "deleteAccountWarning": "Delays delays delays delays delays delays delays delays delays\nDelays delays delays delays delays delays delays delays\nDelays delays delays delays delays delays delays delays delays"
+    "deleteAccountWarning": "Ուշադրություն. Հաշվի փակումն անշրջելի է:\nՓակելուց առաջ համոզվեք, որ դրամապանակներում միջոցներ չկան:\nՓակված հաշիվը հնարավոր չէ վերականգնել:\nՄենք կարող ենք պահպանել որոշ գրառումներ, ինչպես պահանջվում է օրենքով:"
   },
   "lnurl": {
     "overLimit": "Դուք չեք կարող առավելագույն չափը գերազանցող գումար ուղարկել",
@@ -3413,8 +3497,7 @@
         "pinChangedTitle": "PIN-ը փոխվեց",
         "pinChangedSubtitle": "Ձեր PIN-ը հաջողությամբ փոխվել է։",
         "pinChangedToast": "PIN կոդը հաջողությամբ փոխվել է։",
-        "biometricDescription": "Հաստատեք ձեր ինքնությունը PIN-ը փոխելու համար",
-        "biometricRequired": "Կենսաբանական նույնականացումը պահանջվում է PIN-ը փոխելու համար:"
+        "biometricDescription": "Հաստատեք ձեր ինքնությունը PIN-ը փոխելու համար"
       }
     },
     "ReplaceCard": {
@@ -3756,6 +3839,7 @@
     "reminderBulletin": {
       "title": "Կարևոր",
       "body": "Անցեք ոչ պահպանող հաշվի ուղղորդված տեղափոխման միջոցով կամ կանխիկացրեք ձեր միջոցները մինչև {date}։ Ստացումը կդադարի {receiveStopsDate}-ին։",
+      "bodyReceiveDisabled": "Ստացումը դադարել է։ Անցեք ոչ պահպանող հաշվի ուղղորդված տեղափոխման միջոցով կամ կանխիկացրեք ձեր միջոցները մինչև {date}։",
       "migrateCta": "Տեղափոխվել"
     },
     "offboardBulletin": {
@@ -3846,9 +3930,22 @@
     "createFailed": "Չհաջողվեց ստեղծել դրամապանակը: Խնդրում ենք կրկին փորձել:",
     "selfCustodialDisabled": "Ոչ պահպանողականը ժամանակավորապես անհասանելի է։"
   },
+  "ChooseExperienceScreen": {
+    "title": "Ընտրեք ինքնապահառությամբ ռեժիմը",
+    "subtitle": "Ձեր ընտրությունը որոշում է, թե որ գործառույթներն են հասանելի։ Կարող եք փոխել ցանկացած պահի։",
+    "enhancedLabel": "Enhanced\nռեժիմ",
+    "enhancedDescription": "Մենք օգտագործում ենք ձեր տարածաշրջանը՝ ձեր գտնվելու վայրում հասանելի արժեքավոր ծառայությունները բացելու համար։",
+    "anonLabel": "Incognito\nռեժիմ",
+    "anonDescription": "Առավելագույն գաղտնիության համար։ Ավելի քիչ գործառույթներ։",
+    "continueButton": "Շարունակել"
+  },
   "UnsupportedRegionScreen": {
     "title": "Չաջակցվող տարածաշրջան",
-    "description": "Ցավոք, մենք չենք կարող սպասարկել օգտատերերին ձեր ընթացիկ տարածաշրջանից։"
+    "description": "Ցավոք, մենք չենք կարող սպասարկել օգտատերերին ձեր ընթացիկ տարածաշրջանից։",
+    "custodialSignupDescription": "Ցավոք չենք կարող ձեր ընթացիկ տարածաշրջանում նոր պահառական հաշիվներ ստեղծել։ Փոխարենը կարող եք օգտագործել ինքնապահառական հաշիվ։",
+    "custodialSignupOnlyDescription": "Ցավոք չենք կարող ձեր ընթացիկ տարածաշրջանում նոր պահառական հաշիվներ ստեղծել։",
+    "unknownRegionTitle": "Տարածաշրջանը չի որոշվել",
+    "unknownRegionDescription": "Չկարողացանք որոշել ձեր տարածաշրջանը։ Ստուգեք կապը և կրկին փորձեք։"
   },
   "RestoreScreen": {
     "title": "Վերականգնել դրամապանակը",

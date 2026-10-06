@@ -176,6 +176,10 @@ type RootTranslation = {
 		 */
 		authenticationDescription: string
 		/**
+		 * A​u​t​h​e​n​t​i​c​a​t​i​o​n​ ​i​s​ ​r​e​q​u​i​r​e​d​.​ ​Y​o​u​ ​c​a​n​ ​s​e​t​ ​u​p​ ​a​ ​P​I​N​ ​o​r​ ​b​i​o​m​e​t​r​i​c​s​ ​i​n​ ​S​e​c​u​r​i​t​y​ ​s​e​t​t​i​n​g​s​.
+		 */
+		authenticationRequired: string
+		/**
 		 * S​e​t​ ​u​p​ ​B​i​o​m​e​t​r​i​c​ ​A​u​t​h​e​n​t​i​c​a​t​i​o​n
 		 */
 		setUp: string
@@ -6436,6 +6440,10 @@ type RootTranslation = {
 		 */
 		createAccount: string
 		/**
+		 * C​o​n​t​a​c​t​ ​s​u​p​p​o​r​t
+		 */
+		contactSupport: string
+		/**
 		 * E​x​p​l​o​r​e​ ​w​a​l​l​e​t
 		 */
 		exploreWallet: string
@@ -6501,9 +6509,10 @@ type RootTranslation = {
 			 */
 			recoveryOption: string
 			/**
-			 * U​S​D​ ​1​,​0​0​0​ ​d​a​i​l​y​ ​t​r​a​n​s​a​c​t​i​o​n​ ​l​i​m​i​t
+			 * U​S​D​ ​{​l​i​m​i​t​}​ ​d​a​i​l​y​ ​t​r​a​n​s​a​c​t​i​o​n​ ​l​i​m​i​t
+			 * @param {string} limit
 			 */
-			dailyLimit: string
+			dailyLimit: RequiredParams<'limit'>
 			/**
 			 * R​e​c​e​i​v​e​ ​b​i​t​c​o​i​n​ ​o​n​c​h​a​i​n
 			 */
@@ -6520,10 +6529,6 @@ type RootTranslation = {
 		 */
 		navToSettingsText: string
 		/**
-		 * P​a​y​ ​t​h​i​s​ ​b​u​s​i​n​e​s​s
-		 */
-		payBusiness: string
-		/**
 		 * O​p​e​n​ ​s​e​t​t​i​n​g​s
 		 */
 		openSettings: string
@@ -6535,6 +6540,220 @@ type RootTranslation = {
 		 * O​o​p​s​.​ ​S​o​m​e​t​h​i​n​g​ ​w​e​n​t​ ​w​r​o​n​g​ ​w​h​i​l​e​ ​g​e​t​t​i​n​g​ ​y​o​u​r​ ​l​o​c​a​t​i​o​n
 		 */
 		error: string
+		/**
+		 * P​l​a​c​e​s​ ​f​r​o​m​ ​B​T​C​ ​M​a​p​,​ ​©​ ​O​p​e​n​S​t​r​e​e​t​M​a​p​ ​c​o​n​t​r​i​b​u​t​o​r​s
+		 */
+		attribution: string
+		/**
+		 * U​n​n​a​m​e​d​ ​p​l​a​c​e
+		 */
+		unnamedPlace: string
+		/**
+		 * L​o​a​d​i​n​g​ ​p​l​a​c​e​s​ ​f​r​o​m​ ​B​T​C​ ​M​a​p
+		 */
+		loadingPlaces: string
+		/**
+		 * C​o​u​l​d​n​'​t​ ​l​o​a​d​ ​p​l​a​c​e​s​ ​f​r​o​m​ ​B​T​C​ ​M​a​p
+		 */
+		placesError: string
+		/**
+		 * C​o​u​l​d​n​'​t​ ​l​o​a​d​ ​t​h​i​s​ ​p​l​a​c​e
+		 */
+		detailsError: string
+		/**
+		 * N​o​t​h​i​n​g​ ​o​n​ ​t​h​i​s​ ​p​h​o​n​e​ ​c​a​n​ ​o​p​e​n​ ​t​h​a​t​ ​l​i​n​k
+		 */
+		cannotOpenLink: string
+		/**
+		 * O​p​e​n​ ​n​o​w
+		 */
+		openNow: string
+		/**
+		 * C​l​o​s​e​d
+		 */
+		closedNow: string
+		/**
+		 * N​a​v​i​g​a​t​e
+		 */
+		navigate: string
+		/**
+		 * P​a​y​ ​t​h​i​s​ ​m​e​r​c​h​a​n​t
+		 */
+		payMerchant: string
+		/**
+		 * N​e​e​d​s​ ​a​ ​s​p​e​c​i​f​i​c​ ​a​p​p​ ​t​o​ ​p​a​y
+		 */
+		requiresApp: string
+		/**
+		 * B​o​o​s​t​e​d
+		 */
+		boosted: string
+		/**
+		 * V​e​r​i​f​i​e​d​ ​{​d​a​t​e​}
+		 * @param {string} date
+		 */
+		verifiedOn: RequiredParams<'date'>
+		/**
+		 * L​a​s​t​ ​v​e​r​i​f​i​e​d​ ​{​d​a​t​e​}
+		 * @param {string} date
+		 */
+		lastVerifiedOn: RequiredParams<'date'>
+		/**
+		 * T​h​i​s​ ​l​o​c​a​t​i​o​n​ ​n​e​e​d​s​ ​t​o​ ​b​e​ ​s​u​r​v​e​y​e​d
+		 */
+		needsSurvey: string
+		/**
+		 * C​o​u​l​d​n​'​t​ ​s​e​a​r​c​h​ ​t​h​i​s​ ​a​r​e​a
+		 */
+		searchError: string
+		/**
+		 * C​l​e​a​r​ ​s​e​a​r​c​h
+		 */
+		clearSearch: string
+		/**
+		 * N​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w
+		 */
+		nothingToShow: string
+		/**
+		 * {​d​i​s​t​a​n​c​e​}​ ​m​e​t​e​r​s​ ​a​w​a​y
+		 * @param {string} distance
+		 */
+		metersAway: RequiredParams<'distance'>
+		/**
+		 * {​d​i​s​t​a​n​c​e​}​ ​k​m​ ​a​w​a​y
+		 * @param {string} distance
+		 */
+		kilometersAway: RequiredParams<'distance'>
+		/**
+		 * F​i​l​t​e​r​s
+		 */
+		filters: string
+		/**
+		 * C​a​t​e​g​o​r​i​e​s
+		 */
+		categories: string
+		/**
+		 * S​e​l​e​c​t​ ​a​l​l
+		 */
+		selectAll: string
+		/**
+		 * C​l​e​a​r​ ​a​l​l
+		 */
+		clearAll: string
+		/**
+		 * A​d​d​ ​t​o​ ​m​a​p
+		 */
+		addPlace: string
+		/**
+		 * A​d​d​ ​a​ ​p​l​a​c​e
+		 */
+		addPlaceTitle: string
+		/**
+		 * M​o​v​e​ ​t​h​e​ ​m​a​p​ ​t​o​ ​p​u​t​ ​t​h​e​ ​p​i​n​ ​o​n​ ​t​h​e​ ​p​l​a​c​e
+		 */
+		placePinHint: string
+		/**
+		 * N​a​m​e
+		 */
+		placeName: string
+		/**
+		 * W​h​a​t​ ​t​h​e​ ​p​l​a​c​e​ ​i​s​ ​c​a​l​l​e​d
+		 */
+		placeNameHint: string
+		/**
+		 * C​a​t​e​g​o​r​y
+		 */
+		placeCategory: string
+		/**
+		 * C​h​o​o​s​e​ ​a​ ​c​a​t​e​g​o​r​y
+		 */
+		placeCategoryHint: string
+		/**
+		 * L​o​c​a​t​i​o​n
+		 */
+		placeLocation: string
+		/**
+		 * C​h​a​n​g​e
+		 */
+		changeLocation: string
+		/**
+		 * N​e​w​ ​p​l​a​c​e​s​ ​g​o​ ​t​o​ ​B​T​C​ ​M​a​p​.​ ​I​t​s​ ​c​o​m​m​u​n​i​t​y​ ​r​e​v​i​e​w​s​ ​a​n​d​ ​m​a​i​n​t​a​i​n​s​ ​e​v​e​r​y​t​h​i​n​g​ ​o​n​ ​t​h​e​ ​m​a​p​.
+		 */
+		placeReviewNote: string
+		/**
+		 * P​l​a​c​e​ ​s​e​n​t​ ​t​o​ ​B​T​C​ ​M​a​p​ ​—​ ​t​h​a​n​k​s​ ​f​o​r​ ​a​d​d​i​n​g​ ​i​t​.​ ​N​e​w​ ​p​l​a​c​e​s​ ​c​a​n​ ​t​a​k​e​ ​a​ ​w​h​i​l​e​ ​t​o​ ​a​p​p​e​a​r​ ​o​n​ ​t​h​e​ ​m​a​p​.
+		 */
+		placeSubmitted: string
+		/**
+		 * T​h​e​ ​p​l​a​c​e​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​s​e​n​t​.​ ​C​h​e​c​k​ ​y​o​u​r​ ​c​o​n​n​e​c​t​i​o​n​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		placeSubmissionFailed: string
+		/**
+		 * B​T​C​ ​M​a​p​ ​c​o​u​l​d​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​i​s​ ​p​l​a​c​e​ ​—​ ​i​t​ ​m​a​y​ ​a​l​r​e​a​d​y​ ​b​e​ ​o​n​ ​t​h​e​ ​m​a​p​.​ ​N​o​t​h​i​n​g​ ​w​a​s​ ​c​h​a​n​g​e​d​.
+		 */
+		placeRefused: string
+		category: {
+			/**
+			 * R​e​s​t​a​u​r​a​n​t​s
+			 */
+			restaurants: string
+			/**
+			 * C​a​f​é​s
+			 */
+			cafes: string
+			/**
+			 * B​a​k​e​r​i​e​s​ ​&​ ​s​w​e​e​t​s
+			 */
+			bakeries: string
+			/**
+			 * B​a​r​s​ ​&​ ​n​i​g​h​t​l​i​f​e
+			 */
+			bars: string
+			/**
+			 * G​r​o​c​e​r​i​e​s
+			 */
+			groceries: string
+			/**
+			 * S​h​o​p​s
+			 */
+			shops: string
+			/**
+			 * A​T​M​s​ ​&​ ​e​x​c​h​a​n​g​e
+			 */
+			money: string
+			/**
+			 * H​o​t​e​l​s​ ​&​ ​l​o​d​g​i​n​g
+			 */
+			lodging: string
+			/**
+			 * C​a​r​s​ ​&​ ​f​u​e​l
+			 */
+			automotive: string
+			/**
+			 * H​e​a​l​t​h
+			 */
+			health: string
+			/**
+			 * B​e​a​u​t​y​ ​&​ ​w​e​l​l​n​e​s​s
+			 */
+			beauty: string
+			/**
+			 * S​e​r​v​i​c​e​s
+			 */
+			services: string
+			/**
+			 * S​p​o​r​t​s​ ​&​ ​o​u​t​d​o​o​r​s
+			 */
+			sports: string
+			/**
+			 * L​e​i​s​u​r​e​ ​&​ ​c​u​l​t​u​r​e
+			 */
+			leisure: string
+			/**
+			 * O​t​h​e​r
+			 */
+			other: string
+		}
 	}
 	HomeScreen: {
 		/**
@@ -6583,9 +6802,21 @@ type RootTranslation = {
 		 */
 		attemptsRemaining: RequiredParams<'attemptsRemaining'>
 		/**
+		 * E​n​t​e​r​ ​y​o​u​r​ ​P​I​N​ ​c​o​d​e
+		 */
+		enterPin: string
+		/**
+		 * C​o​u​l​d​n​'​t​ ​r​e​c​o​r​d​ ​t​h​e​ ​f​a​i​l​e​d​ ​a​t​t​e​m​p​t​ ​s​e​c​u​r​e​l​y​.​ ​L​o​g​g​i​n​g​ ​o​u​t​.
+		 */
+		lockoutUnavailable: string
+		/**
 		 * I​n​c​o​r​r​e​c​t​ ​P​I​N​.​ ​1​ ​a​t​t​e​m​p​t​ ​r​e​m​a​i​n​i​n​g​.
 		 */
 		oneAttemptRemaining: string
+		/**
+		 * C​o​u​l​d​n​'​t​ ​c​h​e​c​k​ ​y​o​u​r​ ​P​I​N​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		pinUnreadable: string
 		/**
 		 * S​e​t​ ​y​o​u​r​ ​P​I​N​ ​c​o​d​e
 		 */
@@ -6602,6 +6833,11 @@ type RootTranslation = {
 		 * T​o​o​ ​m​a​n​y​ ​f​a​i​l​e​d​ ​a​t​t​e​m​p​t​s​.​ ​L​o​g​g​i​n​g​ ​o​u​t​.
 		 */
 		tooManyAttempts: string
+		/**
+		 * T​r​y​ ​a​g​a​i​n​ ​i​n​ ​{​s​e​c​o​n​d​s​}​s​.
+		 * @param {number} seconds
+		 */
+		tryAgainIn: RequiredParams<'seconds'>
 		/**
 		 * V​e​r​i​f​y​ ​y​o​u​r​ ​P​I​N​ ​c​o​d​e
 		 */
@@ -6977,9 +7213,22 @@ type RootTranslation = {
 		 */
 		expiredContent: RequiredParams<'found'>
 		/**
+		 * W​e​ ​f​o​u​n​d​:​
+	​
+	​{​f​o​u​n​d​}​
+	​
+	​W​e​ ​c​o​u​l​d​ ​n​o​t​ ​p​r​o​c​e​s​s​ ​t​h​i​s​ ​c​o​d​e​.​ ​I​t​ ​m​a​y​ ​h​a​v​e​ ​e​x​p​i​r​e​d​,​ ​o​r​ ​t​h​e​ ​s​e​r​v​i​c​e​ ​m​a​y​ ​b​e​ ​t​e​m​p​o​r​a​r​i​l​y​ ​u​n​a​v​a​i​l​a​b​l​e​.​ ​A​s​k​ ​f​o​r​ ​a​ ​n​e​w​ ​c​o​d​e​ ​o​r​ ​t​r​y​ ​a​g​a​i​n​ ​l​a​t​e​r​.
+		 * @param {string} found
+		 */
+		unresolvedContent: RequiredParams<'found'>
+		/**
 		 * I​n​v​a​l​i​d​ ​Q​R​ ​C​o​d​e
 		 */
 		invalidTitle: string
+		/**
+		 * C​o​d​e​ ​N​o​t​ ​A​v​a​i​l​a​b​l​e
+		 */
+		unresolvedTitle: string
 		/**
 		 * O​p​e​n​ ​L​i​n​k
 		 */
@@ -7272,6 +7521,10 @@ type RootTranslation = {
 		 * W​e​ ​c​a​n​'​t​ ​r​e​a​c​h​ ​t​h​i​s​ ​L​i​g​h​t​n​i​n​g​ ​a​d​d​r​e​s​s​.​ ​I​f​ ​y​o​u​ ​a​r​e​ ​s​u​r​e​ ​i​t​ ​e​x​i​s​t​s​,​ ​y​o​u​ ​c​a​n​ ​t​r​y​ ​a​g​a​i​n​ ​l​a​t​e​r​.
 		 */
 		lnAddressError: string
+		/**
+		 * W​e​ ​c​o​u​l​d​ ​n​o​t​ ​p​r​o​c​e​s​s​ ​t​h​i​s​ ​c​o​d​e​.​ ​I​t​ ​m​a​y​ ​h​a​v​e​ ​e​x​p​i​r​e​d​,​ ​o​r​ ​t​h​e​ ​s​e​r​v​i​c​e​ ​m​a​y​ ​b​e​ ​t​e​m​p​o​r​a​r​i​l​y​ ​u​n​a​v​a​i​l​a​b​l​e​.
+		 */
+		lnurlServiceError: string
 		/**
 		 * E​i​t​h​e​r​ ​m​a​k​e​ ​s​u​r​e​ ​t​h​e​ ​s​p​e​l​l​i​n​g​ ​i​s​ ​r​i​g​h​t​ ​o​r​ ​a​s​k​ ​t​h​e​ ​r​e​c​i​p​i​e​n​t​ ​f​o​r​ ​a​n​ ​i​n​v​o​i​c​e​ ​o​r​ ​B​T​C​ ​a​d​d​r​e​s​s​ ​i​n​s​t​e​a​d​.
 		 */
@@ -7735,6 +7988,10 @@ type RootTranslation = {
 		 */
 		apiDashboard: string
 		/**
+		 * M​o​d​e
+		 */
+		mode: string
+		/**
 		 * P​o​i​n​t​ ​o​f​ ​S​a​l​e
 		 */
 		pos: string
@@ -7746,6 +8003,10 @@ type RootTranslation = {
 		 * C​r​e​a​t​e​ ​a​d​d​r​e​s​s
 		 */
 		createAddress: string
+		/**
+		 * (​d​i​s​a​b​l​e​d​)
+		 */
+		addressDisabled: string
 		/**
 		 * D​o​n​a​t​e​ ​B​u​t​t​o​n
 		 */
@@ -7982,7 +8243,7 @@ type RootTranslation = {
 		 */
 		itsATrialAccount: string
 		/**
-		 * Y​o​u​r​ ​a​c​c​o​u​n​t​ ​i​s​ ​b​e​i​n​g​ ​d​e​l​e​t​e​d​,​ ​p​l​e​a​s​e​ ​w​a​i​t​.​.​.
+		 * Y​o​u​r​ ​a​c​c​o​u​n​t​ ​i​s​ ​b​e​i​n​g​ ​c​l​o​s​e​d​,​ ​p​l​e​a​s​e​ ​w​a​i​t​.​.​.
 		 */
 		accountBeingDeleted: string
 		/**
@@ -8372,6 +8633,88 @@ type RootTranslation = {
 		 * n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​i​n​ ​y​o​u​r​ ​r​e​g​i​o​n
 		 */
 		walletLabel: string
+		/**
+		 * n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​i​n​ ​I​n​c​o​g​n​i​t​o​ ​m​o​d​e
+		 */
+		anonModeWalletLabel: string
+	}
+	AnonModeConvertModal: {
+		/**
+		 * T​r​a​n​s​f​e​r​ ​y​o​u​r​ ​D​o​l​l​a​r​ ​B​a​l​a​n​c​e​ ​f​i​r​s​t
+		 */
+		title: string
+		/**
+		 * I​n​c​o​g​n​i​t​o​ ​M​o​d​e​ ​s​u​p​p​o​r​t​s​ ​t​h​e​ ​B​i​t​c​o​i​n​ ​B​a​l​a​n​c​e​ ​o​n​l​y​.​ ​T​r​a​n​s​f​e​r​ ​y​o​u​r​ ​D​o​l​l​a​r​ ​B​a​l​a​n​c​e​ ​t​o​ ​y​o​u​r​ ​B​i​t​c​o​i​n​ ​B​a​l​a​n​c​e​ ​t​o​ ​s​w​i​t​c​h​.
+		 */
+		body: string
+	}
+	EnhancedModePrompt: {
+		/**
+		 * T​h​i​s​ ​f​e​a​t​u​r​e​ ​r​e​q​u​i​r​e​s​ ​E​n​h​a​n​c​e​d​ ​M​o​d​e
+		 */
+		title: string
+		/**
+		 * Y​o​u​'​r​e​ ​i​n​ ​I​n​c​o​g​n​i​t​o​ ​M​o​d​e​,​ ​B​l​i​n​k​ ​d​o​e​s​n​'​t​ ​k​n​o​w​ ​y​o​u​r​ ​r​e​g​i​o​n​,​ ​s​o​ ​s​o​m​e​ ​f​e​a​t​u​r​e​s​ ​a​r​e​n​'​t​ ​a​v​a​i​l​a​b​l​e​.​ ​S​w​i​t​c​h​ ​t​o​ ​E​n​h​a​n​c​e​d​ ​t​o​ ​r​u​n​ ​a​ ​l​o​c​a​t​i​o​n​ ​c​h​e​c​k​ ​a​n​d​ ​u​n​l​o​c​k​ ​a​l​l​ ​f​e​a​t​u​r​e​s​ ​f​o​r​ ​y​o​u​r​ ​r​e​g​i​o​n​.
+		 */
+		body: string
+		/**
+		 * S​w​i​t​c​h​ ​t​o​ ​E​n​h​a​n​c​e​d
+		 */
+		switchButton: string
+	}
+	ModeSwitchSuccessScreen: {
+		/**
+		 * S​w​i​t​c​h​e​d​ ​t​o​ ​E​n​h​a​n​c​e​d​
+	​N​o​n​-​c​u​s​t​o​d​i​a​l​ ​M​o​d​e
+		 */
+		enhanced: string
+		/**
+		 * S​w​i​t​c​h​e​d​ ​t​o​ ​I​n​c​o​g​n​i​t​o​
+	​N​o​n​-​c​u​s​t​o​d​i​a​l​ ​M​o​d​e
+		 */
+		anon: string
+	}
+	AddressSuccessScreen: {
+		/**
+		 * L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​s​e​t
+		 */
+		title: string
+	}
+	RequiresBlinkAddressPrompt: {
+		/**
+		 * T​h​i​s​ ​f​e​a​t​u​r​e​ ​r​e​q​u​i​r​e​s​ ​a​ ​b​l​i​n​k​.​s​v​ ​L​N​ ​A​d​d​r​e​s​s
+		 */
+		title: string
+		/**
+		 * T​h​e​s​e​ ​s​e​r​v​i​c​e​s​ ​a​r​e​ ​n​o​t​ ​y​e​t​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​a​l​t​e​r​n​a​t​i​v​e​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​d​o​m​a​i​n​s​ ​—​ ​c​o​m​i​n​g​ ​s​o​o​n​!
+		 */
+		body: string
+		/**
+		 * C​l​a​i​m​ ​@​b​l​i​n​k​.​s​v​ ​a​d​d​r​e​s​s
+		 */
+		claimButton: string
+	}
+	RestrictedRegion: {
+		/**
+		 * R​e​s​t​r​i​c​t​e​d​ ​r​e​g​i​o​n​ ​d​e​t​e​c​t​e​d
+		 */
+		title: string
+		/**
+		 * Y​o​u​r​ ​c​o​n​n​e​c​t​i​o​n​ ​a​p​p​e​a​r​s​ ​t​o​ ​b​e​ ​f​r​o​m​ ​a​ ​r​e​s​t​r​i​c​t​e​d​ ​r​e​g​i​o​n​.​ ​B​l​i​n​k​ ​c​a​n​n​o​t​ ​p​r​o​v​i​d​e​ ​s​e​r​v​i​c​e​s​ ​f​r​o​m​ ​t​h​i​s​ ​l​o​c​a​t​i​o​n​.​ ​Y​o​u​r​ ​b​a​l​a​n​c​e​s​ ​a​r​e​ ​u​n​a​f​f​e​c​t​e​d​.
+		 */
+		body: string
+		/**
+		 * O​n​c​e​ ​y​o​u​ ​l​e​a​v​e​ ​t​h​i​s​ ​r​e​g​i​o​n​,​ ​a​l​l​ ​f​u​n​c​t​i​o​n​a​l​i​t​y​ ​w​i​l​l​ ​r​e​t​u​r​n​ ​t​o​ ​n​o​r​m​a​l​.
+		 */
+		bodyReturn: string
+		/**
+		 * L​e​a​r​n​ ​m​o​r​e
+		 */
+		learnMore: string
+		/**
+		 * C​o​n​t​a​c​t​ ​s​u​p​p​o​r​t
+		 */
+		contactSupport: string
 	}
 	DollarBalanceRestriction: {
 		/**
@@ -8529,19 +8872,24 @@ type RootTranslation = {
 		 */
 		lightning: string
 		/**
+		 * L​i​g​h​t​n​i​n​g​ ​b​e​l​o​w​ ​{​t​h​r​e​s​h​o​l​d​}​ ​S​A​T
+		 * @param {string} threshold
+		 */
+		lightningBelowThreshold: RequiredParams<'threshold'>
+		/**
 		 * I​n​t​r​a​l​e​d​g​e​r
 		 */
 		intraledger: string
 		/**
-		 * O​n​c​h​a​i​n​ ​p​r​i​o​r​i​t​y​ ​(​a​s​a​p​)
+		 * O​n​c​h​a​i​n​ ​P​r​i​o​r​i​t​y​ ​(​~​1​0​m​)
 		 */
 		onchainPriority: string
 		/**
-		 * O​n​c​h​a​i​n​ ​s​t​a​n​d​a​r​d​ ​(​~​4​h​)
+		 * O​n​c​h​a​i​n​ ​S​t​a​n​d​a​r​d​ ​(​~​4​h​)
 		 */
 		onchainStandard: string
 		/**
-		 * O​n​c​h​a​i​n​ ​e​c​o​n​o​m​y
+		 * O​n​c​h​a​i​n​ ​E​c​o​n​o​m​y​ ​(​~​2​4​h​)
 		 */
 		onchainEconomy: string
 		/**
@@ -8572,12 +8920,6 @@ type RootTranslation = {
 		 * n​o​ ​f​e​e
 		 */
 		noFee: string
-		/**
-		 * {​f​e​e​}​ ​+​ ​~​{​r​o​u​t​i​n​g​F​e​e​}​ ​r​o​u​t​i​n​g​ ​f​e​e
-		 * @param {string} fee
-		 * @param {string} routingFee
-		 */
-		lightningSendFee: RequiredParams<'fee' | 'routingFee'>
 		/**
 		 * f​r​o​m​ ​~​{​f​e​e​}
 		 * @param {string} fee
@@ -8699,10 +9041,6 @@ type RootTranslation = {
 		 */
 		upgradeToLevel: RequiredParams<'level'>
 		/**
-		 * N​o​t​ ​n​o​w
-		 */
-		notNow: string
-		/**
 		 * S​e​t​ ​u​p​ ​L​e​v​e​l​ ​{​l​e​v​e​l​}​ ​a​c​c​o​u​n​t
 		 * @param {number} level
 		 */
@@ -8757,6 +9095,97 @@ type RootTranslation = {
 		 * C​h​o​o​s​e​ ​w​e​l​l​ ​–​ ​i​t​ ​c​a​n​n​o​t​ ​b​e​ ​c​h​a​n​g​e​d​ ​l​a​t​e​r​!
 		 */
 		itCannotBeChanged: string
+	}
+	ChooseLnurlDomainScreen: {
+		/**
+		 * C​h​o​o​s​e​ ​y​o​u​r​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​d​o​m​a​i​n
+		 */
+		title: string
+		/**
+		 * Y​o​u​r​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​i​s​ ​h​o​w​ ​o​t​h​e​r​s​ ​p​a​y​ ​y​o​u​.​ ​P​i​c​k​ ​w​h​i​c​h​ ​d​o​m​a​i​n​ ​i​t​ ​e​n​d​s​ ​w​i​t​h​.
+		 */
+		subtitle: string
+		/**
+		 * @​b​l​i​n​k​.​s​v
+		 */
+		blinkSvLabel: string
+		/**
+		 * T​h​e​ ​s​t​a​n​d​a​r​d​ ​B​l​i​n​k​ ​d​o​m​a​i​n​,​ ​r​u​n​ ​b​y​ ​B​l​i​n​k​.​ ​R​e​c​o​g​n​i​z​e​d​,​ ​r​e​l​i​a​b​l​e​,​ ​a​n​d​ ​f​r​e​e​.
+		 */
+		blinkSvDescription: string
+		/**
+		 * @​t​w​e​n​t​y​o​n​e​.​i​s​t
+		 */
+		twentyoneIstLabel: string
+		/**
+		 * T​h​e​ ​t​w​e​n​t​y​o​n​e​.​i​s​t​ ​s​e​r​v​e​r​.​ ​E​n​a​b​l​e​s​ ​d​e​l​e​g​a​t​e​d​ ​g​r​a​n​t​s​,​ ​a​n​d​ ​m​u​l​t​i​p​l​e​ ​a​l​i​a​s​e​s​ ​(​c​o​m​i​n​g​ ​s​o​o​n​)​.
+		 */
+		twentyoneIstDescription: string
+		/**
+		 * N​o​t​ ​a​v​a​i​l​a​b​l​e​ ​y​e​t
+		 */
+		twentyoneIstUnavailable: string
+		/**
+		 * N​o​t​ ​a​v​a​i​l​a​b​l​e​ ​i​n​ ​I​n​c​o​g​n​i​t​o
+		 */
+		blinkSvIncognitoUnavailable: string
+		/**
+		 * C​o​n​t​i​n​u​e
+		 */
+		continueButton: string
+		/**
+		 * T​h​i​s​ ​c​h​o​i​c​e​ ​i​s​ ​f​i​x​e​d​ ​o​n​c​e​ ​y​o​u​r​ ​a​d​d​r​e​s​s​ ​i​s​ ​c​r​e​a​t​e​d​.
+		 */
+		domainCannotBeChanged: string
+	}
+	SetSelfCustodialAddressScreen: {
+		/**
+		 * C​h​o​o​s​e​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s
+		 */
+		title: string
+		/**
+		 * s​a​t​o​s​h​i
+		 */
+		addressPlaceholder: string
+		/**
+		 * Y​o​u​r​ ​a​d​d​r​e​s​s​ ​w​i​l​l​ ​b​e​ ​@​{​d​o​m​a​i​n​}
+		 * @param {string} domain
+		 */
+		onDomain: RequiredParams<'domain'>
+		/**
+		 * S​e​t​ ​L​i​g​h​t​n​i​n​g​ ​a​d​d​r​e​s​s
+		 */
+		setAddressButton: string
+		/**
+		 * C​h​e​c​k​i​n​g​ ​a​v​a​i​l​a​b​i​l​i​t​y​…
+		 */
+		checkingAvailability: string
+		Errors: {
+			/**
+			 * A​d​d​r​e​s​s​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​3​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g
+			 */
+			tooShort: string
+			/**
+			 * A​d​d​r​e​s​s​ ​m​u​s​t​ ​b​e​ ​a​t​ ​m​o​s​t​ ​5​0​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g
+			 */
+			tooLong: string
+			/**
+			 * A​d​d​r​e​s​s​ ​c​a​n​ ​o​n​l​y​ ​c​o​n​t​a​i​n​ ​l​e​t​t​e​r​s​,​ ​n​u​m​b​e​r​s​,​ ​a​n​d​ ​u​n​d​e​r​s​c​o​r​e​s
+			 */
+			invalidCharacter: string
+			/**
+			 * S​o​r​r​y​,​ ​t​h​i​s​ ​a​d​d​r​e​s​s​ ​i​s​ ​a​l​r​e​a​d​y​ ​t​a​k​e​n
+			 */
+			addressUnavailable: string
+			/**
+			 * A​n​ ​u​n​k​n​o​w​n​ ​e​r​r​o​r​ ​o​c​c​u​r​r​e​d​,​ ​p​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​ ​l​a​t​e​r
+			 */
+			unknownError: string
+			/**
+			 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​w​a​l​l​e​t​ ​b​e​f​o​r​e​ ​c​r​e​a​t​i​n​g​ ​a​ ​L​i​g​h​t​n​i​n​g​ ​a​d​d​r​e​s​s
+			 */
+			backupRequired: string
+		}
 	}
 	WelcomeFirstScreen: {
 		/**
@@ -8887,9 +9316,10 @@ type RootTranslation = {
 			 */
 			receiveBitcoinDescription: string
 			/**
-			 * S​e​n​d​ ​u​p​ ​t​o​ ​U​S​D​ ​1​,​0​0​0​ ​p​e​r​ ​d​a​y
+			 * S​e​n​d​ ​u​p​ ​t​o​ ​U​S​D​ ​{​l​i​m​i​t​}​ ​p​e​r​ ​d​a​y
+			 * @param {string} limit
 			 */
-			dailyLimitDescription: string
+			dailyLimitDescription: RequiredParams<'limit'>
 			/**
 			 * R​e​c​e​i​v​e​ ​o​n​-​c​h​a​i​n​ ​p​a​y​m​e​n​t​s
 			 */
@@ -9316,6 +9746,10 @@ type RootTranslation = {
 		 * C​a​r​d
 		 */
 		card: string
+		/**
+		 * N​o​t​ ​n​o​w
+		 */
+		notNow: string
 		/**
 		 * C​l​o​s​e
 		 */
@@ -9874,7 +10308,7 @@ type RootTranslation = {
 		 */
 		emailCopied: RequiredParams<'email'>
 		/**
-		 * D​e​l​e​t​e​ ​a​c​c​o​u​n​t
+		 * C​l​o​s​e​ ​a​c​c​o​u​n​t
 		 */
 		deleteAccount: string
 		/**
@@ -9882,7 +10316,7 @@ type RootTranslation = {
 		 */
 		'delete': string
 		/**
-		 * P​l​e​a​s​e​ ​t​y​p​e​ ​"​{​d​e​l​e​t​e​}​"​ ​t​o​ ​c​o​n​f​i​r​m​ ​a​c​c​o​u​n​t​ ​d​e​l​e​t​i​o​n
+		 * P​l​e​a​s​e​ ​t​y​p​e​ ​"​{​d​e​l​e​t​e​}​"​ ​t​o​ ​c​o​n​f​i​r​m​ ​a​c​c​o​u​n​t​ ​c​l​o​s​u​r​e
 		 * @param {string} delete
 		 */
 		typeDelete: RequiredParams<'delete'>
@@ -9891,21 +10325,21 @@ type RootTranslation = {
 		 */
 		finalConfirmationAccountDeletionTitle: string
 		/**
-		 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​y​o​u​r​ ​a​c​c​o​u​n​t​?​ ​T​h​i​s​ ​a​c​t​i​o​n​ ​i​s​ ​i​r​r​e​v​e​r​s​i​b​l​e​.
+		 * A​f​t​e​r​ ​c​l​o​s​i​n​g​,​ ​y​o​u​ ​w​o​n​'​t​ ​b​e​ ​a​b​l​e​ ​t​o​ ​a​c​c​e​s​s​ ​o​r​ ​u​s​e​ ​y​o​u​r​ ​a​c​c​o​u​n​t​.​ ​W​e​ ​m​a​y​ ​r​e​t​a​i​n​ ​c​e​r​t​a​i​n​ ​r​e​c​o​r​d​s​ ​a​s​ ​r​e​q​u​i​r​e​d​ ​b​y​ ​l​a​w​ ​a​n​d​ ​o​u​r​ ​r​e​t​e​n​t​i​o​n​ ​o​b​l​i​g​a​t​i​o​n​s​.​ ​A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​c​l​o​s​e​ ​y​o​u​r​ ​a​c​c​o​u​n​t​?
 		 */
 		finalConfirmationAccountDeletionMessage: string
 		/**
-		 * D​e​l​e​t​i​n​g​ ​y​o​u​r​ ​a​c​c​o​u​n​t​ ​w​i​l​l​ ​c​a​u​s​e​ ​y​o​u​ ​t​o​ ​l​o​s​e​ ​a​c​c​e​s​s​ ​t​o​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​b​a​l​a​n​c​e​.​ ​A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​p​r​o​c​e​e​d​?
+		 * C​l​o​s​i​n​g​ ​y​o​u​r​ ​a​c​c​o​u​n​t​ ​w​i​l​l​ ​c​a​u​s​e​ ​y​o​u​ ​t​o​ ​l​o​s​e​ ​a​c​c​e​s​s​ ​t​o​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​b​a​l​a​n​c​e​.​ ​A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​p​r​o​c​e​e​d​?
 		 */
 		deleteAccountBalanceWarning: string
 		/**
-		 * Y​o​u​r​ ​a​c​c​o​u​n​t​ ​h​a​s​ ​b​e​e​n​ ​w​r​i​t​t​e​n​ ​f​o​r​ ​d​e​l​e​t​i​o​n​.​
+		 * Y​o​u​r​ ​a​c​c​o​u​n​t​ ​h​a​s​ ​b​e​e​n​ ​c​l​o​s​e​d​.​
 	​
-	​W​h​e​n​ ​t​h​e​ ​p​r​o​b​a​t​i​o​n​ ​p​e​r​i​o​d​ ​r​e​l​a​t​e​d​ ​t​o​ ​r​e​g​u​l​a​t​o​r​y​ ​r​e​q​u​i​r​e​m​e​n​t​ ​i​s​ ​o​v​e​r​,​ ​t​h​e​ ​r​e​m​a​i​n​i​n​g​ ​d​a​t​a​ ​r​e​l​a​t​e​d​ ​t​o​ ​y​o​u​r​ ​a​c​c​o​u​n​t​ ​w​i​l​l​ ​b​e​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​e​l​e​t​e​d​.
+	​W​e​ ​m​a​y​ ​r​e​t​a​i​n​ ​c​e​r​t​a​i​n​ ​r​e​c​o​r​d​s​ ​a​s​ ​r​e​q​u​i​r​e​d​ ​b​y​ ​l​a​w​ ​a​n​d​ ​o​u​r​ ​r​e​t​e​n​t​i​o​n​ ​o​b​l​i​g​a​t​i​o​n​s​.
 		 */
 		deleteAccountConfirmation: string
 		/**
-		 * H​e​y​ ​t​h​e​r​e​!​,​ ​p​l​e​a​s​e​ ​d​e​l​e​t​e​ ​m​y​ ​a​c​c​o​u​n​t​.​ ​M​y​ ​p​h​o​n​e​ ​n​u​m​b​e​r​ ​i​s​ ​{​p​h​o​n​e​N​u​m​b​e​r​}​.
+		 * H​e​y​ ​t​h​e​r​e​!​,​ ​p​l​e​a​s​e​ ​c​l​o​s​e​ ​m​y​ ​a​c​c​o​u​n​t​.​ ​M​y​ ​p​h​o​n​e​ ​n​u​m​b​e​r​ ​i​s​ ​{​p​h​o​n​e​N​u​m​b​e​r​}​.
 		 * @param {string} phoneNumber
 		 */
 		deleteAccountFromPhone: RequiredParams<'phoneNumber'>
@@ -9919,9 +10353,10 @@ type RootTranslation = {
 		 */
 		bye: string
 		/**
-		 * A​t​t​e​n​t​i​o​n​:​ ​A​c​c​o​u​n​t​ ​d​e​l​e​t​i​o​n​ ​i​s​ ​p​e​r​m​a​n​e​n​t​!​
-	​M​a​k​e​ ​s​u​r​e​ ​w​a​l​l​e​t​s​ ​h​a​v​e​ ​n​o​ ​f​u​n​d​s​ ​b​e​f​o​r​e​ ​d​e​l​e​t​i​n​g​.​
-	​D​e​l​e​t​e​d​ ​a​c​c​o​u​n​t​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​i​n​s​t​a​t​e​d​.
+		 * A​t​t​e​n​t​i​o​n​:​ ​C​l​o​s​i​n​g​ ​y​o​u​r​ ​a​c​c​o​u​n​t​ ​i​s​ ​p​e​r​m​a​n​e​n​t​!​
+	​M​a​k​e​ ​s​u​r​e​ ​w​a​l​l​e​t​s​ ​h​a​v​e​ ​n​o​ ​f​u​n​d​s​ ​b​e​f​o​r​e​ ​c​l​o​s​i​n​g​.​
+	​A​ ​c​l​o​s​e​d​ ​a​c​c​o​u​n​t​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​i​n​s​t​a​t​e​d​.​
+	​W​e​ ​m​a​y​ ​r​e​t​a​i​n​ ​c​e​r​t​a​i​n​ ​r​e​c​o​r​d​s​ ​a​s​ ​r​e​q​u​i​r​e​d​ ​b​y​ ​l​a​w​.
 		 */
 		deleteAccountWarning: string
 	}
@@ -11386,10 +11821,6 @@ type RootTranslation = {
 				 */
 				biometricDescription: string
 				/**
-				 * B​i​o​m​e​t​r​i​c​ ​a​u​t​h​e​n​t​i​c​a​t​i​o​n​ ​i​s​ ​r​e​q​u​i​r​e​d​ ​t​o​ ​c​h​a​n​g​e​ ​y​o​u​r​ ​P​I​N​.
-				 */
-				biometricRequired: string
-				/**
 				 * P​I​N​ ​c​h​a​n​g​e​d
 				 */
 				pinChangedTitle: string
@@ -12658,6 +13089,11 @@ type RootTranslation = {
 			 */
 			body: RequiredParams<'date' | 'receiveStopsDate'>
 			/**
+			 * R​e​c​e​i​v​i​n​g​ ​h​a​s​ ​s​t​o​p​p​e​d​.​ ​M​o​v​e​ ​t​o​ ​a​ ​n​o​n​-​c​u​s​t​o​d​i​a​l​ ​a​c​c​o​u​n​t​ ​v​i​a​ ​g​u​i​d​e​d​ ​m​i​g​r​a​t​i​o​n​,​ ​o​r​ ​w​i​t​h​d​r​a​w​,​ ​b​e​f​o​r​e​ ​{​d​a​t​e​}​.
+			 * @param {string} date
+			 */
+			bodyReceiveDisabled: RequiredParams<'date'>
+			/**
 			 * M​i​g​r​a​t​e
 			 */
 			migrateCta: string
@@ -12815,6 +13251,38 @@ type RootTranslation = {
 		 */
 		createFailed: string
 	}
+	ChooseExperienceScreen: {
+		/**
+		 * S​e​l​e​c​t​ ​n​o​n​-​c​u​s​t​o​d​i​a​l​ ​m​o​d​e
+		 */
+		title: string
+		/**
+		 * Y​o​u​r​ ​c​h​o​i​c​e​ ​d​e​c​i​d​e​s​ ​w​h​i​c​h​ ​f​e​a​t​u​r​e​s​ ​a​r​e​ ​a​v​a​i​l​a​b​l​e​.​ ​Y​o​u​ ​c​a​n​ ​s​w​i​t​c​h​ ​w​h​e​n​e​v​e​r​ ​y​o​u​ ​w​a​n​t​.
+		 */
+		subtitle: string
+		/**
+		 * E​n​h​a​n​c​e​d​
+	​M​o​d​e
+		 */
+		enhancedLabel: string
+		/**
+		 * W​e​ ​u​s​e​ ​y​o​u​r​ ​r​e​g​i​o​n​ ​t​o​ ​u​n​l​o​c​k​ ​v​a​l​u​a​b​l​e​ ​s​e​r​v​i​c​e​s​ ​a​v​a​i​l​a​b​l​e​ ​w​h​e​r​e​ ​y​o​u​ ​a​r​e​.
+		 */
+		enhancedDescription: string
+		/**
+		 * I​n​c​o​g​n​i​t​o​
+	​M​o​d​e
+		 */
+		anonLabel: string
+		/**
+		 * F​o​r​ ​m​a​x​i​m​u​m​ ​p​r​i​v​a​c​y​.​ ​L​e​s​s​ ​f​e​a​t​u​r​e​s​.
+		 */
+		anonDescription: string
+		/**
+		 * C​o​n​t​i​n​u​e
+		 */
+		continueButton: string
+	}
 	UnsupportedRegionScreen: {
 		/**
 		 * U​n​s​u​p​p​o​r​t​e​d​ ​r​e​g​i​o​n
@@ -12824,6 +13292,22 @@ type RootTranslation = {
 		 * U​n​f​o​r​t​u​n​a​t​e​l​y​ ​w​e​ ​c​a​n​ ​n​o​t​ ​s​e​r​v​e​ ​u​s​e​r​s​ ​f​r​o​m​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​r​e​g​i​o​n​.
 		 */
 		description: string
+		/**
+		 * U​n​f​o​r​t​u​n​a​t​e​l​y​ ​w​e​ ​c​a​n​ ​n​o​t​ ​c​r​e​a​t​e​ ​n​e​w​ ​c​u​s​t​o​d​i​a​l​ ​a​c​c​o​u​n​t​s​ ​i​n​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​r​e​g​i​o​n​.​ ​Y​o​u​ ​c​a​n​ ​u​s​e​ ​a​ ​s​e​l​f​-​c​u​s​t​o​d​i​a​l​ ​a​c​c​o​u​n​t​ ​i​n​s​t​e​a​d​.
+		 */
+		custodialSignupDescription: string
+		/**
+		 * U​n​f​o​r​t​u​n​a​t​e​l​y​ ​w​e​ ​c​a​n​ ​n​o​t​ ​c​r​e​a​t​e​ ​n​e​w​ ​c​u​s​t​o​d​i​a​l​ ​a​c​c​o​u​n​t​s​ ​i​n​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​r​e​g​i​o​n​.
+		 */
+		custodialSignupOnlyDescription: string
+		/**
+		 * R​e​g​i​o​n​ ​n​o​t​ ​d​e​t​e​r​m​i​n​e​d
+		 */
+		unknownRegionTitle: string
+		/**
+		 * W​e​ ​c​o​u​l​d​ ​n​o​t​ ​d​e​t​e​r​m​i​n​e​ ​y​o​u​r​ ​r​e​g​i​o​n​.​ ​P​l​e​a​s​e​ ​c​h​e​c​k​ ​y​o​u​r​ ​c​o​n​n​e​c​t​i​o​n​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		unknownRegionDescription: string
 	}
 	RestoreScreen: {
 		/**
@@ -13352,6 +13836,1575 @@ type RootTranslation = {
 		 */
 		hasFundsWarningButton: string
 	}
+	NostrCreateIdentityScreen: {
+		/**
+		 * C​r​e​a​t​e​ ​n​e​w
+		 */
+		screenCreateTitle: string
+		/**
+		 * N​e​x​t​ ​s​t​e​p​ ​c​r​e​a​t​e​s​ ​y​o​u​r​ ​N​o​s​t​r​ ​k​e​y​s
+		 */
+		chooseTitle: string
+		/**
+		 * W​e​ ​r​e​c​o​m​m​e​n​d​ ​y​o​u​ ​u​s​e​ ​y​o​u​r​ ​w​a​l​l​e​t​ ​b​a​c​k​u​p​ ​p​h​r​a​s​e​ ​t​o​ ​g​e​n​e​r​a​t​e​ ​i​t​,​ ​b​u​t​ ​y​o​u​ ​c​a​n​ ​a​l​s​o​ ​g​e​n​e​r​a​t​e​ ​a​ ​b​r​a​n​d​ ​n​e​w​ ​o​n​e​.
+		 */
+		chooseBody: string
+		/**
+		 * L​e​a​r​n​ ​m​o​r​e​ ​h​e​r​e
+		 */
+		chooseLearnMore: string
+		/**
+		 * G​e​n​e​r​a​t​e​ ​f​r​o​m​ ​w​a​l​l​e​t
+		 */
+		chooseFromWallet: string
+		/**
+		 * G​e​n​e​r​a​t​e​ ​n​e​w
+		 */
+		chooseNew: string
+		/**
+		 * G​e​n​e​r​a​t​i​n​g​…
+		 */
+		generatingTitle: string
+		/**
+		 * Y​o​u​r​ ​b​a​c​k​u​p​ ​p​h​r​a​s​e​ ​i​s​ ​u​s​e​d​ ​t​o​ ​c​r​e​a​t​e​ ​y​o​u​r​ ​N​o​s​t​r​ ​k​e​y​s
+		 */
+		generatingFromSeed: string
+		/**
+		 * C​r​e​a​t​i​n​g​ ​a​ ​b​r​a​n​d​-​n​e​w​ ​N​o​s​t​r​ ​k​e​y​.
+		 */
+		generatingRandom: string
+		/**
+		 * C​r​e​a​t​e​ ​y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y
+		 */
+		introTitle: string
+		/**
+		 * A​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​a​ ​k​e​y​ ​t​h​a​t​ ​i​s​ ​y​o​u​r​s​ ​a​l​o​n​e​.​ ​Y​o​u​ ​u​s​e​ ​i​t​ ​t​o​ ​s​i​g​n​ ​i​n​ ​t​o​ ​a​p​p​s​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​,​ ​a​n​d​ ​o​n​l​y​ ​y​o​u​ ​c​o​n​t​r​o​l​ ​i​t​.
+		 */
+		introBody: string
+		/**
+		 * L​e​a​r​n​ ​m​o​r​e
+		 */
+		introLearnMore: string
+		/**
+		 * Y​o​u​r​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​a​ ​c​r​y​p​t​o​g​r​a​p​h​i​c​ ​k​e​y​ ​k​e​p​t​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​s​e​e​s​ ​t​h​e​ ​p​r​i​v​a​t​e​ ​p​a​r​t​.​ ​Y​o​u​ ​g​e​t​ ​o​n​e​ ​i​d​e​n​t​i​t​y​ ​p​e​r​ ​a​c​c​o​u​n​t​,​ ​a​n​d​ ​y​o​u​ ​c​a​n​ ​h​a​v​e​ ​a​s​ ​m​a​n​y​ ​a​c​c​o​u​n​t​s​ ​a​s​ ​y​o​u​ ​l​i​k​e​.
+		 */
+		introLearnMoreBody: string
+		/**
+		 * C​r​e​a​t​e​ ​m​y​ ​i​d​e​n​t​i​t​y
+		 */
+		introCreate: string
+		/**
+		 * D​e​r​i​v​e​ ​f​r​o​m​ ​m​y​ ​w​a​l​l​e​t​ ​s​e​e​d
+		 */
+		introCreateFromSeed: string
+		/**
+		 * G​e​n​e​r​a​t​e​ ​a​ ​r​a​n​d​o​m​ ​k​e​y
+		 */
+		introCreateRandom: string
+		/**
+		 * I​m​p​o​r​t​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​k​e​y
+		 */
+		introImport: string
+		/**
+		 * R​e​a​d​y​ ​t​o​ ​c​r​e​a​t​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		confirmTitle: string
+		/**
+		 * T​h​i​s​ ​c​r​e​a​t​e​s​ ​a​ ​n​e​w​ ​k​e​y​ ​o​n​ ​y​o​u​r​ ​d​e​v​i​c​e​.​ ​O​n​l​y​ ​y​o​u​ ​w​i​l​l​ ​c​o​n​t​r​o​l​ ​i​t​,​ ​a​n​d​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​s​e​e​s​ ​t​h​e​ ​p​r​i​v​a​t​e​ ​k​e​y​.
+		 */
+		confirmBody: string
+		/**
+		 * C​r​e​a​t​e​ ​i​d​e​n​t​i​t​y
+		 */
+		confirmCta: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		confirmCancel: string
+		/**
+		 * C​r​e​a​t​i​n​g​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		generating: string
+		/**
+		 * S​t​i​l​l​ ​w​o​r​k​i​n​g​,​ ​t​h​i​s​ ​i​s​ ​t​a​k​i​n​g​ ​a​ ​l​i​t​t​l​e​ ​l​o​n​g​e​r​ ​t​h​a​n​ ​u​s​u​a​l
+		 */
+		slowHint: string
+		/**
+		 * W​e​ ​c​o​u​l​d​n​'​t​ ​c​r​e​a​t​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		errorTitle: string
+		/**
+		 * Y​o​u​r​ ​d​e​v​i​c​e​'​s​ ​s​e​c​u​r​e​ ​k​e​y​ ​g​e​n​e​r​a​t​o​r​ ​w​a​s​n​'​t​ ​a​v​a​i​l​a​b​l​e​,​ ​s​o​ ​n​o​ ​k​e​y​ ​w​a​s​ ​c​r​e​a​t​e​d​.​ ​Y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​u​n​c​h​a​n​g​e​d​.
+		 */
+		errorBody: string
+		/**
+		 * Y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​u​n​c​h​a​n​g​e​d​.
+		 */
+		errorUnchanged: string
+		/**
+		 * T​r​y​ ​a​g​a​i​n
+		 */
+		errorTryAgain: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		errorCancel: string
+		/**
+		 * T​h​i​s​ ​i​s​ ​y​o​u​r​s​.​ ​O​n​l​y​ ​y​o​u​ ​c​o​n​t​r​o​l​ ​i​t​.​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​s​e​e​s​ ​y​o​u​r​ ​p​r​i​v​a​t​e​ ​k​e​y​.
+		 */
+		resultOwnership: string
+		/**
+		 * Y​o​u​ ​h​a​v​e​ ​o​n​e​ ​i​d​e​n​t​i​t​y​ ​f​o​r​ ​t​h​i​s​ ​a​c​c​o​u​n​t​.​ ​C​r​e​a​t​e​ ​a​n​o​t​h​e​r​ ​a​c​c​o​u​n​t​ ​f​o​r​ ​a​n​o​t​h​e​r​ ​i​d​e​n​t​i​t​y​.
+		 */
+		resultOneIdentity: string
+		/**
+		 * Y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+		 */
+		resultPublicAddressLabel: string
+		/**
+		 * T​a​p​ ​t​o​ ​r​e​v​e​a​l
+		 */
+		resultReveal: string
+		/**
+		 * C​o​p​y
+		 */
+		resultCopy: string
+		/**
+		 * C​o​p​i​e​d
+		 */
+		resultCopied: string
+		/**
+		 * I​d​e​n​t​i​t​y​ ​p​i​c​t​u​r​e​ ​f​o​r​ ​y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+		 */
+		identiconA11y: string
+		/**
+		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 */
+		backupTitle: string
+		/**
+		 * I​f​ ​y​o​u​ ​l​o​s​e​ ​t​h​i​s​ ​d​e​v​i​c​e​,​ ​a​ ​b​a​c​k​u​p​ ​i​s​ ​t​h​e​ ​o​n​l​y​ ​w​a​y​ ​t​o​ ​r​e​c​o​v​e​r​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y​.
+		 */
+		backupBody: string
+		/**
+		 * T​h​i​s​ ​k​e​y​ ​i​s​ ​d​e​r​i​v​e​d​ ​f​r​o​m​ ​y​o​u​r​ ​w​a​l​l​e​t​ ​s​e​e​d​ ​—​ ​y​o​u​ ​c​a​n​ ​a​l​w​a​y​s​ ​r​e​-​c​r​e​a​t​e​ ​i​t​ ​f​r​o​m​ ​t​h​e​ ​s​a​m​e​ ​s​e​e​d​.​ ​A​ ​s​e​p​a​r​a​t​e​ ​b​a​c​k​u​p​ ​i​s​ ​s​t​i​l​l​ ​r​e​c​o​m​m​e​n​d​e​d​.
+		 */
+		backupDerivedNote: string
+		/**
+		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 */
+		backupCta: string
+		/**
+		 * N​o​t​ ​n​o​w
+		 */
+		backupNotNow: string
+	}
+	NostrImportIdentityScreen: {
+		/**
+		 * I​m​p​o​r​t​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​k​e​y
+		 */
+		title: string
+		/**
+		 * P​a​s​t​e​ ​y​o​u​r​ ​s​e​c​r​e​t​ ​k​e​y​ ​o​r​ ​s​c​a​n​ ​i​t​s​ ​Q​R​ ​c​o​d​e​ ​t​o​ ​u​s​e​ ​y​o​u​r​ ​e​x​i​s​t​i​n​g​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​h​e​r​e​.
+		 */
+		body: string
+		/**
+		 * Y​o​u​r​ ​N​o​s​t​r​ ​s​e​c​r​e​t​ ​k​e​y
+		 */
+		pasteLabel: string
+		/**
+		 * n​s​e​c​1​…
+		 */
+		pastePlaceholder: string
+		/**
+		 * P​a​s​t​e​ ​y​o​u​r​ ​k​e​y
+		 */
+		pasteCta: string
+		/**
+		 * P​a​s​t​e
+		 */
+		pasteAction: string
+		/**
+		 * I​n​v​a​l​i​d​ ​k​e​y​.​ ​P​r​o​b​a​b​l​y​ ​s​o​m​e​t​h​i​n​g​ ​e​l​s​e​.
+		 */
+		invalidInline: string
+		/**
+		 * S​c​a​n​ ​a​ ​Q​R​ ​c​o​d​e
+		 */
+		scanCta: string
+		/**
+		 * C​o​n​t​i​n​u​e
+		 */
+		continueCta: string
+		/**
+		 * T​h​a​t​ ​d​o​e​s​n​'​t​ ​l​o​o​k​ ​l​i​k​e​ ​a​ ​v​a​l​i​d​ ​n​s​e​c
+		 */
+		invalidTitle: string
+		/**
+		 * C​h​e​c​k​ ​t​h​a​t​ ​y​o​u​ ​p​a​s​t​e​d​ ​t​h​e​ ​f​u​l​l​ ​n​s​e​c​ ​k​e​y​.​ ​Y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​u​n​c​h​a​n​g​e​d​.
+		 */
+		invalidBody: string
+		/**
+		 * Y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​ ​i​s​ ​u​n​c​h​a​n​g​e​d​.
+		 */
+		invalidUnchanged: string
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y​?
+		 */
+		replaceTitle: string
+		/**
+		 * T​h​i​s​ ​r​e​p​l​a​c​e​s​ ​t​h​e​ ​i​d​e​n​t​i​t​y​ ​o​n​ ​t​h​i​s​ ​a​c​c​o​u​n​t​.​ ​T​h​e​ ​c​u​r​r​e​n​t​ ​k​e​y​ ​w​i​l​l​ ​b​e​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​i​s​c​a​r​d​e​d​ ​a​n​d​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​c​o​v​e​r​e​d​ ​u​n​l​e​s​s​ ​y​o​u​ ​b​a​c​k​e​d​ ​i​t​ ​u​p​.
+		 */
+		replaceConsequence: string
+		/**
+		 * R​e​p​l​a​c​e​ ​i​d​e​n​t​i​t​y
+		 */
+		replaceConfirm: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		replaceCancel: string
+		/**
+		 * R​e​p​l​a​c​e​ ​t​h​e​ ​i​d​e​n​t​i​t​y​ ​o​n​ ​t​h​i​s​ ​a​c​c​o​u​n​t​.​ ​T​h​e​ ​c​u​r​r​e​n​t​ ​k​e​y​ ​i​s​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​i​s​c​a​r​d​e​d​.​ ​C​o​n​f​i​r​m​ ​o​r​ ​c​a​n​c​e​l​.
+		 */
+		replaceSrLabel: string
+	}
+	NostrBackupScreen: {
+		/**
+		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 */
+		title: string
+		/**
+		 * C​h​o​o​s​e​ ​h​o​w​ ​t​o​ ​b​a​c​k​ ​u​p​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y​ ​s​o​ ​y​o​u​ ​c​a​n​ ​r​e​s​t​o​r​e​ ​i​t​ ​o​n​ ​a​ ​n​e​w​ ​d​e​v​i​c​e​.
+		 */
+		body: string
+		/**
+		 * C​l​o​u​d​ ​b​a​c​k​u​p
+		 */
+		methodCloud: string
+		/**
+		 * P​a​s​s​w​o​r​d​ ​m​a​n​a​g​e​r
+		 */
+		methodKeychain: string
+		/**
+		 * M​a​n​u​a​l​ ​b​a​c​k​u​p
+		 */
+		methodManual: string
+		/**
+		 * C​h​o​o​s​e​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​m​e​t​h​o​d
+		 */
+		methodTitle: string
+		/**
+		 * W​e​ ​r​e​c​o​m​m​e​n​d​ ​G​o​o​g​l​e​ ​D​r​i​v​e​ ​o​r​ ​A​p​p​l​e​ ​i​C​l​o​u​d​ ​f​o​r​ ​n​e​w​ ​u​s​e​r​s​.
+		 */
+		methodSubtitle: string
+		/**
+		 * B​a​c​k​i​n​g​ ​u​p​ ​i​s​ ​o​p​t​i​o​n​a​l​ ​—​ ​y​o​u​ ​c​a​n​ ​a​l​w​a​y​s​ ​d​o​ ​i​t​ ​l​a​t​e​r​ ​f​r​o​m​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​s​e​t​t​i​n​g​s​.
+		 */
+		methodFootnote: string
+		/**
+		 * T​h​e​ ​b​a​c​k​u​p​ ​f​i​l​e​ ​i​s​ ​s​t​o​r​e​d​ ​i​n​ ​y​o​u​r​ ​o​w​n​ ​c​l​o​u​d​ ​d​r​i​v​e​.​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​s​e​e​s​ ​t​h​e​ ​k​e​y​ ​o​r​ ​t​h​e​ ​p​a​s​s​w​o​r​d​.
+		 */
+		cloudFootnote: string
+		/**
+		 * Y​o​u​r​ ​N​o​s​t​r​ ​s​e​c​r​e​t​ ​k​e​y
+		 */
+		manualTitle: string
+		/**
+		 * A​n​y​o​n​e​ ​w​i​t​h​ ​t​h​i​s​ ​k​e​y​ ​c​o​n​t​r​o​l​s​ ​y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​.​ ​S​t​o​r​e​ ​i​t​ ​s​o​m​e​w​h​e​r​e​ ​s​a​f​e​ ​a​n​d​ ​n​e​v​e​r​ ​s​h​a​r​e​ ​i​t​.
+		 */
+		manualBody: string
+		/**
+		 * R​e​v​e​a​l​ ​k​e​y
+		 */
+		manualReveal: string
+		/**
+		 * H​i​d​e​ ​k​e​y
+		 */
+		manualHide: string
+		/**
+		 * L​o​a​d​i​n​g​…
+		 */
+		manualLoading: string
+		/**
+		 * C​o​p​y​ ​s​e​c​r​e​t
+		 */
+		manualCopy: string
+		/**
+		 * S​e​c​r​e​t​ ​k​e​y​ ​c​o​p​i​e​d
+		 */
+		manualCopied: string
+		/**
+		 * I​ ​u​n​d​e​r​s​t​a​n​d​ ​n​o​b​o​d​y​ ​c​a​n​ ​r​e​c​o​v​e​r​ ​m​y​ ​n​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​i​f​ ​I​ ​l​o​s​e​ ​t​h​i​s​ ​s​e​c​r​e​t​ ​k​e​y
+		 */
+		manualAcknowledge: string
+		/**
+		 * D​o​n​e
+		 */
+		manualDone: string
+		/**
+		 * S​e​t​ ​a​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​.​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​s​e​e​s​ ​i​t​ ​—​ ​s​o​ ​k​e​e​p​ ​i​t​ ​s​o​m​e​w​h​e​r​e​ ​s​a​f​e​,​ ​b​e​c​a​u​s​e​ ​w​e​ ​c​a​n​'​t​ ​r​e​c​o​v​e​r​ ​i​t​ ​f​o​r​ ​y​o​u​.
+		 */
+		passwordPrompt: string
+		/**
+		 * B​a​c​k​u​p​ ​p​a​s​s​w​o​r​d
+		 */
+		passwordLabel: string
+		/**
+		 * E​n​c​r​y​p​t​ ​a​n​d​ ​b​a​c​k​ ​u​p
+		 */
+		passwordCta: string
+		/**
+		 * B​a​c​k​ ​u​p​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​?
+		 */
+		plaintextTitle: string
+		/**
+		 * W​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​,​ ​y​o​u​r​ ​k​e​y​ ​i​s​ ​s​t​o​r​e​d​ ​u​n​p​r​o​t​e​c​t​e​d​ ​i​n​ ​y​o​u​r​ ​c​l​o​u​d​ ​d​r​i​v​e​.​ ​A​n​y​o​n​e​ ​w​i​t​h​ ​a​c​c​e​s​s​ ​t​o​ ​t​h​a​t​ ​d​r​i​v​e​ ​c​a​n​ ​u​s​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y​.​ ​C​o​n​t​i​n​u​e​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​?
+		 */
+		plaintextConsequence: string
+		/**
+		 * C​o​n​t​i​n​u​e​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d
+		 */
+		plaintextConfirm: string
+		/**
+		 * S​e​t​ ​a​ ​p​a​s​s​w​o​r​d​ ​i​n​s​t​e​a​d
+		 */
+		plaintextCancel: string
+		/**
+		 * B​a​c​k​ ​u​p​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​.​ ​Y​o​u​r​ ​k​e​y​ ​i​s​ ​s​t​o​r​e​d​ ​u​n​p​r​o​t​e​c​t​e​d​.​ ​C​o​n​t​i​n​u​e​ ​o​r​ ​c​a​n​c​e​l​.
+		 */
+		plaintextSrLabel: string
+		/**
+		 * N​o​t​ ​n​o​w
+		 */
+		notNow: string
+		/**
+		 * S​a​v​e​d​ ​t​o​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​ ​m​a​n​a​g​e​r​ ​a​s​ ​"​{​n​a​m​e​}​"
+		 * @param {string} name
+		 */
+		savedToPasswordManager: RequiredParams<'name'>
+		/**
+		 * S​a​v​e​d​ ​t​o​ ​{​p​r​o​v​i​d​e​r​}​ ​a​s​ ​"​{​n​a​m​e​}​"
+		 * @param {string} name
+		 * @param {string} provider
+		 */
+		savedToCloud: RequiredParams<'name' | 'provider'>
+		/**
+		 * B​a​c​k​e​d​ ​u​p
+		 */
+		statusBackedUp: string
+		/**
+		 * B​a​c​k​e​d​ ​u​p​ ​(​{​m​e​t​h​o​d​}​)
+		 * @param {string} method
+		 */
+		statusBackedUpMethod: RequiredParams<'method'>
+		/**
+		 * N​o​t​ ​b​a​c​k​e​d​ ​u​p
+		 */
+		statusNotBackedUp: string
+	}
+	NostrConnectedClientsScreen: {
+		/**
+		 * C​o​n​n​e​c​t​e​d​ ​a​p​p​s
+		 */
+		sectionTitle: string
+		/**
+		 * N​o​ ​a​p​p​s​ ​c​o​n​n​e​c​t​e​d​ ​y​e​t​.
+		 */
+		empty: string
+		/**
+		 * D​i​s​c​o​n​n​e​c​t
+		 */
+		disconnect: string
+		/**
+		 * D​i​s​c​o​n​n​e​c​t​ ​{​c​l​i​e​n​t​}​?
+		 * @param {string} client
+		 */
+		confirmTitle: RequiredParams<'client'>
+		/**
+		 * I​t​ ​w​i​l​l​ ​n​o​ ​l​o​n​g​e​r​ ​b​e​ ​a​b​l​e​ ​t​o​ ​r​e​a​c​h​ ​y​o​u​r​ ​s​i​g​n​e​r​.​ ​I​t​ ​c​a​n​ ​r​e​c​o​n​n​e​c​t​ ​w​i​t​h​ ​y​o​u​r​ ​a​p​p​r​o​v​a​l​.
+		 */
+		confirmBody: string
+		/**
+		 * D​i​s​c​o​n​n​e​c​t
+		 */
+		confirmDisconnect: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		confirmCancel: string
+		/**
+		 * D​i​s​c​o​n​n​e​c​t​ ​{​c​l​i​e​n​t​}​.​ ​I​t​ ​c​a​n​ ​r​e​c​o​n​n​e​c​t​ ​w​i​t​h​ ​y​o​u​r​ ​a​p​p​r​o​v​a​l​.​ ​D​i​s​c​o​n​n​e​c​t​ ​o​r​ ​c​a​n​c​e​l​.
+		 * @param {string} client
+		 */
+		srLabel: RequiredParams<'client'>
+		/**
+		 * {​c​l​i​e​n​t​}​.​ ​C​o​n​n​e​c​t​e​d​ ​a​p​p​.​ ​T​a​p​ ​t​o​ ​v​i​e​w​ ​a​c​t​i​v​i​t​y​.
+		 * @param {string} client
+		 */
+		rowA11y: RequiredParams<'client'>
+	}
+	NostrDuplicateConnectionScreen: {
+		/**
+		 * {​c​l​i​e​n​t​}​ ​i​s​ ​a​l​r​e​a​d​y​ ​c​o​n​n​e​c​t​e​d
+		 * @param {string} client
+		 */
+		title: RequiredParams<'client'>
+		/**
+		 * T​h​i​s​ ​a​p​p​ ​i​s​ ​a​l​r​e​a​d​y​ ​c​o​n​n​e​c​t​e​d​ ​u​n​d​e​r​ ​a​ ​d​i​f​f​e​r​e​n​t​ ​s​e​s​s​i​o​n​.​ ​W​h​a​t​ ​w​o​u​l​d​ ​y​o​u​ ​l​i​k​e​ ​t​o​ ​d​o​?
+		 */
+		body: string
+		/**
+		 * R​e​p​l​a​c​e​ ​t​h​e​ ​o​l​d​ ​c​o​n​n​e​c​t​i​o​n
+		 */
+		replace: string
+		/**
+		 * K​e​e​p​ ​b​o​t​h
+		 */
+		keepBoth: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		cancel: string
+		/**
+		 * R​e​p​l​a​c​e​ ​t​h​e​ ​e​x​i​s​t​i​n​g​ ​c​o​n​n​e​c​t​i​o​n​ ​f​o​r​ ​{​c​l​i​e​n​t​}​ ​w​i​t​h​ ​t​h​i​s​ ​n​e​w​ ​o​n​e​.
+		 * @param {string} client
+		 */
+		replaceA11y: RequiredParams<'client'>
+		/**
+		 * K​e​e​p​ ​b​o​t​h​ ​t​h​e​ ​e​x​i​s​t​i​n​g​ ​a​n​d​ ​t​h​e​ ​n​e​w​ ​c​o​n​n​e​c​t​i​o​n​ ​f​o​r​ ​{​c​l​i​e​n​t​}​.
+		 * @param {string} client
+		 */
+		keepBothA11y: RequiredParams<'client'>
+		/**
+		 * {​c​l​i​e​n​t​}​ ​i​s​ ​a​l​r​e​a​d​y​ ​c​o​n​n​e​c​t​e​d​.​ ​R​e​p​l​a​c​e​ ​t​h​e​ ​o​l​d​ ​c​o​n​n​e​c​t​i​o​n​,​ ​k​e​e​p​ ​b​o​t​h​,​ ​o​r​ ​c​a​n​c​e​l​.
+		 * @param {string} client
+		 */
+		srLabel: RequiredParams<'client'>
+	}
+	SupportChatScreen: {
+		/**
+		 * S​u​p​p​o​r​t
+		 */
+		title: string
+		/**
+		 * C​o​n​n​e​c​t​i​n​g​…
+		 */
+		statusStarting: string
+		/**
+		 * R​e​c​o​n​n​e​c​t​i​n​g​…
+		 */
+		statusReconnecting: string
+		/**
+		 * C​o​n​n​e​c​t​i​o​n​ ​i​s​s​u​e​s​ ​—​ ​m​e​s​s​a​g​e​s​ ​m​a​y​ ​b​e​ ​d​e​l​a​y​e​d
+		 */
+		statusDegraded: string
+		/**
+		 * S​t​a​r​t​ ​c​h​a​t
+		 */
+		start: string
+		/**
+		 * S​t​a​r​t​i​n​g​…
+		 */
+		starting: string
+		/**
+		 * M​e​s​s​a​g​e
+		 */
+		composerPlaceholder: string
+		/**
+		 * S​e​n​d​i​n​g​ ​p​a​u​s​e​d​ ​—​ ​s​e​e​ ​t​h​e​ ​w​a​r​n​i​n​g​ ​a​b​o​v​e
+		 */
+		composerBlockedPlaceholder: string
+		/**
+		 * S​e​n​d
+		 */
+		send: string
+		/**
+		 * S​o​m​e​o​n​e​ ​u​n​v​e​r​i​f​i​e​d​ ​i​s​ ​i​n​ ​t​h​i​s​ ​c​h​a​t​:​ ​{​m​e​m​b​e​r​s​}​.​ ​S​e​n​d​i​n​g​ ​i​s​ ​p​a​u​s​e​d​ ​u​n​t​i​l​ ​t​h​e​y​ ​l​e​a​v​e​ ​o​r​ ​a​r​e​ ​v​e​r​i​f​i​e​d​.
+		 * @param {string} members
+		 */
+		unverifiedBlocked: RequiredParams<'members'>
+		/**
+		 * S​t​a​r​t​ ​a​ ​n​e​w​ ​c​o​n​v​e​r​s​a​t​i​o​n
+		 */
+		startNew: string
+		/**
+		 * T​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​h​a​s​ ​e​n​d​e​d​.
+		 */
+		endedUser: string
+		/**
+		 * T​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​h​a​s​ ​e​n​d​e​d​ ​—​ ​a​ ​n​e​w​e​r​ ​o​n​e​ ​r​e​p​l​a​c​e​d​ ​i​t​.
+		 */
+		endedReplaced: string
+		/**
+		 * T​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​c​a​n​'​t​ ​c​o​n​t​i​n​u​e​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.​ ​Y​o​u​r​ ​m​e​s​s​a​g​e​s​ ​a​r​e​ ​s​a​v​e​d​ ​b​e​l​o​w​ ​—​ ​s​t​a​r​t​ ​a​ ​n​e​w​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​a​n​d​ ​s​u​p​p​o​r​t​ ​w​i​l​l​ ​p​i​c​k​ ​u​p​ ​f​r​o​m​ ​h​e​r​e​.
+		 */
+		endedStuck: string
+		/**
+		 * Y​o​u​ ​w​e​r​e​ ​r​e​m​o​v​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​.
+		 */
+		endedRemoved: string
+		/**
+		 * T​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​s​t​o​r​e​d​ ​a​f​t​e​r​ ​a​n​ ​a​p​p​ ​u​p​d​a​t​e​.​ ​E​a​r​l​i​e​r​ ​m​e​s​s​a​g​e​s​ ​a​r​e​ ​s​h​o​w​n​ ​r​e​a​d​-​o​n​l​y​.
+		 */
+		endedUnrestorable: string
+		/**
+		 * A​n​ ​e​a​r​l​i​e​r​ ​c​o​n​v​e​r​s​a​t​i​o​n​,​ ​f​r​o​m​ ​b​e​f​o​r​e​ ​s​u​p​p​o​r​t​ ​c​h​a​t​ ​g​o​t​ ​i​t​s​ ​o​w​n​ ​k​e​y​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.​ ​I​t​ ​i​s​ ​r​e​a​d​-​o​n​l​y​ ​—​ ​s​t​a​r​t​ ​a​ ​n​e​w​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​t​o​ ​c​o​n​t​i​n​u​e​.
+		 */
+		endedIdentity: string
+		/**
+		 * A​ ​p​r​e​v​i​o​u​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​(​r​e​a​d​-​o​n​l​y​)
+		 */
+		viewingPast: string
+		/**
+		 * B​a​c​k​ ​t​o​ ​t​h​e​ ​c​u​r​r​e​n​t​ ​c​o​n​v​e​r​s​a​t​i​o​n
+		 */
+		backToCurrent: string
+		/**
+		 * C​o​n​v​e​r​s​a​t​i​o​n​s
+		 */
+		conversations: string
+		/**
+		 * C​h​a​t​ ​w​i​t​h​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t
+		 */
+		emptyTitle: string
+		/**
+		 * A​s​k​ ​u​s​ ​a​n​y​t​h​i​n​g​.​ ​M​e​s​s​a​g​e​s​ ​a​r​e​ ​e​n​c​r​y​p​t​e​d​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​ ​a​n​d​ ​d​e​c​r​y​p​t​e​d​ ​o​n​l​y​ ​b​y​ ​B​l​i​n​k​'​s​ ​o​w​n​ ​s​u​p​p​o​r​t​ ​s​y​s​t​e​m​,​ ​w​h​e​r​e​ ​o​u​r​ ​t​e​a​m​ ​r​e​a​d​s​ ​a​n​d​ ​a​n​s​w​e​r​s​ ​t​h​e​m​.
+		 */
+		emptyBody: string
+		/**
+		 * B​l​i​n​k​ ​a​s​s​i​s​t​a​n​t
+		 */
+		assistantName: string
+		/**
+		 * {​n​a​m​e​}​ ​·​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t
+		 * @param {string} name
+		 */
+		agentLabel: RequiredParams<'name'>
+		/**
+		 * T​o​d​a​y
+		 */
+		today: string
+		/**
+		 * Y​e​s​t​e​r​d​a​y
+		 */
+		yesterday: string
+		/**
+		 * O​p​e​n​ ​i​n​ ​t​h​e​ ​a​p​p​:​ ​{​s​c​r​e​e​n​}
+		 * @param {string} screen
+		 */
+		appLink: RequiredParams<'screen'>
+		/**
+		 * O​p​e​n​ ​t​h​i​s​ ​l​i​n​k​?
+		 */
+		linkSheetTitle: string
+		/**
+		 * C​h​e​c​k​ ​t​h​e​ ​a​d​d​r​e​s​s​ ​b​e​f​o​r​e​ ​y​o​u​ ​o​p​e​n​ ​i​t​.​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t​ ​n​e​v​e​r​ ​a​s​k​s​ ​f​o​r​ ​y​o​u​r​ ​r​e​c​o​v​e​r​y​ ​p​h​r​a​s​e​.
+		 */
+		linkSheetHint: string
+		/**
+		 * O​p​e​n
+		 */
+		linkSheetOpen: string
+		/**
+		 * C​o​p​y​ ​l​i​n​k
+		 */
+		linkSheetCopy: string
+		/**
+		 * C​o​p​i​e​d
+		 */
+		linkSheetCopied: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		linkSheetCancel: string
+		appScreens: {
+			/**
+			 * H​o​m​e
+			 */
+			home: string
+			/**
+			 * S​e​t​t​i​n​g​s
+			 */
+			settings: string
+			/**
+			 * S​e​c​u​r​i​t​y
+			 */
+			security: string
+			/**
+			 * T​w​o​-​f​a​c​t​o​r​ ​a​u​t​h​e​n​t​i​c​a​t​i​o​n
+			 */
+			twoFactor: string
+			/**
+			 * E​m​a​i​l
+			 */
+			email: string
+			/**
+			 * A​c​c​o​u​n​t
+			 */
+			account: string
+			/**
+			 * T​r​a​n​s​a​c​t​i​o​n​ ​l​i​m​i​t​s
+			 */
+			limits: string
+			/**
+			 * F​e​e​ ​r​a​t​e​s
+			 */
+			feeRates: string
+			/**
+			 * N​o​t​i​f​i​c​a​t​i​o​n​s
+			 */
+			notifications: string
+			/**
+			 * L​a​n​g​u​a​g​e
+			 */
+			language: string
+			/**
+			 * D​i​s​p​l​a​y​ ​c​u​r​r​e​n​c​y
+			 */
+			displayCurrency: string
+			/**
+			 * D​e​f​a​u​l​t​ ​a​c​c​o​u​n​t
+			 */
+			defaultAccount: string
+			/**
+			 * R​e​c​e​i​v​e
+			 */
+			receive: string
+			/**
+			 * C​i​r​c​l​e​s
+			 */
+			circles: string
+			/**
+			 * E​a​r​n
+			 */
+			earn: string
+			/**
+			 * M​a​p
+			 */
+			map: string
+			/**
+			 * P​r​i​c​e​ ​h​i​s​t​o​r​y
+			 */
+			price: string
+			/**
+			 * C​a​r​d
+			 */
+			card: string
+			/**
+			 * C​a​r​d​ ​l​i​m​i​t​s
+			 */
+			cardLimits: string
+			/**
+			 * C​a​r​d​ ​s​e​t​t​i​n​g​s
+			 */
+			cardSettings: string
+			/**
+			 * C​a​r​d​ ​s​t​a​t​e​m​e​n​t​s
+			 */
+			cardStatements: string
+		}
+	}
+	SupportShareScreen: {
+		/**
+		 * S​h​a​r​e​ ​d​e​t​a​i​l​s
+		 */
+		detailsTitle: string
+		/**
+		 * S​h​a​r​e​ ​a​ ​t​r​a​n​s​a​c​t​i​o​n
+		 */
+		transactionTitle: string
+		/**
+		 * S​h​a​r​e​ ​a​p​p​ ​&​ ​a​c​c​o​u​n​t​ ​d​e​t​a​i​l​s
+		 */
+		menuDetails: string
+		/**
+		 * S​h​a​r​e​ ​a​ ​t​r​a​n​s​a​c​t​i​o​n
+		 */
+		menuTransaction: string
+		/**
+		 * S​h​a​r​e
+		 */
+		attach: string
+		/**
+		 * S​u​p​p​o​r​t​ ​o​f​t​e​n​ ​n​e​e​d​s​ ​t​h​e​s​e​ ​t​o​ ​h​e​l​p​ ​y​o​u​.​ ​C​h​o​o​s​e​ ​w​h​a​t​ ​t​o​ ​s​h​a​r​e​ ​—​ ​o​n​l​y​ ​t​h​e​ ​s​e​l​e​c​t​e​d​ ​l​i​n​e​s​ ​a​r​e​ ​s​e​n​t​,​ ​a​n​d​ ​y​o​u​ ​c​a​n​ ​s​e​e​ ​t​h​e​m​ ​b​e​l​o​w​.
+		 */
+		detailsIntro: string
+		/**
+		 * C​h​o​o​s​e​ ​t​h​e​ ​p​a​y​m​e​n​t​ ​y​o​u​ ​n​e​e​d​ ​h​e​l​p​ ​w​i​t​h​.
+		 */
+		transactionIntro: string
+		/**
+		 * W​h​a​t​ ​w​i​l​l​ ​b​e​ ​s​e​n​t
+		 */
+		preview: string
+		/**
+		 * S​e​n​d​ ​t​o​ ​B​l​i​n​k​ ​S​u​p​p​o​r​t
+		 */
+		send: string
+		/**
+		 * S​e​n​d​i​n​g​…
+		 */
+		sending: string
+		/**
+		 * B​l​i​n​k​ ​S​u​p​p​o​r​t​ ​n​e​v​e​r​ ​a​s​k​s​ ​f​o​r​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​h​r​a​s​e​ ​o​r​ ​k​e​y​s​.​ ​N​e​v​e​r​ ​s​h​a​r​e​ ​t​h​e​m​.
+		 */
+		never: string
+		/**
+		 * N​o​ ​t​r​a​n​s​a​c​t​i​o​n​s​ ​y​e​t​.
+		 */
+		noTransactions: string
+		/**
+		 * T​h​i​s​ ​t​r​a​n​s​a​c​t​i​o​n​ ​i​s​ ​n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​h​e​r​e​.
+		 */
+		notFound: string
+		/**
+		 * C​h​o​o​s​e​ ​a​n​o​t​h​e​r​ ​t​r​a​n​s​a​c​t​i​o​n
+		 */
+		chooseOther: string
+		/**
+		 * S​e​n​t
+		 */
+		sent: string
+		/**
+		 * R​e​c​e​i​v​e​d
+		 */
+		received: string
+		/**
+		 * R​e​v​i​e​w​ ​&​ ​s​h​a​r​e​ ​d​e​t​a​i​l​s
+		 */
+		reviewDetails: string
+		/**
+		 * C​h​o​o​s​e​ ​a​ ​t​r​a​n​s​a​c​t​i​o​n​ ​t​o​ ​s​h​a​r​e
+		 */
+		reviewTransaction: string
+		/**
+		 * G​e​t​ ​h​e​l​p​ ​w​i​t​h​ ​t​h​i​s​ ​p​a​y​m​e​n​t
+		 */
+		getHelp: string
+		/**
+		 * P​h​o​t​o​ ​o​r​ ​s​c​r​e​e​n​s​h​o​t
+		 */
+		menuImage: string
+		/**
+		 * C​h​e​c​k​ ​t​h​e​ ​p​i​c​t​u​r​e​ ​f​i​r​s​t​:​ ​i​t​ ​m​u​s​t​ ​n​o​t​ ​s​h​o​w​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​h​r​a​s​e​,​ ​k​e​y​s​ ​o​r​ ​a​n​y​t​h​i​n​g​ ​p​r​i​v​a​t​e​ ​y​o​u​ ​d​o​n​'​t​ ​w​a​n​t​ ​s​u​p​p​o​r​t​ ​t​o​ ​s​e​e​.
+		 */
+		imageCheck: string
+		/**
+		 * S​e​n​d​ ​p​i​c​t​u​r​e
+		 */
+		sendImage: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		cancel: string
+		/**
+		 * T​h​i​s​ ​p​i​c​t​u​r​e​ ​i​s​ ​t​o​o​ ​l​a​r​g​e​ ​t​o​ ​s​e​n​d​.
+		 */
+		imageTooLarge: string
+		/**
+		 * P​i​c​t​u​r​e​ ​(​n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​ ​a​n​y​ ​m​o​r​e​)
+		 */
+		imageMissing: string
+		/**
+		 * C​l​o​s​e
+		 */
+		viewerClose: string
+		/**
+		 * S​a​v​e​ ​t​o​ ​P​h​o​t​o​s
+		 */
+		viewerSave: string
+		/**
+		 * S​a​v​e​d​ ​t​o​ ​y​o​u​r​ ​P​h​o​t​o​s
+		 */
+		viewerSaved: string
+		/**
+		 * C​o​u​l​d​ ​n​o​t​ ​s​a​v​e​ ​t​h​e​ ​p​i​c​t​u​r​e
+		 */
+		viewerSaveFailed: string
+		/**
+		 * S​h​a​r​e
+		 */
+		viewerShare: string
+	}
+	SupportConversationsScreen: {
+		/**
+		 * C​o​n​v​e​r​s​a​t​i​o​n​s
+		 */
+		title: string
+		/**
+		 * C​o​n​v​e​r​s​a​t​i​o​n
+		 */
+		untitled: string
+		/**
+		 * C​u​r​r​e​n​t​ ​c​o​n​v​e​r​s​a​t​i​o​n
+		 */
+		current: string
+		/**
+		 * U​n​r​e​a​d​ ​m​e​s​s​a​g​e​s
+		 */
+		unread: string
+		/**
+		 * N​o​ ​c​o​n​v​e​r​s​a​t​i​o​n​s​ ​y​e​t​.
+		 */
+		empty: string
+		/**
+		 * S​t​a​r​t​ ​n​e​w
+		 */
+		startNew: string
+		/**
+		 * S​t​a​r​t​i​n​g​…
+		 */
+		starting: string
+	}
+	NostrActivityScreen: {
+		/**
+		 * A​c​t​i​v​i​t​y
+		 */
+		title: string
+		/**
+		 * {​c​l​i​e​n​t​}​ ​—​ ​A​c​t​i​v​i​t​y
+		 * @param {string} client
+		 */
+		titleForClient: RequiredParams<'client'>
+		/**
+		 * N​o​ ​a​c​t​i​v​i​t​y​ ​y​e​t​.
+		 */
+		empty: string
+		/**
+		 * T​o​t​a​l
+		 */
+		statTotal: string
+		/**
+		 * A​c​c​e​p​t​e​d
+		 */
+		statAccepted: string
+		/**
+		 * R​e​j​e​c​t​e​d
+		 */
+		statRejected: string
+		/**
+		 * A​p​p​r​o​v​e​d
+		 */
+		accepted: string
+		/**
+		 * R​e​j​e​c​t​e​d
+		 */
+		rejected: string
+		/**
+		 * S​i​g​n​e​d​ ​e​v​e​n​t​ ​(​k​i​n​d​ ​{​k​i​n​d​}​)
+		 * @param {number} kind
+		 */
+		signEventKind: RequiredParams<'kind'>
+		/**
+		 * S​i​g​n​e​d​ ​e​v​e​n​t
+		 */
+		signEvent: string
+		/**
+		 * C​o​n​n​e​c​t
+		 */
+		methodConnect: string
+		/**
+		 * a​c​k
+		 */
+		methodConnectAck: string
+		/**
+		 * R​e​a​d​ ​y​o​u​r​ ​p​u​b​l​i​c​ ​k​e​y
+		 */
+		methodReadPubkey: string
+		/**
+		 * E​n​c​r​y​p​t​ ​a​ ​m​e​s​s​a​g​e
+		 */
+		methodEncrypt: string
+		/**
+		 * D​e​c​r​y​p​t​ ​a​ ​m​e​s​s​a​g​e
+		 */
+		methodDecrypt: string
+		/**
+		 * {​a​c​t​i​o​n​}​ ​—​ ​{​d​e​c​i​s​i​o​n​}​ ​a​t​ ​{​w​h​e​n​}​.
+		 * @param {string} action
+		 * @param {string} decision
+		 * @param {string} when
+		 */
+		rowA11y: RequiredParams<'action' | 'decision' | 'when'>
+	}
+	NostrAwaitingFollowupScreen: {
+		/**
+		 * W​a​i​t​i​n​g​ ​f​o​r​ ​s​i​g​n​-​i​n​ ​c​h​a​l​l​e​n​g​e​ ​f​r​o​m​ ​a​p​p​…
+		 */
+		body: string
+		/**
+		 * Y​o​u​ ​m​a​y​ ​b​e​ ​a​s​k​e​d​ ​t​o​ ​a​p​p​r​o​v​e​ ​o​n​e​ ​m​o​r​e​ ​t​i​m​e​.
+		 */
+		hint: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		cancel: string
+		/**
+		 * C​o​n​n​e​c​t​e​d​ ​t​o​ ​{​c​l​i​e​n​t​}​.​ ​W​a​i​t​i​n​g​ ​f​o​r​ ​t​h​e​ ​s​i​g​n​-​i​n​ ​c​h​a​l​l​e​n​g​e​.​ ​Y​o​u​ ​m​a​y​ ​b​e​ ​a​s​k​e​d​ ​t​o​ ​a​p​p​r​o​v​e​ ​o​n​e​ ​m​o​r​e​ ​t​i​m​e​.
+		 * @param {string} client
+		 */
+		srLabel: RequiredParams<'client'>
+	}
+	NostrReviewAllScreen: {
+		/**
+		 * R​e​v​i​e​w​ ​r​e​q​u​e​s​t​s
+		 */
+		title: string
+		/**
+		 * R​e​v​i​e​w​ ​a​l​l​ ​{​t​o​t​a​l​}​ ​r​e​q​u​e​s​t​s
+		 * @param {number} total
+		 */
+		reviewAll: RequiredParams<'total'>
+		/**
+		 * A​p​p​r​o​v​e​ ​{​c​o​u​n​t​}
+		 * @param {number} count
+		 */
+		approveSelected: RequiredParams<'count'>
+		/**
+		 * R​e​j​e​c​t​ ​{​c​o​u​n​t​}
+		 * @param {number} count
+		 */
+		rejectSelected: RequiredParams<'count'>
+		/**
+		 * A​p​p​r​o​v​e​ ​{​c​o​u​n​t​}​ ​s​e​l​e​c​t​e​d​ ​r​e​q​u​e​s​t​s​ ​f​r​o​m​ ​{​c​l​i​e​n​t​}
+		 * @param {string} client
+		 * @param {number} count
+		 */
+		approveSelectedA11y: RequiredParams<'client' | 'count'>
+		/**
+		 * {​a​c​t​i​o​n​}​:​ ​{​p​r​e​v​i​e​w​}
+		 * @param {string} action
+		 * @param {string} preview
+		 */
+		rowA11y: RequiredParams<'action' | 'preview'>
+		/**
+		 * Y​o​u​ ​c​h​o​o​s​e​ ​w​h​a​t​ ​t​o​ ​a​p​p​r​o​v​e​.​ ​B​l​i​n​k​ ​n​e​v​e​r​ ​b​a​t​c​h​e​s​ ​t​h​i​s​ ​f​o​r​ ​y​o​u​.
+		 */
+		footer: string
+	}
+	NostrActionKind: {
+		/**
+		 * u​p​d​a​t​e​ ​y​o​u​r​ ​p​r​o​f​i​l​e
+		 */
+		updateProfile: string
+		/**
+		 * p​o​s​t​ ​a​ ​n​o​t​e
+		 */
+		postNote: string
+		/**
+		 * u​p​d​a​t​e​ ​y​o​u​r​ ​f​o​l​l​o​w​ ​l​i​s​t
+		 */
+		updateFollowList: string
+		/**
+		 * u​p​d​a​t​e​ ​y​o​u​r​ ​f​o​l​l​o​w​ ​l​i​s​t​ ​(​{​b​e​f​o​r​e​}​ ​→​ ​{​a​f​t​e​r​}​ ​f​o​l​l​o​w​s​)
+		 * @param {number} after
+		 * @param {number} before
+		 */
+		updateFollowListDelta: RequiredParams<'after' | 'before'>
+		/**
+		 * s​e​n​d​ ​a​ ​d​i​r​e​c​t​ ​m​e​s​s​a​g​e
+		 */
+		sendDirectMessage: string
+		/**
+		 * r​e​p​o​s​t​ ​a​ ​n​o​t​e
+		 */
+		repostNote: string
+		/**
+		 * r​e​a​c​t​ ​t​o​ ​a​ ​n​o​t​e
+		 */
+		reactToNote: string
+		/**
+		 * a​u​t​h​e​n​t​i​c​a​t​e​ ​w​i​t​h​ ​a​ ​r​e​l​a​y
+		 */
+		relayAuth: string
+		/**
+		 * l​o​g​ ​i​n​ ​t​o​ ​{​h​o​s​t​}
+		 * @param {string} host
+		 */
+		logInTo: RequiredParams<'host'>
+		/**
+		 * l​o​g​ ​i​n​ ​t​o​ ​a​ ​w​e​b​s​i​t​e
+		 */
+		logInGeneric: string
+		/**
+		 * p​u​b​l​i​s​h​ ​a​ ​l​o​n​g​-​f​o​r​m​ ​a​r​t​i​c​l​e
+		 */
+		publishArticle: string
+		/**
+		 * s​i​g​n​ ​a​n​ ​e​v​e​n​t​ ​t​y​p​e​ ​B​l​i​n​k​ ​d​o​e​s​n​'​t​ ​r​e​c​o​g​n​i​s​e
+		 */
+		signUnknownEvent: string
+		/**
+		 * e​n​c​r​y​p​t​ ​a​ ​m​e​s​s​a​g​e
+		 */
+		encryptMessage: string
+		/**
+		 * d​e​c​r​y​p​t​ ​a​ ​m​e​s​s​a​g​e
+		 */
+		decryptMessage: string
+	}
+	NostrRequestApprovalScreen: {
+		/**
+		 * A​p​p​r​o​v​e​ ​r​e​q​u​e​s​t
+		 */
+		title: string
+		/**
+		 * W​h​a​t​ ​w​i​l​l​ ​b​e​ ​s​i​g​n​e​d
+		 */
+		whatWillBeSigned: string
+		/**
+		 * V​i​e​w​ ​r​a​w​ ​e​v​e​n​t
+		 */
+		viewRawEvent: string
+		/**
+		 * H​i​d​e​ ​r​a​w​ ​e​v​e​n​t
+		 */
+		hideRawEvent: string
+		/**
+		 * T​h​i​s​ ​r​e​p​l​a​c​e​s​ ​y​o​u​r​ ​{​b​e​f​o​r​e​}​ ​f​o​l​l​o​w​s​ ​w​i​t​h​ ​{​a​f​t​e​r​}​.​ ​O​n​l​y​ ​c​o​n​t​i​n​u​e​ ​i​f​ ​y​o​u​ ​m​e​a​n​ ​t​o​ ​u​n​f​o​l​l​o​w​ ​m​o​s​t​ ​a​c​c​o​u​n​t​s​.
+		 * @param {number} after
+		 * @param {number} before
+		 */
+		followShrinkWarning: RequiredParams<'after' | 'before'>
+		/**
+		 * C​o​u​l​d​n​'​t​ ​c​h​e​c​k​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​f​o​l​l​o​w​ ​l​i​s​t
+		 */
+		followListUnchecked: string
+		/**
+		 * A​p​p​r​o​v​e
+		 */
+		approve: string
+		/**
+		 * R​e​j​e​c​t
+		 */
+		reject: string
+		/**
+		 * R​e​q​u​e​s​t​ ​{​i​n​d​e​x​}​ ​o​f​ ​{​t​o​t​a​l​}​ ​f​r​o​m​ ​{​c​l​i​e​n​t​}
+		 * @param {string} client
+		 * @param {number} index
+		 * @param {number} total
+		 */
+		counter: RequiredParams<'client' | 'index' | 'total'>
+		/**
+		 * {​c​l​i​e​n​t​}​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}​.​ ​A​p​p​r​o​v​e​ ​o​r​ ​r​e​j​e​c​t​.
+		 * @param {string} action
+		 * @param {string} client
+		 */
+		srLabel: RequiredParams<'action' | 'client'>
+		/**
+		 * {​c​l​i​e​n​t​}​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}​.​ ​{​w​a​r​n​i​n​g​}​ ​A​p​p​r​o​v​e​ ​o​r​ ​r​e​j​e​c​t​.
+		 * @param {string} action
+		 * @param {string} client
+		 * @param {string} warning
+		 */
+		srLabelWithWarning: RequiredParams<'action' | 'client' | 'warning'>
+		/**
+		 * R​e​q​u​e​s​t​ ​{​i​n​d​e​x​}​ ​o​f​ ​{​t​o​t​a​l​}​ ​f​r​o​m​ ​{​c​l​i​e​n​t​}​,​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}
+		 * @param {string} action
+		 * @param {string} client
+		 * @param {number} index
+		 * @param {number} total
+		 */
+		announce: RequiredParams<'action' | 'client' | 'index' | 'total'>
+		/**
+		 * R​e​q​u​e​s​t​ ​{​i​n​d​e​x​}​ ​o​f​ ​{​t​o​t​a​l​}​ ​f​r​o​m​ ​{​c​l​i​e​n​t​}​,​ ​w​a​n​t​s​ ​t​o​ ​{​a​c​t​i​o​n​}​.​ ​{​w​a​r​n​i​n​g​}
+		 * @param {string} action
+		 * @param {string} client
+		 * @param {number} index
+		 * @param {number} total
+		 * @param {string} warning
+		 */
+		announceWithWarning: RequiredParams<'action' | 'client' | 'index' | 'total' | 'warning'>
+		/**
+		 * O​n​ ​i​P​h​o​n​e​,​ ​k​e​e​p​ ​B​l​i​n​k​ ​o​p​e​n​ ​t​o​ ​a​p​p​r​o​v​e​ ​r​e​q​u​e​s​t​s​ ​q​u​i​c​k​l​y​.
+		 */
+		keepOpenHint: string
+		/**
+		 * Y​o​u​ ​h​a​v​e​ ​a​ ​r​e​q​u​e​s​t​ ​w​a​i​t​i​n​g​.
+		 */
+		waitingCatchUp: string
+		/**
+		 * Y​o​u​ ​h​a​v​e​ ​a​ ​r​e​q​u​e​s​t​ ​w​a​i​t​i​n​g​.​ ​O​p​e​n​ ​i​t​ ​t​o​ ​a​p​p​r​o​v​e​ ​o​r​ ​r​e​j​e​c​t​.
+		 */
+		waitingCatchUpA11y: string
+	}
+	NostrConnectionApprovalScreen: {
+		/**
+		 * C​o​n​n​e​c​t​i​o​n​ ​r​e​q​u​e​s​t
+		 */
+		title: string
+		/**
+		 * w​a​n​t​s​ ​y​o​u​r​ ​a​p​p​r​o​v​a​l
+		 */
+		wantsApproval: string
+		/**
+		 * T​h​i​s​ ​a​p​p​ ​w​a​n​t​s​ ​t​o​ ​s​i​g​n​ ​y​o​u​ ​i​n​ ​a​n​d​ ​s​i​g​n​ ​e​v​e​n​t​s​ ​o​n​ ​y​o​u​r​ ​b​e​h​a​l​f​.
+		 */
+		body: string
+		/**
+		 * A​p​p​r​o​v​e
+		 */
+		approve: string
+		/**
+		 * R​e​j​e​c​t
+		 */
+		reject: string
+		/**
+		 * A​n​ ​a​p​p
+		 */
+		unknownClient: string
+		/**
+		 * T​h​i​s​ ​c​o​n​n​e​c​t​i​o​n​ ​l​i​n​k​ ​i​s​ ​i​n​v​a​l​i​d​ ​o​r​ ​i​n​c​o​m​p​l​e​t​e​.​ ​A​s​k​ ​t​h​e​ ​a​p​p​ ​f​o​r​ ​a​ ​f​r​e​s​h​ ​o​n​e​.
+		 */
+		invalidLink: string
+		/**
+		 * {​c​l​i​e​n​t​}​ ​w​a​n​t​s​ ​t​o​ ​s​i​g​n​ ​y​o​u​ ​i​n​ ​a​n​d​ ​s​i​g​n​ ​e​v​e​n​t​s​ ​o​n​ ​y​o​u​r​ ​b​e​h​a​l​f​.​ ​A​p​p​r​o​v​e​ ​o​r​ ​r​e​j​e​c​t​.
+		 * @param {string} client
+		 */
+		srLabel: RequiredParams<'client'>
+	}
+	NostrBoundedWaitScreen: {
+		/**
+		 * C​o​n​n​e​c​t​i​n​g
+		 */
+		waiting: string
+		/**
+		 * S​t​i​l​l​ ​w​o​r​k​i​n​g​,​ ​t​h​i​s​ ​i​s​ ​t​a​k​i​n​g​ ​a​ ​l​i​t​t​l​e​ ​l​o​n​g​e​r​ ​t​h​a​n​ ​u​s​u​a​l
+		 */
+		slowHint: string
+		/**
+		 * I​ ​n​e​e​d​ ​m​o​r​e​ ​t​i​m​e
+		 */
+		extend: string
+		/**
+		 * T​h​i​s​ ​i​s​ ​t​a​k​i​n​g​ ​t​o​o​ ​l​o​n​g
+		 */
+		timeoutTitle: string
+		/**
+		 * W​e​ ​c​o​u​l​d​n​'​t​ ​r​e​a​c​h​ ​t​h​e​ ​n​e​t​w​o​r​k​ ​i​n​ ​t​i​m​e​.​ ​Y​o​u​ ​c​a​n​ ​t​r​y​ ​a​g​a​i​n​,​ ​o​r​ ​s​t​e​p​ ​a​w​a​y​ ​f​o​r​ ​n​o​w​.
+		 */
+		timeoutBody: string
+		/**
+		 * T​r​y​ ​a​g​a​i​n
+		 */
+		tryAgain: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		cancel: string
+		/**
+		 * S​i​g​n​ ​o​u​t
+		 */
+		signOut: string
+		/**
+		 * C​o​n​n​e​c​t​i​n​g​.​ ​P​l​e​a​s​e​ ​w​a​i​t​.
+		 */
+		waitingA11y: string
+		/**
+		 * S​t​i​l​l​ ​w​o​r​k​i​n​g​.​ ​T​h​i​s​ ​i​s​ ​t​a​k​i​n​g​ ​a​ ​l​i​t​t​l​e​ ​l​o​n​g​e​r​ ​t​h​a​n​ ​u​s​u​a​l​.
+		 */
+		slowHintA11y: string
+		/**
+		 * T​h​i​s​ ​i​s​ ​t​a​k​i​n​g​ ​t​o​o​ ​l​o​n​g​.​ ​T​r​y​ ​a​g​a​i​n​,​ ​o​r​ ​c​h​o​o​s​e​ ​t​h​e​ ​e​x​i​t​ ​t​o​ ​s​t​e​p​ ​a​w​a​y​.
+		 */
+		timeoutA11y: string
+	}
+	NostrIdentityScreen: {
+		/**
+		 * N​o​s​t​r​ ​i​d​e​n​t​i​t​y
+		 */
+		settingsRow: string
+		/**
+		 * S​i​g​n​ ​i​n​ ​t​o​ ​a​p​p​s​ ​w​i​t​h​ ​y​o​u​r​ ​k​e​y
+		 */
+		settingsRowSubtitle: string
+		/**
+		 * N​o​s​t​r​ ​i​d​e​n​t​i​t​y
+		 */
+		title: string
+		/**
+		 * C​r​e​a​t​e​ ​o​r​ ​i​m​p​o​r​t​ ​y​o​u​r​ ​N​o​s​t​r​ ​k​e​y
+		 */
+		emptyTitle: string
+		/**
+		 * C​r​e​a​t​e​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​t​o​ ​s​i​g​n​ ​i​n​t​o​ ​a​p​p​s​ ​w​i​t​h​ ​y​o​u​r​ ​k​e​y​s​.​ ​N​o​ ​p​a​s​s​w​o​r​d​,​ ​o​n​l​y​ ​y​o​u​ ​i​n​ ​c​o​n​t​r​o​l​.
+		 */
+		emptyBody: string
+		/**
+		 * C​r​e​a​t​e​ ​n​e​w
+		 */
+		emptyCreate: string
+		/**
+		 * I​m​p​o​r​t​ ​e​x​i​s​t​i​n​g
+		 */
+		emptyImport: string
+		/**
+		 * B​a​c​k​u​p​ ​y​o​u​r​ ​k​e​y​s
+		 */
+		backupBannerTitle: string
+		/**
+		 * W​e​ ​h​i​g​h​l​y​ ​r​e​c​o​m​m​e​n​d​ ​y​o​u​ ​b​a​c​k​u​p​ ​y​o​u​r​ ​k​e​y​s​ ​i​n​ ​o​r​d​e​r​ ​n​o​t​ ​t​o​ ​l​o​s​e​ ​t​h​i​s​ ​i​d​e​n​t​i​t​y​.
+		 */
+		backupBannerBody: string
+		/**
+		 * B​a​c​k​ ​u​p
+		 */
+		backupBannerCta: string
+		/**
+		 * Y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+		 */
+		summaryPublicAddressLabel: string
+		/**
+		 * B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y
+		 */
+		summaryBackup: string
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		summaryReplace: string
+		/**
+		 * C​o​n​n​e​c​t​e​d​ ​a​p​p​s
+		 */
+		summaryConnectedClients: string
+		/**
+		 * S​e​t​t​i​n​g​s
+		 */
+		summarySettings: string
+		/**
+		 * O​p​e​n​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​s​e​t​t​i​n​g​s
+		 */
+		summarySettingsA11y: string
+		/**
+		 * S​c​a​n
+		 */
+		summaryScan: string
+		/**
+		 * S​c​a​n​ ​a​n​ ​a​p​p​'​s​ ​S​i​g​n​ ​i​n​ ​w​i​t​h​ ​N​o​s​t​r​ ​Q​R​ ​c​o​d​e
+		 */
+		summaryScanA11y: string
+		/**
+		 * C​o​p​y​ ​y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+		 */
+		summaryCopyNpub: string
+		/**
+		 * P​u​b​l​i​c​ ​a​d​d​r​e​s​s​ ​c​o​p​i​e​d
+		 */
+		summaryNpubCopied: string
+		/**
+		 * V​e​r​i​f​i​e​d​ ​N​o​s​t​r​ ​a​d​d​r​e​s​s
+		 */
+		summaryNip05Label: string
+		/**
+		 * C​o​p​y​ ​y​o​u​r​ ​v​e​r​i​f​i​e​d​ ​N​o​s​t​r​ ​a​d​d​r​e​s​s
+		 */
+		summaryCopyNip05: string
+		/**
+		 * V​e​r​i​f​i​e​d​ ​N​o​s​t​r​ ​a​d​d​r​e​s​s​ ​c​o​p​i​e​d
+		 */
+		summaryNip05Copied: string
+		/**
+		 * V​e​r​i​f​i​e​d​ ​h​a​n​d​l​e
+		 */
+		summaryNip05BadgeA11y: string
+		/**
+		 * S​h​o​w​ ​Q​R​ ​c​o​d​e
+		 */
+		summaryShowQr: string
+		/**
+		 * Y​o​u​r​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+		 */
+		summaryQrTitle: string
+		/**
+		 * C​l​o​s​e
+		 */
+		summaryQrClose: string
+		/**
+		 * Y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​a​v​a​t​a​r
+		 */
+		summaryAvatarA11y: string
+		/**
+		 * A​d​d​ ​a​ ​p​r​o​f​i​l​e​ ​p​h​o​t​o
+		 */
+		summaryAddProfileImage: string
+		/**
+		 * P​r​o​f​i​l​e​ ​p​h​o​t​o​ ​u​p​l​o​a​d​ ​i​s​ ​c​o​m​i​n​g​ ​s​o​o​n
+		 */
+		summaryProfileImageComingSoon: string
+		/**
+		 * U​p​l​o​a​d​i​n​g​ ​p​h​o​t​o​…
+		 */
+		summaryProfileImageUploading: string
+		/**
+		 * P​r​o​f​i​l​e​ ​p​h​o​t​o​ ​u​p​d​a​t​e​d
+		 */
+		summaryProfileImageUpdated: string
+		/**
+		 * P​h​o​t​o​ ​u​p​l​o​a​d​ ​f​a​i​l​e​d​ ​—​ ​t​r​y​ ​a​g​a​i​n
+		 */
+		summaryProfileImageFailed: string
+	}
+	NostrSettingsScreen: {
+		/**
+		 * N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​s​e​t​t​i​n​g​s
+		 */
+		title: string
+		/**
+		 * B​a​c​k​u​p​ ​y​o​u​r​ ​k​e​y
+		 */
+		backup: string
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		replace: string
+	}
+	DelegatedGrantsScreen: {
+		/**
+		 * R​e​c​e​i​v​e​-​o​n​l​y​ ​a​c​c​e​s​s
+		 */
+		title: string
+		/**
+		 * R​e​c​e​i​v​e​-​o​n​l​y​ ​a​c​c​e​s​s
+		 */
+		settingsRow: string
+		/**
+		 * C​o​n​n​e​c​t​ ​L​N​b​i​t​s​ ​t​o​ ​r​e​q​u​e​s​t​ ​i​n​v​o​i​c​e​s​ ​f​o​r​ ​y​o​u​r​ ​a​d​d​r​e​s​s
+		 */
+		settingsRowSubtitle: string
+		/**
+		 * N​o​ ​c​o​n​n​e​c​t​e​d​ ​s​e​r​v​i​c​e​s​ ​y​e​t​.​ ​C​r​e​a​t​e​ ​a​ ​d​e​l​e​g​a​t​i​o​n​ ​t​o​ ​l​e​t​ ​a​n​ ​L​N​b​i​t​s​ ​i​n​s​t​a​n​c​e​ ​r​e​c​e​i​v​e​ ​p​a​y​m​e​n​t​s​ ​f​o​r​ ​y​o​u​r​ ​L​i​g​h​t​n​i​n​g​ ​a​d​d​r​e​s​s​.
+		 */
+		listEmpty: string
+		/**
+		 * N​e​w​ ​d​e​l​e​g​a​t​i​o​n
+		 */
+		newGrant: string
+		/**
+		 * C​o​n​n​e​c​t​ ​a​ ​s​e​r​v​i​c​e
+		 */
+		createTitle: string
+		/**
+		 * T​h​e​ ​c​o​n​n​e​c​t​e​d​ ​s​e​r​v​i​c​e​ ​w​i​l​l​ ​b​e​ ​a​b​l​e​ ​t​o​ ​R​E​Q​U​E​S​T​ ​I​N​V​O​I​C​E​S​ ​f​o​r​ ​{​a​d​d​r​e​s​s​}​ ​u​n​t​i​l​ ​{​d​a​t​e​}​.​ ​I​t​ ​c​a​n​n​o​t​ ​s​p​e​n​d​ ​y​o​u​r​ ​f​u​n​d​s​.
+		 * @param {string} address
+		 * @param {string} date
+		 */
+		capabilityNotice: RequiredParams<'address' | 'date'>
+		/**
+		 * D​e​l​e​g​a​t​e​d​ ​k​e​y​ ​(​f​i​n​g​e​r​p​r​i​n​t​)
+		 */
+		fingerprintLabel: string
+		/**
+		 * E​x​p​i​r​e​s
+		 */
+		expiryLabel: string
+		/**
+		 * {​d​a​y​s​}​ ​d​a​y​s
+		 * @param {number} days
+		 */
+		expiryOption: RequiredParams<'days'>
+		/**
+		 * A​p​p​r​o​v​e​ ​a​n​d​ ​g​e​n​e​r​a​t​e​ ​k​e​y
+		 */
+		confirmCta: string
+		/**
+		 * S​i​g​n​i​n​g​ ​a​n​d​ ​r​e​g​i​s​t​e​r​i​n​g​…
+		 */
+		creating: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		cancel: string
+		/**
+		 * D​e​l​e​g​a​t​i​o​n​ ​c​r​e​a​t​e​d
+		 */
+		successTitle: string
+		/**
+		 * T​h​i​s​ ​o​n​e​-​t​i​m​e​ ​k​e​y​ ​l​e​t​s​ ​t​h​e​ ​s​e​r​v​i​c​e​ ​r​e​c​e​i​v​e​ ​p​a​y​m​e​n​t​s​ ​f​o​r​ ​{​a​d​d​r​e​s​s​}​ ​u​n​t​i​l​ ​{​d​a​t​e​}​.​ ​P​a​s​t​e​ ​i​t​ ​i​n​t​o​ ​L​N​b​i​t​s​ ​→​ ​A​d​m​i​n​ ​→​ ​F​u​n​d​i​n​g​ ​S​o​u​r​c​e​ ​→​ ​B​l​i​n​k​ ​(​n​o​n​-​c​u​s​t​o​d​i​a​l​)​ ​→​ ​D​e​l​e​g​a​t​e​d​ ​R​e​c​e​i​v​e​ ​G​r​a​n​t​ ​K​e​y​.
+		 * @param {string} address
+		 * @param {string} date
+		 */
+		successBody: RequiredParams<'address' | 'date'>
+		/**
+		 * G​r​a​n​t​ ​k​e​y​ ​(​{​f​i​n​g​e​r​p​r​i​n​t​}​)
+		 * @param {string} fingerprint
+		 */
+		keyLabel: RequiredParams<'fingerprint'>
+		/**
+		 * C​o​p​y​ ​k​e​y
+		 */
+		copyKey: string
+		/**
+		 * G​r​a​n​t​ ​k​e​y​ ​c​o​p​i​e​d​ ​—​ ​i​t​ ​w​i​l​l​ ​b​e​ ​c​l​e​a​r​e​d​ ​f​r​o​m​ ​y​o​u​r​ ​c​l​i​p​b​o​a​r​d​ ​i​n​ ​6​0​ ​s​e​c​o​n​d​s
+		 */
+		copiedToast: string
+		/**
+		 * A​n​y​o​n​e​ ​w​i​t​h​ ​t​h​i​s​ ​k​e​y​ ​c​a​n​ ​r​e​q​u​e​s​t​ ​i​n​v​o​i​c​e​s​ ​(​n​e​v​e​r​ ​s​p​e​n​d​)​.​ ​R​e​v​o​k​e​ ​i​t​ ​a​n​y​ ​t​i​m​e​ ​f​r​o​m​ ​t​h​i​s​ ​s​c​r​e​e​n​.
+		 */
+		instructions: string
+		/**
+		 * D​o​n​e
+		 */
+		done: string
+		/**
+		 * R​e​v​o​k​e
+		 */
+		revoke: string
+		/**
+		 * E​x​p​i​r​e​s​ ​i​n​ ​{​d​a​y​s​}​ ​d​a​y​s
+		 * @param {number} days
+		 */
+		expiresInDays: RequiredParams<'days'>
+		/**
+		 * T​h​i​s​ ​f​e​a​t​u​r​e​ ​i​s​ ​o​n​l​y​ ​a​v​a​i​l​a​b​l​e​ ​o​n​ ​a​ ​s​e​l​f​-​c​u​s​t​o​d​i​a​l​ ​w​a​l​l​e​t​ ​w​i​t​h​ ​S​p​a​r​k​ ​e​n​a​b​l​e​d​.
+		 */
+		errorUnavailable: string
+		/**
+		 * S​e​t​ ​a​ ​L​i​g​h​t​n​i​n​g​ ​a​d​d​r​e​s​s​ ​f​o​r​ ​t​h​i​s​ ​a​c​c​o​u​n​t​ ​f​i​r​s​t​.
+		 */
+		errorNoAddress: string
+		/**
+		 * T​o​o​ ​m​a​n​y​ ​a​t​t​e​m​p​t​s​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​ ​l​a​t​e​r​.
+		 */
+		errorRateLimit: string
+		/**
+		 * T​h​i​s​ ​k​e​y​ ​i​s​ ​a​l​r​e​a​d​y​ ​r​e​g​i​s​t​e​r​e​d​ ​t​o​ ​a​n​o​t​h​e​r​ ​a​c​c​o​u​n​t​.
+		 */
+		errorConflict: string
+		/**
+		 * I​n​v​a​l​i​d​ ​e​x​p​i​r​y​ ​—​ ​c​h​o​o​s​e​ ​a​ ​d​u​r​a​t​i​o​n​ ​o​f​ ​o​n​e​ ​y​e​a​r​ ​o​r​ ​l​e​s​s​.
+		 */
+		errorInvalidExpiry: string
+		/**
+		 * T​h​e​ ​s​e​r​v​e​r​ ​r​e​j​e​c​t​e​d​ ​t​h​i​s​ ​k​e​y​.​ ​G​e​n​e​r​a​t​e​ ​a​ ​n​e​w​ ​d​e​l​e​g​a​t​i​o​n​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		errorInvalidKey: string
+		/**
+		 * T​h​i​s​ ​a​d​d​r​e​s​s​ ​i​s​ ​r​e​g​i​s​t​e​r​e​d​ ​o​n​ ​a​ ​s​e​r​v​e​r​ ​t​h​a​t​ ​d​o​e​s​n​'​t​ ​s​u​p​p​o​r​t​ ​d​e​l​e​g​a​t​e​d​ ​g​r​a​n​t​s​.
+		 */
+		errorUnsupportedServer: string
+		/**
+		 * T​h​e​ ​s​e​r​v​e​r​ ​r​e​j​e​c​t​e​d​ ​t​h​e​ ​s​i​g​n​a​t​u​r​e​.​ ​C​h​e​c​k​ ​t​h​a​t​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​o​w​n​s​ ​t​h​i​s​ ​a​d​d​r​e​s​s​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		errorSignature: string
+		/**
+		 * C​o​u​l​d​n​'​t​ ​r​e​a​c​h​ ​t​h​e​ ​g​r​a​n​t​ ​s​e​r​v​e​r​.​ ​C​h​e​c​k​ ​y​o​u​r​ ​c​o​n​n​e​c​t​i​o​n​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		errorNetwork: string
+	}
+	NostrReplaceChoiceScreen: {
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​i​d​e​n​t​i​t​y
+		 */
+		title: string
+		/**
+		 * T​h​i​s​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​i​s​c​a​r​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​k​e​y​.​ ​C​o​n​n​e​c​t​e​d​ ​a​p​p​s​ ​w​i​l​l​ ​s​t​o​p​ ​w​o​r​k​i​n​g​ ​u​n​t​i​l​ ​y​o​u​ ​r​e​c​o​n​n​e​c​t​.​ ​B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y​ ​f​i​r​s​t​ ​i​f​ ​y​o​u​ ​m​i​g​h​t​ ​n​e​e​d​ ​i​t​.
+		 */
+		body: string
+		/**
+		 * I​m​p​o​r​t​ ​e​x​i​s​t​i​n​g
+		 */
+		importOption: string
+		/**
+		 * C​r​e​a​t​e​ ​n​e​w
+		 */
+		createOption: string
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​?
+		 */
+		confirmTitle: string
+		/**
+		 * T​h​i​s​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​i​s​c​a​r​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​k​e​y​.​ ​C​o​n​n​e​c​t​e​d​ ​a​p​p​s​ ​w​i​l​l​ ​s​t​o​p​ ​w​o​r​k​i​n​g​ ​u​n​t​i​l​ ​y​o​u​ ​r​e​c​o​n​n​e​c​t​.​ ​B​a​c​k​ ​u​p​ ​y​o​u​r​ ​k​e​y​ ​f​i​r​s​t​ ​i​f​ ​y​o​u​ ​m​i​g​h​t​ ​n​e​e​d​ ​i​t​.
+		 */
+		confirmConsequence: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		confirmCancel: string
+		/**
+		 * C​r​e​a​t​e​ ​a​ ​n​e​w​ ​i​d​e​n​t​i​t​y
+		 */
+		confirmContinue: string
+		/**
+		 * R​e​p​l​a​c​e​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​i​d​e​n​t​i​t​y​.​ ​T​h​i​s​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​i​s​c​a​r​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​k​e​y​.​ ​C​a​n​c​e​l​ ​o​r​ ​c​o​n​t​i​n​u​e​.
+		 */
+		confirmSrLabel: string
+	}
+	BtcpaySetupScreen: {
+		/**
+		 * B​T​C​P​a​y​ ​S​e​r​v​e​r
+		 */
+		title: string
+		/**
+		 * Y​o​u​r​ ​o​w​n​ ​B​T​C​P​a​y​ ​S​e​r​v​e​r
+		 */
+		introTitle: string
+		/**
+		 * B​T​C​P​a​y​ ​S​e​r​v​e​r​ ​i​s​ ​y​o​u​r​ ​o​w​n​ ​o​n​l​i​n​e​ ​s​t​o​r​e​ ​a​n​d​ ​b​i​t​c​o​i​n​ ​c​h​e​c​k​o​u​t​.​ ​W​e​'​l​l​ ​s​e​t​ ​o​n​e​ ​u​p​ ​f​o​r​ ​y​o​u​ ​a​n​d​ ​o​p​e​n​ ​i​t​ ​i​n​ ​y​o​u​r​ ​b​r​o​w​s​e​r​ ​—​ ​a​l​r​e​a​d​y​ ​s​i​g​n​e​d​ ​i​n​,​ ​r​e​a​d​y​ ​t​o​ ​r​e​c​e​i​v​e​.
+		 */
+		introBody: string
+		/**
+		 * Y​o​u​r​ ​s​t​o​r​e​ ​i​s​ ​w​i​r​e​d​ ​t​o​ ​y​o​u​r​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​{​l​n​A​d​d​r​e​s​s​}​ ​—​ ​e​v​e​r​y​t​h​i​n​g​ ​y​o​u​ ​r​e​c​e​i​v​e​ ​l​a​n​d​s​ ​s​t​r​a​i​g​h​t​ ​i​n​ ​y​o​u​r​ ​B​l​i​n​k​ ​w​a​l​l​e​t​.
+		 * @param {string} lnAddress
+		 */
+		introLightningAddress: RequiredParams<'lnAddress'>
+		/**
+		 * Y​o​u​ ​s​i​g​n​ ​i​n​ ​w​i​t​h​ ​y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.​ ​N​o​ ​p​a​s​s​w​o​r​d​,​ ​a​n​d​ ​y​o​u​r​ ​k​e​y​s​ ​n​e​v​e​r​ ​l​e​a​v​e​ ​y​o​u​r​ ​p​h​o​n​e​.
+		 */
+		introIdentity: string
+		/**
+		 * 2​1​0​0​ ​s​a​t​s​ ​p​e​r​ ​m​o​n​t​h​.
+		 */
+		introPrice: string
+		/**
+		 * S​e​t​ ​u​p​ ​m​y​ ​B​T​C​P​a​y​ ​S​e​r​v​e​r
+		 */
+		introCta: string
+		/**
+		 * Y​o​u​r​ ​B​T​C​P​a​y​ ​S​e​r​v​e​r​ ​i​s​ ​r​e​a​d​y
+		 */
+		readyTitle: string
+		/**
+		 * Y​o​u​r​ ​s​t​o​r​e​ ​i​s​ ​w​i​r​e​d​ ​t​o​ ​y​o​u​r​ ​L​i​g​h​t​n​i​n​g​ ​A​d​d​r​e​s​s​ ​{​l​n​A​d​d​r​e​s​s​}​ ​—​ ​e​v​e​r​y​t​h​i​n​g​ ​y​o​u​ ​r​e​c​e​i​v​e​ ​l​a​n​d​s​ ​i​n​ ​y​o​u​r​ ​B​l​i​n​k​ ​w​a​l​l​e​t​.
+		 * @param {string} lnAddress
+		 */
+		readyBody: RequiredParams<'lnAddress'>
+		/**
+		 * O​p​e​n​ ​m​y​ ​B​T​C​P​a​y​ ​d​a​s​h​b​o​a​r​d
+		 */
+		readyCta: string
+		/**
+		 * Y​o​u​r​ ​p​l​a​n
+		 */
+		planLabel: string
+		/**
+		 * 2​1​0​0​ ​s​a​t​s​/​m​o​n​t​h
+		 */
+		planValue: string
+		/**
+		 * P​l​a​n​ ​m​a​n​a​g​e​m​e​n​t​ ​a​n​d​ ​r​e​n​e​w​a​l​ ​a​r​e​ ​c​o​m​i​n​g​ ​s​o​o​n​.
+		 */
+		planNote: string
+		/**
+		 * S​e​t​t​i​n​g​ ​t​h​i​n​g​s​ ​u​p​…
+		 */
+		workingTitle: string
+		/**
+		 * S​i​g​n​i​n​g​ ​y​o​u​ ​i​n​ ​w​i​t​h​ ​y​o​u​r​ ​N​o​s​t​r​ ​i​d​e​n​t​i​t​y​ ​—​ ​y​o​u​r​ ​s​t​o​r​e​ ​w​i​l​l​ ​o​p​e​n​ ​i​n​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​i​n​ ​a​ ​m​o​m​e​n​t​.
+		 */
+		workingBody: string
+		/**
+		 * Y​o​u​'​r​e​ ​a​l​l​ ​s​e​t
+		 */
+		doneTitle: string
+		/**
+		 * W​e​ ​o​p​e​n​e​d​ ​y​o​u​r​ ​B​T​C​P​a​y​ ​d​a​s​h​b​o​a​r​d​ ​i​n​ ​t​h​e​ ​b​r​o​w​s​e​r​.
+		 */
+		doneBody: string
+		/**
+		 * O​p​e​n​ ​i​t​ ​a​g​a​i​n
+		 */
+		doneAgain: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -13488,6 +15541,10 @@ export type TranslationFunctions = {
 		 * Authenticate to continue
 		 */
 		authenticationDescription: () => LocalizedString
+		/**
+		 * Authentication is required. You can set up a PIN or biometrics in Security settings.
+		 */
+		authenticationRequired: () => LocalizedString
 		/**
 		 * Set up Biometric Authentication
 		 */
@@ -19742,6 +21799,10 @@ export type TranslationFunctions = {
 		 */
 		createAccount: () => LocalizedString
 		/**
+		 * Contact support
+		 */
+		contactSupport: () => LocalizedString
+		/**
 		 * Explore wallet
 		 */
 		exploreWallet: () => LocalizedString
@@ -19807,9 +21868,9 @@ export type TranslationFunctions = {
 			 */
 			recoveryOption: () => LocalizedString
 			/**
-			 * USD 1,000 daily transaction limit
+			 * USD {limit} daily transaction limit
 			 */
-			dailyLimit: () => LocalizedString
+			dailyLimit: (arg: { limit: string }) => LocalizedString
 			/**
 			 * Receive bitcoin onchain
 			 */
@@ -19826,10 +21887,6 @@ export type TranslationFunctions = {
 		 */
 		navToSettingsText: () => LocalizedString
 		/**
-		 * Pay this business
-		 */
-		payBusiness: () => LocalizedString
-		/**
 		 * Open settings
 		 */
 		openSettings: () => LocalizedString
@@ -19841,6 +21898,216 @@ export type TranslationFunctions = {
 		 * Oops. Something went wrong while getting your location
 		 */
 		error: () => LocalizedString
+		/**
+		 * Places from BTC Map, © OpenStreetMap contributors
+		 */
+		attribution: () => LocalizedString
+		/**
+		 * Unnamed place
+		 */
+		unnamedPlace: () => LocalizedString
+		/**
+		 * Loading places from BTC Map
+		 */
+		loadingPlaces: () => LocalizedString
+		/**
+		 * Couldn't load places from BTC Map
+		 */
+		placesError: () => LocalizedString
+		/**
+		 * Couldn't load this place
+		 */
+		detailsError: () => LocalizedString
+		/**
+		 * Nothing on this phone can open that link
+		 */
+		cannotOpenLink: () => LocalizedString
+		/**
+		 * Open now
+		 */
+		openNow: () => LocalizedString
+		/**
+		 * Closed
+		 */
+		closedNow: () => LocalizedString
+		/**
+		 * Navigate
+		 */
+		navigate: () => LocalizedString
+		/**
+		 * Pay this merchant
+		 */
+		payMerchant: () => LocalizedString
+		/**
+		 * Needs a specific app to pay
+		 */
+		requiresApp: () => LocalizedString
+		/**
+		 * Boosted
+		 */
+		boosted: () => LocalizedString
+		/**
+		 * Verified {date}
+		 */
+		verifiedOn: (arg: { date: string }) => LocalizedString
+		/**
+		 * Last verified {date}
+		 */
+		lastVerifiedOn: (arg: { date: string }) => LocalizedString
+		/**
+		 * This location needs to be surveyed
+		 */
+		needsSurvey: () => LocalizedString
+		/**
+		 * Couldn't search this area
+		 */
+		searchError: () => LocalizedString
+		/**
+		 * Clear search
+		 */
+		clearSearch: () => LocalizedString
+		/**
+		 * Nothing to show
+		 */
+		nothingToShow: () => LocalizedString
+		/**
+		 * {distance} meters away
+		 */
+		metersAway: (arg: { distance: string }) => LocalizedString
+		/**
+		 * {distance} km away
+		 */
+		kilometersAway: (arg: { distance: string }) => LocalizedString
+		/**
+		 * Filters
+		 */
+		filters: () => LocalizedString
+		/**
+		 * Categories
+		 */
+		categories: () => LocalizedString
+		/**
+		 * Select all
+		 */
+		selectAll: () => LocalizedString
+		/**
+		 * Clear all
+		 */
+		clearAll: () => LocalizedString
+		/**
+		 * Add to map
+		 */
+		addPlace: () => LocalizedString
+		/**
+		 * Add a place
+		 */
+		addPlaceTitle: () => LocalizedString
+		/**
+		 * Move the map to put the pin on the place
+		 */
+		placePinHint: () => LocalizedString
+		/**
+		 * Name
+		 */
+		placeName: () => LocalizedString
+		/**
+		 * What the place is called
+		 */
+		placeNameHint: () => LocalizedString
+		/**
+		 * Category
+		 */
+		placeCategory: () => LocalizedString
+		/**
+		 * Choose a category
+		 */
+		placeCategoryHint: () => LocalizedString
+		/**
+		 * Location
+		 */
+		placeLocation: () => LocalizedString
+		/**
+		 * Change
+		 */
+		changeLocation: () => LocalizedString
+		/**
+		 * New places go to BTC Map. Its community reviews and maintains everything on the map.
+		 */
+		placeReviewNote: () => LocalizedString
+		/**
+		 * Place sent to BTC Map — thanks for adding it. New places can take a while to appear on the map.
+		 */
+		placeSubmitted: () => LocalizedString
+		/**
+		 * The place could not be sent. Check your connection and try again.
+		 */
+		placeSubmissionFailed: () => LocalizedString
+		/**
+		 * BTC Map could not accept this place — it may already be on the map. Nothing was changed.
+		 */
+		placeRefused: () => LocalizedString
+		category: {
+			/**
+			 * Restaurants
+			 */
+			restaurants: () => LocalizedString
+			/**
+			 * Cafés
+			 */
+			cafes: () => LocalizedString
+			/**
+			 * Bakeries & sweets
+			 */
+			bakeries: () => LocalizedString
+			/**
+			 * Bars & nightlife
+			 */
+			bars: () => LocalizedString
+			/**
+			 * Groceries
+			 */
+			groceries: () => LocalizedString
+			/**
+			 * Shops
+			 */
+			shops: () => LocalizedString
+			/**
+			 * ATMs & exchange
+			 */
+			money: () => LocalizedString
+			/**
+			 * Hotels & lodging
+			 */
+			lodging: () => LocalizedString
+			/**
+			 * Cars & fuel
+			 */
+			automotive: () => LocalizedString
+			/**
+			 * Health
+			 */
+			health: () => LocalizedString
+			/**
+			 * Beauty & wellness
+			 */
+			beauty: () => LocalizedString
+			/**
+			 * Services
+			 */
+			services: () => LocalizedString
+			/**
+			 * Sports & outdoors
+			 */
+			sports: () => LocalizedString
+			/**
+			 * Leisure & culture
+			 */
+			leisure: () => LocalizedString
+			/**
+			 * Other
+			 */
+			other: () => LocalizedString
+		}
 	}
 	HomeScreen: {
 		/**
@@ -19887,9 +22154,21 @@ export type TranslationFunctions = {
 		 */
 		attemptsRemaining: (arg: { attemptsRemaining: number }) => LocalizedString
 		/**
+		 * Enter your PIN code
+		 */
+		enterPin: () => LocalizedString
+		/**
+		 * Couldn't record the failed attempt securely. Logging out.
+		 */
+		lockoutUnavailable: () => LocalizedString
+		/**
 		 * Incorrect PIN. 1 attempt remaining.
 		 */
 		oneAttemptRemaining: () => LocalizedString
+		/**
+		 * Couldn't check your PIN. Please try again.
+		 */
+		pinUnreadable: () => LocalizedString
 		/**
 		 * Set your PIN code
 		 */
@@ -19906,6 +22185,10 @@ export type TranslationFunctions = {
 		 * Too many failed attempts. Logging out.
 		 */
 		tooManyAttempts: () => LocalizedString
+		/**
+		 * Try again in {seconds}s.
+		 */
+		tryAgainIn: (arg: { seconds: number }) => LocalizedString
 		/**
 		 * Verify your PIN code
 		 */
@@ -20259,9 +22542,21 @@ export type TranslationFunctions = {
 		 */
 		expiredContent: (arg: { found: string }) => LocalizedString
 		/**
+		 * We found:
+
+	{found}
+
+	We could not process this code. It may have expired, or the service may be temporarily unavailable. Ask for a new code or try again later.
+		 */
+		unresolvedContent: (arg: { found: string }) => LocalizedString
+		/**
 		 * Invalid QR Code
 		 */
 		invalidTitle: () => LocalizedString
+		/**
+		 * Code Not Available
+		 */
+		unresolvedTitle: () => LocalizedString
 		/**
 		 * Open Link
 		 */
@@ -20538,6 +22833,10 @@ export type TranslationFunctions = {
 		 * We can't reach this Lightning address. If you are sure it exists, you can try again later.
 		 */
 		lnAddressError: () => LocalizedString
+		/**
+		 * We could not process this code. It may have expired, or the service may be temporarily unavailable.
+		 */
+		lnurlServiceError: () => LocalizedString
 		/**
 		 * Either make sure the spelling is right or ask the recipient for an invoice or BTC address instead.
 		 */
@@ -20989,6 +23288,10 @@ export type TranslationFunctions = {
 		 */
 		apiDashboard: () => LocalizedString
 		/**
+		 * Mode
+		 */
+		mode: () => LocalizedString
+		/**
 		 * Point of Sale
 		 */
 		pos: () => LocalizedString
@@ -21000,6 +23303,10 @@ export type TranslationFunctions = {
 		 * Create address
 		 */
 		createAddress: () => LocalizedString
+		/**
+		 * (disabled)
+		 */
+		addressDisabled: () => LocalizedString
 		/**
 		 * Donate Button
 		 */
@@ -21234,7 +23541,7 @@ export type TranslationFunctions = {
 		 */
 		itsATrialAccount: () => LocalizedString
 		/**
-		 * Your account is being deleted, please wait...
+		 * Your account is being closed, please wait...
 		 */
 		accountBeingDeleted: () => LocalizedString
 		/**
@@ -21616,6 +23923,88 @@ export type TranslationFunctions = {
 		 * not available in your region
 		 */
 		walletLabel: () => LocalizedString
+		/**
+		 * not available in Incognito mode
+		 */
+		anonModeWalletLabel: () => LocalizedString
+	}
+	AnonModeConvertModal: {
+		/**
+		 * Transfer your Dollar Balance first
+		 */
+		title: () => LocalizedString
+		/**
+		 * Incognito Mode supports the Bitcoin Balance only. Transfer your Dollar Balance to your Bitcoin Balance to switch.
+		 */
+		body: () => LocalizedString
+	}
+	EnhancedModePrompt: {
+		/**
+		 * This feature requires Enhanced Mode
+		 */
+		title: () => LocalizedString
+		/**
+		 * You're in Incognito Mode, Blink doesn't know your region, so some features aren't available. Switch to Enhanced to run a location check and unlock all features for your region.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Switch to Enhanced
+		 */
+		switchButton: () => LocalizedString
+	}
+	ModeSwitchSuccessScreen: {
+		/**
+		 * Switched to Enhanced
+	Non-custodial Mode
+		 */
+		enhanced: () => LocalizedString
+		/**
+		 * Switched to Incognito
+	Non-custodial Mode
+		 */
+		anon: () => LocalizedString
+	}
+	AddressSuccessScreen: {
+		/**
+		 * Lightning Address set
+		 */
+		title: () => LocalizedString
+	}
+	RequiresBlinkAddressPrompt: {
+		/**
+		 * This feature requires a blink.sv LN Address
+		 */
+		title: () => LocalizedString
+		/**
+		 * These services are not yet available for alternative Lightning Address domains — coming soon!
+		 */
+		body: () => LocalizedString
+		/**
+		 * Claim @blink.sv address
+		 */
+		claimButton: () => LocalizedString
+	}
+	RestrictedRegion: {
+		/**
+		 * Restricted region detected
+		 */
+		title: () => LocalizedString
+		/**
+		 * Your connection appears to be from a restricted region. Blink cannot provide services from this location. Your balances are unaffected.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Once you leave this region, all functionality will return to normal.
+		 */
+		bodyReturn: () => LocalizedString
+		/**
+		 * Learn more
+		 */
+		learnMore: () => LocalizedString
+		/**
+		 * Contact support
+		 */
+		contactSupport: () => LocalizedString
 	}
 	DollarBalanceRestriction: {
 		/**
@@ -21767,19 +24156,23 @@ export type TranslationFunctions = {
 		 */
 		lightning: () => LocalizedString
 		/**
+		 * Lightning below {threshold} SAT
+		 */
+		lightningBelowThreshold: (arg: { threshold: string }) => LocalizedString
+		/**
 		 * Intraledger
 		 */
 		intraledger: () => LocalizedString
 		/**
-		 * Onchain priority (asap)
+		 * Onchain Priority (~10m)
 		 */
 		onchainPriority: () => LocalizedString
 		/**
-		 * Onchain standard (~4h)
+		 * Onchain Standard (~4h)
 		 */
 		onchainStandard: () => LocalizedString
 		/**
-		 * Onchain economy
+		 * Onchain Economy (~24h)
 		 */
 		onchainEconomy: () => LocalizedString
 		/**
@@ -21806,10 +24199,6 @@ export type TranslationFunctions = {
 		 * no fee
 		 */
 		noFee: () => LocalizedString
-		/**
-		 * {fee} + ~{routingFee} routing fee
-		 */
-		lightningSendFee: (arg: { fee: string, routingFee: string }) => LocalizedString
 		/**
 		 * from ~{fee}
 		 */
@@ -21927,10 +24316,6 @@ export type TranslationFunctions = {
 		 */
 		upgradeToLevel: (arg: { level: number }) => LocalizedString
 		/**
-		 * Not now
-		 */
-		notNow: () => LocalizedString
-		/**
 		 * Set up Level {level} account
 		 */
 		setUpLevelAccount: (arg: { level: number }) => LocalizedString
@@ -21982,6 +24367,96 @@ export type TranslationFunctions = {
 		 * Choose well – it cannot be changed later!
 		 */
 		itCannotBeChanged: () => LocalizedString
+	}
+	ChooseLnurlDomainScreen: {
+		/**
+		 * Choose your Lightning Address domain
+		 */
+		title: () => LocalizedString
+		/**
+		 * Your Lightning Address is how others pay you. Pick which domain it ends with.
+		 */
+		subtitle: () => LocalizedString
+		/**
+		 * @blink.sv
+		 */
+		blinkSvLabel: () => LocalizedString
+		/**
+		 * The standard Blink domain, run by Blink. Recognized, reliable, and free.
+		 */
+		blinkSvDescription: () => LocalizedString
+		/**
+		 * @twentyone.ist
+		 */
+		twentyoneIstLabel: () => LocalizedString
+		/**
+		 * The twentyone.ist server. Enables delegated grants, and multiple aliases (coming soon).
+		 */
+		twentyoneIstDescription: () => LocalizedString
+		/**
+		 * Not available yet
+		 */
+		twentyoneIstUnavailable: () => LocalizedString
+		/**
+		 * Not available in Incognito
+		 */
+		blinkSvIncognitoUnavailable: () => LocalizedString
+		/**
+		 * Continue
+		 */
+		continueButton: () => LocalizedString
+		/**
+		 * This choice is fixed once your address is created.
+		 */
+		domainCannotBeChanged: () => LocalizedString
+	}
+	SetSelfCustodialAddressScreen: {
+		/**
+		 * Choose Lightning Address
+		 */
+		title: () => LocalizedString
+		/**
+		 * satoshi
+		 */
+		addressPlaceholder: () => LocalizedString
+		/**
+		 * Your address will be @{domain}
+		 */
+		onDomain: (arg: { domain: string }) => LocalizedString
+		/**
+		 * Set Lightning address
+		 */
+		setAddressButton: () => LocalizedString
+		/**
+		 * Checking availability…
+		 */
+		checkingAvailability: () => LocalizedString
+		Errors: {
+			/**
+			 * Address must be at least 3 characters long
+			 */
+			tooShort: () => LocalizedString
+			/**
+			 * Address must be at most 50 characters long
+			 */
+			tooLong: () => LocalizedString
+			/**
+			 * Address can only contain letters, numbers, and underscores
+			 */
+			invalidCharacter: () => LocalizedString
+			/**
+			 * Sorry, this address is already taken
+			 */
+			addressUnavailable: () => LocalizedString
+			/**
+			 * An unknown error occurred, please try again later
+			 */
+			unknownError: () => LocalizedString
+			/**
+			 * Back up your wallet before creating a Lightning address
+			 */
+			backupRequired: () => LocalizedString
+		}
 	}
 	WelcomeFirstScreen: {
 		/**
@@ -22112,9 +24587,9 @@ export type TranslationFunctions = {
 			 */
 			receiveBitcoinDescription: () => LocalizedString
 			/**
-			 * Send up to USD 1,000 per day
+			 * Send up to USD {limit} per day
 			 */
-			dailyLimitDescription: () => LocalizedString
+			dailyLimitDescription: (arg: { limit: string }) => LocalizedString
 			/**
 			 * Receive on-chain payments
 			 */
@@ -22530,6 +25005,10 @@ export type TranslationFunctions = {
 		 * Card
 		 */
 		card: () => LocalizedString
+		/**
+		 * Not now
+		 */
+		notNow: () => LocalizedString
 		/**
 		 * Close
 		 */
@@ -23080,7 +25559,7 @@ export type TranslationFunctions = {
 		 */
 		emailCopied: (arg: { email: string }) => LocalizedString
 		/**
-		 * Delete account
+		 * Close account
 		 */
 		deleteAccount: () => LocalizedString
 		/**
@@ -23088,7 +25567,7 @@ export type TranslationFunctions = {
 		 */
 		'delete': () => LocalizedString
 		/**
-		 * Please type "{delete}" to confirm account deletion
+		 * Please type "{delete}" to confirm account closure
 		 */
 		typeDelete: (arg: { delete: string }) => LocalizedString
 		/**
@@ -23096,21 +25575,21 @@ export type TranslationFunctions = {
 		 */
 		finalConfirmationAccountDeletionTitle: () => LocalizedString
 		/**
-		 * Are you sure you want to delete your account? This action is irreversible.
+		 * After closing, you won't be able to access or use your account. We may retain certain records as required by law and our retention obligations. Are you sure you want to close your account?
 		 */
 		finalConfirmationAccountDeletionMessage: () => LocalizedString
 		/**
-		 * Deleting your account will cause you to lose access to your current balance. Are you sure you want to proceed?
+		 * Closing your account will cause you to lose access to your current balance. Are you sure you want to proceed?
 		 */
 		deleteAccountBalanceWarning: () => LocalizedString
 		/**
-		 * Your account has been written for deletion.
+		 * Your account has been closed.
 
-	When the probation period related to regulatory requirement is over, the remaining data related to your account will be permanently deleted.
+	We may retain certain records as required by law and our retention obligations.
 		 */
 		deleteAccountConfirmation: () => LocalizedString
 		/**
-		 * Hey there!, please delete my account. My phone number is {phoneNumber}.
+		 * Hey there!, please close my account. My phone number is {phoneNumber}.
 		 */
 		deleteAccountFromPhone: (arg: { phoneNumber: string }) => LocalizedString
 		/**
@@ -23122,9 +25601,10 @@ export type TranslationFunctions = {
 		 */
 		bye: () => LocalizedString
 		/**
-		 * Attention: Account deletion is permanent!
-	Make sure wallets have no funds before deleting.
-	Deleted account cannot be reinstated.
+		 * Attention: Closing your account is permanent!
+	Make sure wallets have no funds before closing.
+	A closed account cannot be reinstated.
+	We may retain certain records as required by law.
 		 */
 		deleteAccountWarning: () => LocalizedString
 	}
@@ -24568,10 +27048,6 @@ export type TranslationFunctions = {
 				 */
 				biometricDescription: () => LocalizedString
 				/**
-				 * Biometric authentication is required to change your PIN.
-				 */
-				biometricRequired: () => LocalizedString
-				/**
 				 * PIN changed
 				 */
 				pinChangedTitle: () => LocalizedString
@@ -25818,6 +28294,10 @@ export type TranslationFunctions = {
 			 */
 			body: (arg: { date: string, receiveStopsDate: string }) => LocalizedString
 			/**
+			 * Receiving has stopped. Move to a non-custodial account via guided migration, or withdraw, before {date}.
+			 */
+			bodyReceiveDisabled: (arg: { date: string }) => LocalizedString
+			/**
 			 * Migrate
 			 */
 			migrateCta: () => LocalizedString
@@ -25975,6 +28455,38 @@ export type TranslationFunctions = {
 		 */
 		createFailed: () => LocalizedString
 	}
+	ChooseExperienceScreen: {
+		/**
+		 * Select non-custodial mode
+		 */
+		title: () => LocalizedString
+		/**
+		 * Your choice decides which features are available. You can switch whenever you want.
+		 */
+		subtitle: () => LocalizedString
+		/**
+		 * Enhanced
+	Mode
+		 */
+		enhancedLabel: () => LocalizedString
+		/**
+		 * We use your region to unlock valuable services available where you are.
+		 */
+		enhancedDescription: () => LocalizedString
+		/**
+		 * Incognito
+	Mode
+		 */
+		anonLabel: () => LocalizedString
+		/**
+		 * For maximum privacy. Less features.
+		 */
+		anonDescription: () => LocalizedString
+		/**
+		 * Continue
+		 */
+		continueButton: () => LocalizedString
+	}
 	UnsupportedRegionScreen: {
 		/**
 		 * Unsupported region
@@ -25984,6 +28496,22 @@ export type TranslationFunctions = {
 		 * Unfortunately we can not serve users from your current region.
 		 */
 		description: () => LocalizedString
+		/**
+		 * Unfortunately we can not create new custodial accounts in your current region. You can use a self-custodial account instead.
+		 */
+		custodialSignupDescription: () => LocalizedString
+		/**
+		 * Unfortunately we can not create new custodial accounts in your current region.
+		 */
+		custodialSignupOnlyDescription: () => LocalizedString
+		/**
+		 * Region not determined
+		 */
+		unknownRegionTitle: () => LocalizedString
+		/**
+		 * We could not determine your region. Please check your connection and try again.
+		 */
+		unknownRegionDescription: () => LocalizedString
 	}
 	RestoreScreen: {
 		/**
@@ -26492,6 +29020,1516 @@ export type TranslationFunctions = {
 		 * Go back
 		 */
 		hasFundsWarningButton: () => LocalizedString
+	}
+	NostrCreateIdentityScreen: {
+		/**
+		 * Create new
+		 */
+		screenCreateTitle: () => LocalizedString
+		/**
+		 * Next step creates your Nostr keys
+		 */
+		chooseTitle: () => LocalizedString
+		/**
+		 * We recommend you use your wallet backup phrase to generate it, but you can also generate a brand new one.
+		 */
+		chooseBody: () => LocalizedString
+		/**
+		 * Learn more here
+		 */
+		chooseLearnMore: () => LocalizedString
+		/**
+		 * Generate from wallet
+		 */
+		chooseFromWallet: () => LocalizedString
+		/**
+		 * Generate new
+		 */
+		chooseNew: () => LocalizedString
+		/**
+		 * Generating…
+		 */
+		generatingTitle: () => LocalizedString
+		/**
+		 * Your backup phrase is used to create your Nostr keys
+		 */
+		generatingFromSeed: () => LocalizedString
+		/**
+		 * Creating a brand-new Nostr key.
+		 */
+		generatingRandom: () => LocalizedString
+		/**
+		 * Create your Nostr identity
+		 */
+		introTitle: () => LocalizedString
+		/**
+		 * A Nostr identity is a key that is yours alone. You use it to sign in to apps without a password, and only you control it.
+		 */
+		introBody: () => LocalizedString
+		/**
+		 * Learn more
+		 */
+		introLearnMore: () => LocalizedString
+		/**
+		 * Your identity is a cryptographic key kept on this device. Blink never sees the private part. You get one identity per account, and you can have as many accounts as you like.
+		 */
+		introLearnMoreBody: () => LocalizedString
+		/**
+		 * Create my identity
+		 */
+		introCreate: () => LocalizedString
+		/**
+		 * Derive from my wallet seed
+		 */
+		introCreateFromSeed: () => LocalizedString
+		/**
+		 * Generate a random key
+		 */
+		introCreateRandom: () => LocalizedString
+		/**
+		 * Import an existing key
+		 */
+		introImport: () => LocalizedString
+		/**
+		 * Ready to create your identity
+		 */
+		confirmTitle: () => LocalizedString
+		/**
+		 * This creates a new key on your device. Only you will control it, and Blink never sees the private key.
+		 */
+		confirmBody: () => LocalizedString
+		/**
+		 * Create identity
+		 */
+		confirmCta: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		confirmCancel: () => LocalizedString
+		/**
+		 * Creating your identity
+		 */
+		generating: () => LocalizedString
+		/**
+		 * Still working, this is taking a little longer than usual
+		 */
+		slowHint: () => LocalizedString
+		/**
+		 * We couldn't create your identity
+		 */
+		errorTitle: () => LocalizedString
+		/**
+		 * Your device's secure key generator wasn't available, so no key was created. Your current identity is unchanged.
+		 */
+		errorBody: () => LocalizedString
+		/**
+		 * Your current identity is unchanged.
+		 */
+		errorUnchanged: () => LocalizedString
+		/**
+		 * Try again
+		 */
+		errorTryAgain: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		errorCancel: () => LocalizedString
+		/**
+		 * This is yours. Only you control it. Blink never sees your private key.
+		 */
+		resultOwnership: () => LocalizedString
+		/**
+		 * You have one identity for this account. Create another account for another identity.
+		 */
+		resultOneIdentity: () => LocalizedString
+		/**
+		 * Your public address
+		 */
+		resultPublicAddressLabel: () => LocalizedString
+		/**
+		 * Tap to reveal
+		 */
+		resultReveal: () => LocalizedString
+		/**
+		 * Copy
+		 */
+		resultCopy: () => LocalizedString
+		/**
+		 * Copied
+		 */
+		resultCopied: () => LocalizedString
+		/**
+		 * Identity picture for your public address
+		 */
+		identiconA11y: () => LocalizedString
+		/**
+		 * Back up your key
+		 */
+		backupTitle: () => LocalizedString
+		/**
+		 * If you lose this device, a backup is the only way to recover your identity.
+		 */
+		backupBody: () => LocalizedString
+		/**
+		 * This key is derived from your wallet seed — you can always re-create it from the same seed. A separate backup is still recommended.
+		 */
+		backupDerivedNote: () => LocalizedString
+		/**
+		 * Back up your key
+		 */
+		backupCta: () => LocalizedString
+		/**
+		 * Not now
+		 */
+		backupNotNow: () => LocalizedString
+	}
+	NostrImportIdentityScreen: {
+		/**
+		 * Import an existing key
+		 */
+		title: () => LocalizedString
+		/**
+		 * Paste your secret key or scan its QR code to use your existing Nostr identity here.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Your Nostr secret key
+		 */
+		pasteLabel: () => LocalizedString
+		/**
+		 * nsec1…
+		 */
+		pastePlaceholder: () => LocalizedString
+		/**
+		 * Paste your key
+		 */
+		pasteCta: () => LocalizedString
+		/**
+		 * Paste
+		 */
+		pasteAction: () => LocalizedString
+		/**
+		 * Invalid key. Probably something else.
+		 */
+		invalidInline: () => LocalizedString
+		/**
+		 * Scan a QR code
+		 */
+		scanCta: () => LocalizedString
+		/**
+		 * Continue
+		 */
+		continueCta: () => LocalizedString
+		/**
+		 * That doesn't look like a valid nsec
+		 */
+		invalidTitle: () => LocalizedString
+		/**
+		 * Check that you pasted the full nsec key. Your current identity is unchanged.
+		 */
+		invalidBody: () => LocalizedString
+		/**
+		 * Your current identity is unchanged.
+		 */
+		invalidUnchanged: () => LocalizedString
+		/**
+		 * Replace your identity?
+		 */
+		replaceTitle: () => LocalizedString
+		/**
+		 * This replaces the identity on this account. The current key will be permanently discarded and cannot be recovered unless you backed it up.
+		 */
+		replaceConsequence: () => LocalizedString
+		/**
+		 * Replace identity
+		 */
+		replaceConfirm: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		replaceCancel: () => LocalizedString
+		/**
+		 * Replace the identity on this account. The current key is permanently discarded. Confirm or cancel.
+		 */
+		replaceSrLabel: () => LocalizedString
+	}
+	NostrBackupScreen: {
+		/**
+		 * Back up your key
+		 */
+		title: () => LocalizedString
+		/**
+		 * Choose how to back up your identity so you can restore it on a new device.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Cloud backup
+		 */
+		methodCloud: () => LocalizedString
+		/**
+		 * Password manager
+		 */
+		methodKeychain: () => LocalizedString
+		/**
+		 * Manual backup
+		 */
+		methodManual: () => LocalizedString
+		/**
+		 * Choose your backup method
+		 */
+		methodTitle: () => LocalizedString
+		/**
+		 * We recommend Google Drive or Apple iCloud for new users.
+		 */
+		methodSubtitle: () => LocalizedString
+		/**
+		 * Backing up is optional — you can always do it later from Nostr identity settings.
+		 */
+		methodFootnote: () => LocalizedString
+		/**
+		 * The backup file is stored in your own cloud drive. Blink never sees the key or the password.
+		 */
+		cloudFootnote: () => LocalizedString
+		/**
+		 * Your Nostr secret key
+		 */
+		manualTitle: () => LocalizedString
+		/**
+		 * Anyone with this key controls your Nostr identity. Store it somewhere safe and never share it.
+		 */
+		manualBody: () => LocalizedString
+		/**
+		 * Reveal key
+		 */
+		manualReveal: () => LocalizedString
+		/**
+		 * Hide key
+		 */
+		manualHide: () => LocalizedString
+		/**
+		 * Loading…
+		 */
+		manualLoading: () => LocalizedString
+		/**
+		 * Copy secret
+		 */
+		manualCopy: () => LocalizedString
+		/**
+		 * Secret key copied
+		 */
+		manualCopied: () => LocalizedString
+		/**
+		 * I understand nobody can recover my nostr identity if I lose this secret key
+		 */
+		manualAcknowledge: () => LocalizedString
+		/**
+		 * Done
+		 */
+		manualDone: () => LocalizedString
+		/**
+		 * Set a backup password. Blink never sees it — so keep it somewhere safe, because we can't recover it for you.
+		 */
+		passwordPrompt: () => LocalizedString
+		/**
+		 * Backup password
+		 */
+		passwordLabel: () => LocalizedString
+		/**
+		 * Encrypt and back up
+		 */
+		passwordCta: () => LocalizedString
+		/**
+		 * Back up without a password?
+		 */
+		plaintextTitle: () => LocalizedString
+		/**
+		 * Without a password, your key is stored unprotected in your cloud drive. Anyone with access to that drive can use your identity. Continue without a password?
+		 */
+		plaintextConsequence: () => LocalizedString
+		/**
+		 * Continue without a password
+		 */
+		plaintextConfirm: () => LocalizedString
+		/**
+		 * Set a password instead
+		 */
+		plaintextCancel: () => LocalizedString
+		/**
+		 * Back up without a password. Your key is stored unprotected. Continue or cancel.
+		 */
+		plaintextSrLabel: () => LocalizedString
+		/**
+		 * Not now
+		 */
+		notNow: () => LocalizedString
+		/**
+		 * Saved to your password manager as "{name}"
+		 */
+		savedToPasswordManager: (arg: { name: string }) => LocalizedString
+		/**
+		 * Saved to {provider} as "{name}"
+		 */
+		savedToCloud: (arg: { name: string, provider: string }) => LocalizedString
+		/**
+		 * Backed up
+		 */
+		statusBackedUp: () => LocalizedString
+		/**
+		 * Backed up ({method})
+		 */
+		statusBackedUpMethod: (arg: { method: string }) => LocalizedString
+		/**
+		 * Not backed up
+		 */
+		statusNotBackedUp: () => LocalizedString
+	}
+	NostrConnectedClientsScreen: {
+		/**
+		 * Connected apps
+		 */
+		sectionTitle: () => LocalizedString
+		/**
+		 * No apps connected yet.
+		 */
+		empty: () => LocalizedString
+		/**
+		 * Disconnect
+		 */
+		disconnect: () => LocalizedString
+		/**
+		 * Disconnect {client}?
+		 */
+		confirmTitle: (arg: { client: string }) => LocalizedString
+		/**
+		 * It will no longer be able to reach your signer. It can reconnect with your approval.
+		 */
+		confirmBody: () => LocalizedString
+		/**
+		 * Disconnect
+		 */
+		confirmDisconnect: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		confirmCancel: () => LocalizedString
+		/**
+		 * Disconnect {client}. It can reconnect with your approval. Disconnect or cancel.
+		 */
+		srLabel: (arg: { client: string }) => LocalizedString
+		/**
+		 * {client}. Connected app. Tap to view activity.
+		 */
+		rowA11y: (arg: { client: string }) => LocalizedString
+	}
+	NostrDuplicateConnectionScreen: {
+		/**
+		 * {client} is already connected
+		 */
+		title: (arg: { client: string }) => LocalizedString
+		/**
+		 * This app is already connected under a different session. What would you like to do?
+		 */
+		body: () => LocalizedString
+		/**
+		 * Replace the old connection
+		 */
+		replace: () => LocalizedString
+		/**
+		 * Keep both
+		 */
+		keepBoth: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		cancel: () => LocalizedString
+		/**
+		 * Replace the existing connection for {client} with this new one.
+		 */
+		replaceA11y: (arg: { client: string }) => LocalizedString
+		/**
+		 * Keep both the existing and the new connection for {client}.
+		 */
+		keepBothA11y: (arg: { client: string }) => LocalizedString
+		/**
+		 * {client} is already connected. Replace the old connection, keep both, or cancel.
+		 */
+		srLabel: (arg: { client: string }) => LocalizedString
+	}
+	SupportChatScreen: {
+		/**
+		 * Support
+		 */
+		title: () => LocalizedString
+		/**
+		 * Connecting…
+		 */
+		statusStarting: () => LocalizedString
+		/**
+		 * Reconnecting…
+		 */
+		statusReconnecting: () => LocalizedString
+		/**
+		 * Connection issues — messages may be delayed
+		 */
+		statusDegraded: () => LocalizedString
+		/**
+		 * Start chat
+		 */
+		start: () => LocalizedString
+		/**
+		 * Starting…
+		 */
+		starting: () => LocalizedString
+		/**
+		 * Message
+		 */
+		composerPlaceholder: () => LocalizedString
+		/**
+		 * Sending paused — see the warning above
+		 */
+		composerBlockedPlaceholder: () => LocalizedString
+		/**
+		 * Send
+		 */
+		send: () => LocalizedString
+		/**
+		 * Someone unverified is in this chat: {members}. Sending is paused until they leave or are verified.
+		 */
+		unverifiedBlocked: (arg: { members: string }) => LocalizedString
+		/**
+		 * Start a new conversation
+		 */
+		startNew: () => LocalizedString
+		/**
+		 * This conversation has ended.
+		 */
+		endedUser: () => LocalizedString
+		/**
+		 * This conversation has ended — a newer one replaced it.
+		 */
+		endedReplaced: () => LocalizedString
+		/**
+		 * This conversation can't continue on this device. Your messages are saved below — start a new conversation and support will pick up from here.
+		 */
+		endedStuck: () => LocalizedString
+		/**
+		 * You were removed from this conversation.
+		 */
+		endedRemoved: () => LocalizedString
+		/**
+		 * This conversation could not be restored after an app update. Earlier messages are shown read-only.
+		 */
+		endedUnrestorable: () => LocalizedString
+		/**
+		 * An earlier conversation, from before support chat got its own key on this device. It is read-only — start a new conversation to continue.
+		 */
+		endedIdentity: () => LocalizedString
+		/**
+		 * A previous conversation (read-only)
+		 */
+		viewingPast: () => LocalizedString
+		/**
+		 * Back to the current conversation
+		 */
+		backToCurrent: () => LocalizedString
+		/**
+		 * Conversations
+		 */
+		conversations: () => LocalizedString
+		/**
+		 * Chat with Blink Support
+		 */
+		emptyTitle: () => LocalizedString
+		/**
+		 * Ask us anything. Messages are encrypted on this device and decrypted only by Blink's own support system, where our team reads and answers them.
+		 */
+		emptyBody: () => LocalizedString
+		/**
+		 * Blink assistant
+		 */
+		assistantName: () => LocalizedString
+		/**
+		 * {name} · Blink Support
+		 */
+		agentLabel: (arg: { name: string }) => LocalizedString
+		/**
+		 * Today
+		 */
+		today: () => LocalizedString
+		/**
+		 * Yesterday
+		 */
+		yesterday: () => LocalizedString
+		/**
+		 * Open in the app: {screen}
+		 */
+		appLink: (arg: { screen: string }) => LocalizedString
+		/**
+		 * Open this link?
+		 */
+		linkSheetTitle: () => LocalizedString
+		/**
+		 * Check the address before you open it. Blink Support never asks for your recovery phrase.
+		 */
+		linkSheetHint: () => LocalizedString
+		/**
+		 * Open
+		 */
+		linkSheetOpen: () => LocalizedString
+		/**
+		 * Copy link
+		 */
+		linkSheetCopy: () => LocalizedString
+		/**
+		 * Copied
+		 */
+		linkSheetCopied: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		linkSheetCancel: () => LocalizedString
+		appScreens: {
+			/**
+			 * Home
+			 */
+			home: () => LocalizedString
+			/**
+			 * Settings
+			 */
+			settings: () => LocalizedString
+			/**
+			 * Security
+			 */
+			security: () => LocalizedString
+			/**
+			 * Two-factor authentication
+			 */
+			twoFactor: () => LocalizedString
+			/**
+			 * Email
+			 */
+			email: () => LocalizedString
+			/**
+			 * Account
+			 */
+			account: () => LocalizedString
+			/**
+			 * Transaction limits
+			 */
+			limits: () => LocalizedString
+			/**
+			 * Fee rates
+			 */
+			feeRates: () => LocalizedString
+			/**
+			 * Notifications
+			 */
+			notifications: () => LocalizedString
+			/**
+			 * Language
+			 */
+			language: () => LocalizedString
+			/**
+			 * Display currency
+			 */
+			displayCurrency: () => LocalizedString
+			/**
+			 * Default account
+			 */
+			defaultAccount: () => LocalizedString
+			/**
+			 * Receive
+			 */
+			receive: () => LocalizedString
+			/**
+			 * Circles
+			 */
+			circles: () => LocalizedString
+			/**
+			 * Earn
+			 */
+			earn: () => LocalizedString
+			/**
+			 * Map
+			 */
+			map: () => LocalizedString
+			/**
+			 * Price history
+			 */
+			price: () => LocalizedString
+			/**
+			 * Card
+			 */
+			card: () => LocalizedString
+			/**
+			 * Card limits
+			 */
+			cardLimits: () => LocalizedString
+			/**
+			 * Card settings
+			 */
+			cardSettings: () => LocalizedString
+			/**
+			 * Card statements
+			 */
+			cardStatements: () => LocalizedString
+		}
+	}
+	SupportShareScreen: {
+		/**
+		 * Share details
+		 */
+		detailsTitle: () => LocalizedString
+		/**
+		 * Share a transaction
+		 */
+		transactionTitle: () => LocalizedString
+		/**
+		 * Share app & account details
+		 */
+		menuDetails: () => LocalizedString
+		/**
+		 * Share a transaction
+		 */
+		menuTransaction: () => LocalizedString
+		/**
+		 * Share
+		 */
+		attach: () => LocalizedString
+		/**
+		 * Support often needs these to help you. Choose what to share — only the selected lines are sent, and you can see them below.
+		 */
+		detailsIntro: () => LocalizedString
+		/**
+		 * Choose the payment you need help with.
+		 */
+		transactionIntro: () => LocalizedString
+		/**
+		 * What will be sent
+		 */
+		preview: () => LocalizedString
+		/**
+		 * Send to Blink Support
+		 */
+		send: () => LocalizedString
+		/**
+		 * Sending…
+		 */
+		sending: () => LocalizedString
+		/**
+		 * Blink Support never asks for your backup phrase or keys. Never share them.
+		 */
+		never: () => LocalizedString
+		/**
+		 * No transactions yet.
+		 */
+		noTransactions: () => LocalizedString
+		/**
+		 * This transaction is not available here.
+		 */
+		notFound: () => LocalizedString
+		/**
+		 * Choose another transaction
+		 */
+		chooseOther: () => LocalizedString
+		/**
+		 * Sent
+		 */
+		sent: () => LocalizedString
+		/**
+		 * Received
+		 */
+		received: () => LocalizedString
+		/**
+		 * Review & share details
+		 */
+		reviewDetails: () => LocalizedString
+		/**
+		 * Choose a transaction to share
+		 */
+		reviewTransaction: () => LocalizedString
+		/**
+		 * Get help with this payment
+		 */
+		getHelp: () => LocalizedString
+		/**
+		 * Photo or screenshot
+		 */
+		menuImage: () => LocalizedString
+		/**
+		 * Check the picture first: it must not show your backup phrase, keys or anything private you don't want support to see.
+		 */
+		imageCheck: () => LocalizedString
+		/**
+		 * Send picture
+		 */
+		sendImage: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		cancel: () => LocalizedString
+		/**
+		 * This picture is too large to send.
+		 */
+		imageTooLarge: () => LocalizedString
+		/**
+		 * Picture (not available on this device any more)
+		 */
+		imageMissing: () => LocalizedString
+		/**
+		 * Close
+		 */
+		viewerClose: () => LocalizedString
+		/**
+		 * Save to Photos
+		 */
+		viewerSave: () => LocalizedString
+		/**
+		 * Saved to your Photos
+		 */
+		viewerSaved: () => LocalizedString
+		/**
+		 * Could not save the picture
+		 */
+		viewerSaveFailed: () => LocalizedString
+		/**
+		 * Share
+		 */
+		viewerShare: () => LocalizedString
+	}
+	SupportConversationsScreen: {
+		/**
+		 * Conversations
+		 */
+		title: () => LocalizedString
+		/**
+		 * Conversation
+		 */
+		untitled: () => LocalizedString
+		/**
+		 * Current conversation
+		 */
+		current: () => LocalizedString
+		/**
+		 * Unread messages
+		 */
+		unread: () => LocalizedString
+		/**
+		 * No conversations yet.
+		 */
+		empty: () => LocalizedString
+		/**
+		 * Start new
+		 */
+		startNew: () => LocalizedString
+		/**
+		 * Starting…
+		 */
+		starting: () => LocalizedString
+	}
+	NostrActivityScreen: {
+		/**
+		 * Activity
+		 */
+		title: () => LocalizedString
+		/**
+		 * {client} — Activity
+		 */
+		titleForClient: (arg: { client: string }) => LocalizedString
+		/**
+		 * No activity yet.
+		 */
+		empty: () => LocalizedString
+		/**
+		 * Total
+		 */
+		statTotal: () => LocalizedString
+		/**
+		 * Accepted
+		 */
+		statAccepted: () => LocalizedString
+		/**
+		 * Rejected
+		 */
+		statRejected: () => LocalizedString
+		/**
+		 * Approved
+		 */
+		accepted: () => LocalizedString
+		/**
+		 * Rejected
+		 */
+		rejected: () => LocalizedString
+		/**
+		 * Signed event (kind {kind})
+		 */
+		signEventKind: (arg: { kind: number }) => LocalizedString
+		/**
+		 * Signed event
+		 */
+		signEvent: () => LocalizedString
+		/**
+		 * Connect
+		 */
+		methodConnect: () => LocalizedString
+		/**
+		 * ack
+		 */
+		methodConnectAck: () => LocalizedString
+		/**
+		 * Read your public key
+		 */
+		methodReadPubkey: () => LocalizedString
+		/**
+		 * Encrypt a message
+		 */
+		methodEncrypt: () => LocalizedString
+		/**
+		 * Decrypt a message
+		 */
+		methodDecrypt: () => LocalizedString
+		/**
+		 * {action} — {decision} at {when}.
+		 */
+		rowA11y: (arg: { action: string, decision: string, when: string }) => LocalizedString
+	}
+	NostrAwaitingFollowupScreen: {
+		/**
+		 * Waiting for sign-in challenge from app…
+		 */
+		body: () => LocalizedString
+		/**
+		 * You may be asked to approve one more time.
+		 */
+		hint: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		cancel: () => LocalizedString
+		/**
+		 * Connected to {client}. Waiting for the sign-in challenge. You may be asked to approve one more time.
+		 */
+		srLabel: (arg: { client: string }) => LocalizedString
+	}
+	NostrReviewAllScreen: {
+		/**
+		 * Review requests
+		 */
+		title: () => LocalizedString
+		/**
+		 * Review all {total} requests
+		 */
+		reviewAll: (arg: { total: number }) => LocalizedString
+		/**
+		 * Approve {count}
+		 */
+		approveSelected: (arg: { count: number }) => LocalizedString
+		/**
+		 * Reject {count}
+		 */
+		rejectSelected: (arg: { count: number }) => LocalizedString
+		/**
+		 * Approve {count} selected requests from {client}
+		 */
+		approveSelectedA11y: (arg: { client: string, count: number }) => LocalizedString
+		/**
+		 * {action}: {preview}
+		 */
+		rowA11y: (arg: { action: string, preview: string }) => LocalizedString
+		/**
+		 * You choose what to approve. Blink never batches this for you.
+		 */
+		footer: () => LocalizedString
+	}
+	NostrActionKind: {
+		/**
+		 * update your profile
+		 */
+		updateProfile: () => LocalizedString
+		/**
+		 * post a note
+		 */
+		postNote: () => LocalizedString
+		/**
+		 * update your follow list
+		 */
+		updateFollowList: () => LocalizedString
+		/**
+		 * update your follow list ({before} → {after} follows)
+		 */
+		updateFollowListDelta: (arg: { after: number, before: number }) => LocalizedString
+		/**
+		 * send a direct message
+		 */
+		sendDirectMessage: () => LocalizedString
+		/**
+		 * repost a note
+		 */
+		repostNote: () => LocalizedString
+		/**
+		 * react to a note
+		 */
+		reactToNote: () => LocalizedString
+		/**
+		 * authenticate with a relay
+		 */
+		relayAuth: () => LocalizedString
+		/**
+		 * log in to {host}
+		 */
+		logInTo: (arg: { host: string }) => LocalizedString
+		/**
+		 * log in to a website
+		 */
+		logInGeneric: () => LocalizedString
+		/**
+		 * publish a long-form article
+		 */
+		publishArticle: () => LocalizedString
+		/**
+		 * sign an event type Blink doesn't recognise
+		 */
+		signUnknownEvent: () => LocalizedString
+		/**
+		 * encrypt a message
+		 */
+		encryptMessage: () => LocalizedString
+		/**
+		 * decrypt a message
+		 */
+		decryptMessage: () => LocalizedString
+	}
+	NostrRequestApprovalScreen: {
+		/**
+		 * Approve request
+		 */
+		title: () => LocalizedString
+		/**
+		 * What will be signed
+		 */
+		whatWillBeSigned: () => LocalizedString
+		/**
+		 * View raw event
+		 */
+		viewRawEvent: () => LocalizedString
+		/**
+		 * Hide raw event
+		 */
+		hideRawEvent: () => LocalizedString
+		/**
+		 * This replaces your {before} follows with {after}. Only continue if you mean to unfollow most accounts.
+		 */
+		followShrinkWarning: (arg: { after: number, before: number }) => LocalizedString
+		/**
+		 * Couldn't check your current follow list
+		 */
+		followListUnchecked: () => LocalizedString
+		/**
+		 * Approve
+		 */
+		approve: () => LocalizedString
+		/**
+		 * Reject
+		 */
+		reject: () => LocalizedString
+		/**
+		 * Request {index} of {total} from {client}
+		 */
+		counter: (arg: { client: string, index: number, total: number }) => LocalizedString
+		/**
+		 * {client} wants to {action}. Approve or reject.
+		 */
+		srLabel: (arg: { action: string, client: string }) => LocalizedString
+		/**
+		 * {client} wants to {action}. {warning} Approve or reject.
+		 */
+		srLabelWithWarning: (arg: { action: string, client: string, warning: string }) => LocalizedString
+		/**
+		 * Request {index} of {total} from {client}, wants to {action}
+		 */
+		announce: (arg: { action: string, client: string, index: number, total: number }) => LocalizedString
+		/**
+		 * Request {index} of {total} from {client}, wants to {action}. {warning}
+		 */
+		announceWithWarning: (arg: { action: string, client: string, index: number, total: number, warning: string }) => LocalizedString
+		/**
+		 * On iPhone, keep Blink open to approve requests quickly.
+		 */
+		keepOpenHint: () => LocalizedString
+		/**
+		 * You have a request waiting.
+		 */
+		waitingCatchUp: () => LocalizedString
+		/**
+		 * You have a request waiting. Open it to approve or reject.
+		 */
+		waitingCatchUpA11y: () => LocalizedString
+	}
+	NostrConnectionApprovalScreen: {
+		/**
+		 * Connection request
+		 */
+		title: () => LocalizedString
+		/**
+		 * wants your approval
+		 */
+		wantsApproval: () => LocalizedString
+		/**
+		 * This app wants to sign you in and sign events on your behalf.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Approve
+		 */
+		approve: () => LocalizedString
+		/**
+		 * Reject
+		 */
+		reject: () => LocalizedString
+		/**
+		 * An app
+		 */
+		unknownClient: () => LocalizedString
+		/**
+		 * This connection link is invalid or incomplete. Ask the app for a fresh one.
+		 */
+		invalidLink: () => LocalizedString
+		/**
+		 * {client} wants to sign you in and sign events on your behalf. Approve or reject.
+		 */
+		srLabel: (arg: { client: string }) => LocalizedString
+	}
+	NostrBoundedWaitScreen: {
+		/**
+		 * Connecting
+		 */
+		waiting: () => LocalizedString
+		/**
+		 * Still working, this is taking a little longer than usual
+		 */
+		slowHint: () => LocalizedString
+		/**
+		 * I need more time
+		 */
+		extend: () => LocalizedString
+		/**
+		 * This is taking too long
+		 */
+		timeoutTitle: () => LocalizedString
+		/**
+		 * We couldn't reach the network in time. You can try again, or step away for now.
+		 */
+		timeoutBody: () => LocalizedString
+		/**
+		 * Try again
+		 */
+		tryAgain: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		cancel: () => LocalizedString
+		/**
+		 * Sign out
+		 */
+		signOut: () => LocalizedString
+		/**
+		 * Connecting. Please wait.
+		 */
+		waitingA11y: () => LocalizedString
+		/**
+		 * Still working. This is taking a little longer than usual.
+		 */
+		slowHintA11y: () => LocalizedString
+		/**
+		 * This is taking too long. Try again, or choose the exit to step away.
+		 */
+		timeoutA11y: () => LocalizedString
+	}
+	NostrIdentityScreen: {
+		/**
+		 * Nostr identity
+		 */
+		settingsRow: () => LocalizedString
+		/**
+		 * Sign in to apps with your key
+		 */
+		settingsRowSubtitle: () => LocalizedString
+		/**
+		 * Nostr identity
+		 */
+		title: () => LocalizedString
+		/**
+		 * Create or import your Nostr key
+		 */
+		emptyTitle: () => LocalizedString
+		/**
+		 * Create Nostr identity to sign into apps with your keys. No password, only you in control.
+		 */
+		emptyBody: () => LocalizedString
+		/**
+		 * Create new
+		 */
+		emptyCreate: () => LocalizedString
+		/**
+		 * Import existing
+		 */
+		emptyImport: () => LocalizedString
+		/**
+		 * Backup your keys
+		 */
+		backupBannerTitle: () => LocalizedString
+		/**
+		 * We highly recommend you backup your keys in order not to lose this identity.
+		 */
+		backupBannerBody: () => LocalizedString
+		/**
+		 * Back up
+		 */
+		backupBannerCta: () => LocalizedString
+		/**
+		 * Your public address
+		 */
+		summaryPublicAddressLabel: () => LocalizedString
+		/**
+		 * Back up your key
+		 */
+		summaryBackup: () => LocalizedString
+		/**
+		 * Replace your identity
+		 */
+		summaryReplace: () => LocalizedString
+		/**
+		 * Connected apps
+		 */
+		summaryConnectedClients: () => LocalizedString
+		/**
+		 * Settings
+		 */
+		summarySettings: () => LocalizedString
+		/**
+		 * Open Nostr identity settings
+		 */
+		summarySettingsA11y: () => LocalizedString
+		/**
+		 * Scan
+		 */
+		summaryScan: () => LocalizedString
+		/**
+		 * Scan an app's Sign in with Nostr QR code
+		 */
+		summaryScanA11y: () => LocalizedString
+		/**
+		 * Copy your public address
+		 */
+		summaryCopyNpub: () => LocalizedString
+		/**
+		 * Public address copied
+		 */
+		summaryNpubCopied: () => LocalizedString
+		/**
+		 * Verified Nostr address
+		 */
+		summaryNip05Label: () => LocalizedString
+		/**
+		 * Copy your verified Nostr address
+		 */
+		summaryCopyNip05: () => LocalizedString
+		/**
+		 * Verified Nostr address copied
+		 */
+		summaryNip05Copied: () => LocalizedString
+		/**
+		 * Verified handle
+		 */
+		summaryNip05BadgeA11y: () => LocalizedString
+		/**
+		 * Show QR code
+		 */
+		summaryShowQr: () => LocalizedString
+		/**
+		 * Your public address
+		 */
+		summaryQrTitle: () => LocalizedString
+		/**
+		 * Close
+		 */
+		summaryQrClose: () => LocalizedString
+		/**
+		 * Your Nostr identity avatar
+		 */
+		summaryAvatarA11y: () => LocalizedString
+		/**
+		 * Add a profile photo
+		 */
+		summaryAddProfileImage: () => LocalizedString
+		/**
+		 * Profile photo upload is coming soon
+		 */
+		summaryProfileImageComingSoon: () => LocalizedString
+		/**
+		 * Uploading photo…
+		 */
+		summaryProfileImageUploading: () => LocalizedString
+		/**
+		 * Profile photo updated
+		 */
+		summaryProfileImageUpdated: () => LocalizedString
+		/**
+		 * Photo upload failed — try again
+		 */
+		summaryProfileImageFailed: () => LocalizedString
+	}
+	NostrSettingsScreen: {
+		/**
+		 * Nostr identity settings
+		 */
+		title: () => LocalizedString
+		/**
+		 * Backup your key
+		 */
+		backup: () => LocalizedString
+		/**
+		 * Replace your identity
+		 */
+		replace: () => LocalizedString
+	}
+	DelegatedGrantsScreen: {
+		/**
+		 * Receive-only access
+		 */
+		title: () => LocalizedString
+		/**
+		 * Receive-only access
+		 */
+		settingsRow: () => LocalizedString
+		/**
+		 * Connect LNbits to request invoices for your address
+		 */
+		settingsRowSubtitle: () => LocalizedString
+		/**
+		 * No connected services yet. Create a delegation to let an LNbits instance receive payments for your Lightning address.
+		 */
+		listEmpty: () => LocalizedString
+		/**
+		 * New delegation
+		 */
+		newGrant: () => LocalizedString
+		/**
+		 * Connect a service
+		 */
+		createTitle: () => LocalizedString
+		/**
+		 * The connected service will be able to REQUEST INVOICES for {address} until {date}. It cannot spend your funds.
+		 */
+		capabilityNotice: (arg: { address: string, date: string }) => LocalizedString
+		/**
+		 * Delegated key (fingerprint)
+		 */
+		fingerprintLabel: () => LocalizedString
+		/**
+		 * Expires
+		 */
+		expiryLabel: () => LocalizedString
+		/**
+		 * {days} days
+		 */
+		expiryOption: (arg: { days: number }) => LocalizedString
+		/**
+		 * Approve and generate key
+		 */
+		confirmCta: () => LocalizedString
+		/**
+		 * Signing and registering…
+		 */
+		creating: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		cancel: () => LocalizedString
+		/**
+		 * Delegation created
+		 */
+		successTitle: () => LocalizedString
+		/**
+		 * This one-time key lets the service receive payments for {address} until {date}. Paste it into LNbits → Admin → Funding Source → Blink (non-custodial) → Delegated Receive Grant Key.
+		 */
+		successBody: (arg: { address: string, date: string }) => LocalizedString
+		/**
+		 * Grant key ({fingerprint})
+		 */
+		keyLabel: (arg: { fingerprint: string }) => LocalizedString
+		/**
+		 * Copy key
+		 */
+		copyKey: () => LocalizedString
+		/**
+		 * Grant key copied — it will be cleared from your clipboard in 60 seconds
+		 */
+		copiedToast: () => LocalizedString
+		/**
+		 * Anyone with this key can request invoices (never spend). Revoke it any time from this screen.
+		 */
+		instructions: () => LocalizedString
+		/**
+		 * Done
+		 */
+		done: () => LocalizedString
+		/**
+		 * Revoke
+		 */
+		revoke: () => LocalizedString
+		/**
+		 * Expires in {days} days
+		 */
+		expiresInDays: (arg: { days: number }) => LocalizedString
+		/**
+		 * This feature is only available on a self-custodial wallet with Spark enabled.
+		 */
+		errorUnavailable: () => LocalizedString
+		/**
+		 * Set a Lightning address for this account first.
+		 */
+		errorNoAddress: () => LocalizedString
+		/**
+		 * Too many attempts. Please try again later.
+		 */
+		errorRateLimit: () => LocalizedString
+		/**
+		 * This key is already registered to another account.
+		 */
+		errorConflict: () => LocalizedString
+		/**
+		 * Invalid expiry — choose a duration of one year or less.
+		 */
+		errorInvalidExpiry: () => LocalizedString
+		/**
+		 * The server rejected this key. Generate a new delegation and try again.
+		 */
+		errorInvalidKey: () => LocalizedString
+		/**
+		 * This address is registered on a server that doesn't support delegated grants.
+		 */
+		errorUnsupportedServer: () => LocalizedString
+		/**
+		 * The server rejected the signature. Check that the account owns this address and try again.
+		 */
+		errorSignature: () => LocalizedString
+		/**
+		 * Couldn't reach the grant server. Check your connection and try again.
+		 */
+		errorNetwork: () => LocalizedString
+	}
+	NostrReplaceChoiceScreen: {
+		/**
+		 * Replace your identity
+		 */
+		title: () => LocalizedString
+		/**
+		 * This permanently discards your current key. Connected apps will stop working until you reconnect. Back up your key first if you might need it.
+		 */
+		body: () => LocalizedString
+		/**
+		 * Import existing
+		 */
+		importOption: () => LocalizedString
+		/**
+		 * Create new
+		 */
+		createOption: () => LocalizedString
+		/**
+		 * Replace your current identity?
+		 */
+		confirmTitle: () => LocalizedString
+		/**
+		 * This permanently discards your current key. Connected apps will stop working until you reconnect. Back up your key first if you might need it.
+		 */
+		confirmConsequence: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		confirmCancel: () => LocalizedString
+		/**
+		 * Create a new identity
+		 */
+		confirmContinue: () => LocalizedString
+		/**
+		 * Replace your current identity. This permanently discards your current key. Cancel or continue.
+		 */
+		confirmSrLabel: () => LocalizedString
+	}
+	BtcpaySetupScreen: {
+		/**
+		 * BTCPay Server
+		 */
+		title: () => LocalizedString
+		/**
+		 * Your own BTCPay Server
+		 */
+		introTitle: () => LocalizedString
+		/**
+		 * BTCPay Server is your own online store and bitcoin checkout. We'll set one up for you and open it in your browser — already signed in, ready to receive.
+		 */
+		introBody: () => LocalizedString
+		/**
+		 * Your store is wired to your Lightning Address {lnAddress} — everything you receive lands straight in your Blink wallet.
+		 */
+		introLightningAddress: (arg: { lnAddress: string }) => LocalizedString
+		/**
+		 * You sign in with your Nostr identity on this device. No password, and your keys never leave your phone.
+		 */
+		introIdentity: () => LocalizedString
+		/**
+		 * 2100 sats per month.
+		 */
+		introPrice: () => LocalizedString
+		/**
+		 * Set up my BTCPay Server
+		 */
+		introCta: () => LocalizedString
+		/**
+		 * Your BTCPay Server is ready
+		 */
+		readyTitle: () => LocalizedString
+		/**
+		 * Your store is wired to your Lightning Address {lnAddress} — everything you receive lands in your Blink wallet.
+		 */
+		readyBody: (arg: { lnAddress: string }) => LocalizedString
+		/**
+		 * Open my BTCPay dashboard
+		 */
+		readyCta: () => LocalizedString
+		/**
+		 * Your plan
+		 */
+		planLabel: () => LocalizedString
+		/**
+		 * 2100 sats/month
+		 */
+		planValue: () => LocalizedString
+		/**
+		 * Plan management and renewal are coming soon.
+		 */
+		planNote: () => LocalizedString
+		/**
+		 * Setting things up…
+		 */
+		workingTitle: () => LocalizedString
+		/**
+		 * Signing you in with your Nostr identity — your store will open in the browser in a moment.
+		 */
+		workingBody: () => LocalizedString
+		/**
+		 * You're all set
+		 */
+		doneTitle: () => LocalizedString
+		/**
+		 * We opened your BTCPay dashboard in the browser.
+		 */
+		doneBody: () => LocalizedString
+		/**
+		 * Open it again
+		 */
+		doneAgain: () => LocalizedString
 	}
 }
 

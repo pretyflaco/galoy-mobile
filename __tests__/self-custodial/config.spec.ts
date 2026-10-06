@@ -3,7 +3,9 @@ import { Network } from "@breeztech/breez-sdk-spark-react-native"
 import {
   hasSparkAddressShape,
   isRegtestNetwork,
+  LnurlDomain,
   lnurlDomainFor,
+  lnurlServerUrlFor,
   mismatchedNetworkLabel,
   networkForInstance,
   networkLabelFor,
@@ -120,12 +122,78 @@ describe("isRegtestNetwork", () => {
 })
 
 describe("lnurlDomainFor", () => {
-  it("uses the production Blink LNURL host on mainnet", () => {
+  it("uses the production Blink LNURL host on mainnet by default", () => {
     expect(lnurlDomainFor(Network.Mainnet)).toBe("blink.sv")
   })
 
   it("uses the staging Blink LNURL host on regtest", () => {
     expect(lnurlDomainFor(Network.Regtest)).toBe("staging.blink.sv")
+  })
+
+  it("honours a mainnet account that chose twentyone.ist", () => {
+    expect(lnurlDomainFor(Network.Mainnet, LnurlDomain.TwentyoneIst)).toBe(
+      "twentyone.ist",
+    )
+  })
+
+  it("honours an explicit blink.sv choice on mainnet", () => {
+    expect(lnurlDomainFor(Network.Mainnet, LnurlDomain.BlinkSv)).toBe("blink.sv")
+  })
+
+  it("ignores a null/undefined choice and keeps the mainnet default", () => {
+    expect(lnurlDomainFor(Network.Mainnet, null)).toBe("blink.sv")
+    expect(lnurlDomainFor(Network.Mainnet, undefined)).toBe("blink.sv")
+  })
+
+  it("never honours a choice on regtest — the staging server is the only regtest host", () => {
+    expect(lnurlDomainFor(Network.Regtest, LnurlDomain.TwentyoneIst)).toBe(
+      "staging.blink.sv",
+    )
+  })
+})
+
+/**
+ * The guard on the host the mode requests reach. It has to be the host the account's
+ * address is spelled with, which is what serves the authenticated `/lnurlpay/{pubkey}`
+ * routes the mode endpoint sits beside. The custodial `lnAddressHostname` is a different
+ * service (`pay.staging.blink.sv` fronts the payment app) and answers those routes with
+ * its own 404, so pointing there would look like a healthy request that never lands.
+ */
+describe("lnurlServerUrlFor", () => {
+  it("reaches the production LNURL server on mainnet", () => {
+    expect(lnurlServerUrlFor(Network.Mainnet)).toBe("https://blink.sv")
+  })
+
+  it("reaches the staging LNURL server on regtest", () => {
+    expect(lnurlServerUrlFor(Network.Regtest)).toBe("https://staging.blink.sv")
+  })
+
+  it("keeps mainnet and regtest on separate servers", () => {
+    expect(lnurlServerUrlFor(Network.Mainnet)).not.toBe(
+      lnurlServerUrlFor(Network.Regtest),
+    )
+  })
+
+  /** Both deployments are public and TLS-terminated; a plain-http request would be
+   *  sending a signed pubkey in the clear. */
+  it("always speaks https", () => {
+    expect(lnurlServerUrlFor(Network.Mainnet)).toMatch(/^https:\/\//)
+    expect(lnurlServerUrlFor(Network.Regtest)).toMatch(/^https:\/\//)
+  })
+
+  it("stays on the exact host the address is spelled with", () => {
+    for (const network of [Network.Mainnet, Network.Regtest]) {
+      expect(lnurlServerUrlFor(network)).toBe(`https://${lnurlDomainFor(network)}`)
+    }
+  })
+
+  it("targets the chosen domain's server on mainnet", () => {
+    expect(lnurlServerUrlFor(Network.Mainnet, LnurlDomain.TwentyoneIst)).toBe(
+      "https://twentyone.ist",
+    )
+    expect(lnurlServerUrlFor(Network.Mainnet, LnurlDomain.BlinkSv)).toBe(
+      "https://blink.sv",
+    )
   })
 })
 

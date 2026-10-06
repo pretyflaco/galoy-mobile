@@ -6,6 +6,9 @@ import { useFragment } from "@apollo/client"
 import { IconNamesType } from "@app/components/atomic/galoy-icon"
 import { GaloyIconButton } from "@app/components/atomic/galoy-icon-button"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
+import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-button"
+import { useFeatureFlags } from "@app/config/feature-flags-context"
+import { testProps } from "@app/utils/testProps"
 import { GaloyInfo } from "@app/components/atomic/galoy-info"
 import { HiddenBalancePlaceholder } from "@app/components/hidden-balance-placeholder/hidden-balance-placeholder"
 import { TransactionDate } from "@app/components/transaction-date"
@@ -26,8 +29,10 @@ import { useHideAmount } from "@app/graphql/hide-amount-context"
 import { useAppConfig, useClipboard, useTransactionSeenState } from "@app/hooks"
 import { useDisplayCurrency } from "@app/hooks/use-display-currency"
 import { useI18nContext } from "@app/i18n/i18n-react"
+import { useSelfCustodialTransactionFragments } from "@app/self-custodial/hooks/use-self-custodial-transaction-fragments"
+import { useSelfCustodialWallet } from "@app/self-custodial/providers/wallet"
 import { toWalletAmount } from "@app/types/amounts"
-import { PaymentType } from "@app/types/transaction"
+import { NO_TRANSACTIONS, PaymentType } from "@app/types/transaction"
 import { RouteProp, useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { makeStyles, Text } from "@rn-vui/themed"
@@ -157,18 +162,29 @@ export const TransactionDetailScreen: React.FC<Props> = ({ route }) => {
   const [timer, setTimer] = React.useState<number>(0)
 
   const { LL, locale } = useI18nContext()
-  const { isSelfCustodial, wallets } = useActiveWallet()
+  const { supportChatEnabled } = useFeatureFlags()
+  const { isSelfCustodial } = useActiveWallet()
+  const { allTransactions: selfCustodialAllTransactions } = useSelfCustodialWallet()
   const { copyToClipboard } = useClipboard()
   const { formatCurrency } = useDisplayCurrency()
 
-  const selfCustodialPaymentType = React.useMemo(() => {
-    if (!isSelfCustodial) return undefined
-    for (const wallet of wallets) {
-      const match = wallet.transactions.find((t) => t.id === txid)
-      if (match) return match.paymentType
-    }
-    return undefined
-  }, [isSelfCustodial, wallets, txid])
+  /** The same list home reads, so both screens resolve the same newest transaction and
+   *  therefore agree on the seen-state id they write and compare. */
+  const selfCustodialTransactions = React.useMemo(
+    () => (isSelfCustodial ? selfCustodialAllTransactions : NO_TRANSACTIONS),
+    [isSelfCustodial, selfCustodialAllTransactions],
+  )
+
+  const selfCustodialPaymentType = React.useMemo(
+    () =>
+      selfCustodialTransactions.find((transaction) => transaction.id === txid)
+        ?.paymentType,
+    [selfCustodialTransactions, txid],
+  )
+
+  const selfCustodialFragments = useSelfCustodialTransactionFragments(
+    selfCustodialTransactions,
+  )
 
   const hasTxData = Boolean(tx) && Object.keys(tx).length > 0
   const { status: resolveStatus, retry: retryResolve } = useResolveTransactionAccount({
@@ -205,9 +221,16 @@ export const TransactionDetailScreen: React.FC<Props> = ({ route }) => {
       ? formatTimeToMempool(timeDiff, LL, locale)
       : ""
 
-  const { latestBtcTxId, latestUsdTxId, markTxSeen } = useTransactionSeenState(
-    homeData?.me?.defaultAccount?.id || "",
-  )
+  /**
+   * Empty for custodial, which leaves the seen state reading the cached home query;
+   * self-custodial has no such cache and must be handed its own transactions, or the
+   * screen could never tell that the one being read is the newest and mark it seen.
+   */
+  const { latestBtcTxId, latestUsdTxId, markTxSeen } = useTransactionSeenState({
+    accountId: homeData?.me?.defaultAccount?.id || "",
+    isSelfCustodial,
+    transactions: selfCustodialFragments,
+  })
 
   React.useEffect(() => {
     let intervalId: NodeJS.Timeout
@@ -580,6 +603,14 @@ export const TransactionDetailScreen: React.FC<Props> = ({ route }) => {
                 ]}
               />
             )}
+          {supportChatEnabled && (
+            <GaloySecondaryButton
+              title={LL.SupportShareScreen.getHelp()}
+              onPress={() => navigation.navigate("supportChatShareTransaction", { txid })}
+              containerStyle={styles.getHelp}
+              {...testProps("transaction-get-help")}
+            />
+          )}
           {id && !isSelfCustodial && (
             <Row
               entry="Blink Internal Id"
@@ -605,6 +636,8 @@ export const TransactionDetailScreen: React.FC<Props> = ({ route }) => {
 }
 
 const useStyles = makeStyles(({ colors }) => ({
+  // M19: "Get help with this payment" → Support → share this transaction
+  getHelp: { marginVertical: 14 },
   closeIconContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",

@@ -9,7 +9,7 @@ PODS:
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
-  - BreezSdkSparkReactNative (0.15.0):
+  - BreezSdkSparkReactNative (0.22.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1574,6 +1574,27 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-cameraroll (7.10.2):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-cloud-storage (2.3.0):
     - hermes-engine
     - RCTRequired
@@ -2865,6 +2886,7 @@ DEPENDENCIES:
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - React-mutationobservernativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/mutationobserver`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
+  - "react-native-cameraroll (from `../node_modules/@react-native-camera-roll/camera-roll`)"
   - react-native-cloud-storage (from `../node_modules/react-native-cloud-storage`)
   - react-native-config (from `../node_modules/react-native-config`)
   - react-native-credentials-manager (from `../node_modules/react-native-credentials-manager`)
@@ -3069,6 +3091,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/mutationobserver"
   react-native-blur:
     :path: "../node_modules/@react-native-community/blur"
+  react-native-cameraroll:
+    :path: "../node_modules/@react-native-camera-roll/camera-roll"
   react-native-cloud-storage:
     :path: "../node_modules/react-native-cloud-storage"
   react-native-config:
@@ -3233,7 +3257,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AppAuth: 1c1a8afa7e12f2ec3a294d9882dfa5ab7d3cb063
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
-  BreezSdkSparkReactNative: dc779fe799955a8349c0d9b7eaa0b122e0213ef2
+  BreezSdkSparkReactNative: a6f93818d201430b82e0ac62b22b8b415a5524b2
   BVLinearGradient: cb006ba232a1f3e4f341bb62c42d1098c284da70
   FBLazyVector: 473b935415b82ae4f7f9aa9d5b3378491143ccbf
   Firebase: 26f6f8d460603af3df970ad505b16b15f5e2e9a1
@@ -3302,6 +3326,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 0f9a67dd2b5f0d7555babfd10970ad829b5ce3ad
   React-mutationobservernativemodule: f0f1c1b1b04d262804190152295b4c74a586db69
   react-native-blur: 729b3a793cee9d8fea81544fbb16cb5778f46c28
+  react-native-cameraroll: 449ddcbcd87d454e62fb52e0b4c2d62559860f71
   react-native-cloud-storage: 0113b199c67fba1aa46d49d81263bf3823f2d2bf
   react-native-config: 136f9755ccc991cc6438053a44363259ad4c7813
   react-native-credentials-manager: b893163ab9457cfbead16ce6a7c9633a23abca29

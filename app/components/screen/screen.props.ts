@@ -47,5 +47,11 @@ export interface ScreenProps {
    */
   keyboardOffset?: KeyboardOffsets
 
+  /**
+   * iOS: lift the content above the keyboard with a KeyboardAvoidingView (default true).
+   * Set false when the screen lifts itself (e.g. by the exact keyboard inset).
+   */
+  avoidKeyboard?: boolean
+
   keyboardShouldPersistTaps?: "always" | "never" | "handled"
 }

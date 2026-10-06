@@ -6,10 +6,12 @@ import { GaloySecondaryButton } from "@app/components/atomic/galoy-secondary-but
 import { useFeatureFlags } from "@app/config/feature-flags-context"
 import { useAppConfig } from "@app/hooks"
 import {
+  AccountOption,
   useAccountTypeOptions,
   ACCOUNT_OPTION_TO_FLOW,
 } from "@app/hooks/use-account-type-options"
 import { useCreationBlock } from "@app/hooks/use-creation-block"
+import { useIsMounted } from "@app/hooks/use-is-mounted"
 import { useSecretMenuTrigger } from "@app/hooks/use-secret-menu-trigger"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import theme from "@app/rne-theme/theme"
@@ -24,7 +26,10 @@ import { Text, makeStyles, useTheme } from "@rn-vui/themed"
 import AppLogoDarkMode from "../../assets/logo/app-logo-dark.svg"
 import AppLogoLightMode from "../../assets/logo/blink-logo-light.svg"
 import { Screen } from "../../components/screen"
-import { RootStackParamList } from "../../navigation/stack-param-lists"
+import {
+  ChooseExperienceContinueRoute,
+  RootStackParamList,
+} from "../../navigation/stack-param-lists"
 import useAppCheckToken from "./use-device-token"
 import { PhoneLoginInitiateType } from "../phone-auth-screen"
 
@@ -51,35 +56,59 @@ export const GetStartedScreen: React.FC = () => {
 
   const { LL } = useI18nContext()
 
-  const { deviceAccountEnabled, nonCustodialEnabled } = useFeatureFlags()
-  const { options, defaultSelected, loading: detectingCountry } = useAccountTypeOptions()
-  const { isCreationBlocked, loading: detectingRegion } = useCreationBlock()
-  const canCreateAccount = options.length > 0
-  const isCreateAccountDisabled = !canCreateAccount || detectingCountry || detectingRegion
+  const { deviceAccountEnabled, nonCustodialEnabled, supportChatEnabled } =
+    useFeatureFlags()
+  const { defaultSelected } = useAccountTypeOptions()
+  const { checkBlockReason, isChecking, isFirstSignupRuleReady } = useCreationBlock()
+  const isMounted = useIsMounted()
+  /** With several types on offer this screen only navigates, so it waits on nothing a
+   *  check would read. A build offering one type submits it here, and does. */
+  const isOptionSubmittedHere = defaultSelected !== null
+  const isCreateWaiting = isChecking || (isOptionSubmittedHere && !isFirstSignupRuleReady)
 
   const appCheckToken = useAppCheckToken({ skip: !deviceAccountEnabled })
 
-  const handleCreateAccount = () => {
-    if (!canCreateAccount) return
-
-    if (options.every((option) => isCreationBlocked(option))) {
-      navigation.navigate("unsupportedRegion")
-      return
-    }
-
+  const logCreateAccountPress = () =>
     logGetStartedAction({
       action: "create_device_account",
       createDeviceAccountEnabled: Boolean(appCheckToken),
     })
 
-    if (defaultSelected) {
-      navigation.navigate("acceptTermsAndConditions", {
-        flow: ACCOUNT_OPTION_TO_FLOW[defaultSelected],
+  const handleCreateAccount = async () => {
+    /**
+     * Nothing has been chosen yet when several types are offered, so this screen locates
+     * nobody and leaves the region to the screen where the choice is made. A build offering
+     * a single type has no such screen, and pressing create is itself that choice.
+     */
+    if (!defaultSelected) {
+      logCreateAccountPress()
+      navigation.navigate("accountTypeSelection", { mode: AccountTypeMode.Create })
+      return
+    }
+
+    const blockReason = await checkBlockReason(defaultSelected)
+    if (!isMounted()) return
+    if (blockReason) {
+      navigation.navigate("unsupportedRegion", { reason: blockReason })
+      return
+    }
+
+    /** Logged past the refusal, so a blocked user is not counted as starting a signup. */
+    logCreateAccountPress()
+
+    /** The single offered type is submitted here rather than on the account type screen, so
+     *  this is where a self-custodial creation has to capture its region mode. Skipping to
+     *  terms would provision the account with no mode, and nothing asks again. */
+    if (defaultSelected === AccountOption.SelfCustodial) {
+      navigation.navigate("selfCustodialChooseExperience", {
+        onContinue: { route: ChooseExperienceContinueRoute.AcceptTerms },
       })
       return
     }
 
-    navigation.navigate("accountTypeSelection", { mode: AccountTypeMode.Create })
+    navigation.navigate("acceptTermsAndConditions", {
+      flow: ACCOUNT_OPTION_TO_FLOW[defaultSelected],
+    })
   }
 
   const handleLogin = () => {
@@ -130,7 +159,8 @@ export const GetStartedScreen: React.FC = () => {
           <GaloyPrimaryButton
             title={LL.GetStartedScreen.createAccount()}
             onPress={handleCreateAccount}
-            disabled={isCreateAccountDisabled}
+            disabled={isCreateWaiting}
+            loading={isCreateWaiting}
           />
           <GaloySecondaryButton
             title={
@@ -141,6 +171,18 @@ export const GetStartedScreen: React.FC = () => {
             onPress={handleLogin}
             containerStyle={styles.secondaryButtonContainer}
           />
+          {supportChatEnabled && (
+            <Pressable
+              onPress={() => navigation.navigate("supportChat")}
+              style={styles.contactSupport}
+              accessibilityRole="button"
+              {...testProps("get-started-contact-support")}
+            >
+              <Text type="p2" style={styles.contactSupportText}>
+                {LL.GetStartedScreen.contactSupport()}
+              </Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </Screen>
@@ -158,7 +200,18 @@ const useStyles = makeStyles(() => ({
   },
 
   secondaryButtonContainer: {
-    marginVertical: 15,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  // M19: support before an account exists (kngako) — the chat has its own device key
+  contactSupport: {
+    alignSelf: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginBottom: 5,
+  },
+  contactSupportText: {
+    textDecorationLine: "underline",
   },
   logoWrapper: {
     flex: 1,

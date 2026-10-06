@@ -72,6 +72,7 @@
   },
   "AuthenticationScreen": {
     "authenticationDescription": "Confirma la teva identitat per continuar",
+    "authenticationRequired": "Cal autenticació. Pots configurar un codi PIN o biometria a la configuració de seguretat.",
     "setUp": "Configura la identificació biomètrica",
     "setUpAuthenticationDescription": "Utilitza la identificació biomètrica",
     "skip": "Omet",
@@ -2097,17 +2098,70 @@
       "sendingLimit": "Límit diari d'enviament reduït",
       "noOnchain": "No rebre bitcoin \"onchain\"",
       "recoveryOption": "Recupera fons per SMS o correu electrònic",
-      "dailyLimit": "Límit diari de transaccions de USD 1,000",
+      "dailyLimit": "Límit diari de transaccions de USD {limit: string}",
       "onchainReceive": "Rep bitcoin onchain"
     }
   },
   "MapScreen": {
     "navToSettingsTitle": "Permisos de ubicació",
     "navToSettingsText": "Si vols donar permis de ubicació a Blink, si us plau, navega fins a la configuració i habilita-ho allà.",
-    "payBusiness": "Pagar a aquest negoci.",
     "openSettings": "Obra la configuració",
     "title": "Mapa",
-    "error": "Oops. Alguna cosa ha anat malament mentre s'obtenia la teva ubicació."
+    "error": "Oops. Alguna cosa ha anat malament mentre s'obtenia la teva ubicació.",
+    "attribution": "Llocs de BTC Map, © col·laboradors d'OpenStreetMap",
+    "unnamedPlace": "Lloc sense nom",
+    "loadingPlaces": "Carregant llocs de BTC Map",
+    "placesError": "No s'han pogut carregar els llocs de BTC Map",
+    "detailsError": "No s'ha pogut carregar aquest lloc",
+    "cannotOpenLink": "Res en aquest telèfon no pot obrir aquest enllaç",
+    "openNow": "Obert ara",
+    "closedNow": "Tancat",
+    "navigate": "Com arribar-hi",
+    "payMerchant": "Paga a aquest comerç",
+    "requiresApp": "Cal una aplicació específica per pagar",
+    "boosted": "Destacat",
+    "verifiedOn": "Verificat el {date: string}",
+    "lastVerifiedOn": "Verificat per última vegada el {date: string}",
+    "needsSurvey": "Aquest lloc necessita ser verificat",
+    "searchError": "No s'ha pogut cercar en aquesta zona",
+    "clearSearch": "Esborra la cerca",
+    "nothingToShow": "No hi ha res per mostrar",
+    "metersAway": "a {distance: string} metres",
+    "kilometersAway": "a {distance: string} km",
+    "filters": "Filtres",
+    "categories": "Categories",
+    "selectAll": "Selecciona-ho tot",
+    "clearAll": "Esborra-ho tot",
+    "addPlace": "Afegeix al mapa",
+    "addPlaceTitle": "Afegeix un lloc",
+    "placePinHint": "Mou el mapa per posar el marcador sobre el lloc",
+    "placeName": "Nom",
+    "placeNameHint": "Com es diu el lloc",
+    "placeCategory": "Categoria",
+    "placeCategoryHint": "Tria una categoria",
+    "placeLocation": "Ubicació",
+    "changeLocation": "Canvia",
+    "placeReviewNote": "Els llocs nous van a BTC Map. La seva comunitat revisa i manté tot el que hi ha al mapa.",
+    "placeSubmitted": "Lloc enviat a BTC Map: gràcies per afegir-lo",
+    "placeSubmissionFailed": "No s'ha pogut enviar el lloc. Comprova la connexió i torna-ho a provar.",
+    "placeRefused": "BTC Map no ha pogut acceptar aquest lloc. No s'ha afegit res al mapa.",
+    "category": {
+      "restaurants": "Restaurants",
+      "cafes": "Cafeteries",
+      "bakeries": "Fleques i dolços",
+      "bars": "Bars i vida nocturna",
+      "groceries": "Alimentació",
+      "shops": "Botigues",
+      "money": "Caixers i canvi",
+      "lodging": "Hotels i allotjament",
+      "automotive": "Cotxes i combustible",
+      "health": "Salut",
+      "beauty": "Bellesa i benestar",
+      "services": "Serveis",
+      "sports": "Esports i aire lliure",
+      "leisure": "Oci i cultura",
+      "other": "Altres"
+    }
   },
   "HomeScreen": {
     "pendingReceiveBadge": "+{amount: string} pendent",
@@ -2122,11 +2176,15 @@
   },
   "PinScreen": {
     "attemptsRemaining": "PIN incorrecte. Queden {attemptsRemaining: string} intents.",
+    "enterPin": "Introdueix el teu codi PIN",
+    "lockoutUnavailable": "No s'ha pogut registrar l'intent fallit de manera segura. Tancant la sessió.",
     "oneAttemptRemaining": "PIN incorrecte. Queda 1 intent.",
+    "pinUnreadable": "No s'ha pogut comprovar el PIN. Torna-ho a provar.",
     "setPin": "Configura el teu codi PIN",
     "setPinFailedMatch": "Els Pins no coincideixen - Estableix el teu codi PIN",
     "storePinFailed": "No es pot desar el teu pin.",
     "tooManyAttempts": "Massa intents fallits. Tancant la sessió.",
+    "tryAgainIn": "Torna-ho a provar d'aquí a {seconds: number} s.",
     "verifyPin": "Verifica el teu codi PIN"
   },
   "PriceHistoryScreen": {
@@ -2222,7 +2280,9 @@
   "ScanningQRCodeScreen": {
     "invalidContent": "Hem trobat:\n\n{found: string}\n\nAquesta no és una adreça Bitcoin vàlida o una factura Lightning",
     "expiredContent": "Hem trobat:\n\n{found: string}\n\nAquesta factura ha caducat",
+    "unresolvedContent": "Hem trobat:\n\n{found: string}\n\nNo hem pogut processar aquest codi. Pot ser que hagi caducat o que el servei no estigui disponible temporalment. Demana un codi nou o torna-ho a provar més tard.",
     "invalidTitle": "Codi QR no vàlid",
+    "unresolvedTitle": "Codi no disponible",
     "openLinkTitle": "Obrir l'enllaç",
     "confirmOpenLink": "Estàs segur que vols obrir aquest enllaç?",
     "noQrCode": "No hem trobat cap codi QR a la imatge",
@@ -2297,6 +2357,7 @@
     "selfPaymentError": "{lnAddress: string} és la teva adreça {bankName: string} .",
     "selfPaymentAdvice": "Si vols enviar diners a un altre compte teu, pots utilitzar una adreça de factura, LN o BTC.",
     "lnAddressError": "No podem contactar a aquesta adreça de Lightning. Si estas segur que existeix, tornar-ho a provar més tard.",
+    "lnurlServiceError": "No hem pogut processar aquest codi. Pot ser que hagi caducat o que el servei no estigui disponible temporalment.",
     "lnAddressAdvice": "Revisa que l'ortografia sigui correcta o demana al destinatari una factura o una adreça BTC.",
     "unknownLightning": "No podem analitzar aquesta adreça Lightning. Si us plau torna-ho.a provar",
     "unknownOnchain": "No podem analitzar aquesta adreça Bitcoin. Si us plau torna-ho a provar.",
@@ -2377,6 +2438,7 @@
   },
   "SettingsScreen": {
     "createAddress": "Crea una adreça",
+    "addressDisabled": "(desactivat)",
     "donationButton": "Botó Donar",
     "btcpayServer": "BTCPay Server",
     "woocommerce": "WooCommerce",
@@ -2386,6 +2448,7 @@
     "apiAcess": "Accès API",
     "apiDocumentation": "Documentació de l'API",
     "apiDashboard": "Accés a l'API i tauler de control",
+    "mode": "Mode",
     "pos": "Punt de venda",
     "posCopied": "S'ha copiat l'enllaç del teu punt de venda",
     "activated": "Activat",
@@ -2455,7 +2518,7 @@
   "AccountScreen": {
     "fundsMoreThan5Dollars": "El teu compte té més de 5$",
     "itsATrialAccount": "Els comptes de prova tenen límits de transaccions reduïts i cap mètode de recuperació. Si perds el telèfon o desinstal·les l'aplicació, els teus fons seran irrecuperables.",
-    "accountBeingDeleted": "El teu compte s'està suprimint, si us plau espera...",
+    "accountBeingDeleted": "El teu compte s'està tancant, si us plau espera...",
     "dangerZone": "Zona Perillosa",
     "phoneDeletedSuccessfully": "El telèfon s'ha suprimit correctament",
     "phoneNumber": "Número de telèfon",
@@ -2517,7 +2580,28 @@
     "removedAccount": "Has eliminat el compte {identifier: string}."
   },
   "StablesatsRestriction": {
-    "walletLabel": "no està disponible a la teva regió"
+    "walletLabel": "no està disponible a la teva regió",
+    "anonModeWalletLabel": "no disponible en mode Incognito"
+  },
+  "AnonModeConvertModal": {
+    "title": "Transfereix primer el teu saldo en dòlars",
+    "body": "El mode Incognito només admet el saldo en Bitcoin. Transfereix el teu saldo en dòlars al teu saldo en Bitcoin per canviar."
+  },
+  "EnhancedModePrompt": {
+    "title": "Aquesta funció requereix el mode Enhanced",
+    "body": "Ets en mode Incognito, Blink no coneix la teva regió, així que algunes funcions no estan disponibles. Canvia a Enhanced per executar una comprovació d'ubicació i desbloquejar totes les funcions per a la teva regió.",
+    "switchButton": "Canvia a Enhanced"
+  },
+  "ModeSwitchSuccessScreen": {
+    "enhanced": "Has canviat al mode Enhanced\nno custodiat",
+    "anon": "Has canviat al mode Incognito\nno custodiat"
+  },
+  "RestrictedRegion": {
+    "title": "Regió restringida detectada",
+    "body": "Sembla que la teva connexió prové d'una regió restringida. Blink no pot oferir serveis des d'aquesta ubicació. Els teus saldos no es veuen afectats.",
+    "bodyReturn": "Quan surtis d'aquesta regió, tota la funcionalitat tornarà a la normalitat.",
+    "learnMore": "Més informació",
+    "contactSupport": "Contacta amb el suport"
   },
   "DollarBalanceRestriction": {
     "modalTitle": "El saldo en dòlars no està disponible a la teva regió"
@@ -2597,17 +2681,17 @@
     "receive": "Rebre",
     "transfer": "Transferència",
     "lightning": "Lightning",
+    "lightningBelowThreshold": "Lightning per sota de {threshold: string} SAT",
     "intraledger": "Intraledger",
-    "onchainPriority": "Onchain prioritari (al més aviat possible)",
+    "onchainPriority": "Onchain prioritari (~10 min)",
     "onchainStandard": "Onchain estàndard (~4h)",
-    "onchainEconomy": "Onchain econòmic",
+    "onchainEconomy": "Onchain econòmic (~24h)",
     "lightningTransactions": "Transaccions Lightning",
     "onchainBelowThreshold": "Onchain per sota de {threshold: string} SAT",
     "onchainAboveThreshold": "Onchain per sobre de {threshold: string} SAT",
     "onchainBetweenThresholds": "Onchain between {lower: string} and {upper: string} SAT",
     "transferFee": "Comissió de transferència",
     "noFee": "sense comissió",
-    "lightningSendFee": "{fee: string} + ~{routingFee: string} de comissió d'encaminament",
     "fromApprox": "des de ~{fee: string}",
     "satAmount": "{amount: string} SAT",
     "error": "No es poden obtenir les comissions en aquest moment"
@@ -2643,7 +2727,6 @@
     "letsGo": "Anem!",
     "stayInTrialMode": "Mantenir-se en mode de prova",
     "upgradeToLevel": "Actualitza al nivell {level: number}",
-    "notNow": "Ara no",
     "setUpLevelAccount": "Configura un compte de nivell {level: number}"
   },
   "SetAddressModal": {
@@ -2699,7 +2782,7 @@
       "mainTitle": "Benvingut al nivell 1",
       "title": "Noves funcionalitats desbloquejades per al teu compte:",
       "receiveBitcoinDescription": "Rep Bitcoin utilitzant el teu número de telèfon",
-      "dailyLimitDescription": "Envia fins a USD 1,000 al dia",
+      "dailyLimitDescription": "Envia fins a USD {limit: string} al dia",
       "onchainDescription": "Rep pagaments on-chain"
     },
     "emailBenefits": {
@@ -2821,6 +2904,7 @@
     "bitcoinPrice": "Preu de Bitcoin",
     "btcAccount": "Compte Bitcoin",
     "cancel": "Cancela",
+    "notNow": "Ara no",
     "card": "Targeta",
     "close": "Tanca",
     "confirm": "Confirma",
@@ -2969,17 +3053,17 @@
     "defaultEmailSubject": "{bankName: string} - Suport",
     "defaultSupportMessage": "Hola! Necessito ajuda amb {bankName: string}, utilitzo la versió {version: string} de {os: string}.",
     "emailCopied": "l'adreça electrònica {email: string} s'ha copiat al porta-retalls",
-    "deleteAccount": "Elimina el compte",
+    "deleteAccount": "Tancar el compte",
     "delete": "esborrar",
-    "typeDelete": "Escriu \"{delete: string}\" per confirmar la supressió del compte",
+    "typeDelete": "Escriu \"{delete: string}\" per confirmar el tancament del compte",
     "finalConfirmationAccountDeletionTitle": "Cal la confirmació final",
-    "finalConfirmationAccountDeletionMessage": "Estas segur que vols suprimir el teu compte? Aquesta acció és irreversible.",
-    "deleteAccountBalanceWarning": "Si suprimeixes el teu compte, perdras l'accés al teu saldo actual. Estàs segur que vols continuar?",
-    "deleteAccountConfirmation": "El seu compte ha estat marcat per a la supressió.\n\nQuan finalitzi el període de prova relacionat amb els requisits normatius, les dades restants relacionades amb el seu compte seran eliminades de manera permanent.",
-    "deleteAccountFromPhone": "Hola!, si us plau, esborra el meu compte. El meu número de telèfon és {phoneNumber: string}.",
+    "finalConfirmationAccountDeletionMessage": "Després de tancar-lo, no podràs accedir al teu compte ni utilitzar-lo. És possible que conservem certs registres segons ho exigeixi la llei i les nostres obligacions de retenció. Estàs segur que vols tancar el teu compte?",
+    "deleteAccountBalanceWarning": "Si tanques el compte, perdràs l'accés al teu saldo actual. Estàs segur que vols continuar?",
+    "deleteAccountConfirmation": "El teu compte s'ha tancat.\n\nÉs possible que conservem certs registres segons ho exigeixi la llei i les nostres obligacions de retenció.",
+    "deleteAccountFromPhone": "Hola! Si us plau, tanqueu el meu compte. El meu número de telèfon és {phoneNumber: string}.",
     "deleteAccountError": "Alguna cosa ha anat malament. Contacta amb {email: string} per obtenir més ajuda.",
     "bye": "Adéu!",
-    "deleteAccountWarning": "Atenció: L'eliminació del compte és permanent!\nAssegura't que els moneders no tinguin fons abans d'eliminar.\nEl compte eliminat no es pot restablir."
+    "deleteAccountWarning": "Atenció: el tancament del compte és permanent!\nAssegura't que les carteres no tinguin fons abans de tancar-lo.\nUn compte tancat no es pot restaurar.\nÉs possible que conservem certs registres segons ho exigeixi la llei."
   },
   "lnurl": {
     "overLimit": "No pots enviar més que l'import màxim",
@@ -3413,8 +3497,7 @@
         "pinChangedTitle": "PIN canviat",
         "pinChangedSubtitle": "El vostre PIN s'ha canviat correctament.",
         "pinChangedToast": "El PIN s'ha canviat correctament",
-        "biometricDescription": "Verifiqueu la vostra identitat per canviar el PIN",
-        "biometricRequired": "L'autenticació biomètrica és necessària per canviar el vostre PIN."
+        "biometricDescription": "Verifiqueu la vostra identitat per canviar el PIN"
       }
     },
     "ReplaceCard": {
@@ -3756,6 +3839,7 @@
     "reminderBulletin": {
       "title": "Important",
       "body": "Passa a un compte no custodi mitjançant la migració guiada, o retira els teus fons, abans del {date}. La recepció s'atura el {receiveStopsDate}.",
+      "bodyReceiveDisabled": "La recepció s'ha aturat. Passa a un compte no custodi mitjançant la migració guiada, o retira els teus fons, abans del {date}.",
       "migrateCta": "Migra"
     },
     "offboardBulletin": {
@@ -3846,9 +3930,22 @@
     "createFailed": "No s'ha pogut crear la cartera. Si us plau, torna-ho a provar.",
     "selfCustodialDisabled": "El mode no custodial està temporalment no disponible."
   },
+  "ChooseExperienceScreen": {
+    "title": "Selecciona el mode no custodiat",
+    "subtitle": "La teva elecció decideix quines funcions estan disponibles. Pots canviar quan vulguis.",
+    "enhancedLabel": "Enhanced\nMode",
+    "enhancedDescription": "Fem servir la teva regió per desbloquejar serveis valuosos disponibles allà on ets.",
+    "anonLabel": "Incognito\nMode",
+    "anonDescription": "Per a màxima privadesa. Menys funcions.",
+    "continueButton": "Continuar"
+  },
   "UnsupportedRegionScreen": {
     "title": "Regió no admesa",
-    "description": "Malauradament, no podem atendre usuaris de la vostra regió actual."
+    "description": "Malauradament, no podem atendre usuaris de la vostra regió actual.",
+    "custodialSignupDescription": "Malauradament no podem crear comptes de custòdia nous a la teva regió actual. Pots utilitzar un compte d'autocustòdia.",
+    "custodialSignupOnlyDescription": "Malauradament no podem crear comptes de custòdia nous a la teva regió actual.",
+    "unknownRegionTitle": "Regió no determinada",
+    "unknownRegionDescription": "No hem pogut determinar la teva regió. Comprova la connexió i torna-ho a provar."
   },
   "RestoreScreen": {
     "title": "Restaura la cartera",

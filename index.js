@@ -7,6 +7,23 @@
 // side effect of breaking other tooling like mobile-center and react-native-rename.
 //
 // It's easier just to leave it here.
+
+// FIRST: install the Hermes TextEncoder/TextDecoder polyfill before ANY other import. The
+// nostr-signer + its crypto deps reference these globals at module-load time; on Hermes they
+// don't exist, so this import must run ahead of firebase/App. (ES imports are evaluated in
+// order, so importing this side-effect module first guarantees the globals are ready.)
+import "./app/polyfills/text-encoding"
+// SECOND (still before any nostr-tools/@noble consumer): install crypto.getRandomValues on
+// Hermes. nostr-tools finalizeEvent → @noble schnorr signing reads global crypto.getRandomValues
+// for aux randomness; without it every signed NIP-46 event throws and the connect-ack never
+// publishes (BTCPay plugin then times out).
+import "./app/polyfills/crypto-get-random-values"
+// THIRD (P1): full URL implementation + URL.canParse for marmot-ts v2's relay-URL
+// validation (canParse, M2 — and `new URL(u).hostname` on wss://, F-M9-10). Imported
+// here so the globals are ready before any consumer module evaluates; the support
+// chat re-runs ensureUrlCanParse() when it starts (F-M6-3: app.tsx replaces URL).
+import "./app/polyfills/url-can-parse"
+
 import "@react-native-firebase/app"
 import * as React from "react"
 
@@ -17,6 +34,11 @@ globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true
 import { AppRegistry, LogBox } from "react-native"
 
 import { App } from "./app/app.tsx"
+import { registerPushBackgroundHandler } from "./app/support-chat/push"
+
+// Support chat (M18): content-free wake from the push server → local notification.
+// Must be registered outside React; no-op unless the build configures push.
+registerPushBackgroundHandler()
 
 // Disables showing errors and warnings on UI - they still get shown on console
 // Ensures elements are visible deterministically during tests

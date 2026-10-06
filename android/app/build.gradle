@@ -120,6 +120,17 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            // Blink Alpha (internal pre-release channel, never production): the debug
+            // variant installs as com.blinkbtc.alpha (set below via the variant API — a
+            // build-type suffix cannot change the base), beside com.galoyapp. Its own
+            // Firebase project; the git-ignored debug google-services.json carries the
+            // com.blinkbtc.alpha client (CI: scripts/support-chat-ci/google-services.ci.json).
+            versionNameSuffix "-alpha"
+            // react-native-config reads BuildConfig of `build_config_package`; the runtime
+            // package differs from the BuildConfig namespace (com.galoyapp), so Config would
+            // come back empty and Spark SDK init throws (the .nostrpoc2 lesson). Point it at
+            // the namespace.
+            resValue "string", "build_config_package", "com.galoyapp"
         }
         release {
             // Caution! In production, you need to generate your own keystore file.
@@ -145,6 +156,13 @@ android {
         unitTests {
             includeAndroidResources true
         }
+    }
+}
+
+// Blink Alpha: the debug variant's application id (see buildTypes.debug).
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        variant.applicationId.set("com.blinkbtc.alpha")
     }
 }
 
@@ -188,8 +206,10 @@ dependencies {
 }
 
 
+// MaterialIcons is the icon set BTC Map tags its places with, and the map screen
+// renders those names directly on the pins.
 project.ext.vectoricons = [
-    iconFontNames: [ 'Ionicons.ttf' ]
+    iconFontNames: [ 'Ionicons.ttf', 'MaterialIcons.ttf' ]
 ]
 
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")

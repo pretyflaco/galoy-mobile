@@ -10,6 +10,7 @@ import ErrorBoundary from "react-native-error-boundary"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import "react-native-reanimated"
 import { RootSiblingParent } from "react-native-root-siblings"
+import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context"
 // for URL; need a polyfill on react native
 import "react-native-url-polyfill/auto"
 
@@ -20,14 +21,21 @@ import { GaloyThemeProvider } from "./components/galoy-theme-provider"
 import { GaloyToast } from "./components/galoy-toast"
 import { NotificationsProvider } from "./components/notifications/index"
 import { PushNotificationComponent } from "./components/push-notification"
+import { SupportChatMount } from "./support-chat/support-chat-mount"
 import { FeatureFlagContextProvider } from "./config/feature-flags-context"
 import { CustodialWalletProvider } from "./custodial/providers/wallet"
-import { AutoConvertListenerMount } from "./self-custodial/components"
+import {
+  AccountModeSyncMount,
+  AutoConvertListenerMount,
+  DisplayCurrencyFromRegionMount,
+} from "./self-custodial/components"
 import { AutoConvertStatusProvider } from "./self-custodial/providers/auto-convert-status"
 import { BackupStateProvider } from "./self-custodial/providers/backup-state"
 import { SelfCustodialWalletProvider } from "./self-custodial/providers/wallet"
 import { GaloyClient } from "./graphql/client"
 import { NetworkErrorComponent } from "./graphql/network-error-component"
+import { NostrRuntimeProvider } from "./nostr/nostr-runtime-provider"
+import { ApprovalSurfaceHost } from "./nostr/approval-surface-host"
 import TypesafeI18n from "./i18n/i18n-react"
 import { loadLocale } from "./i18n/i18n-util.sync"
 import "./i18n/mapping"
@@ -40,6 +48,9 @@ import { PersistentStateProvider } from "./store/persistent-state"
 import { detectDefaultLocale } from "./utils/locale-detector"
 import "./utils/logs"
 import { ActionModals, ActionsProvider } from "./components/actions"
+import { EnhancedModePromptProvider } from "./components/enhanced-mode-prompt"
+import { RequiresBlinkAddressPromptProvider } from "./components/requires-blink-address-prompt"
+import { RestrictedRegionProvider } from "./components/restricted-region"
 
 // Lazy load only the default locale instead of all 27 locales
 // This reduces startup time by 3-5 seconds on Android
@@ -54,42 +65,60 @@ if (__DEV__) console.log(`Loaded default locale: ${defaultLocale}`)
 export const App = () => (
   /* eslint-disable-next-line react-native/no-inline-styles */
   <GestureHandlerRootView style={{ flex: 1 }}>
-    <PersistentStateProvider>
-      <TypesafeI18n locale={detectDefaultLocale()}>
-        <GaloyClient>
-          <GaloyThemeProvider>
-            <FeatureFlagContextProvider>
-              <CustodialWalletProvider>
-                <SelfCustodialWalletProvider>
-                  <BackupStateProvider>
-                    <AutoConvertStatusProvider>
-                      <ActionsProvider>
-                        <MigrationBlockerProvider>
-                          <NavigationContainerWrapper>
-                            <ErrorBoundary FallbackComponent={ErrorScreen}>
-                              <RootSiblingParent>
-                                <NotificationsProvider>
-                                  <AppStateWrapper />
-                                  <PushNotificationComponent />
-                                  <AutoConvertListenerMount />
-                                  <RootStack />
-                                  <NetworkErrorComponent />
-                                  <ActionModals />
-                                </NotificationsProvider>
-                                <GaloyToast />
-                              </RootSiblingParent>
-                            </ErrorBoundary>
-                          </NavigationContainerWrapper>
-                        </MigrationBlockerProvider>
-                      </ActionsProvider>
-                    </AutoConvertStatusProvider>
-                  </BackupStateProvider>
-                </SelfCustodialWalletProvider>
-              </CustodialWalletProvider>
-            </FeatureFlagContextProvider>
-          </GaloyThemeProvider>
-        </GaloyClient>
-      </TypesafeI18n>
-    </PersistentStateProvider>
+    {/* Every screen reads its window insets from here. React Navigation supplies a
+        provider of its own inside each navigator, but only there and only after the
+        first frame, so anything rendered outside or before it measured zero insets
+        and drew under the system bars. */}
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <PersistentStateProvider>
+        <TypesafeI18n locale={detectDefaultLocale()}>
+          <GaloyClient>
+            <GaloyThemeProvider>
+              <FeatureFlagContextProvider>
+                <NostrRuntimeProvider>
+                  <CustodialWalletProvider>
+                    <SelfCustodialWalletProvider>
+                      <BackupStateProvider>
+                        <AutoConvertStatusProvider>
+                          <ActionsProvider>
+                            <MigrationBlockerProvider>
+                              <NavigationContainerWrapper>
+                                <ErrorBoundary FallbackComponent={ErrorScreen}>
+                                  <RootSiblingParent>
+                                    <EnhancedModePromptProvider>
+                                      <RequiresBlinkAddressPromptProvider>
+                                        <RestrictedRegionProvider>
+                                          <NotificationsProvider>
+                                            <AppStateWrapper />
+                                            <PushNotificationComponent />
+                                            <SupportChatMount />
+                                            <AutoConvertListenerMount />
+                                            <AccountModeSyncMount />
+                                            <DisplayCurrencyFromRegionMount />
+                                            <RootStack />
+                                            <NetworkErrorComponent />
+                                            <ActionModals />
+                                            <ApprovalSurfaceHost />
+                                          </NotificationsProvider>
+                                        </RestrictedRegionProvider>
+                                      </RequiresBlinkAddressPromptProvider>
+                                    </EnhancedModePromptProvider>
+                                    <GaloyToast />
+                                  </RootSiblingParent>
+                                </ErrorBoundary>
+                              </NavigationContainerWrapper>
+                            </MigrationBlockerProvider>
+                          </ActionsProvider>
+                        </AutoConvertStatusProvider>
+                      </BackupStateProvider>
+                    </SelfCustodialWalletProvider>
+                  </CustodialWalletProvider>
+                </NostrRuntimeProvider>
+              </FeatureFlagContextProvider>
+            </GaloyThemeProvider>
+          </GaloyClient>
+        </TypesafeI18n>
+      </PersistentStateProvider>
+    </SafeAreaProvider>
   </GestureHandlerRootView>
 )

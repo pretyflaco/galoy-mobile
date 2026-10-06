@@ -1,0 +1,187 @@
+name: Support-chat smoke (Hermes)
+
+# Req 10 (spec 03 §4): a device smoke test that starts a conversation on Hermes —
+# a successful bundle proved nothing three times in the POC. Boots the emulator,
+# runs a local wok relay, a throwaway roster + peer bot (all from THIS repo —
+# scripts/support-chat-ci/), builds the app against them (ENVFILE), and drives the
+# full loop via adb: onboard → nostr identity → start chat → greeting → send →
+# live E2EE reply. Everything the job uses is throwaway, public data — no secrets.
+#
+# SECURITY (self-hosted runner on a PUBLIC repo, F-M16-12): the runner is a dedicated,
+# sandboxed user on the operator's machine (scripts/support-chat-ci/install-runner.sh).
+# The real protections live OUTSIDE this file, because a fork PR runs its OWN copy of
+# the workflow: repo setting "require approval for all external contributors", a
+# read-only default GITHUB_TOKEN, a runner that carries ONLY the label below (no
+# `self-hosted` default label, so upstream workflows never land on it), and the
+# runner's systemd sandbox (no /home, private /tmp, own adb server). The `if:` below
+# is defense in depth only.
+
+on:
+  pull_request:
+    branches: [main, feat/support-chat]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  support-chat-smoke-android:
+    name: Android (Hermes)
+    runs-on: supportchat-muscle
+    timeout-minutes: 90
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      # Own adb server (the runner user cannot open USB devices, and the host user's
+      # adb server on :5037 — which owns the operator's phone — is never used), and
+      # every adb call pinned to the emulator.
+      ANDROID_ADB_SERVER_PORT: "5039"
+      ANDROID_SERIAL: emulator-5554
+      LANG: en_US.UTF-8
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Reap leftovers of earlier (cancelled) jobs
+        # A cancelled job leaves its nohup'd relay, adb server and emulator behind (seen:
+        # wok :7787 + a hung `adb logcat` 6 h after a timeout). Only this runner user's
+        # own processes — the job cannot see or signal anyone else's.
+        run: |
+          for pat in 'support-chat-ci/bin/wok' 'support-chat-ci/peer.mjs' 'qemu-system' 'emulator -avd' 'adb logcat' 'adb -L tcp:5039'; do
+            pkill -u "$(id -u)" -f "$pat" && echo "reaped: $pat" || true
+          done
+          sleep 2
+
+      - name: Gradle memory (the runner user's own gradle.properties)
+        # prepareAssets runs `gradlew clean -b ./android/build.gradle` from the repo root,
+        # which does not pick up android/gradle.properties → the daemon ran out of its
+        # 512 MiB default heap (F-M16-12). The user-level file is always read.
+        run: |
+          mkdir -p ~/.gradle
+          printf 'org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=2g\norg.gradle.daemon=true\n' > ~/.gradle/gradle.properties
+      - uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-supportchat-deps-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-supportchat-deps-
+
+      - name: Install Node modules
+        run: nix develop -c yarn install
+
+      - name: Vendored adapters → node_modules (yarn 1 never refreshes a file dep's copy)
+        # node_modules comes from a cache keyed on yarn.lock, and an edit under vendor/
+        # does not change the lock → without this the app bundles a STALE adapters copy
+        # (the SOURCE.md gotcha, F-M12-2).
+        run: |
+          rm -rf node_modules/@blink-support-chat/adapters
+          cp -R vendor/blink-support-chat-adapters node_modules/@blink-support-chat/adapters
+          diff -r vendor/blink-support-chat-adapters node_modules/@blink-support-chat/adapters
+
+      - name: Fetch wok and start the relay on :7787
+        run: |
+          cd scripts/support-chat-ci && ./fetch-wok.sh && cd ../..
+          mkdir -p /tmp/wok-smoke-db
+          nohup scripts/support-chat-ci/bin/wok --config scripts/support-chat-ci/wok.toml relay > /tmp/wok-smoke.log 2>&1 &
+          echo $! > /tmp/wok-smoke.pid
+          sleep 3
+          tail -5 /tmp/wok-smoke.log
+
+      - name: Smoke prep (throwaway roster + snapshot + env)
+        # ONE relay URL for app and peer: 127.0.0.1, reverse-forwarded into the emulator
+        # (Boot step). With 10.0.2.2 for the app and 127.0.0.1 for the peer, the peer's
+        # advertised inbox (10050) pointed the app's Welcome at the emulator's own
+        # loopback and the group relay was unreachable from the host (run 36833568030).
+        run: nix develop -c node scripts/support-chat-ci/prep.mjs ws://127.0.0.1:7787 .env.support-smoke /tmp/support-chat-smoke-state
+
+      - name: Build debug APK (ENVFILE=.env.support-smoke, x86_64 for the emulator)
+        # react-native-config resolves "$rootDir/../$ENVFILE" with rootDir=android/, so the
+        # value is REPO-relative (the old `../../` pointed outside the repo: "Missing .env").
+        run: |
+          set -o pipefail
+          rm -rf android/app/.cxx
+          # The debug variant's app id (com.blinkbtc.alpha, Blink Alpha) is only in the git-ignored
+          # local android/app/src/debug/google-services.json (Blink's PRODUCTION Firebase
+          # project — never in CI). CI gets a synthetic, CI-only config: well-formed dummy
+          # values, no real project; Firebase calls fail at runtime, which the smoke does
+          # not need (push is blink-wip#1498).
+          cp scripts/support-chat-ci/google-services.ci.json android/app/src/debug/google-services.json
+          mkdir -p smoke-artifacts
+          nix develop -c sh -c 'unset ANDROID_SDK_ROOT; yarn android:prepareAssets && ./android/gradlew -b ./android/build.gradle assembleDebug -PreactNativeArchitectures=x86_64' 2>&1 | tee smoke-artifacts/build.log
+          grep -q "Reading env from: .env.support-smoke" smoke-artifacts/build.log || { echo "ENVFILE not picked up"; exit 1; }
+          ! grep -q "Missing .env file" smoke-artifacts/build.log || { echo "Missing .env file"; exit 1; }
+        env:
+          ENVFILE: .env.support-smoke
+
+      - name: Start peer bot (local relay)
+        run: |
+          nohup nix develop -c node scripts/support-chat-ci/peer.mjs ws://127.0.0.1:7787 /tmp/support-chat-smoke-state/bot.json > /tmp/smoke-peer.log 2>&1 &
+          echo $! > /tmp/smoke-peer.pid
+          # `nix develop` evaluation + node start + relay connect can exceed a fixed 5 s
+          # (run 36831465573 failed with only the nix eval warnings in the log): poll ≤ 90 s
+          for i in $(seq 1 45); do
+            grep -q "discovery published" /tmp/smoke-peer.log && break
+            kill -0 "$(cat /tmp/smoke-peer.pid)" 2>/dev/null || break
+            sleep 2
+          done
+          grep -q "discovery published" /tmp/smoke-peer.log || (cat /tmp/smoke-peer.log && exit 1)
+
+      - name: Boot emulator
+        # Pixel_API_36 is created by the flake's shellHook on `nix develop` (F-M16-12:
+        # the workflow asked for Pixel_API_34, which never existed).
+        run: |
+          nix develop -c sh -c 'emulator -avd Pixel_API_36 -port 5554 -gpu swiftshader -wipe-data -no-boot-anim -no-window -no-audio' &
+          nix develop -c adb wait-for-device
+          # poll FROM THE HOST (the old `sh -c 'adb shell while …; do …'` was parsed by the
+          # host shell: syntax error), bounded so a dead boot cannot eat the job timeout
+          timeout 600 nix develop -c sh -c 'until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; do sleep 3; done'
+          nix develop -c adb shell getprop ro.build.version.release
+          # the emulator's 127.0.0.1:7787 → the host relay (runner's own adb server :5039)
+          nix develop -c adb reverse tcp:7787 tcp:7787
+          nix develop -c adb reverse --list
+
+      - name: Find the built APK
+        run: |
+          APK=$(find android/app/build/outputs/apk -name "*-debug.apk" | head -1)
+          echo "APK_PATH=$APK" >> $GITHUB_ENV
+          ls -la "$APK"
+
+      - name: Drive the smoke (onboard → chat → round trip)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 2
+          command: nix develop -c node scripts/support-chat-ci/drive.mjs "$APK_PATH"
+
+      # M20 (Hermes R8): the support-chat unit specs ran nowhere (the "Test" job queues
+      # forever on the fork) — run the security-relevant ones here, where they gate.
+      - name: "M20: support-chat unit specs"
+        run: nix develop -c yarn jest __tests__/nostr/support-invite-policy.spec.ts __tests__/nostr/support-media-store.spec.ts __tests__/nostr/support-key.spec.ts __tests__/nostr/support-chat-push.spec.ts --ci
+
+      - name: Artifacts
+        if: always()
+        run: |
+          mkdir -p smoke-artifacts
+          cp /tmp/wok-smoke.log /tmp/smoke-peer.log smoke-artifacts/ 2>/dev/null || true
+          # `adb logcat` waits forever without a device — that hang ate a 90-min timeout
+          timeout 60 nix develop -c adb logcat -d -s ReactNativeJS > smoke-artifacts/app-logcat.txt 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: support-chat-smoke
+          path: smoke-artifacts
+
+      - name: Cleanup
+        if: always()
+        continue-on-error: true
+        run: |
+          kill $(cat /tmp/smoke-peer.pid) 2>/dev/null || true
+          kill $(cat /tmp/wok-smoke.pid) 2>/dev/null || true
+          timeout 60 nix develop -c adb emu kill || true
+          timeout 60 nix develop -c adb kill-server || true
+          pkill -u "$(id -u)" -f 'qemu-system' || true

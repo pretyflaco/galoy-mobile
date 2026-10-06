@@ -82,6 +82,7 @@ import { MapScreen } from "../screens/map-screen/map-screen"
 import { ContactsDetailScreen, PeopleScreen } from "../screens/people-screen"
 import { PriceHistoryScreen } from "../screens/price/price-history-screen"
 import { ScanningQRCodeScreen } from "../screens/send-bitcoin-screen"
+import { NostrRootScreens } from "./nostr-screens"
 import { SettingsScreen } from "../screens/settings-screen"
 import { LanguageScreen } from "../screens/settings-screen/language-screen"
 import { SelectionScreen } from "../screens/settings-screen/selection-screen"
@@ -143,8 +144,13 @@ import {
   ViewBackupPhraseScreen,
   BackupPhraseConfirmScreen,
   BackupSuccessScreen,
+  ChooseExperienceScreen,
+  ChooseLnurlDomainScreen,
+  SetSelfCustodialAddressScreen,
   WalletCreationScreen,
 } from "@app/screens/self-custodial/onboarding"
+import { ModeSwitchSuccessScreen } from "@app/screens/self-custodial/mode-switch-success-screen"
+import { AddressSuccessScreen } from "@app/screens/self-custodial/address-success-screen"
 import {
   RestoreMethodScreen,
   RestorePhraseScreen,
@@ -162,6 +168,7 @@ import {
   MigrationTransferringFundsScreen,
 } from "@app/screens/account-migration"
 import {
+  canGoBackFromChooseExperience,
   OnboardingStackParamList,
   PeopleStackParamList,
   PhoneValidationStackParamList,
@@ -173,7 +180,7 @@ import { useResumeCompletedMigration } from "@app/screens/account-migration/hook
 import { WindDownReceiveGate } from "@app/screens/account-migration/wind-down-receive-gate"
 import { AcceptTermsAndConditionsScreen } from "@app/screens/accept-t-and-c"
 import { TouchableOpacity } from "react-native"
-import { useNavigation } from "@react-navigation/native"
+import { RouteProp, useNavigation } from "@react-navigation/native"
 import { ApiScreen } from "@app/screens/settings-screen/api-screen"
 import { ApiKeyCreateScreen } from "@app/screens/settings-screen/api/api-key-create-screen"
 
@@ -185,6 +192,41 @@ const DeveloperScreen: React.ComponentType | null = __DEV__
   ? // eslint-disable-next-line @typescript-eslint/no-var-requires
     require("../screens/developer-screen").DeveloperScreen
   : null
+
+/** Built once so every navigator hands `headerLeft` the same function. Calling the factory
+ *  inside a navigator's screenOptions would mint a new identity on each render, which stays
+ *  invisible only while native-stack invokes headerLeft instead of rendering it as an
+ *  element; the day that changes, the back button would remount on every render. */
+const defaultHeaderBack = headerBackControl()
+/** Same reasoning as `defaultHeaderBack`: built once so the screens that refuse a back
+ *  press hand `headerLeft` a stable identity instead of minting one per render. */
+const suppressedHeaderBack = headerBackControl({ canGoBack: false })
+
+/**
+ * The swipe stays blocked for every entry: leaving by gesture is undirected, so the arrow is
+ * the one deliberate way out, and only creation has anywhere to take it.
+ *
+ * Swapping `headerLeft` rather than setting `headerBackVisible` is what keeps this to one
+ * control: the navigator already supplies a custom `headerLeft`, so enabling the native
+ * button on top of it renders a second arrow beside the first.
+ */
+const chooseExperienceOptions = ({
+  route,
+}: {
+  route: RouteProp<RootStackParamList, "selfCustodialChooseExperience">
+}) => {
+  const { params } = route
+  /** The settings entry carries no onward step, and it is the one entry that opened this
+   *  screen over a live session, so it keeps its way back. */
+  const onContinue = "onContinue" in params ? params.onContinue : null
+  const canGoBack = canGoBackFromChooseExperience(onContinue)
+
+  return {
+    title: "",
+    gestureEnabled: false,
+    headerLeft: canGoBack ? defaultHeaderBack : suppressedHeaderBack,
+  }
+}
 
 const RootNavigator = createNativeStackNavigator<RootStackParamList>()
 
@@ -223,6 +265,7 @@ const ConversionDetailsGated = withOfflineGate(ConversionDetailsScreen)
 const ConversionConfirmationGated = withOfflineGate(ConversionConfirmationScreen)
 const UnclaimedDepositsGated = withOfflineGate(UnclaimedDepositsScreen)
 
+// eslint-disable-next-line max-lines-per-function -- the root navigator declares every route in one tree; splitting solely for the line cap fragments the navigation structure
 export const RootStack = () => {
   const styles = useStyles()
   const {
@@ -249,7 +292,7 @@ export const RootStack = () => {
         headerTitleStyle: styles.title,
         headerTintColor: colors.black,
         headerShadowVisible: false,
-        headerLeft: headerBackControl(),
+        headerLeft: defaultHeaderBack,
       }}
       initialRouteName={hasAccount ? "authenticationCheck" : "getStarted"}
     >
@@ -311,6 +354,7 @@ export const RootStack = () => {
           headerShown: false,
         }}
       />
+      {NostrRootScreens(RootNavigator, LL)}
       <RootNavigator.Screen
         name="sendBitcoinDestination"
         component={SendBitcoinDestinationGated}
@@ -877,6 +921,31 @@ export const RootStack = () => {
         options={{ headerShown: false }}
       />
       <RootNavigator.Screen
+        name="selfCustodialChooseExperience"
+        component={ChooseExperienceScreen}
+        options={chooseExperienceOptions}
+      />
+      <RootNavigator.Screen
+        name="selfCustodialChooseLnurlDomain"
+        component={ChooseLnurlDomainScreen}
+        options={{ title: LL.ChooseLnurlDomainScreen.title() }}
+      />
+      <RootNavigator.Screen
+        name="selfCustodialSetAddress"
+        component={SetSelfCustodialAddressScreen}
+        options={{ title: LL.SetSelfCustodialAddressScreen.title() }}
+      />
+      <RootNavigator.Screen
+        name="selfCustodialModeSwitchSuccess"
+        component={ModeSwitchSuccessScreen}
+        options={{ headerShown: false }}
+      />
+      <RootNavigator.Screen
+        name="selfCustodialAddressSuccess"
+        component={AddressSuccessScreen}
+        options={{ headerShown: false }}
+      />
+      <RootNavigator.Screen
         name="selfCustodialWalletCreation"
         component={WalletCreationScreen}
         options={{ title: "" }}
@@ -1023,7 +1092,7 @@ export const ContactNavigator = () => {
         headerTitleStyle: styles.title,
         headerTintColor: colors.black,
         headerShadowVisible: false,
-        headerLeft: headerBackControl(),
+        headerLeft: defaultHeaderBack,
       }}
       initialRouteName="peopleHome"
     >
@@ -1038,7 +1107,7 @@ export const ContactNavigator = () => {
       <StackContacts.Screen
         name="contactDetail"
         component={ContactsDetailScreen}
-        options={{ headerShown: false }}
+        options={{ title: "" }}
       />
       <StackContacts.Screen
         name="allContacts"
@@ -1081,7 +1150,7 @@ export const PhoneLoginNavigator = () => {
         headerTitleStyle: styles.title,
         headerTintColor: colors.black,
         headerShadowVisible: false,
-        headerLeft: headerBackControl(),
+        headerLeft: defaultHeaderBack,
       }}
     >
       <StackPhoneValidation.Screen

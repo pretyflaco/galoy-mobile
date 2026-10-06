@@ -85,13 +85,16 @@
 	<string>This app includes a component that requires background location access, but your location is only used while in app to find merchants near you.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Find merchants who accept bitcoin near you</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save pictures from Blink Support to your Photos</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Import a screenshot with a QR code</string>
+	<string>Choose a picture: a QR code to scan, or a screenshot to send to Blink Support</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Ionicons.ttf</string>
+		<string>MaterialIcons.ttf</string>
 		<string>SourceSansPro-Bold.ttf</string>
 		<string>SourceSansPro-BoldItalic.ttf</string>
 		<string>SourceSansPro-Italic.ttf</string>

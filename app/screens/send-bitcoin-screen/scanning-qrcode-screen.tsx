@@ -1,11 +1,11 @@
 import * as React from "react"
 import {
   Alert,
-  Dimensions,
   Linking,
   Platform,
   Pressable,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from "react-native"
 import { launchImageLibrary } from "react-native-image-picker"
@@ -13,8 +13,14 @@ import Svg, { Circle } from "react-native-svg"
 import { Camera, CameraType } from "react-native-camera-kit"
 import { check, request, PERMISSIONS, RESULTS } from "react-native-permissions"
 import RNQRGenerator from "rn-qr-generator"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { gql } from "@apollo/client"
+import {
+  handleNostrConnectLink,
+  hasNostrConnectHandler,
+  isNostrConnectLink,
+} from "@app/nostr/connect-link-handler"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import {
   useAccountDefaultWalletLazyQuery,
@@ -28,6 +34,7 @@ import { useSelfCustodialWallet } from "@app/self-custodial/providers/wallet"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { logParseDestinationResult } from "@app/utils/analytics"
 import { reportError } from "@app/utils/error-logging"
+import { toError } from "@app/utils/error-reporting"
 import { toastShow } from "@app/utils/toast"
 import Clipboard from "@react-native-clipboard/clipboard"
 import { useIsFocused, useNavigation } from "@react-navigation/native"
@@ -41,10 +48,28 @@ import {
   DestinationDirection,
   isMerchantChoiceDestination,
 } from "./payment-destination/index.types"
+import { testProps } from "@app/utils/testProps"
+
 import { resolveDestination } from "./payment-destination/resolve-destination"
 
-const { width: screenWidth } = Dimensions.get("window")
-const { height: screenHeight } = Dimensions.get("window")
+/** Gaps kept between the scanner's own controls and whatever the system draws over the
+ *  window. From Android 15 the window runs edge to edge, so the status bar and the
+ *  navigation or gesture bar sit on top of the camera preview rather than beside it, and
+ *  a control placed at a fixed offset from the window edge lands underneath them. */
+const CLOSE_BUTTON_GAP = 16
+const BOTTOM_CONTROLS_GAP = 24
+
+/**
+ * Longest side the picker is allowed to hand back. The QR decoder holds the decoded
+ * bitmap and one integer per pixel on top of it, so its peak is eight bytes per pixel of
+ * whatever it receives: a 12000x12000 photo asks for 576MB against a heap that caps out
+ * around 200MB, and the app dies before reading anything. At this bound the peak is 34MB,
+ * which the 96MB heap of a budget device survives. A code filling the frame stays well
+ * inside what the decoder needs, eight or more pixels per module even at version 40, the
+ * densest there is; a code occupying a small corner of a very large photo is the case
+ * this trades away.
+ */
+const QR_IMAGE_MAX_DIMENSION = 2048
 
 gql`
   query scanningQRCodeScreen {
@@ -83,6 +108,11 @@ export const ScanningQRCodeScreen: React.FC = () => {
   } = useTheme()
 
   const [pending, setPending] = React.useState(false)
+  // Synchronous guard for the nostrconnect:// branch below. The camera fires per-frame and
+  // `pending`/`scannedCache` are async React state, so two rapid frames can both pass the state
+  // guards and forward the SAME pairing URI twice → a duplicate connection-approval modal. A ref
+  // flips synchronously on the first frame, closing that window (AD-9 / Fix B).
+  const nostrConnectInFlight = React.useRef(false)
   const [scannedCache, setScannedCache] = React.useState(new Set<string>())
   const [hasPermission, setHasPermission] = React.useState(false)
   const [isCameraUnavailable, setIsCameraUnavailable] = React.useState(false)
@@ -93,6 +123,7 @@ export const ScanningQRCodeScreen: React.FC = () => {
   })
 
   const { LL } = useI18nContext()
+  const insets = useSafeAreaInsets()
   const { displayCurrency } = useDisplayCurrency()
   const { sdk } = useSelfCustodialWallet()
   const sparkNetwork = useSparkNetwork()
@@ -148,6 +179,36 @@ export const ScanningQRCodeScreen: React.FC = () => {
       if (pending || !bitcoinNetwork || !data) {
         return
       }
+
+      // nostrconnect:// (Story A3 / AD-9): a scanned pairing URI is forwarded RAW to ConnectFlow
+      // (via the runtime handler) and never treated as a payment destination.
+      //
+      // Camera dismissal (UX): when the signer is ON (a handler is registered) we pop the scanner
+      // IMMEDIATELY on recognizing the URI — BEFORE the connection approval resolves — so the
+      // approval surface renders on a clean background instead of over the still-running camera.
+      // The forward is fired without awaiting the human decision; `hasNostrConnectHandler()` lets
+      // us know synchronously whether the URI will actually be consumed. If the signer is off, no
+      // handler is registered, so we keep the old await/fall-through-to-payments behavior.
+      if (isNostrConnectLink(data)) {
+        // Ref guard closes the per-frame double-forward window (see nostrConnectInFlight above).
+        if (nostrConnectInFlight.current) {
+          return
+        }
+
+        if (hasNostrConnectHandler()) {
+          nostrConnectInFlight.current = true
+          // Fire-and-forget the forward (the approval overlay owns the decision from here) and pop
+          // the camera synchronously so it unmounts before the connection Modal appears.
+          handleNostrConnectLink(data).finally(() => {
+            nostrConnectInFlight.current = false
+          })
+          navigation.goBack()
+          return
+        }
+
+        // Signer off: no handler → the URI is not consumed; fall through to payment parsing.
+      }
+
       try {
         setPending(true)
 
@@ -211,6 +272,20 @@ export const ScanningQRCodeScreen: React.FC = () => {
               ],
             )
             break
+          case "LnurlServiceError":
+            Alert.alert(
+              LL.ScanningQRCodeScreen.unresolvedTitle(),
+              LL.ScanningQRCodeScreen.unresolvedContent({
+                found: data.toString(),
+              }),
+              [
+                {
+                  text: LL.common.ok(),
+                  onPress: () => setPending(false),
+                },
+              ],
+            )
+            break
           case "UnknownDestination":
             if (isValidHttpUrl(data.toString())) {
               Alert.alert(
@@ -261,20 +336,24 @@ export const ScanningQRCodeScreen: React.FC = () => {
             break
         }
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          reportError("scanning-qrcode", err)
-          Alert.alert(err.toString(), "", [
-            {
-              text: LL.common.ok(),
-              onPress: () => setPending(false),
-            },
-          ])
-        }
+        /** Narrowing on instanceof here would drop a rejection that is not an Error
+         *  without ever reaching setPending(false), and pending gates every scan: the
+         *  camera and the gallery button would both stay dead for the rest of the screen.
+         *  What was rejected goes to error reporting rather than into the dialog, which
+         *  would otherwise show the user a serialized native payload. */
+        reportError("scanning-qrcode", toError(err))
+        Alert.alert(LL.errors.unexpectedError(), "", [
+          {
+            text: LL.common.ok(),
+            onPress: () => setPending(false),
+          },
+        ])
       }
     }
   }, [
     LL.ScanningQRCodeScreen,
     LL.common,
+    LL.errors,
     navigation,
     pending,
     bitcoinNetwork,
@@ -297,29 +376,51 @@ export const ScanningQRCodeScreen: React.FC = () => {
     [scannedCache, processInvoice],
   )
 
-  const styles = useStyles()
+  const { width, height } = useWindowDimensions()
+  /** The viewfinder is square, so it is bounded by the shorter edge. Sizing it off
+   *  the width put its horizontal borders off-screen once the screen could rotate. */
+  const shortestEdge = Math.min(width, height)
+  const styles = useStyles({ width, shortestEdge })
 
   const handleInvoicePaste = async () => {
     try {
       const data = await Clipboard.getString()
       processInvoice(data)
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        reportError("scanning-qrcode", err)
-        Alert.alert(err.toString())
-      }
+      reportError("scanning-qrcode", toError(err))
+      Alert.alert(LL.errors.unexpectedError())
     }
   }
 
   const showImagePicker = async () => {
     try {
-      const result = await launchImageLibrary({ mediaType: "photo" })
+      const result = await launchImageLibrary({
+        mediaType: "photo",
+        maxWidth: QR_IMAGE_MAX_DIMENSION,
+        maxHeight: QR_IMAGE_MAX_DIMENSION,
+      })
       if (result.errorCode === "permission") {
         toastShow({
           message: (translations) =>
             translations.ScanningQRCodeScreen.imageLibraryPermissionsNotGranted(),
           LL,
         })
+        return
+      }
+      /** Every other code arrives with no assets, so without this the button reads as
+       *  dead: nothing opens, nothing is said, and nothing reaches error reporting. The
+       *  message stays generic because the picker failed before it could hand over a
+       *  photo, and saying the image holds no QR would be a claim about something the app
+       *  never got to look at. */
+      if (result.errorCode) {
+        reportError(
+          "scanning-qrcode",
+          new Error(
+            `Image library failed: ${result.errorCode} ${result.errorMessage ?? ""}`,
+          ),
+        )
+        Alert.alert(LL.errors.unexpectedError())
+        return
       }
       if (result.assets && result.assets.length > 0) {
         const { uri } = result.assets[0]
@@ -331,10 +432,14 @@ export const ScanningQRCodeScreen: React.FC = () => {
         Alert.alert(LL.ScanningQRCodeScreen.noQrCode())
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        reportError("scanning-qrcode", err)
-        Alert.alert(err.toString())
-      }
+      /** A native module can reject with a plain object or a string rather than an Error,
+       *  and an Error crossing a realm boundary fails the instanceof check too. Narrowing
+       *  on that check here would leave those rejections with no alert and nothing in
+       *  error reporting, which is the dead button this change is closing. The detail goes
+       *  to error reporting rather than to the user, who would otherwise be shown whatever
+       *  the native module rejected with, serialized. */
+      reportError("scanning-qrcode", toError(err))
+      Alert.alert(LL.errors.unexpectedError())
     }
   }
 
@@ -379,6 +484,13 @@ export const ScanningQRCodeScreen: React.FC = () => {
     )
   }
 
+  /** A scan already in flight makes processInvoice drop whatever the picker hands back,
+   *  so opening it would read as a dead button. Dimming says the same thing the guard
+   *  does, before the user spends a trip through the gallery on it. */
+  const galleryIconStyle = pending ? styles.iconGaleryPending : styles.iconGalery
+  const closeInsetStyle = { marginTop: insets.top + CLOSE_BUTTON_GAP }
+  const bottomControlsInsetStyle = { bottom: insets.bottom + BOTTOM_CONTROLS_GAP }
+
   return (
     <Screen unsafe>
       {isFocused && (
@@ -397,20 +509,24 @@ export const ScanningQRCodeScreen: React.FC = () => {
           <View style={styles.rectangle} />
         </View>
         <Pressable onPress={navigation.goBack}>
-          <View style={styles.close}>
+          <View style={[styles.close, closeInsetStyle]}>
             <Svg viewBox="0 0 100 100">
               <Circle cx={50} cy={50} r={50} fill={colors._white} opacity={0.5} />
             </Svg>
             <GaloyIcon name="close" size={64} style={styles.iconClose} />
           </View>
         </Pressable>
-        <View style={styles.openGallery}>
-          <Pressable onPress={showImagePicker}>
+        <View style={[styles.openGallery, bottomControlsInsetStyle]}>
+          <Pressable
+            {...testProps("open-gallery")}
+            disabled={pending}
+            onPress={showImagePicker}
+          >
             <GaloyIcon
               name="image"
               size={64}
               color={colors._lightGrey}
-              style={styles.iconGalery}
+              style={galleryIconStyle}
             />
           </Pressable>
           <Pressable onPress={handleInvoicePaste}>
@@ -428,55 +544,57 @@ export const ScanningQRCodeScreen: React.FC = () => {
   )
 }
 
-const useStyles = makeStyles(({ colors }) => ({
-  close: {
-    alignSelf: "flex-end",
-    height: 64,
-    marginRight: 16,
-    marginTop: 40,
-    width: 64,
-  },
+const useStyles = makeStyles(
+  ({ colors }, { width, shortestEdge }: { width: number; shortestEdge: number }) => ({
+    close: {
+      alignSelf: "flex-end",
+      height: 64,
+      marginRight: 16,
+      width: 64,
+    },
 
-  openGallery: {
-    height: 128,
-    left: 32,
-    position: "absolute",
-    top: screenHeight - 96,
-    width: screenWidth,
-  },
+    openGallery: {
+      height: 64,
+      left: 32,
+      position: "absolute",
+      width,
+    },
 
-  rectangle: {
-    borderColor: colors.primary,
-    borderWidth: 2,
-    height: screenWidth * 0.75,
-    width: screenWidth * 0.75,
-  },
+    rectangle: {
+      borderColor: colors.primary,
+      borderWidth: 2,
+      height: shortestEdge * 0.75,
+      width: shortestEdge * 0.75,
+    },
 
-  rectangleContainer: {
-    alignItems: "center",
-    bottom: 0,
-    justifyContent: "center",
-    left: 0,
-    position: "absolute",
-    right: 0,
-    top: 0,
-  },
+    rectangleContainer: {
+      alignItems: "center",
+      bottom: 0,
+      justifyContent: "center",
+      left: 0,
+      position: "absolute",
+      right: 0,
+      top: 0,
+    },
 
-  iconClose: { position: "absolute", top: -2, color: colors._black },
+    iconClose: { position: "absolute", top: -2, color: colors._black },
 
-  iconGalery: { opacity: 0.8 },
+    iconGalery: { opacity: 0.8 },
 
-  iconClipboard: { opacity: 0.8, position: "absolute", bottom: "5%", right: "15%" },
+    iconGaleryPending: { opacity: 0.4 },
 
-  permissionMissing: {
-    alignItems: "center",
-    flex: 1,
-    justifyContent: "center",
-    rowGap: 32,
-  },
+    iconClipboard: { opacity: 0.8, position: "absolute", bottom: "5%", right: "15%" },
 
-  permissionMissingText: {
-    width: "80%",
-    textAlign: "center",
-  },
-}))
+    permissionMissing: {
+      alignItems: "center",
+      flex: 1,
+      justifyContent: "center",
+      rowGap: 32,
+    },
+
+    permissionMissingText: {
+      width: "80%",
+      textAlign: "center",
+    },
+  }),
+)

@@ -1,10 +1,9 @@
 import { useSettingsScreenQuery } from "@app/graphql/generated"
 import { useIsAuthed } from "@app/graphql/is-authed-context"
 import { useAccountRegistry } from "@app/hooks/use-account-registry"
+import { useAccountLightningAddresses } from "@app/self-custodial/hooks/use-account-lightning-addresses"
 import { AccountType } from "@app/types/wallet"
 import { extractLightningAddressUsername } from "@app/utils/pay-links"
-
-import { useSelfCustodialLightningAddress } from "./use-self-custodial-lightning-address"
 
 type PayLinks = {
   /** Null until the account has a username, which hides the dependent rows. */
@@ -19,20 +18,22 @@ type PayLinks = {
  * Custodial accounts key off the account username; self-custodial accounts have
  * no username of their own, so they key off the username portion of their
  * lightning address and stay hidden until one is registered. Both modes build
- * the same hosts from it — see pay-links.
+ * the same hosts from it — see pay-links. The hosts are Blink-served, so a
+ * two-domain account must key off its BLINK.SV address: links built from the
+ * twentyone.ist username would name an account pay.blink.sv does not serve.
  */
 export const usePayLinks = (): PayLinks => {
   const isAuthed = useIsAuthed()
   const { activeAccount } = useAccountRegistry()
 
   const { data, loading } = useSettingsScreenQuery({ skip: !isAuthed })
-  const selfCustodialAddress = useSelfCustodialLightningAddress()
+  const { blinkSvAddress, effective } = useAccountLightningAddresses()
 
   const isSelfCustodial = activeAccount?.type === AccountType.SelfCustodial
 
   return {
     username: isSelfCustodial
-      ? extractLightningAddressUsername(selfCustodialAddress)
+      ? extractLightningAddressUsername(blinkSvAddress ?? effective)
       : data?.me?.username ?? null,
     // The self-custodial address resolves synchronously; only the custodial
     // username arrives over the network, so only it can show a skeleton.

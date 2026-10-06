@@ -1,0 +1,122 @@
+import { useCallback, useEffect, useRef, useState } from "react"
+import {
+  AccessibilityInfo,
+  AppState,
+  Platform,
+  findNodeHandle,
+  type View,
+} from "react-native"
+
+import { useI18nContext } from "@app/i18n/i18n-react"
+import {
+  followShrinkWarningText,
+  nostrActionLabel,
+} from "@app/screens/nostr/action-label"
+import type { ApprovalCoordinator, ApprovalEntry } from "@app/nostr/approval/coordinator"
+import {
+  buildAnnouncement,
+  foregroundCatchUp,
+  shouldPresentNow,
+  type AppStateValue,
+  type Platform as SignerPlatform,
+} from "@app/nostr/approval/presenter"
+
+const platform = (): SignerPlatform => (Platform.OS === "ios" ? "ios" : "android")
+
+/**
+ * Coordinator-driven React binding (Story 3.4 / Tasks 3/5/6). Subscribes to the single
+ * ApprovalCoordinator and exposes the active entry + queue depth to the surface. On each new
+ * surface it:
+ *  - ANNOUNCES requester + request + position assertively (AccessibilityInfo);
+ *  - lands focus on the surface's default-focus view (setAccessibilityFocus on `focusRef`, which
+ *    the host hands to the surface as `defaultFocusRef`): the FR-25 list-shrink warning while it
+ *    shows, else Approve — never Reject; restored to the next queued surface on drain;
+ *  - (iOS) HOLDS presentation while backgrounded/inactive and drains + announces the
+ *    keep-app-open catch-up on the next foreground (AppState). Android presents unconditionally.
+ *
+ * No background mode / NSE / watcher is registered (AD-14 v1 scope guard) — foreground drain is
+ * driven purely by AppState.
+ */
+export const useApprovalCoordinator = (coordinator: ApprovalCoordinator) => {
+  const { LL } = useI18nContext()
+  const [active, setActive] = useState<ApprovalEntry | null>(coordinator.activeEntry())
+  const [depth, setDepth] = useState<number>(coordinator.queueDepth())
+  const [appState, setAppState] = useState<AppStateValue>(
+    (AppState.currentState as AppStateValue) ?? "active",
+  )
+  // True when an iOS foreground transition finds a waiting queue — the screen renders the
+  // keep-app-open catch-up (i18n copy) in an assertive live region so it is announced.
+  const [catchUpPending, setCatchUpPending] = useState(false)
+  const focusRef = useRef<View>(null)
+  const lastAnnouncedId = useRef<string | null>(null)
+
+  // Subscribe to coordinator changes.
+  useEffect(() => {
+    const sync = () => {
+      setActive(coordinator.activeEntry())
+      setDepth(coordinator.queueDepth())
+    }
+    sync()
+    return coordinator.subscribe(sync)
+  }, [coordinator])
+
+  // Track AppState for the iOS foreground gate + catch-up.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) => {
+      setAppState(next as AppStateValue)
+      const catchUp = foregroundCatchUp({
+        platform: platform(),
+        queueDepth: coordinator.queueDepth(),
+      })
+      setCatchUpPending(next === "active" && catchUp.announce)
+    })
+    return () => sub.remove()
+  }, [coordinator])
+
+  // Whether the active surface may be shown now (iOS foreground gate; Android unconditional).
+  const visible = active !== null && shouldPresentNow({ platform: platform(), appState })
+
+  // On a NEW visible surface: announce assertively + land focus on the heading.
+  useEffect(() => {
+    if (!visible || !active) return
+    if (lastAnnouncedId.current === active.id) return
+    lastAnnouncedId.current = active.id
+
+    if (active.kind === "request") {
+      // Announce the PLAIN-LANGUAGE action (issue #1): "update your follow list", never the
+      // raw dump or the runtime's technical fallback string. A kind:3 carries its counts, and a
+      // drastic shrink its warning — screen readers hear the same as sighted users (FR-25).
+      AccessibilityInfo.announceForAccessibility(
+        buildAnnouncement({
+          index: 1,
+          total: coordinator.queueDepth(),
+          client: active.clientPubkey,
+          action: nostrActionLabel(LL.NostrActionKind, {
+            method: active.method,
+            eventKind: active.eventKind,
+            uHost: active.uHost,
+            fallback: active.humanAction,
+            followDelta: active.followListDelta,
+          }),
+          warning: followShrinkWarningText(
+            LL.NostrRequestApprovalScreen,
+            active.followListDelta,
+          ),
+        }),
+      )
+    }
+
+    const node = focusRef.current ? findNodeHandle(focusRef.current) : null
+    if (node) AccessibilityInfo.setAccessibilityFocus(node)
+  }, [visible, active, coordinator, LL])
+
+  const approve = useCallback(() => {
+    coordinator.resolveActive({ approved: true })
+  }, [coordinator])
+
+  const reject = useCallback(() => {
+    coordinator.resolveActive({ approved: false })
+  }, [coordinator])
+
+  return { active, depth, visible, approve, reject, focusRef, catchUpPending }
+}

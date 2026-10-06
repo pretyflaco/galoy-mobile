@@ -104,7 +104,7 @@ const csvType = (
   }
 }
 
-const extractPaymentHash = (details: Payment["details"]): string | undefined => {
+export const extractPaymentHash = (details: Payment["details"]): string | undefined => {
   if (!details) return undefined
   if (PaymentDetails.Lightning.instanceOf(details)) {
     return details.inner.htlcDetails?.paymentHash
@@ -120,7 +120,7 @@ const extractPubkey = (details: Payment["details"]): string | undefined =>
     ? details.inner.destinationPubkey
     : undefined
 
-const extractTxHash = (details: Payment["details"]): string | undefined => {
+export const extractTxHash = (details: Payment["details"]): string | undefined => {
   if (!details) return undefined
   if (PaymentDetails.Deposit.instanceOf(details)) return details.inner.txId
   if (PaymentDetails.Withdraw.instanceOf(details)) return details.inner.txId

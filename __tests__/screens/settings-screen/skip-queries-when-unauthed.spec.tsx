@@ -29,10 +29,15 @@ jest.mock("@app/graphql/generated", () => ({
 jest.mock("@react-navigation/native", () => ({
   ...jest.requireActual("@react-navigation/native"),
   useNavigation: () => ({ navigate: jest.fn() }),
+  // The fork's nostr-aware account icon re-reads on focus; stub it so the banner renders
+  // without a NavigationContainer.
+  useIsFocused: () => true,
 }))
 
 jest.mock("@app/hooks/use-dollar-balance-restricted", () => ({
   useDollarBalanceRestricted: () => false,
+  useDollarBalanceGate: () => ({ isGated: false, isRegionPending: false }),
+  useDollarBalanceGated: () => false,
 }))
 
 jest.mock("@app/i18n/i18n-react", () => ({

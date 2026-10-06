@@ -29,6 +29,7 @@ import {
   CoinsIcon,
   CopyIcon,
   CurrencyDollarIcon,
+  DotsThreeVerticalIcon,
   DownloadSimpleIcon,
   EnvelopeIcon,
   EyeIcon,
@@ -110,6 +111,11 @@ import DonationButton from "@app/assets/icons-redesign/donation-button.svg"
 import Woocommerce from "@app/assets/icons-redesign/woocommerce.svg"
 import CaretUpCircle from "@app/assets/icons-redesign/caret-up-circle.svg"
 import Limits from "@app/assets/icons-redesign/limits.svg"
+import Chain from "@app/assets/icons/chain.svg"
+import Spinner from "@app/assets/icons-redesign/spinner.svg"
+import MagicWand from "@app/assets/icons-redesign/magic-wand.svg"
+import Sunglasses from "@app/assets/icons-redesign/sunglasses.svg"
+import Nostr from "@app/assets/icons/nostr.svg"
 
 import { makeStyles, useTheme } from "@rn-vui/themed"
 
@@ -157,6 +163,7 @@ const phosphorIconMap = {
   "document-outline": FileIcon,
   "dollar": CurrencyDollarIcon,
   "download": DownloadSimpleIcon,
+  "ellipsis": DotsThreeVerticalIcon,
   "email-add": EnvelopeIcon,
   "error": XCircleIcon,
   "eye": EyeIcon,
@@ -242,6 +249,11 @@ const customSvgMap = {
   "woocommerce": Woocommerce,
   "caret-up-circle": CaretUpCircle,
   "limits": Limits,
+  "chain": Chain,
+  "spinner": Spinner,
+  "magic-wand": MagicWand,
+  "sunglasses": Sunglasses,
+  "nostr": Nostr,
 } as const
 
 export const icons = { ...phosphorIconMap, ...customSvgMap } as const

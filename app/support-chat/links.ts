@@ -17,6 +17,10 @@ export const SUPPORT_WEB_HOSTS: Record<string, string | null> = {
   "dev.blink.sv": null,
   "blink.statuspage.io": null,
   "github.com": "/blinkbitcoin/", // path prefix required
+  // block explorers the app itself links (transaction details) — support shares them to let
+  // a customer follow a payment (operator 2026-10-06)
+  "mempool.space": null,
+  "sparkscan.io": null,
 }
 
 /** blink://<path> → the screen it opens (subset of app/navigation/deep-link-screens.ts). */

@@ -21,6 +21,8 @@ describe("support-chat links", () => {
       "https://blink.statuspage.io/",
       "https://github.com/blinkbitcoin/blink-mobile/releases",
       "https://FAQ.Blink.SV/x",
+      "https://mempool.space/tx/" + "ab".repeat(32),
+      "https://sparkscan.io/tx/" + "cd".repeat(32),
     ])
       expect(allowedWebUrl(u)).not.toBeNull()
   })
@@ -37,6 +39,8 @@ describe("support-chat links", () => {
       "https://github.com/someone/blinkbitcoin/x",
       "https://www.github.com/blinkbitcoin/blink",
       "https://gist.github.com/blinkbitcoin/x",
+      "https://mempool.space.evil.example/tx/x",
+      "https://www.sparkscan.io.attacker.example/",
       // eslint-disable-next-line no-script-url
       "javascript:alert(1)",
       "not a url",
